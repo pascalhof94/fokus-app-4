@@ -2612,7 +2612,8 @@ const FSLive = (()=>{
   const WORTE={ grau:'nicht gekoppelt', rot:'Mac mini nicht erreichbar', gelb:'ausstehend', gruen:'verbunden' };
   const offen=new Map();          // Betriebsschlüssel → Zähler des letzten Vormerkens
   let zaehler=0, ersterTs=0, uhr=null, laeuft=false, gescheitert=false, fehlerText='', punkt=null;
-  let warteschlange=[], sendetSchlange=false, paketeLaufen=false, paketeGesehen=new Set(), aktuellesPaket=null, letzteUhr='';
+  let warteschlange=[], sendetSchlange=false, paketeLaufen=false, zurueckgestellt=new Map(), aktuellesPaket=null, letzteUhr='';
+  const ZURUECK_MS=10*60000;   // ein in der App weggetipptes Paket kommt frühestens nach 10 Minuten wieder
 
   function lies(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function schreib(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -2736,13 +2737,13 @@ const FSLive = (()=>{
   // ── Paket-Eingang ─────────────────────────────────────────────────
   async function paketeHolen(){
     if(paketeLaufen || !gekoppelt() || aktuellesPaket) return;
+    try{ if(sheetOffen()) return; }catch(e){}   // ein offenes Blatt wird nicht verdrängt; das Paket wartet auf den nächsten Takt
     paketeLaufen=true;
     try{
       const d=await aufruf('GET', '/api/app/pakete');
       gescheitert=false; fehlerText='';
       for(const p of (d && d.pakete)||[]){
-        if(paketeGesehen.has(p.id)) continue;
-        paketeGesehen.add(p.id);
+        if((zurueckgestellt.get(p.id)||0) > Date.now()-ZURUECK_MS) continue;
         const text=JSON.stringify(p.paket);
         let res; try{ res=syncImport(text); }catch(e){ res={ fehler:String((e&&e.message)||e) }; }
         if(res && res.freigabeNoetig){ aktuellesPaket={ id:p.id, text }; try{ oeffneSyncFreigabe(text, res.vorschau, 'fslive'); }catch(e){ aktuellesPaket=null; } break; }
@@ -2755,7 +2756,7 @@ const FSLive = (()=>{
   async function paketMelden(id, res){
     const ok=!(res && res.fehler);
     try{ await aufruf('POST', '/api/app/pakete/'+id, JSON.stringify(ok ? { status:'uebernommen' } : { status:'abgelehnt', grund:String(res.fehler).slice(0,300) })); }
-    catch(e){ paketeGesehen.delete(id); }   // nicht gemeldet: beim nächsten Holen wiederholen (die App hat es schon übernommen; der Import ist je Karte idempotent)
+    catch(e){}   // nicht gemeldet: beim nächsten Holen kommt das Paket erneut; der Import ist je Karte idempotent
   }
   // Aus syncFreigabeAnwenden: das Blatt „Paket prüfen“ wurde mit Übernehmen beantwortet.
   function paketAbgeschlossen(res, quelle){
@@ -2763,7 +2764,7 @@ const FSLive = (()=>{
     const id=aktuellesPaket.id; aktuellesPaket=null;
     paketMelden(id, res).then(()=>paketeHolen());
   }
-  function paketAbgebrochen(){ aktuellesPaket=null; }
+  function paketAbgebrochen(){ if(aktuellesPaket){ zurueckgestellt.set(aktuellesPaket.id, Date.now()); } aktuellesPaket=null; }
 
   // ── Uhr ───────────────────────────────────────────────────────────
   function uhrMelden(erzwingen){

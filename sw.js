@@ -6,7 +6,7 @@
    fasst dieser Worker nie an. */
 'use strict';
 
-const CACHE = 'fokus4-v4.0.0-1';
+const CACHE = 'fokus4-v4.0.0-2';
 const ASSETS = [
   './',
   './index.html',
@@ -38,6 +38,9 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // 4.0 · Paket 3: nur die eigene Herkunft (die App selbst). Anfragen an den Dienst auf dem Mac mini (FSLive) gehen
+  // am Worker vorbei; sie bekommen nie index.html als Ersatz.
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then(res => {
