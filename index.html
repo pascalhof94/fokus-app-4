@@ -150,7 +150,7 @@ body[data-e1] #nav,body[data-e1] #suchFab,body[data-e1] #neuFab{display:none}
 #e1Kopf{position:sticky;top:0;z-index:6;flex:none;padding:calc(var(--sat) + 4px) 8px 6px;background:linear-gradient(180deg,var(--card2),var(--card));border-bottom:1px solid var(--line)}
 #e1Kopf .sb-bar[hidden]{display:none}
 #ebene1 .e1{display:none;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--sab) + 16px)}
-body[data-e1="suche"] #e1-suche,body[data-e1="plus"] #e1-plus,body[data-e1="kettenwahl"] #e1-kettenwahl,body[data-e1="inkette"] #e1-inkette,body[data-e1="tagebuch"] #e1-tagebuch{display:block}
+body[data-e1="suche"] #e1-suche,body[data-e1="plus"] #e1-plus,body[data-e1="kettenwahl"] #e1-kettenwahl,body[data-e1="inkette"] #e1-inkette,body[data-e1="tagebuch"] #e1-tagebuch,body[data-e1="durchsuchen"] #e1-durchsuchen,body[data-e1="erfassen"] #e1-erfassen,body[data-e1="routinen"] #e1-routinen,body[data-e1="chat"] #e1-chat,body[data-e1="plan"] #e1-plan{display:block}
 #ebene1 .an-kopf{padding-top:8px;position:sticky;top:0;z-index:5;background:var(--bg)}
 #ebene1 .an-body{flex:none;overflow:visible;padding-bottom:12px}
 #ebene1 input,#ebene1 textarea,#ebene1 select{font-size:16px}   /* iOS zoomt sonst beim Fokus */
@@ -291,7 +291,7 @@ main{
 html,body{overflow-x:hidden}                 /* U3: kein horizontaler Body-Scroll */
 .view{display:none}
 /* C2 (v3.8.0): Ebene 0 — genau eine Seite, geschaltet allein über body[data-seite] */
-body[data-seite="fokus"] #v-fokus,body[data-seite="belohnung"] #v-belohnung,body[data-seite="statistik"] #v-statistik,body[data-seite="einst"] #v-einst{display:block}
+body[data-seite="fokus"] #v-fokus,body[data-seite="belohnung"] #v-belohnung,body[data-seite="statistik"] #v-statistik,body[data-seite="einst"] #v-einst,body[data-seite="postfach"] #v-postfach{display:block}
 .view{overflow-x:hidden}
 .placeholder{margin-top:22vh;text-align:center;color:var(--mut2);font-size:13px}
 .placeholder .big{font-size:44px;display:block;margin-bottom:var(--s1)}
@@ -2560,6 +2560,114 @@ img.objimg.laedt{opacity:0}
 .f6-ag .bar{height:10px;border-radius:5px;background:#1f2228;overflow:hidden;display:flex}
 .f6-ag .bar i{display:block;height:100%}
 .f6-ag span:last-child{text-align:right;color:#9a9ca2;white-space:nowrap}
+/* ══ 4.0 · Paket 7 · Bedienung nach Punkt 7 ══════════════════════════════════════════════════════ */
+#neuFab{display:none!important}
+#v-postfach .headbar{display:none}#v-postfach #postfachBody{padding:12px 12px 90px}
+#suchFab .badge,#nav .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#f66d6d;color:#fff;font:700 11px/20px system-ui;text-align:center;padding:0 5px}
+#nav button{position:relative}#nav .badge{top:2px;right:14px}#nav .badge:not(.rot){background:#3b82f6}
+.f7-h5{font:700 12.5px system-ui;color:#9a9ca2;letter-spacing:.06em;text-transform:uppercase;margin:14px 0 6px}
+.f7-h5.zw{display:flex;justify-content:space-between;gap:8px}.f7-h5 .red{color:#f66d6d}
+.f7-top{padding:4px 0 8px}.f7-tt{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:800;min-width:0}
+.f7-tt em{font-style:normal;color:#3b82f6;font-size:22px;padding:4px 6px 4px 0;cursor:pointer}
+.f7-tt .f7-r{margin-left:auto;font-size:13px;font-weight:600;color:#9a9ca2;white-space:nowrap}
+.f7-sub{font-size:13px;color:#9a9ca2;margin:2px 0 8px}.f7-crumb{font-size:12.5px;color:#7fb0ff;font-weight:600;margin-bottom:4px}
+.f7-inp{display:flex;align-items:center;gap:8px;background:#121418;border:1px solid #2a2d33;border-radius:12px;padding:10px 12px;margin-top:10px}
+.f7-inp input{flex:1;background:none;border:0;color:#e8e9ec;font-size:15px;min-width:0;outline:none}
+.f7-inp span,.f7-inp b{font-size:18px;cursor:pointer}.f7-inp b{background:#2dd4bf;color:#000;border-radius:50%;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;font-size:15px}
+.f7-inp.klein{margin-top:6px;padding:6px 10px}.f7-inp.unten{position:sticky;bottom:4px;background:#17181b}
+.f7-inp input[type=date]{color-scheme:dark}
+/* Aktionsreihe · Schnellplätze · Gruppen */
+.f7-act{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:4px}
+.f7-act>div{position:relative;background:#121418;border:1px solid #2a2d33;border-radius:12px;padding:8px 2px;text-align:center;font-size:10.5px;font-weight:700;color:#e8e9ec;cursor:pointer;min-height:64px;hyphens:manual}
+.f7-act>div b{display:block;font-size:20px;margin-bottom:3px;font-weight:400}.f7-act>div.blau{border-color:#3b82f6}
+.f7-act .badge,.f7-qt .badge{position:absolute;top:-5px;right:-5px;background:#f66d6d;color:#fff;font:700 10px/18px system-ui;min-width:18px;border-radius:9px;text-align:center}
+.f7-qt{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.f7-qt>div{position:relative;border-radius:12px;padding:8px 32px 7px 8px;min-height:66px;font-size:12.5px;font-weight:700;line-height:1.15;cursor:pointer;border:1px solid #2a2d33;background:#121418}
+.f7-qt>div.d{background:linear-gradient(160deg,#101a2e,#0d1424);border-color:#2b4a7c}.f7-qt>div.p{background:linear-gradient(160deg,#1c1230,#140d24);border-color:#4a2d7c}.f7-qt>div.e{background:linear-gradient(160deg,#0f2a26,#0b1c1a);border-color:#1f6b60}
+.f7-qt .tick{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:1.5px solid #cfd2d8;font-size:11px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25)}
+.f7-qt i{display:block;font-style:normal;font-size:10.5px;color:#9a9ca2;font-weight:600;margin-top:5px}.f7-qt i .tr{color:#2dd4bf}
+.f7-g>div{display:flex;justify-content:space-between;align-items:center;padding:11px 2px;border-bottom:1px solid #2a2d33;font-size:16px;font-weight:700;cursor:pointer}
+.f7-g>div span{background:#262a32;color:#9a9ca2;border-radius:11px;padding:1px 9px;font-size:12.5px}
+.f7-gk{color:#3b82f6;font-weight:700;font-size:14px;padding:6px 0 8px;cursor:pointer}
+/* Durchsuchen */
+.f7-seg{display:flex;background:#121418;border-radius:12px;padding:3px;margin-top:8px}
+.f7-seg>div{flex:1;text-align:center;padding:8px 6px;border-radius:9px;font-size:13.5px;font-weight:700;color:#9a9ca2;cursor:pointer}.f7-seg>div.on{background:#262a32;color:#e8e9ec}
+.f7-seg.klein{margin:0;padding:2px}.f7-seg.klein>div{padding:4px 9px;font-size:12px}
+.f7-inp2,.f7-inp.such{margin-top:8px}
+input.f7-inp{display:block;width:100%;color:#e8e9ec;font-size:15px;outline:none}
+.f7-l>div{display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid #2a2d33;cursor:pointer;gap:8px}
+.f7-l p{margin:0;font-size:15.5px;font-weight:700;min-width:0}.f7-l small{display:block;font-size:12px;color:#9a9ca2;font-weight:500;margin-top:2px}
+.f7-l>div>span{color:#6b6e75;font-size:18px}.f7-l .c{display:flex;align-items:center;gap:5px;flex:none}
+.f7-l .c span{background:#1f2228;border-radius:9px;padding:1px 8px;font-size:12.5px;font-weight:700}.f7-l .c .r{background:rgba(246,109,109,.18);color:#f66d6d}.f7-l .c b{color:#6b6e75}
+.f7-l .st{flex:none;font-size:12px;font-weight:700;border-radius:9px;padding:3px 9px;background:#1f2228;color:#9a9ca2}.f7-l .st.ok{background:rgba(62,207,142,.15);color:#3ecf8e}.f7-l .st.ask{background:rgba(255,210,63,.15);color:#ffd23f}.f7-l .st.run{background:rgba(59,130,246,.18);color:#93c5fd}
+.f7-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.f7-chips>div{padding:6px 11px;border-radius:15px;background:#1f2228;font-size:12.5px;font-weight:700;color:#e8e9ec;cursor:pointer;border:1px solid transparent}
+.f7-chips>div.on{border-color:#3b82f6;color:#7fb0ff;background:rgba(59,130,246,.12)}.f7-chips>div.on.tk{border-color:#2dd4bf;color:#2dd4bf;background:rgba(45,212,191,.12)}.f7-chips>div.rd{border-color:#f66d6d;color:#f66d6d}
+.f7-chips.gr>div{font-size:13.5px;padding:8px 12px}.f7-chips.ein{margin:4px 0 8px 12px}
+.f7-qk{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.f7-qk>div{background:#121418;border:1px solid #2a2d33;border-radius:10px;padding:8px 4px;text-align:center;font-size:11px;color:#9a9ca2;cursor:pointer}.f7-qk>div b{display:block;font-size:19px;color:#e8e9ec}.f7-qk>div.r b{color:#f66d6d}.f7-qk>div.on{border-color:#3b82f6}.f7-qk>div.r.on{border-color:#f66d6d}
+.f7-it{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #2a2d33;cursor:pointer}.f7-it .bar{width:3px;border-radius:2px;background:#3b82f6;flex:none}
+.f7-it .t{flex:1;font-size:14.5px;font-weight:600;min-width:0}.f7-it .m{font-size:12px;color:#9a9ca2;font-weight:500;margin-top:3px}.f7-it .red{color:#f66d6d}.f7-it .mx{background:#1f2228;border-radius:6px;padding:0 6px}.f7-it .g{color:#ffd23f;font-weight:700;font-size:13px;flex:none}
+.f7-save,.f7-send,.f7-foot{margin-top:14px;background:#3b82f6;color:#fff;border-radius:14px;padding:14px;text-align:center;font-size:16px;font-weight:800;cursor:pointer}
+.f7-foot{background:transparent;border:1.5px solid #2dd4bf;color:#2dd4bf}
+.f7-leg{font-size:12.5px;color:#9a9ca2;font-weight:600;line-height:1.6}.f7-leg .r{background:rgba(246,109,109,.18);color:#f66d6d;border-radius:9px;padding:1px 8px}.f7-leg .g{background:#1f2228;border-radius:9px;padding:1px 8px}
+/* Erfassen */
+.f7-src{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.f7-src>div{background:#121418;border:1px solid #2a2d33;border-radius:14px;padding:14px 4px 10px;text-align:center;font-size:14px;font-weight:700;cursor:pointer}.f7-src>div b{display:block;font-size:30px;margin-bottom:6px;font-weight:400}.f7-src>div.on{border-color:#3b82f6}
+.f7-txt{display:block;width:100%;margin-top:10px;background:#121418;border:1.5px solid #3b82f6;border-radius:14px;padding:12px;color:#e8e9ec;font-size:16px;min-height:90px;resize:vertical;outline:none}
+.f7-q{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,210,63,.5);background:rgba(255,210,63,.1);color:#ffd23f;font-size:13.5px;font-weight:600}.f7-q.ok{border-color:rgba(62,207,142,.5);background:rgba(62,207,142,.1);color:#3ecf8e}
+/* Routinen */
+.f7-rec{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.f7-rec>div{background:linear-gradient(160deg,#1c1230,#140d24);border:1px solid #4a2d7c;border-radius:12px;padding:9px 8px;font-size:13px;font-weight:700;line-height:1.15;min-height:70px;cursor:pointer}.f7-rec>div.d{background:linear-gradient(160deg,#101a2e,#0d1424);border-color:#2b4a7c}
+.f7-rec i{display:flex;justify-content:space-between;align-items:center;gap:4px;font-style:normal;font-size:11px;color:#9a9ca2;font-weight:600;margin-top:8px}
+.f7-r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid #2a2d33}.f7-r.erl{opacity:.55}
+.f7-r .t{font-size:15.5px;font-weight:700;min-width:0;flex:1;cursor:pointer}.f7-r small{display:block;font-size:12px;color:#9a9ca2;font-weight:500;margin-top:2px}.f7-r .red,.f7-r small.red{color:#f66d6d}
+.tag{font-size:11px;font-weight:700;border-radius:8px;padding:1px 7px;vertical-align:1px}.tag.muss{background:rgba(246,109,109,.2);color:#f66d6d}.tag.kann{background:#262a32;color:#9a9ca2}
+.f7-r .btn,.f7-rec .btn{display:inline-flex;gap:5px;flex:none;padding:0;background:none;border:0}.f7-r .btn b,.f7-rec .btn b{width:36px;height:36px;border-radius:50%;border:1.5px solid #9a9ca2;display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer}.f7-rec .btn b{width:30px;height:30px;font-size:12px}.f7-r .btn b.ok{border-color:#3ecf8e;color:#3ecf8e}
+.f7-blk{display:flex;justify-content:space-between;align-items:center;padding:11px 2px;border-bottom:1px solid #2a2d33;font-size:16px;font-weight:800;cursor:pointer}.f7-blk span{color:#9a9ca2;font-size:14px;font-weight:700}.f7-blk span.ok{color:#3ecf8e}
+.f7-open{border:1px solid #2a2d33;border-radius:14px;padding:4px 10px 2px;margin:6px 0}.f7-open .f7-blk{border:0}.f7-open .bar{height:6px;border-radius:3px;background:#262a32;margin:2px 0 6px}.f7-open .bar i{display:block;height:100%;border-radius:3px;background:#a855f7}
+/* Pause · Chat */
+.f7-pkopf{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:20px;font-weight:800;margin-bottom:8px}.f7-pkopf small{font-size:13px;color:#9a9ca2;font-weight:600;text-align:right}
+.f7-tr{background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.45);border-radius:14px;padding:12px;font-size:15px;line-height:1.35}.f7-tr b{color:#2dd4bf}
+.f7-card{display:flex;align-items:center;gap:10px;background:#121418;border:1px solid #2a2d33;border-radius:14px;padding:12px;margin-top:6px}.f7-card>span{font-size:22px}.f7-card .t{flex:1;font-size:16px;font-weight:700;min-width:0}.f7-card small{display:block;font-size:12.5px;color:#9a9ca2;font-weight:500}.f7-card em{font-style:normal;color:#7fb0ff;font-weight:700;cursor:pointer}
+.f7-arrow{text-align:center;color:#6b6e75;font-size:18px;line-height:1.2}
+.f7-pts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.f7-pts>div{background:#121418;border:1px solid #2a2d33;border-radius:12px;padding:10px 6px;text-align:center;font-size:12px;color:#9a9ca2}.f7-pts b{display:block;font-size:19px;color:#ffd23f;margin-bottom:2px}
+.f7-go{width:100%;border-radius:16px;padding:16px;font-size:17px}.f7-go.gruen{background:#2dd4bf;border-color:#2dd4bf;color:#000}
+.f7-day{text-align:center;font-size:13px;color:#9a9ca2;font-weight:600;margin:10px 0 6px}
+.f7-m{max-width:82%;border-radius:16px;padding:10px 13px;font-size:15.5px;line-height:1.35;margin-top:8px}.f7-m small{display:block;font-size:12px;color:#9a9ca2;margin-top:4px}
+.f7-m.t{background:#121418;border:1px solid #2a2d33;margin-right:auto}.f7-m.p{background:#3b82f6;color:#fff;margin-left:auto}.f7-m.p small{color:rgba(255,255,255,.75)}
+.f7-act2{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.f7-act2>div{padding:8px 12px;border-radius:14px;background:#1f2228;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent}.f7-act2>div.g{border-color:#2dd4bf;color:#2dd4bf;background:rgba(45,212,191,.1)}
+.f7-info{margin-top:8px;padding:8px 12px;border-radius:12px;border:1px dashed #3a3d44;font-size:13px;color:#9a9ca2;font-weight:600}
+/* Postfach */
+.f7-prog{height:8px;border-radius:4px;background:#262a32;overflow:hidden}.f7-prog i{display:block;height:100%;background:#3b82f6}
+.f7-ps{display:flex;justify-content:space-between;font-size:12.5px;color:#9a9ca2;margin-top:4px}
+.f7-c{background:#121418;border:1px solid #2a2d33;border-radius:16px;padding:12px;margin-bottom:10px}.f7-c.u{border-color:rgba(246,109,109,.6);background:linear-gradient(180deg,#1b1215,#121418)}
+.f7-c .hd{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:#9a9ca2;font-weight:600}.f7-c .hd .red{color:#f66d6d;font-weight:800}
+.f7-c .ti{font-size:17px;font-weight:800;margin-top:4px}.f7-c .ctx{font-size:13px;color:#9a9ca2;margin-top:2px}
+.f7-c .dr{margin-top:8px;padding:10px 12px;background:#1a1d22;border-left:3px solid #3b82f6;border-radius:10px;font-size:14.5px;color:#c9cbd0;line-height:1.35}.f7-c .why{font-size:13px;color:#9a9ca2;margin-top:8px}
+.f7-c .bt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .bt>div{padding:9px 11px;border-radius:12px;background:#1f2228;font-size:13.5px;font-weight:800;cursor:pointer}.f7-c .bt .ok{background:#3ecf8e;color:#000}
+.f7-c .opt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .opt>div{flex:1;text-align:center;padding:10px;border-radius:12px;background:#1f2228;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent}.f7-c .opt .ok{border-color:#3ecf8e;color:#3ecf8e;background:rgba(62,207,142,.1)}
+.f7-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid #2a2d33;font-size:16px;font-weight:700}.f7-row small{display:block;font-size:12.5px;color:#9a9ca2;font-weight:500}.f7-row b{flex:none;background:#262a32;border-radius:14px;padding:7px 13px;font-size:13.5px;cursor:pointer}
+/* Abhaken · Schieben */
+.f7-tf{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#121418;border:1px solid #2a2d33;border-radius:14px;padding:12px;margin-top:6px}.f7-tf .t{font-size:16px;font-weight:700}.f7-tf small{display:block;font-size:12.5px;color:#9a9ca2;font-weight:500}
+.f7-tf input{background:#0d1420;border:1.5px solid #3b82f6;border-radius:10px;color:#e8e9ec;font-size:17px;font-weight:800;padding:6px 10px;width:auto;color-scheme:dark}.f7-min{display:flex;align-items:center;gap:6px;font-weight:700}.f7-min input{width:76px;text-align:right}
+.f7-st{background:#121418;border:1px solid #2a2d33;border-radius:14px;padding:4px 12px}.f7-st>div{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #2a2d33;font-size:15.5px;font-weight:600}.f7-st>div:last-child{border:0}
+.f7-st .ck{width:26px;height:26px;border-radius:7px;border:1.5px solid #6b6e75;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer}.f7-st .ck.on{background:#3ecf8e;border-color:#3ecf8e;color:#000}
+.f7-fo{margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid #2b4a7c;background:#0d1424;font-size:14px;line-height:1.35}.f7-fo b{cursor:pointer;color:#7fb0ff}
+.f7-warn{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,210,63,.5);background:rgba(255,210,63,.08);color:#ffd23f;font-size:14px;font-weight:600;line-height:1.35}
+.f7-o{display:flex;align-items:center;gap:12px;background:#121418;border:1px solid #2a2d33;border-radius:14px;padding:12px;margin-top:6px;cursor:pointer}.f7-o.on{border-color:#3b82f6;background:#0d1424}.f7-o>span{font-size:22px}.f7-o .t{font-size:16px;font-weight:700}.f7-o small{display:block;font-size:12.5px;color:#9a9ca2;font-weight:500}
+.f7-eff{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:6px}.f7-eff .g{color:#3ecf8e}.f7-eff .r{color:#9a9ca2}
+.f7-tb{margin-top:14px;border:1.5px solid #2dd4bf;border-radius:14px;padding:10px;text-align:center;color:#2dd4bf;font-weight:800;font-size:16px;cursor:pointer}.f7-tb span{display:block;font-size:12px;color:#9a9ca2;font-weight:500}
+/* Plan */
+.f7-sum{padding:12px;border-radius:14px;border:1px solid rgba(255,210,63,.5);background:rgba(255,210,63,.07);font-size:15px;line-height:1.35;margin-bottom:8px}.f7-sum b{color:#ffd23f}.f7-sum.warn{border-color:rgba(246,109,109,.6)}
+.f7-b{display:flex;gap:8px;margin-top:8px}.f7-b .tm{width:46px;flex:none;text-align:right;font-size:13px;font-weight:700;color:#9a9ca2;padding-top:12px;line-height:1.15}.f7-b .tm.jetzt{color:#7fb0ff}
+.f7-b .bx{flex:1;background:#121418;border:1px solid #2a2d33;border-left-width:4px;border-radius:14px;padding:10px 12px;min-width:0}
+.f7-b .bx.d{border-left-color:#3b82f6}.f7-b .bx.p{border-left-color:#a855f7}.f7-b .bx.e{border-left-color:#2dd4bf}.f7-b .bx.s{border-left-color:#8b7bb8}.f7-b .bx.done{opacity:.6}.f7-b .bx.now{border-color:#3b82f6;background:#0d1424;opacity:1}
+.f7-b .bh{display:flex;justify-content:space-between;gap:8px;font-size:16px;font-weight:800}.f7-b .bh span{font-size:13px;color:#9a9ca2;font-weight:700;white-space:nowrap}
+.f7-b .ist{font-size:12.5px;color:#9a9ca2;margin-top:3px}.f7-b .ist .o{color:#ffd23f}.f7-b .ist .g{color:#3ecf8e}
+.f7-b .it{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid #2a2d33;font-size:15px;font-weight:600;cursor:pointer}.f7-b .it small{font-size:13px;color:#9a9ca2;font-weight:700;white-space:nowrap}.f7-b .it .ok{color:#3ecf8e}.f7-b .it .run{color:#2dd4bf}
+.f7-b .chg{margin-top:6px;font-size:13px;color:#2dd4bf;font-weight:700}
+.f7-woche{margin-top:8px}.f7-wt{display:grid;grid-template-columns:72px 1fr auto;gap:8px;padding:10px 2px;border-bottom:1px solid #2a2d33;font-size:14px}.f7-wt b{font-size:15px}.f7-wt span{color:#9a9ca2}.f7-wt.jetzt b{color:#7fb0ff}
 </style>
 </head>
 <body>
@@ -2580,6 +2688,12 @@ img.objimg.laedt{opacity:0}
   <section class="view" id="v-statistik">
     <div class="headbar"><h2>Statistik</h2></div>
     <div id="statistikBody"></div>
+  </section>
+
+  <!-- 4.0 · Paket 7 (7.5): Postfach — Ergebnisse der Agenten, sortiert nach Dringlichkeit -->
+  <section class="view" id="v-postfach">
+    <div class="headbar"><h2>Postfach</h2></div>
+    <div id="postfachBody"></div>
   </section>
 
   <!-- Einstellungen — kein Navigationsziel mehr, erreichbar über ⚙︎ im Kopf -->
@@ -2605,8 +2719,9 @@ img.objimg.laedt{opacity:0}
 
 <nav id="nav">
   <button data-seite="fokus"><span class="ic">🎯</span>Fokus</button>
-  <button data-seite="belohnung"><span class="ic">🛍</span>Shop</button>
+  <button data-seite="postfach"><span class="ic">📥</span>Postfach</button>
   <button data-seite="statistik"><span class="ic">📊</span>Statistik</button>
+  <button data-seite="belohnung"><span class="ic">🛍</span>Shop</button>
   <button data-seite="einst"><span class="ic">⚙︎</span>Einstellungen</button>
 </nav>
 
@@ -2665,6 +2780,12 @@ img.objimg.laedt{opacity:0}
     </div>
     <div class="an-body" id="tbBody"></div>
   </section>
+  <!-- 4.0 · Paket 7: Durchsuchen (7.1) · Erfassen (7.2) · Routinen (7.3) · Chat (7.4) · Plan (7.7) — Kopf je Ansicht im Inhalt -->
+  <section class="e1" id="e1-durchsuchen" data-e1="durchsuchen"><div class="an-body" id="dsBody"></div></section>
+  <section class="e1" id="e1-erfassen" data-e1="erfassen"><div class="an-body" id="erfBody"></div></section>
+  <section class="e1" id="e1-routinen" data-e1="routinen"><div class="an-body" id="routBody"></div></section>
+  <section class="e1" id="e1-chat" data-e1="chat"><div class="an-body" id="chatBody"></div></section>
+  <section class="e1" id="e1-plan" data-e1="plan"><div class="an-body" id="planBody"></div></section>
 </div>
 
 <div id="backdrop"></div>
@@ -2716,7 +2837,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-16-5';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-6';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -2908,7 +3029,8 @@ const FSLive = (()=>{
       while(warteschlange.length){
         const e=warteschlange[0];
         try{
-          const antwort=await aufruf('POST', '/api/db/'+encodeURIComponent(e.werkzeug), JSON.stringify(e.args));
+          const pfad=String(e.werkzeug).indexOf('app:')===0 ? '/api/app/'+encodeURIComponent(String(e.werkzeug).slice(4)) : '/api/db/'+encodeURIComponent(e.werkzeug);   // 4.0 · Paket 7: app:erfassen
+          const antwort=await aufruf('POST', pfad, JSON.stringify(e.args));
           warteschlange.shift(); schlangeMerken(); letzte={ id:e.id, antwort }; gescheitert=false; fehlerText='';
           schreib(K.letzt, new Date().toISOString());
         }catch(x){
@@ -3052,7 +3174,8 @@ const FSLive = (()=>{
       planen(); anzeigen();
     }catch(e){}
   }
-  return { vormerken, spiegeln, senden, lesen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen };
+  return { vormerken, spiegeln, senden, lesen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
+    warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length };
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
@@ -4273,7 +4396,7 @@ function f4TempoBloeckeInnen(id){
 }
 function f4TempoBloeckeHtml(id){
   const kp=f4TempoKennzahlen();
-  return '<div class="blk f4-tb"><div class="blk-h">Tempo und Blöcke<span class="r">wischen ▸</span></div>'+f4TempoBloeckeInnen(id)+
+  return '<div class="blk f4-tb"><div class="blk-h">Tempo und Blöcke<span class="r">wischen ▸ · <a href="#" data-f7plan="heute">🗓️ Plan</a></span></div>'+f4TempoBloeckeInnen(id)+
     '<div class="f4-kp4">'+kp.map(x=>'<div><b style="color:'+x.c+'">'+esc(x.w)+'</b><small>'+esc(x.s)+'</small></div>').join('')+'</div></div>';
 }
 function f4TempoZeichnen(sc, D){
@@ -4958,6 +5081,680 @@ function f6Klick(e){
   const ms=t.closest('#statistikBody [data-f6ms]'); if(ms){ toast(ms.dataset.f6ms); return true; }
   return false;
 }
+/* ══════════════════════════════════════════════════════════════════════
+   4.0 · Paket 7 · BEDIENUNG nach Punkt 7 — Teil A: Navigation, Suche, Durchsuchen (7.1) · Erfassen (7.2) · Routinen-Schublade (7.3)
+   Nur ein schwebender Knopf 🔍. Unten die Leiste Fokus · Postfach · Statistik · Shop · Einstellungen.
+   ══════════════════════════════════════════════════════════════════════ */
+/* ── Lager aus FocusSystem: kleine Zwischenspeicher je Schlüssel, Laden im Hintergrund, danach neu zeichnen ── */
+const F7={ lager:{}, laeuft:{} };
+function f7Lager(key, ttlMs, laden){
+  const L=F7.lager[key];
+  if(L && Date.now()-L.ts<ttlMs) return L.daten;
+  if(!F7.laeuft[key] && FSLive.gekoppelt()){ F7.laeuft[key]=true;
+    Promise.resolve().then(laden).then(d=>{ F7.lager[key]={ ts:Date.now(), daten:d, fehler:'' }; }).catch(e=>{ F7.lager[key]={ ts:Date.now(), daten:(L && L.daten)||null, fehler:(e && e.message)||'Fehler' }; })
+      .then(()=>{ F7.laeuft[key]=false; f7Neu(); }); }
+  return L ? L.daten : null;
+}
+function f7LagerFehler(key){ const L=F7.lager[key]; return L ? L.fehler : (FSLive.gekoppelt() ? '' : 'nicht gekoppelt'); }
+function f7LagerLeeren(key){ delete F7.lager[key]; }
+/* alle Seiten eines Werkzeugs einsammeln (bis 1000 Zeilen) */
+async function f7Alle(args){
+  const rows=[]; let versatz=0;
+  while(versatz<1000){ const d=await FSLive.lesen('datensaetze_auflisten', Object.assign({ limit:100, versatz }, args)); const l=(d && d.datensaetze)||[]; l.forEach(x=>rows.push(x)); if(l.length<100) break; versatz+=100; }
+  return rows;
+}
+function f7Link(v){ return Array.isArray(v) ? v.map(x=>(x && typeof x==='object') ? { id:x.id, name:x.anzeige } : { id:String(x), name:String(x) }) : []; }
+function f7LinkName(v){ const l=f7Link(v); return l.length ? l.map(x=>x.name).join(', ') : ''; }
+function f7Neu(){ try{ if(_e1) e1Rendern(); if(seiteAktuell()==='postfach') renderPostfach(); if(sheetOffen() && F7.blattNeu) F7.blattNeu(); }catch(e){ console.warn('f7Neu', e); } }
+function f7Abteilungen(){ return f7Lager('abteilungen', 10*60000, ()=>f7Alle({ tabelle:'Abteilungen', felder:['Name','Emoji','Leitung','Teams','Claude-Raum'], sortierung:[{feld:'Name', richtung:'auf'}] })); }
+function f7Projekte(){ return f7Lager('projekte', 5*60000, ()=>f7Alle({ tabelle:'Projekte', felder:['Projekt','Status','Intern/Extern','Abteilung','Owner','Privat','Oberprojekt'], sortierung:[{feld:'Projekt', richtung:'auf'}] })); }
+function f7Agenten(){ return f7Lager('agenten', 10*60000, ()=>f7Alle({ tabelle:'Personen', felder:['Name','Abteilung','Art'], filter:[{ feld:'Art', operator:'gleich', wert:'Agent' }] })); }
+function f7GespeicherteFilter(){ return f7Lager('filter', 5*60000, ()=>f7Alle({ tabelle:'Gespeicherte Filter', felder:['Name','Emoji','Bereich','Filter','Reihenfolge'], sortierung:[{feld:'Reihenfolge', richtung:'auf'}] })); }
+/* Aufgaben eines Projekts bzw. einer Abteilung (offen = Status ≠ Erledigt) */
+const F7_AUFG_FELDER=['Titel','Status','Deadline','Soll-Minuten','Geld-Score','Matrixfeld','Projekt','Owner','Rhythmus','Prioritaet','Geplant für'];
+function f7AufgabenProjekt(pid){ return f7Lager('aufg:'+pid, 2*60000, ()=>f7Alle({ tabelle:'Aufgaben', felder:F7_AUFG_FELDER, filter:[{ feld:'Projekt', operator:'gleich', wert:pid }] })); }
+function f7AufgabenAbteilung(aid){ return f7Lager('aufgA:'+aid, 2*60000, ()=>f7Alle({ tabelle:'Aufgaben', felder:F7_AUFG_FELDER, filter:[{ feld:'Status', operator:'ungleich', wert:'Erledigt' }, { feld:'Projekt', operator:'ist_leer' }] })); }
+const F7_ABT_EMOJI={ 'Geschäftsführung':'👔', 'Stabsstellen':'🧭', 'Management':'📋', 'Sales':'🤝', 'Marketing':'📣', 'DEV':'💻', 'Finanzen':'💶', 'Office':'🗄️', 'Automatisierungen':'🤖', 'HOFtech':'🏭', 'Privat':'🏡' };
+const F7_ABT_FOLGE=['Geschäftsführung','Stabsstellen','Management','Sales','Marketing','DEV','Finanzen','Office','Automatisierungen','HOFtech','Privat'];
+function f7AbtEmoji(a){ return (a && a.Emoji) || F7_ABT_EMOJI[a && a.Name] || '🏢'; }
+/* ══ 7.1 · Suche ohne Text: Aktionsreihe · Schnellplätze · Gruppen ══ */
+const F7_AKTIONEN=[['erfassen','＋','Erfassen'],['routinen','🔁','Routinen'],['pause','☕','Pause'],['chat','💬','Trainer'],['neu','🎯','Neue Karte'],['durchsuchen','🗂️','Durch­suchen']];
+function f7Onramps(){ return S.karten.filter(k=>k.status==='offen' && !k.rhythmus && !istSonderRolle(k) && (k.onramp===true || (num(k.sollMin)>0 && num(k.sollMin)<=15 && !istTickbar(k)))); }
+function f7KW(d){ const x=new Date((d||heuteApp())+'T12:00:00'); const mo=anVorTage(d||heuteApp(), anWochentag(d||heuteApp())); return { von:mo, bis:anVorTage(mo, -6), kw:isoKW(mo) }; }
+function f7Gruppen(){
+  const heute=heuteApp(), offen=k=>k.status==='offen', W=f7KW(heute), bl=tagesBloecke()||[], lb=laufenderBlock(bl);
+  const g=[
+    { id:'kette', emoji:'⛓️', name:'Aktuelle Kette', karten:aktiveKetteKarten().filter(offen) },
+    { id:'onramps', emoji:'🚀', name:'Onramps', karten:f7Onramps() },
+    { id:'tag', emoji:'☀️', name:'Tag · heute', karten:S.karten.filter(k=>offen(k) && k.faelligkeit===heute), plan:true },
+    { id:'woche', emoji:'🗓️', name:'Woche · KW '+W.kw, karten:S.karten.filter(k=>offen(k) && k.faelligkeit && k.faelligkeit>=W.von && k.faelligkeit<=W.bis) },
+    { id:'routinen', emoji:'🔁', name:'Routinen'+(lb ? ' · '+esc(lb.name||BLOCK_TYP_NAME[lb.typ]||'') : ''), karten:abhakLeisteKarten().filter(k=>!lb || klRoutineBlock(k, bl)===lb || !klRoutineBlock(k, bl)) },
+    { id:'ticksDfm', emoji:'🔷', name:'Ticks DFM', karten:klTicks('dfm') },
+    { id:'ticksPrivat', emoji:'🟣', name:'Ticks Privat', karten:klTicks('privat') },
+    { id:'meist', emoji:'⭐', name:'Meistgenutzt · 7 Tage', karten:kartenMeistgenutzt().map(q=>q.k) },
+    { id:'erledigt', emoji:'✅', name:'Erledigt heute', karten:klErledigtHeute(), erl:true } ];
+  (f7GespeicherteFilter()||[]).forEach(f=>{ g.push({ id:'filter:'+f.id, emoji:f.Emoji||'💾', name:f.Name||'Filter', filter:f, karten:null }); });
+  return g;
+}
+/* Schnellplätze: 8 Plätze · Pascal heftet fest (📌) · die übrigen belegt der Trainer je Tagesblock (privat.schnellplaetze), sonst die meistgenutzten Tick-Karten */
+function f7SchnellplaetzeFest(){ const l=(S.meta && Array.isArray(S.meta.schnellplaetze)) ? S.meta.schnellplaetze : []; return l.filter(x=>x && x.fest); }
+function f7KarteFuer(bez){ const t=String(bez||'').toLowerCase(); return S.karten.find(k=>k.status!=='archiviert' && String(k.titel||'').toLowerCase()===t) || null; }
+function f7PauseKarte(art, anlegen){
+  const NAME={ kopffrei:'Kopf-frei-Pause', essen:'Essen', spaziergang:'Spaziergang', adhs:'ADHS-Blockade' };
+  let k=f7KarteFuer(NAME[art]); if(k || !anlegen) return k;
+  k=Object.assign(neueKarte({ titel:NAME[art], domain:'privat' }), { rolle:art==='adhs' ? null : 'erholung', erholung:true, matrixFeld:'werkzeug', status:'offen', immerSichtbar:true, ticksAktiv:art==='adhs', tickWert:art==='adhs' ? 0 : null });
+  S.karten.push(k); saveKarten(); return k;
+}
+function f7Schnellplaetze(){
+  const bl=tagesBloecke()||[], lb=laufenderBlock(bl), blockName=lb ? (lb.name||BLOCK_TYP_NAME[lb.typ]||'') : '';
+  const fest=f7SchnellplaetzeFest(), out=[];
+  // vorbelegt fest: Kopf-frei-Pause (öffnet den Pausen-Dialog) und ADHS-Blockade (+1)
+  out.push({ art:'pause', titel:'Kopf-frei-Pause', fest:true, sub:'📌 fest · Trainer-Dialog', fam:'erholung' });
+  { const k=f7PauseKarte('adhs', false); out.push({ art:'karte', k, titel:'ADHS-Blockade', fest:true, sub:'📌 fest · heute '+(k ? Math.max(tickAnzahlHeute(k), num(k.ticksHeute)) : 0)+'×', fam:'privat' }); }
+  fest.forEach(p=>{ if(out.length>=8) return; const k=S.karten.find(x=>x.id===p.karteId); if(!k || k.status==='archiviert') return; if(out.some(o=>o.k && o.k.id===k.id)) return;
+    out.push({ art:'karte', k, titel:k.titel, fest:true, sub:'📌 fest · '+f7PlatzStand(k), fam:k.erholung||leiterArt(k)==='erholung' ? 'erholung' : k.domain }); });
+  // Trainer-Belegung je Tagesblock aus FocusSystem, sonst die meistgenutzten Tick-Karten
+  const trainer=(f7Lager('schnellplaetze', 5*60000, ()=>f7Alle({ tabelle:'Schnellplätze', felder:['Bezeichnung','Platz','Karte','Fest','Tagesblock'], sortierung:[{feld:'Platz', richtung:'auf'}] }))||[])
+    .filter(p=>!p.Fest && (!p.Tagesblock || String(p.Tagesblock).toLowerCase()===String(blockName).toLowerCase()));
+  trainer.forEach(p=>{ if(out.length>=8) return; const k=S.karten.find(x=>x.id===p.Karte || x.airtableId===p.Karte || String(x.titel||'').toLowerCase()===String(p.Bezeichnung||'').toLowerCase()); if(!k || k.status!=='offen' || out.some(o=>o.k && o.k.id===k.id)) return;
+    out.push({ art:'karte', k, titel:k.titel, fest:false, sub:'<b class="tr">Trainer</b> · '+f7PlatzStand(k), fam:k.erholung ? 'erholung' : k.domain }); });
+  if(out.length<8){ kartenMeistgenutzt().map(q=>q.k).filter(k=>k.status==='offen' && istTickbar(k) && !out.some(o=>o.k && o.k.id===k.id)).slice(0, 8-out.length)
+    .forEach(k=>out.push({ art:'karte', k, titel:k.titel, fest:false, sub:'<b class="tr">Vorschlag</b> · '+f7PlatzStand(k), fam:k.erholung ? 'erholung' : k.domain })); }
+  return { plaetze:out.slice(0,8), fest:out.filter(o=>o.fest).length, trainer:out.filter(o=>!o.fest).length, block:blockName };
+}
+function f7PlatzStand(k){ if(istTickbar(k)){ const n=Math.max(tickAnzahlHeute(k), num(k.ticksHeute)), z=num(k.tagesziel)||num(k.tageslimit); return z>0 ? n+' / '+z : n+'×'; } return k.domain==='dfm' ? 'DFM' : 'Privat'; }
+function f7SucheStartHtml(){
+  const q=f7Schnellplaetze(), pf=f4PostfachStand(), gr=f7Gruppen();
+  let h='<div class="f7-act">'+F7_AKTIONEN.map(a=>'<div data-f7akt="'+a[0]+'"'+(a[0]==='durchsuchen'?' class="blau"':'')+'><b>'+a[1]+'</b>'+a[2]+(a[0]==='chat' && pf.offen ? '<span class="badge">'+pf.offen+'</span>' : '')+'</div>').join('')+'</div>';
+  h+='<h5 class="f7-h5">Schnell abhaken · 📌 '+q.fest+' fest · '+q.trainer+' Trainer'+(q.block ? ' · '+esc(q.block) : '')+'</h5><div class="f7-qt">'+q.plaetze.map(p=>{
+    const fam=p.fam==='erholung' ? 'e' : p.fam==='dfm' ? 'd' : 'p', tick=p.art==='pause' ? '✓' : (p.k && istTickbar(p.k) ? '+1' : '✓');
+    return '<div class="'+fam+'" data-f7platz="'+(p.art==='pause' ? 'pause' : p.k ? p.k.id : 'adhs')+'" data-f7platzfest="'+(p.fest?'1':'')+'"><span class="tick">'+tick+'</span>'+esc(p.titel)+'<i>'+p.sub+'</i></div>'; }).join('')+'</div>';
+  h+='<h5 class="f7-h5">Gruppen</h5><div class="f7-g">'+gr.map(g=>'<div data-f7gruppe="'+g.id+'"'+(g.filter?' style="color:#9a9ca2"':'')+'>'+g.emoji+' '+g.name+' <span>'+(g.karten ? g.karten.length : '…')+'</span></div>').join('')+'</div>';
+  return h;
+}
+function f7GruppeHtml(id){
+  const g=f7Gruppen().find(x=>x.id===id); if(!g) return '';
+  if(g.filter){ return '<div class="f7-gk" data-f7gruppezu="1">‹ Gruppen</div>'+f7FilterGruppeHtml(g.filter); }
+  const z=g.karten.map(k=>kartenZeileHtml(k, g.erl ? {erl:true} : null)).join('');
+  return '<div class="f7-gk" data-f7gruppezu="1">‹ Gruppen</div><div class="blk kl-blk"><div class="blk-h">'+g.emoji+' '+g.name+'<span class="r">'+g.karten.length+(g.plan ? ' · <a href="#" data-f7plan="heute">🗓️ Plan</a>' : '')+'</span></div>'+(z ? '<div class="kl">'+z+'</div>' : '<div class="leer">—</div>')+'</div>';
+}
+function f7FilterGruppeHtml(f){
+  let fl={}; try{ fl=JSON.parse(f.Filter||'{}'); }catch(e){ fl={}; }
+  const rows=fl.projekt ? f7AufgabenProjekt(fl.projekt) : (fl.abteilung ? f7AufgabenAbteilung(fl.abteilung) : null);
+  const l=rows ? f7AufgabenFiltern(rows, fl) : null;
+  return '<div class="blk kl-blk"><div class="blk-h">'+(f.Emoji||'💾')+' '+esc(f.Name||'')+'<span class="r">'+(l ? l.length : '…')+'</span></div>'+(l ? f7AufgabenListeHtml(l) : '<div class="leer">lädt aus FocusSystem …</div>')+'</div>';
+}
+/* ══ 7.1 · Durchsuchen: Abteilung › Team › Projekt › Aufgaben ══ */
+const F7_FILTER_STD={ status:'offen', datum:'alle', art:'alle', matrix:'alle', familie:'alle', owner:'alle', sort:'geld' };
+function f7Ds(){ if(!S.ui.f7ds || typeof S.ui.f7ds!=='object') S.ui.f7ds={ modus:'abteilungen', pfad:[], filter:Object.assign({}, F7_FILTER_STD) }; if(!S.ui.f7ds.filter) S.ui.f7ds.filter=Object.assign({}, F7_FILTER_STD); return S.ui.f7ds; }
+function f7AufgabeOffen(a){ return !/^erledigt$/i.test(String(a.Status||'')) && !/archiv/i.test(String(a.Status||'')); }
+function f7AufgabenFiltern(rows, fl){
+  const heute=heuteApp(), W=f7KW(heute), f=Object.assign({}, F7_FILTER_STD, fl||{});
+  let l=rows.filter(a=>{
+    if(f.status==='offen' && !f7AufgabeOffen(a)) return false; if(f.status==='erledigt' && f7AufgabeOffen(a)) return false;
+    const d=a.Deadline ? String(a.Deadline).slice(0,10) : '';
+    if(f.datum==='ueberfaellig' && !(d && d<heute)) return false; if(f.datum==='heute' && d!==heute) return false;
+    if(f.datum==='woche' && !(d && d>=W.von && d<=W.bis)) return false; if(f.datum==='spaeter' && !(d && d>W.bis)) return false; if(f.datum==='ohne' && d) return false;
+    const art=a.Rhythmus ? 'routine' : 'aufgabe'; if(f.art!=='alle' && f.art!==art && !(f.art==='onramp' && num(a['Soll-Minuten'])>0 && num(a['Soll-Minuten'])<=15)) return false;
+    if(f.matrix!=='alle' && String(a.Matrixfeld||'').toLowerCase()!==f.matrix && !(f.matrix==='ohne' && !a.Matrixfeld)) return false;
+    if(f.owner!=='alle' && f7LinkName(a.Owner)!==f.owner) return false;
+    return true; });
+  const key={ geld:a=>-num(a['Geld-Score']), datum:a=>a.Deadline ? String(a.Deadline) : '9999', zuletzt:a=>'', soll:a=>-num(a['Soll-Minuten']) }[f.sort]||(()=>0);
+  l.sort((a,b)=>{ const x=key(a), y=key(b); return x<y ? -1 : x>y ? 1 : 0; });
+  return l;
+}
+function f7AufgabenListeHtml(l){
+  const heute=heuteApp();
+  if(!l.length) return '<div class="leer">keine Aufgabe</div>';
+  return l.map(a=>{ const d=a.Deadline ? String(a.Deadline).slice(0,10) : '', ueber=d && d<heute, mx=a.Matrixfeld ? esc(a.Matrixfeld) : '<span style="color:#ffd23f">ohne Matrix</span>';
+    return '<div class="f7-it" data-f7aufgabe="'+esc(a.id)+'"><div class="bar"></div><div class="t">'+esc(a.Titel||'?')+'<div class="m">'+(d ? '<span'+(ueber?' class="red"':'')+'>'+anKurzDatum(d)+'</span>' : 'ohne Datum')+' · '+(num(a['Soll-Minuten'])>0 ? fmtDauer(num(a['Soll-Minuten'])) : 'ohne Soll')+' · <span class="mx">'+mx+'</span></div></div><div class="g">'+(a['Geld-Score']!=null ? Math.round(num(a['Geld-Score'])) : '')+'</div></div>'; }).join('');
+}
+function f7ChipsHtml(fl, voll){
+  const f=Object.assign({}, F7_FILTER_STD, fl||{}), on=(k,v)=>f[k]!==v;
+  const C=[['status','Status',{offen:'offen', erledigt:'erledigt', alle:'alle'},'offen'],['datum','Datum',{alle:'alle', ueberfaellig:'überfällig', heute:'heute', woche:'Woche', spaeter:'später', ohne:'ohne'},'alle'],['art','Art',{alle:'alle', aufgabe:'Aufgabe', routine:'Routine', counter:'Counter', onramp:'Onramp'},'alle']];
+  if(voll) C.push(['matrix','Matrix',{alle:'alle', ziel:'Ziel', werkzeug:'Werkzeug', zustand:'Zustand', ablenkung:'Ablenkung', ohne:'ohne'},'alle'],['familie','Familie',{alle:'alle', dfm:'DFM', privat:'Privat'},'alle'],['owner','Owner',{alle:'alle'},'alle']);
+  C.push(['sort','↓',{geld:'Geld-Score', datum:'Datum', zuletzt:'zuletzt bearbeitet', soll:'Soll-Min.'},'geld']);
+  return '<div class="f7-chips">'+C.map(c=>'<div class="'+(f[c[0]]!==c[3] || c[0]==='status' ? 'on' : '')+'" data-f7chip="'+c[0]+'">'+(c[0]==='sort' ? '↓ ' : c[1]+': ')+esc(c[2][f[c[0]]]||f[c[0]])+' ▾</div>').join('')+'<div data-f7chip="reset">⚙️ Filter</div></div>';
+}
+function f7ChipWahl(key){
+  const ds=f7Ds(), W={ status:[['offen','offen'],['erledigt','erledigt'],['alle','alle']], datum:[['alle','alle'],['ueberfaellig','überfällig'],['heute','heute'],['woche','diese Woche'],['spaeter','später'],['ohne','ohne Datum']],
+    art:[['alle','alle'],['aufgabe','Aufgabe'],['routine','Routine'],['counter','Counter'],['onramp','Onramp']], matrix:[['alle','alle'],['ziel','Ziel'],['werkzeug','Werkzeug'],['zustand','Zustand'],['ablenkung','Ablenkung'],['ohne','ohne Matrix']],
+    familie:[['alle','alle'],['dfm','DFM'],['privat','Privat']], sort:[['geld','Geld-Score'],['datum','Datum'],['zuletzt','zuletzt bearbeitet'],['soll','Soll-Min.']] };
+  if(key==='reset'){ ds.filter=Object.assign({}, F7_FILTER_STD); saveUi(); e1Rendern(); return; }
+  let opts=W[key]||[];
+  if(key==='owner'){ const p=ds.pfad[ds.pfad.length-1], rows=(p && p.art==='projekt') ? f7AufgabenProjekt(p.id) : []; const o={}; (rows||[]).forEach(a=>{ const n=f7LinkName(a.Owner); if(n) o[n]=1; }); opts=[['alle','alle']].concat(Object.keys(o).sort().map(n=>[n,n])); }
+  openSheet('Filter · '+key, '<div class="chips">'+opts.map(o=>'<button class="chip'+(ds.filter[key]===o[0]?' on':'')+'" data-f7chipwert="'+esc(o[0])+'" data-f7chipkey="'+key+'">'+esc(o[1])+'</button>').join('')+'</div>', '<button class="btn ghost sm" data-close="1">Schließen</button>');
+}
+function f7DurchsuchenHtml(){
+  const ds=f7Ds(), pfad=ds.pfad, kopf=(titel, sub, crumb)=>'<div class="f7-top">'+(crumb ? '<div class="f7-crumb">'+crumb+'</div>' : '')+'<div class="f7-tt"><em data-f7zurueck="1">‹</em> '+titel+'</div>'+(sub ? '<div class="f7-sub">'+sub+'</div>' : '')+'</div>';
+  const abts=f7Abteilungen(), proj=f7Projekte(), fehler=f7LagerFehler('abteilungen');
+  if(!pfad.length){
+    let h=kopf('🗂️ Durchsuchen', '')+'<input class="f7-inp" type="search" placeholder="In allem suchen …" data-f7dssuche="1" value="'+esc(ds.suche||'')+'">'+
+      '<div class="f7-seg"><div class="'+(ds.modus==='abteilungen'?'on':'')+'" data-f7dsmodus="abteilungen">🏢 Abteilungen</div><div class="'+(ds.modus==='projekte'?'on':'')+'" data-f7dsmodus="projekte">📁 Projekte</div></div>';
+    if(!abts) return h+'<div class="leer">'+(fehler ? 'FocusSystem: '+esc(fehler) : 'lädt aus FocusSystem …')+'</div>';
+    if(ds.modus==='abteilungen'){ const sortiert=abts.slice().sort((a,b)=>F7_ABT_FOLGE.indexOf(a.Name)-F7_ABT_FOLGE.indexOf(b.Name));
+      const zeile=a=>'<div data-f7abt="'+esc(a.id)+'"><p>'+f7AbtEmoji(a)+' '+esc(a.Name)+'<small>'+esc(f7LinkName(a.Leitung)||String(a.Teams||'').split('\n')[0]||'')+'</small></p><span>›</span></div>';
+      h+='<h5 class="f7-h5">DFM</h5><div class="f7-l">'+sortiert.filter(a=>a.Name!=='Privat').map(zeile).join('')+'</div><h5 class="f7-h5">Privat</h5><div class="f7-l">'+sortiert.filter(a=>a.Name==='Privat').map(zeile).join('')+'</div>'; }
+    else { const q=String(ds.suche||'').toLowerCase(), l=(proj||[]).filter(p=>!q || String(p.Projekt||'').toLowerCase().indexOf(q)>=0);
+      h+='<div class="f7-l">'+(proj ? l.map(p=>'<div data-f7proj="'+esc(p.id)+'"><p>📁 '+esc(p.Projekt)+'<small>'+esc([p['Intern/Extern'], f7LinkName(p.Abteilung), p.Status].filter(Boolean).join(' · '))+'</small></p><span>›</span></div>').join('') : '<div class="leer">lädt …</div>')+'</div>'; }
+    return h;
+  }
+  const st=pfad[pfad.length-1];
+  if(st.art==='abteilung'){
+    const a=(abts||[]).find(x=>x.id===st.id)||{ Name:st.name }, ps=(proj||[]).filter(p=>f7Link(p.Abteilung).some(l=>l.id===st.id) && !/erledigt|archiv/i.test(String(p.Status||'')));
+    let h=kopf(f7AbtEmoji(a)+' '+esc(a.Name), esc([f7LinkName(a.Leitung)].concat(String(a.Teams||'').split('\n')).filter(Boolean).join(' · ')))+f7ChipsHtml(ds.filter, false);
+    h+='<h5 class="f7-h5">👥 Team Projekte · je Projekt ein Projekt-Agent</h5><div class="f7-l">'+(ps.length ? ps.map(p=>{ const rows=f7AufgabenProjekt(p.id), of=rows ? rows.filter(f7AufgabeOffen) : null, ue=of ? of.filter(x=>x.Deadline && String(x.Deadline).slice(0,10)<heuteApp()).length : null;
+      return '<div data-f7proj="'+esc(p.id)+'"><p>📁 '+esc(p.Projekt)+'<small>'+esc([p['Intern/Extern'], 'Projekt-Agent '+p.Projekt].filter(Boolean).join(' · '))+'</small></p><div class="c">'+(ue ? '<span class="r">'+ue+'</span>' : '')+'<span>'+(of ? of.length : '…')+'</span><b>›</b></div></div>'; }).join('') : '<div class="leer">kein Projekt in dieser Abteilung</div>')+'</div>';
+    const ohne=f7AufgabenAbteilung(st.id);
+    h+='<h5 class="f7-h5">📌 Aufgaben der Abteilung ohne eigenen Projektraum</h5>'+(ohne ? f7AufgabenListeHtml(f7AufgabenFiltern(ohne, ds.filter).slice(0,30)) : '<div class="leer">lädt …</div>');
+    h+='<h5 class="f7-h5">Legende</h5><div class="f7-leg"><span class="r">rot</span> überfällig · <span class="g">grau</span> offen gesamt</div>';
+    return h;
+  }
+  if(st.art==='projekt'){
+    const p=(proj||[]).find(x=>x.id===st.id)||{ Projekt:st.name }, abt=f7Link(p.Abteilung)[0], rows=f7AufgabenProjekt(st.id), of=rows ? rows.filter(f7AufgabeOffen) : null;
+    const crumb=(abt ? '🏢 '+esc(abt.name)+' › ' : '')+'👥 Team Projekte ›';
+    let h=kopf('📁 '+esc(p.Projekt||''), esc([p['Intern/Extern'], 'Projekt-Agent '+(p.Projekt||''), of ? of.length+' offen' : ''].filter(Boolean).join(' · ')), crumb)+f7ChipsHtml(ds.filter, true);
+    if(!rows) return h+'<div class="leer">lädt aus FocusSystem …</div>';
+    const heute=heuteApp(), W=f7KW(heute), z={ ueber:of.filter(x=>x.Deadline && String(x.Deadline).slice(0,10)<heute).length, woche:of.filter(x=>x.Deadline && String(x.Deadline).slice(0,10)>=heute && String(x.Deadline).slice(0,10)<=W.bis).length, spaeter:of.filter(x=>x.Deadline && String(x.Deadline).slice(0,10)>W.bis).length, ohneMx:of.filter(x=>!x.Matrixfeld).length };
+    const f=ds.filter;
+    h+='<div class="f7-qk"><div class="r'+(f.datum==='ueberfaellig'?' on':'')+'" data-f7qk="datum:ueberfaellig"><b>'+z.ueber+'</b>überfällig</div><div class="'+(f.datum==='woche'?'on':'')+'" data-f7qk="datum:woche"><b>'+z.woche+'</b>diese Woche</div><div class="'+(f.datum==='spaeter'?'on':'')+'" data-f7qk="datum:spaeter"><b>'+z.spaeter+'</b>später</div><div class="'+(f.matrix==='ohne'?'on':'')+'" data-f7qk="matrix:ohne"><b>'+z.ohneMx+'</b>ohne Matrix</div></div>';
+    h+='<div style="margin-top:8px">'+f7AufgabenListeHtml(f7AufgabenFiltern(rows, f))+'</div>';
+    h+='<div class="f7-save" data-f7filtersave="1">💾 Als Gruppe in der Suche speichern</div>';
+    return h;
+  }
+  return kopf('🗂️ Durchsuchen','');
+}
+function f7FilterSpeichern(){
+  const ds=f7Ds(), st=ds.pfad[ds.pfad.length-1]; if(!st) return;
+  const name=prompt('Name der Gruppe', st.name+(ds.filter.datum==='ueberfaellig' ? ' überfällig' : '')); if(!name) return;
+  const fl=Object.assign({}, ds.filter, st.art==='projekt' ? { projekt:st.id } : { abteilung:st.id });
+  FSLive.senden('datensatz_anlegen', { tabelle:'Gespeicherte Filter', felder:{ Name:name, Emoji:'💾', Bereich:st.art==='projekt' ? 'Projekt' : 'Abteilung', Filter:JSON.stringify(fl), Reihenfolge:(f7GespeicherteFilter()||[]).length+1 } })
+    .then(()=>{ f7LagerLeeren('filter'); toast('💾 Gruppe gespeichert'); f7Neu(); }).catch(e=>toast('Nicht gespeichert: '+((e && e.message)||'Fehler')));
+}
+/* Tipp auf eine Aufgabe aus dem Lager: liegt sie auf dem Gerät, öffnet die Fokusseite sie; sonst ein Blatt mit den Werten */
+function f7AufgabeOeffnen(id){
+  const k=S.karten.find(x=>x.id===id || x.airtableId===id); if(k){ fokusZeigen(k.id); return; }
+  const ds=f7Ds(), st=ds.pfad[ds.pfad.length-1]; let a=null; Object.keys(F7.lager).forEach(key=>{ if(key.indexOf('aufg')===0 && F7.lager[key].daten){ const x=F7.lager[key].daten.find(r=>r.id===id); if(x) a=x; } });
+  if(!a) return;
+  openSheet(esc(a.Titel||'Aufgabe'), '<div class="kvblock">'+[['Status', a.Status],['Deadline', a.Deadline ? fmtDatum(String(a.Deadline).slice(0,10)) : '—'],['Soll', num(a['Soll-Minuten'])>0 ? fmtDauer(num(a['Soll-Minuten'])) : '—'],['Geld-Score', a['Geld-Score']],['Matrixfeld', a.Matrixfeld||'—'],['Projekt', f7LinkName(a.Projekt)||'—'],['Owner', f7LinkName(a.Owner)||'—']].map(x=>'<div class="kv"><span>'+x[0]+'</span><b>'+esc(x[1]==null?'—':String(x[1]))+'</b></div>').join('')+'</div><p class="d">Diese Aufgabe liegt im Lager (FocusSystem), nicht auf dem Gerät. Der Trainer holt sie über ein Paket in die Kette.</p>',
+    '<button class="btn ghost sm" data-close="1">Schließen</button>');
+}
+/* ══ 7.2 · Erfassen ══ */
+const F7_QUELLEN=[['foto','📷','Foto / Scan','image/*','environment'],['screenshot','🖼️','Screenshot','image/*',null],['datei','📄','Datei','*/*',null],['sprache','🎙️','Sprachnotiz','audio/*',null],['einfuegen','📋','Einfügen',null,null],['mail','📧','Mail-Weg',null,null]];
+function f7Erf(){ if(!F7.erf) F7.erf={ quelle:null, datei:null, text:'', bezug:(S.fokus && S.fokus.laeuft) ? 'karte' : 'agent', bezugId:null, bezugName:'' }; return F7.erf; }
+function f7ErfasstListe(){ return (S.meta && Array.isArray(S.meta.erfasst)) ? S.meta.erfasst : []; }
+function f7ErfassenHtml(){
+  const e=f7Erf(), lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null, warte=FSLive.warteschlangeAnzahl ? FSLive.warteschlangeAnzahl('app:erfassen') : 0;
+  let h='<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> ＋ Erfassen<span class="f7-r">an den Erfassungs-Agenten</span></div></div>';
+  h+='<div class="f7-src">'+F7_QUELLEN.map(q=>'<div class="'+(e.quelle===q[0]?'on':'')+'" data-f7quelle="'+q[0]+'"><b>'+q[1]+'</b>'+q[2]+'</div>').join('')+'</div>';
+  if(e.datei) h+='<div class="f7-q ok">📎 '+esc(e.datei.name)+' · '+Math.round(e.datei.groesse/1024)+' KB</div>';
+  h+='<textarea class="f7-txt" data-f7erftext="1" placeholder="… oder Text tippen" rows="3">'+esc(e.text||'')+'</textarea>';
+  h+='<h5 class="f7-h5">Bezug</h5><div class="f7-chips">'+
+    '<div class="'+(e.bezug==='agent'?'on':'')+'" data-f7bezug="agent">🤖 Agent entscheidet</div>'+
+    (lk ? '<div class="'+(e.bezug==='karte'?'on':'')+'" data-f7bezug="karte">▶ laufende Karte</div>' : '')+
+    '<div class="'+(e.bezug==='abteilung'?'on':'')+'" data-f7bezug="abteilung">🏢 '+(e.bezug==='abteilung' && e.bezugName ? esc(e.bezugName) : 'Abteilung')+' ▾</div>'+
+    '<div class="'+(e.bezug==='projekt'?'on':'')+'" data-f7bezug="projekt">📁 '+(e.bezug==='projekt' && e.bezugName ? esc(e.bezugName) : 'Projekt')+' ▾</div>'+
+    '<div class="'+(e.bezug==='person'?'on':'')+'" data-f7bezug="person">👤 '+(e.bezug==='person' && e.bezugName ? esc(e.bezugName) : 'Person')+' ▾</div></div>';
+  h+='<div class="f7-send" data-f7erfsenden="1">Abschicken</div>';
+  if(warte>0) h+='<div class="f7-q">📤 '+warte+' '+(warte===1?'Eintrag wartet':'Einträge warten')+' auf den Mac mini · '+(warte===1?'wird':'werden')+' automatisch geschickt</div>';
+  const l=f7ErfasstListe().slice(-8).reverse();
+  h+='<h5 class="f7-h5">Zuletzt erfasst</h5><div class="f7-l">'+(l.length ? l.map(x=>{ const st=x.status||'wartet', cls=st==='abgelegt' ? 'ok' : st==='Frage im Postfach' ? 'ask' : 'run';
+    return '<div><p>'+esc(x.titel)+'<small>'+esc([x.bezug, fmtUhr(x.ts)].filter(Boolean).join(' · '))+'</small></p><span class="st '+cls+'">'+esc(st)+'</span></div>'; }).join('') : '<div class="leer">noch nichts erfasst</div>')+'</div>';
+  return h;
+}
+function f7QuelleWaehlen(q){
+  const e=f7Erf(); e.quelle=q; const def=F7_QUELLEN.find(x=>x[0]===q);
+  if(q==='einfuegen'){ if(navigator.clipboard && navigator.clipboard.readText){ navigator.clipboard.readText().then(t=>{ if(t){ e.text=(e.text ? e.text+'\n' : '')+t; e1Rendern(); } else toast('Zwischenablage leer'); }).catch(()=>toast('Zwischenablage nicht lesbar — Text einfügen')); } else toast('Zwischenablage nicht lesbar — Text einfügen'); e1Rendern(); return; }
+  if(q==='mail'){ openSheet('📧 Mail-Weg', '<p class="d">Mails gehen über Outlook: die Mail in den Ordner <b>„Claude in"</b> verschieben. Der Erfassungs-Agent liest den Ordner und legt Aufgabe, Dokument oder Frage im Postfach an.</p><p class="d">Weiterleiten ist nicht nötig; Anhänge kommen mit.</p>', '<button class="btn ghost sm" data-close="1">Schließen</button>'); e1Rendern(); return; }
+  if(def && def[3]){ const inp=document.createElement('input'); inp.type='file'; inp.accept=def[3]; if(def[4]) inp.setAttribute('capture', def[4]);
+    inp.onchange=()=>{ const f=inp.files && inp.files[0]; if(!f) return; if(f.size>8*1024*1024){ toast('Datei zu groß (max. 8 MB)'); return; }
+      const r=new FileReader(); r.onload=()=>{ e.datei={ name:f.name||(q+'.bin'), typ:f.type||'application/octet-stream', groesse:f.size, base64:String(r.result).split(',')[1]||'' }; e1Rendern(); }; r.readAsDataURL(f); };
+    inp.click(); }
+  e1Rendern();
+}
+function f7BezugWaehlen(art){
+  const e=f7Erf();
+  if(art==='agent' || art==='karte'){ e.bezug=art; e.bezugId=null; e.bezugName=''; e1Rendern(); return; }
+  const liste=art==='abteilung' ? (f7Abteilungen()||[]).map(a=>({ id:a.id, name:f7AbtEmoji(a)+' '+a.Name })) : art==='projekt' ? (f7Projekte()||[]).filter(p=>!/erledigt|archiv/i.test(String(p.Status||''))).map(p=>({ id:p.id, name:p.Projekt })) : null;
+  if(art==='person'){ const q=prompt('Name der Person'); if(q){ e.bezug='person'; e.bezugId=null; e.bezugName=q; } e1Rendern(); return; }
+  if(!liste || !liste.length){ toast('lädt aus FocusSystem …'); e1Rendern(); return; }
+  openSheet(art==='abteilung' ? '🏢 Abteilung' : '📁 Projekt', '<div class="chips">'+liste.map(x=>'<button class="chip'+(e.bezugId===x.id?' on':'')+'" data-f7bezugwahl="'+esc(x.id)+'" data-f7bezugart="'+art+'" data-f7bezugname="'+esc(x.name)+'">'+esc(x.name)+'</button>').join('')+'</div>', '<button class="btn ghost sm" data-close="1">Schließen</button>');
+}
+function f7ErfassenSenden(){
+  const e=f7Erf(), txt=(el('ebene1') && document.querySelector('[data-f7erftext]')) ? document.querySelector('[data-f7erftext]').value.trim() : (e.text||'');
+  if(!txt && !e.datei){ toast('Nichts zu erfassen — Text oder Quelle wählen'); return; }
+  const lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null;
+  const bezug={ art:e.bezug, id:e.bezugId, name:e.bezug==='karte' && lk ? lk.titel : e.bezugName, karte:e.bezug==='karte' && lk ? { id:lk.id, airtableId:lk.airtableId||null, titel:lk.titel } : null };
+  const quelle=e.quelle||'text', titel=e.datei ? (F7_QUELLEN.find(q=>q[0]===quelle)||['','','Datei'])[2]+': '+e.datei.name : txt.slice(0,60);
+  const eintrag={ titel, ts:jetztIso(), bezug:bezug.name||(bezug.art==='agent' ? 'Agent entscheidet' : ''), status:'wartet', inboxId:null };
+  (S.meta.erfasst=f7ErfasstListe()).push(eintrag); if(S.meta.erfasst.length>30) S.meta.erfasst=S.meta.erfasst.slice(-30); saveMeta();
+  FSLive.senden('app:erfassen', { text:txt, quelle, bezug, datei:e.datei, geraetZeit:jetztIso() })
+    .then(r=>{ if(r && r.sofort && r.antwort && r.antwort.inbox){ eintrag.inboxId=r.antwort.inbox; eintrag.status='wird gelesen'; saveMeta(); } f7Neu(); })
+    .catch(x=>{ eintrag.status='abgelehnt'; saveMeta(); toast('Erfassen abgelehnt: '+((x && x.message)||'Fehler')); f7Neu(); });
+  F7.erf=null; toast('📤 Erfasst — an den Erfassungs-Agenten'); haptik(10); e1Rendern();
+}
+/* Status der letzten Einträge aus der Inbox nachlesen (alle 2 Minuten, wenn die Ansicht offen ist) */
+function f7ErfasstStatus(){
+  const l=f7ErfasstListe().filter(x=>x.inboxId && x.status!=='abgelegt' && x.status!=='Frage im Postfach').slice(-8); if(!l.length || !FSLive.gekoppelt()) return;
+  if(F7.erfStatusTs && Date.now()-F7.erfStatusTs<120000) return; F7.erfStatusTs=Date.now();
+  l.forEach(x=>{ FSLive.lesen('datensatz_lesen', { tabelle:'Inbox', id:x.inboxId }).then(d=>{ const f=(d && (d.felder||d))||{}; const st=String(f.Status||''), pf=f7Link(f['Postfach-Karte']).length;
+    x.status=pf ? 'Frage im Postfach' : (/einsortiert|abgelegt|verarbeitet|erledigt/i.test(st) ? 'abgelegt' : 'wird gelesen'); saveMeta(); f7Neu(); }).catch(()=>{}); });
+}
+/* ══ 7.3 · Routinen-Schublade ══ */
+function f7RoutDom(){ return S.ui.f7routDom||'alle'; }
+function f7RoutinenAlle(dom){ return S.karten.filter(k=>k.status!=='archiviert' && (kartenArt(k)==='Routine' || kartenArt(k)==='Counter') && !istSonderRolle(k) && (dom==='alle' || k.domain===dom) && !(k.faelligkeit && k.faelligkeit>heuteApp())); }
+function f7RoutZeile(k, opt){
+  opt=opt||{}; const heute=heuteApp(), erf=zielErreicht(k), tick=istTickbar(k), n=Math.max(tickAnzahlHeute(k), num(k.ticksHeute)), ziel=num(k.tagesziel)||num(k.tageslimit), ue=ueberfaelligTage(k, heute);
+  const tag=k.rhythmus ? (k.pflicht===true ? '<span class="tag muss">Muss</span>' : '<span class="tag kann">Kann</span>') : '';
+  let sub=opt.sub; if(!sub){ if(ue>0) sub='<span class="red">fällig seit '+esc(fmtDatum(anVorTage(heute, ue)))+(k.rhythmus && k.rhythmus.typ==='alleNTage' ? ' · alle '+num(k.rhythmus.n)+' Tage' : '')+'</span>'; else if(tick && ziel>0) sub=n+' / '+ziel+' heute'; else if(num(k.streak)>0) sub='🔥 '+num(k.streak)+' Tage'; else if(k.rhythmus && routineFaellig(k, heute)) sub=erf ? '✓ erledigt' : 'heute fällig'+(k.rhythmus.typ==='alleNTage' ? ' · alle '+num(k.rhythmus.n)+' Tage' : ''); else sub=erf ? '✓ erledigt' : 'heute noch nicht'; }
+  const kn=erf ? '<span class="btn"><b class="ok">✓</b></span>' : '<span class="btn">'+(tick ? '<b data-f7rtick="'+k.id+'">+1</b>' : (num(k.sollMin)>0 ? '<b data-f7rplay="'+k.id+'">▶</b>' : '')+'<b data-f7rcheck="'+k.id+'">✓</b>')+'</span>';
+  return '<div class="f7-r'+(erf?' erl':'')+'"><div class="t" data-klfokus="'+k.id+'">'+esc(k.titel||'?')+' '+tag+'<small>'+sub+'</small></div>'+kn+'</div>';
+}
+function f7RoutinenHtml(){
+  const dom=f7RoutDom(), heute=heuteApp(), ks=f7RoutinenAlle(dom), bl=tagesBloecke()||[], lb=laufenderBlock(bl), eins=bl.filter(b=>!b.parent).slice().sort((a,b)=>a.von-b.von);
+  let h='<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> 🔁 Routinen<span class="f7-r"><span class="f7-seg klein">'+[['alle','Alle'],['dfm','DFM'],['privat','Privat']].map(x=>'<div class="'+(dom===x[0]?'on':'')+'" data-f7routdom="'+x[0]+'">'+x[1]+'</div>').join('')+'</span></span></div></div>';
+  // 1 · Trainer empfiehlt jetzt: drei offene Routinen des laufenden Blocks (Kann zuerst kurz, dann Muss)
+  const imBlock=k=>lb && klRoutineBlock(k, bl)===lb, offen=ks.filter(k=>!zielErreicht(k) && routineFaellig(k, heute)), emp=offen.filter(imBlock).concat(offen.filter(k=>!imBlock(k))).slice(0,3);
+  h+='<h5 class="f7-h5 zw"><span>💬 Trainer empfiehlt jetzt'+(lb ? ' · '+esc(lb.name||BLOCK_TYP_NAME[lb.typ]||'') : '')+'</span><span>'+fmtUhr(jetztIso())+'</span></h5>';
+  h+='<div class="f7-rec">'+(emp.length ? emp.map(k=>{ const tick=istTickbar(k); return '<div class="'+(k.domain==='dfm'?'d':'')+'" data-klfokus="'+k.id+'">'+esc(k.titel||'?')+'<i>'+(k.pflicht===true?'Muss':'Kann')+(num(k.streak)>0?' · 🔥'+num(k.streak):'')+(num(k.sollMin)>0?' · '+Math.round(num(k.sollMin))+' Min.':'')+' <span class="btn">'+(tick ? '<b data-f7rtick="'+k.id+'">+1</b>' : (num(k.sollMin)>0 ? '<b data-f7rplay="'+k.id+'">▶</b>' : '')+'<b data-f7rcheck="'+k.id+'">✓</b>')+'</span></i></div>'; }).join('') : '<div class="leer">alles erledigt</div>')+'</div>';
+  // 2 · Überfällig: nur Muss-Routinen über ihrem Rhythmus
+  const ue=ks.filter(k=>k.pflicht===true && !zielErreicht(k) && ueberfaelligTage(k, heute)>0);
+  h+='<h5 class="f7-h5 zw"><span class="red">⚠️ Überfällig</span><span class="red">'+ue.length+'</span></h5>'+(ue.length ? ue.map(k=>f7RoutZeile(k)).join('') : '<div class="leer">nichts überfällig</div>');
+  // 3 · Tagesblöcke mit erledigt/gesamt; der laufende Block offen mit Balken
+  const je={}, ohne=[]; ks.forEach(k=>{ const b=klRoutineBlock(k, bl); if(b) (je[b.id]=je[b.id]||[]).push(k); else ohne.push(k); });
+  const ges=ks.filter(k=>routineFaellig(k, heute) || istTickbar(k)), gesE=ges.filter(zielErreicht).length;
+  h+='<h5 class="f7-h5 zw"><span>Tagesblöcke</span><span>'+gesE+' / '+ges.length+' erledigt</span></h5>';
+  const auf=S.ui.f7routAuf||null, ICON={ dfm:'💼', privat:'🌀', pause:'🌿', schlaf:'🌙' };
+  const blockHtml=(b, l, name)=>{ const n=l.length, e=l.filter(zielErreicht).length, ist=lb && b && b.id===lb.id, offenB=auf ? auf===(b?b.id:'ohne') : ist;
+    const kopf='<div class="f7-blk'+(b && b.typ==='dfm' ? ' d' : '')+'" data-f7routblock="'+(b?b.id:'ohne')+'">'+(b ? (ICON[b.typ]||'📦')+' '+esc(name) : '📦 Ohne Block')+(ist?' · jetzt':'')+' <span'+(n && e===n ? ' class="ok"' : '')+'>'+e+' / '+n+(n && e===n ? ' ✓' : '')+'</span></div>';
+    if(!offenB) return kopf;
+    return '<div class="f7-open">'+kopf+(n ? '<div class="bar"><i style="width:'+(e/n*100).toFixed(0)+'%"></i></div>' : '')+l.map(k=>f7RoutZeile(k)).join('')+'</div>'; };
+  eins.forEach(b=>{ h+=blockHtml(b, je[b.id]||[], b.name||BLOCK_TYP_NAME[b.typ]||'Block'); });
+  if(ohne.length) h+=blockHtml(null, ohne, 'Ohne Block');
+  // 4 · Demnächst: Routinen mit Rhythmus, die in den nächsten 14 Tagen fällig werden
+  const dem=ks.filter(k=>k.rhythmus && !routineFaellig(k, heute)).map(k=>{ let t=null; try{ t=tageBisFaellig(k, heute); }catch(e){ t=null; } if(t==null){ for(let i=1;i<=14;i++){ if(routineFaellig(k, anVorTage(heute, -i))){ t=i; break; } } } return { k, t }; }).filter(x=>x.t!=null && x.t>0 && x.t<=14).sort((a,b)=>a.t-b.t).slice(0,6);
+  h+='<h5 class="f7-h5 zw"><span>📅 Demnächst</span><span></span></h5>'+(dem.length ? dem.map(x=>'<div class="f7-r"><div class="t" data-klfokus="'+x.k.id+'">'+esc(x.k.titel||'?')+'<small>in '+x.t+' Tag'+(x.t===1?'':'en')+(x.k.rhythmus.typ==='alleNTage' ? ' · alle '+num(x.k.rhythmus.n)+' Tage' : '')+'</small></div></div>').join('') : '<div class="leer">nichts in den nächsten 14 Tagen</div>');
+  return h;
+}
+/* ══ 4.0 · Paket 7 · Teil B: Pausen-Dialog und Chat (7.4) · Postfach (7.5) · Abhaken und Schieben (7.6) · Planansicht (7.7) ══ */
+/* ── 7.4 · Pausen-Dialog ── */
+const F7_PAUSE_ART=[['kopffrei','🌿 Kopf-frei-Pause'],['essen','🍽️ Essen'],['spaziergang','🚶 Spaziergang'],['adhs','🧠 ADHS-Blockade']];
+function f7Pz(){ if(!F7.pz) F7.pz={ art:'kopffrei', min:20, onrampId:null, zielId:null, text:'' }; return F7.pz; }
+function f7PauseVorschlag(){
+  const bl=tagesBloecke()||[], lb=laufenderBlock(bl), now=belX(jetztIso()), seit=lb ? Math.max(0, (now-lb.von)*60) : 0;
+  let r=null; try{ r=tempoVerhaeltnis(); }catch(e){ r=null; }
+  const lk=getrackteKarte(), ziel=f7PauseZiel(), on=f7PauseOnramp();
+  const tempo=r==null ? '' : r<0.85 ? ', Tempo fällt' : r>1.15 ? ', Tempo steigt' : ', Tempo hält';
+  const txt=(lb ? 'Du bist seit '+fmtDauer(seit)+' im Block'+tempo+'. ' : '')+f7Pz().min+' Min. '+(F7_PAUSE_ART.find(a=>a[0]===f7Pz().art)||['','Pause'])[1].replace(/^\S+ /,'')+(on ? ', dann leicht einsteigen mit '+on.titel : '')+(ziel ? ' und weiter mit '+ziel.titel : '')+'.';
+  return { lb, seit, txt, lk, ziel, on };
+}
+function f7PauseOnramp(){ const p=f7Pz(); if(p.onrampId){ const k=S.karten.find(x=>x.id===p.onrampId); if(k) return k; } const l=f7Onramps().filter(k=>!zielErreicht(k)).sort((a,b)=>num(a.sollMin)-num(b.sollMin)); return l[0]||null; }
+function f7PauseZiel(){ const p=f7Pz(); if(p.zielId){ const k=S.karten.find(x=>x.id===p.zielId); if(k) return k; } const lk=getrackteKarte(); if(lk && lk.status==='offen' && !lk.erholung) return lk; const r=ketteRechts().filter(k=>k.status==='offen' && !k.erholung); return r[0]||null; }
+function oeffnePause(){
+  F7.pz=null; const p=f7Pz(); F7.blattNeu=f7PauseRender; f7PauseRender();
+}
+function f7PauseRender(){
+  const p=f7Pz(), V=f7PauseVorschlag(), W=e4BrueckeWerte(), ende=new Date(Date.now()+p.min*60000);
+  const kopf='<div class="f7-sub">'+fmtUhr(jetztIso())+(V.lb ? ' · '+esc(V.lb.name||BLOCK_TYP_NAME[V.lb.typ]||'')+' seit '+fmtDauer(V.seit) : '')+'</div>';
+  let h=kopf+'<div class="f7-tr"><b>Trainer:</b> '+esc(V.txt)+'</div>';
+  h+='<h5 class="f7-h5">Art</h5><div class="f7-chips gr">'+F7_PAUSE_ART.map(a=>'<div class="'+(p.art===a[0]?'on':'')+'" data-f7pzart="'+a[0]+'">'+a[1]+'</div>').join('')+'</div>';
+  h+='<h5 class="f7-h5">Dauer · Ende als Timer</h5><div class="f7-chips gr">'+[10,15,20,30].map(m=>'<div class="'+(p.min===m?'on':'')+'" data-f7pzmin="'+m+'">'+m+' Min.'+(p.min===m ? ' · bis '+fmtUhr(ende.toISOString()) : '')+'</div>').join('')+'<div data-f7pzmin="frei">⋯</div></div>';
+  h+='<h5 class="f7-h5">Danach · Onramp-Brücke</h5>'+
+    '<div class="f7-card"><span>🚀</span><div class="t">'+(V.on ? esc(V.on.titel)+'<small>Onramp · '+(num(V.on.sollMin)>0 ? Math.round(num(V.on.sollMin)) : 10)+' Min.</small>' : 'keine Onramp<small>leichte Karte unter 15 Min</small>')+'</div><em data-f7pzwahl="onramp">ändern ▾</em></div>'+
+    '<div class="f7-arrow">↓</div>'+
+    '<div class="f7-card"><span>🎯</span><div class="t">'+(V.ziel ? esc(V.ziel.titel)+'<small>'+esc([V.ziel.projekt, 'Zielaufgabe'].filter(Boolean).join(' · '))+'</small>' : 'keine Zielaufgabe<small>nächste Karte der Kette</small>')+'</div><em data-f7pzwahl="ziel">ändern ▾</em></div>';
+  h+='<div class="f7-pts"><div><b>+'+Math.round(num(S.settings.startBonus,25))+'</b>Start pünktlich</div><div><b>+'+num(W.onramp,100)+'</b>Onramp</div><div><b>+'+num(W.ziel,100)+'</b>Flow im Ziel</div></div>';
+  h+='<div class="f7-inp"><input type="text" id="f7pzText" placeholder="💬 Etwas dazu sagen (optional) …" value="'+esc(p.text||'')+'"><span data-f7mic="f7pzText">🎙️</span></div>';
+  openSheet('☕ Pause', h, '<button class="btn prim f7-go gruen" data-f7pzstart="1">Pause starten · '+p.min+' Min.</button>');
+}
+function f7PauseStarten(){
+  const p=f7Pz(), V=f7PauseVorschlag(), inp=el('f7pzText'); p.text=inp ? inp.value.trim() : p.text;
+  const pk=f7PauseKarte(p.art, true);
+  if(V.on || V.ziel) e4BrueckeSetzen(V.on ? V.on.id : null, V.ziel ? V.ziel.id : null, p.art);
+  S.tag.pause={ art:p.art, min:p.min, start:jetztIso(), bis:new Date(Date.now()+p.min*60000).toISOString(), karteId:pk.id, gemeldet:false }; saveTag();
+  if(p.text) f7ChatSenden('Trainer', '☕ Pause ('+p.min+' Min.): '+p.text, { art:'Pause' });
+  closeSheet(); F7.blattNeu=null; F7.pz=null;
+  if(p.art==='adhs'){ try{ kartenListeTick(pk.id); }catch(e){} toast('🧠 ADHS-Blockade notiert · '+p.min+' Min. Pause'); }
+  fokusStarten(pk.id, 'pause'); try{ e4Pause(); }catch(e){}
+  fokusseiteNachStart(); haptik(12);
+}
+/* Ende der Pause: nach Ablauf eine Meldung — die Brücke zählt weiter (Onramp +100 · Zielaufgabe +100 · nicht gehalten −150) */
+function f7PausePruefen(){
+  const pz=S.tag && S.tag.pause; if(!pz || pz.gemeldet) return;
+  if(Date.now()<Date.parse(pz.bis)) return;
+  pz.gemeldet=true; saveTag();
+  const on=e4Bruecke() && e4Bruecke().onrampId ? S.karten.find(x=>x.id===e4Bruecke().onrampId) : null;
+  toast('☕ Pause vorbei'+(on ? ' → 🚀 '+String(on.titel||'').slice(0,24) : ''));
+  try{ if('Notification' in window && Notification.permission==='granted') new Notification('Pause vorbei', { body:on ? 'Jetzt: '+on.titel : 'Weiter geht es' }); }catch(e){}
+}
+function f7PauseWahl(was){
+  const l=was==='onramp' ? f7Onramps() : S.karten.filter(k=>k.status==='offen' && !k.erholung && !istSonderRolle(k) && !k.rhythmus).slice(0,40);
+  openSheet(was==='onramp' ? '🚀 Onramp wählen' : '🎯 Zielaufgabe wählen', (l.length ? '<div class="kl">'+l.map(k=>'<div class="kl-z" data-f7pzgesetzt="'+was+':'+k.id+'" style="--fam:'+famFarbe(k)+'"><div class="kl-t"><b class="kl-titel">'+esc(k.titel||'?')+'</b><span class="kl-meta">'+(num(k.sollMin)>0 ? Math.round(num(k.sollMin))+' Min' : (k.domain==='dfm'?'DFM':'Privat'))+'</span></div></div>').join('')+'</div>' : '<div class="leer">keine Karte</div>'), '<button class="btn ghost sm" data-f7pzzurueck="1">‹ zurück</button>');
+}
+/* Onramp-Wahl aus dem Karten-Kern (Paket 5, Knopf „Onramp wählen") */
+function oeffneOnrampWahl(zielId){
+  const l=f7Onramps().filter(k=>k.id!==zielId);
+  openSheet('🚀 Onramp wählen', (l.length ? '<p class="d">Leichte Karte vor „'+esc((S.karten.find(x=>x.id===zielId)||{}).titel||'')+'": Onramp erledigt +'+num(e4BrueckeWerte().onramp,100)+' · Zielaufgabe in '+num(e4BrueckeWerte().zielMin,10)+' Min gestartet +'+num(e4BrueckeWerte().ziel,100)+'.</p><div class="kl">'+l.map(k=>'<div class="kl-z" data-f7onramp="'+k.id+':'+zielId+'" style="--fam:'+famFarbe(k)+'"><div class="kl-t"><b class="kl-titel">'+esc(k.titel||'?')+'</b><span class="kl-meta">'+(num(k.sollMin)>0 ? Math.round(num(k.sollMin))+' Min' : 'ohne Soll')+'</span></div></div>').join('')+'</div>' : '<div class="leer">keine Onramp-Karte (leichte Karte unter 15 Min)</div>'), '<button class="btn ghost sm" data-close="1">Schließen</button>');
+}
+/* ── 7.4 · Chat: jeder Agent über dfm.agenten_auftraege (Art Chat); Antworten kommen in denselben Chat ── */
+function f7Chat(){ if(!S.ui.f7chat || typeof S.ui.f7chat!=='object') S.ui.f7chat={ an:'Trainer', bezug:null }; return S.ui.f7chat; }
+const F7_CHAT_ARTEN=['Chat','Antwort','Planänderung','Auftrag','Pause','Kommentar','Schiebe-Grund','Postfach'];
+function f7ChatLaden(){ const ab=anVorTage(heuteApp(), 14)+'T00:00:00';
+  return f7Lager('chat', 30000, ()=>f7Alle({ tabelle:'Agenten-Aufträge', felder:['Text','Auftraggeber','Empfänger','Art','Status','Ergebnis','Zeitstempel','Aufgabe','Projekt','Antwortet auf'], filter:[{ feld:'Zeitstempel', operator:'groesser_gleich', wert:ab }], sortierung:[{ feld:'Zeitstempel', richtung:'auf' }] })); }
+function f7ChatEmpfaenger(){ const c=f7Chat(); return c.an||'Trainer'; }
+function f7ChatSenden(an, text, opt){
+  opt=opt||{}; const lk=getrackteKarte(), verk={};
+  if(opt.karte && opt.karte.airtableId) verk.Aufgabe=[opt.karte.airtableId]; else if(opt.bezugKarte && lk && lk.airtableId) verk.Aufgabe=[lk.airtableId];
+  if(opt.projektId) verk.Projekt=[opt.projektId];
+  const felder={ Text:text, Auftraggeber:'Pascal', 'Empfänger':an, Art:opt.art||'Chat', Status:'offen', Zeitstempel:jetztIso() };
+  const eintrag={ id:'lokal-'+Date.now(), Text:text, Auftraggeber:'Pascal', 'Empfänger':an, Art:opt.art||'Chat', Zeitstempel:jetztIso(), lokal:true };
+  const L=F7.lager.chat; if(L && Array.isArray(L.daten)) L.daten.push(eintrag);
+  return FSLive.senden('datensatz_anlegen', { tabelle:'Agenten-Aufträge', felder, verknuepfungen:verk }).then(r=>{ f7LagerLeeren('chat'); f7Neu(); return r; }).catch(e=>{ toast('Nachricht wartet: '+((e && e.message)||'Fehler')); });
+}
+function f7ChatOeffnen(an, bezug, vorlage){ const c=f7Chat(); if(an) c.an=an; c.bezug=bezug||null; c.vorlage=vorlage||''; saveUi(); e1Oeffnen('chat'); }
+function f7ChatHtml(){
+  const c=f7Chat(), rows=f7ChatLaden(), an=f7ChatEmpfaenger(), lk=getrackteKarte(), abts=f7Abteilungen()||[], proj=f7Projekte()||[];
+  let h='<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> 💬 Chat</div></div>';
+  h+='<div class="f7-chips gr"><div class="'+(an==='Trainer'?'on tk':'')+'" data-f7chatan="Trainer">🏋️ Trainer</div>'+
+    '<div class="'+(c.anArt==='abteilung'?'on':'')+'" data-f7chatwahl="abteilung">🏢 '+(c.anArt==='abteilung' ? esc(an) : 'Abteilung')+' ▾</div>'+
+    '<div class="'+(c.anArt==='projekt'?'on':'')+'" data-f7chatwahl="projekt">📁 '+(c.anArt==='projekt' ? esc(an) : 'Projekt')+' ▾</div>'+
+    (lk ? '<div class="'+(c.bezug==='karte'?'on':'')+'" data-f7chatbezug="karte">▶ zur laufenden Karte</div>' : '')+'</div>';
+  if(c.bezugText) h+='<div class="f7-info">'+esc(c.bezugText)+'</div>';
+  if(!rows) h+='<div class="leer">'+(f7LagerFehler('chat') ? 'FocusSystem: '+esc(f7LagerFehler('chat')) : 'lädt …')+'</div>';
+  else{
+    const mine=rows.filter(r=>{ const A=String(r.Auftraggeber||''), E=String(r['Empfänger']||''); if(an==='Trainer') return (A==='Pascal' && /trainer/i.test(E)) || /trainer/i.test(A); return (A==='Pascal' && E===an) || A===an; });
+    let tag=''; mine.forEach(r=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; }
+      const vonPascal=String(r.Auftraggeber||'')==='Pascal', art=String(r.Art||'');
+      if(/plan|auftrag/i.test(art) && !vonPascal){ h+='<div class="f7-info">'+(/plan/i.test(art) ? '📥 Planänderung im Postfach: ' : '➡️ ')+esc(r.Text||'')+'</div>'; return; }
+      const text=String(r.Text||''), lines=text.split('\n'), opts=lines.filter(l=>/^\s*[-•]\s+/.test(l)).map(l=>l.replace(/^\s*[-•]\s+/,'').trim()), body=lines.filter(l=>!/^\s*[-•]\s+/.test(l)).join('\n');
+      h+='<div class="f7-m '+(vonPascal?'p':'t')+'">'+esc(body).replace(/\n/g,'<br>')+'<small>'+(vonPascal ? '' : esc(r.Auftraggeber||an)+' · ')+fmtUhr(r.Zeitstempel)+(r.lokal ? ' · wird gesendet' : '')+'</small></div>';
+      if(!vonPascal && opts.length) h+='<div class="f7-act2">'+opts.map((o,i)=>'<div class="'+(i?'':'g')+'" data-f7chatantwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'</div>';
+      if(!vonPascal && r.Ergebnis) h+='<div class="f7-m t">'+esc(String(r.Ergebnis)).replace(/\n/g,'<br>')+'<small>Ergebnis</small></div>';
+      if(vonPascal && /auftrag|plan/i.test(art)) h+='<div class="f7-info">➡️ Auftrag an '+esc(r['Empfänger']||'')+' · Antwort erscheint hier</div>'; });
+    if(!mine.length) h+='<div class="leer">noch keine Nachricht · schreib dem '+(an==='Trainer'?'Trainer':esc(an))+'</div>';
+  }
+  h+='<div class="f7-inp unten"><input type="text" id="f7chatText" placeholder="Nachricht an '+(an==='Trainer'?'den Trainer':esc(an))+' …" value="'+esc(c.vorlage||'')+'" enterkeyhint="send"><span data-f7mic="f7chatText">🎙️</span><b data-f7chatsenden="1">➤</b></div>';
+  return h;
+}
+function f7ChatAbschicken(text){
+  const c=f7Chat(), inp=el('f7chatText'); text=(text!=null ? text : (inp ? inp.value : '')).trim(); if(!text) return;
+  const lk=getrackteKarte(); f7ChatSenden(f7ChatEmpfaenger(), text, { karte:c.bezug==='karte' ? lk : null, projektId:c.anArt==='projekt' ? c.anId : null });
+  c.vorlage=''; if(inp) inp.value=''; saveUi(); haptik(8); e1Rendern();
+}
+/* Spracheingabe, wo das Gerät sie anbietet */
+function f7Mikro(feldId){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR){ toast('Spracheingabe hier nicht verfügbar — Mikrofon der Tastatur nutzen'); return; }
+  try{ const r=new SR(); r.lang='de-DE'; r.interimResults=false; r.onresult=ev=>{ const t=ev.results[0][0].transcript, f=el(feldId); if(f){ f.value=(f.value ? f.value+' ' : '')+t; } }; r.onerror=()=>toast('Spracheingabe abgebrochen'); r.start(); toast('🎙️ spricht …'); }catch(e){ toast('Spracheingabe nicht möglich'); }
+}
+/* ── 7.5 · Postfach ── */
+function f7Postfach(){ return f7Lager('postfach', 60000, ()=>f7Alle({ tabelle:'Postfach', felder:['Titel','Agent','Art','Output/Entwurf','Quelle','Projekt','Person','Organisation','Begründung','Sicherheit %','Dringlichkeit','Push','Folge nach Freigabe','Status','Entscheidung'], filter:[{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Dringlichkeit', richtung:'ab' }] })); }
+function f7PfHeute(){ const h=S.meta.postfachHeute; if(!h || h.datum!==heuteApp()){ S.meta.postfachHeute={ datum:heuteApp(), n:0, leerBonus:false }; } return S.meta.postfachHeute; }
+function f7PfKat(r){ const a=String(r.Art||''); if(a==='Dringend' || num(r.Dringlichkeit)>=80) return 'dringend'; if(a==='Klärung') return 'klaerung'; if(/^(Plan|Kurs|Ziel)$/.test(a)) return 'plan'; return 'entwurf'; }
+function f7PfAgentAbt(name){ const a=(f7Agenten()||[]).find(p=>String(p.Name||'')===String(name||'')); return a ? f7LinkName(a.Abteilung) : ''; }
+function f7PostfachStandSetzen(rows){
+  const dr=rows.filter(r=>f7PfKat(r)==='dringend').sort((a,b)=>num(b.Dringlichkeit)-num(a.Dringlichkeit))[0];
+  S.meta.postfach={ offen:rows.length, dringend:rows.filter(r=>f7PfKat(r)==='dringend').length, dringendText:dr ? String(dr.Titel||'') : '', dringendBis:null }; saveMeta();
+  try{ renderStatusbar(); }catch(e){} try{ f7NavBadge(); }catch(e){}
+}
+function f7NavBadge(){ const b=document.querySelector('#nav button[data-seite="postfach"]'); if(!b) return; const p=(S.meta && S.meta.postfach)||{}; let s=b.querySelector('.badge'); if(num(p.offen)>0){ if(!s){ s=document.createElement('span'); s.className='badge'; b.appendChild(s); } s.textContent=num(p.offen); s.classList.toggle('rot', num(p.dringend)>0); } else if(s) s.remove();
+  const f=el('suchFab'); if(f){ let q=f.querySelector('.badge'); if(num(p.dringend)>0){ if(!q){ q=document.createElement('span'); q.className='badge'; f.appendChild(q); } q.textContent=num(p.dringend); } else if(q) q.remove(); } }
+function renderPostfach(){
+  const host=el('postfachBody'); if(!host) return;
+  const rows=f7Postfach(), fl=S.ui.f7pfFilter||'alle', H=f7PfHeute();
+  if(rows && F7.pfStandTs!==F7.lager.postfach.ts){ F7.pfStandTs=F7.lager.postfach.ts; f7PostfachStandSetzen(rows); }
+  if(!F7.pfSeit) F7.pfSeit=Date.now();
+  const n=rows ? rows.length : 0, ges=n+H.n, pct=ges ? H.n/ges*100 : 0;
+  let h='<div class="f7-pkopf"><span>📥 Postfach</span><small>'+n+' offen · heute '+H.n+' erledigt</small></div>';
+  h+='<div class="f7-prog"><i style="width:'+pct.toFixed(0)+'%"></i></div><div class="f7-ps"><span>+10 je Karte · Zeit mit 400 P/h</span><span>leer → +50</span></div>';
+  if(!rows){ host.innerHTML=h+'<div class="leer">'+(f7LagerFehler('postfach') ? 'FocusSystem: '+esc(f7LagerFehler('postfach')) : 'lädt aus FocusSystem …')+'</div>'; return; }
+  const z=k=>rows.filter(r=>f7PfKat(r)===k).length;
+  h+='<div class="f7-chips gr">'+[['alle','Alle '+n],['dringend','🔴 Dringend '+z('dringend')],['klaerung','❓ Klärung '+z('klaerung')],['entwurf','📝 Entwurf '+z('entwurf')],['plan','📅 Plan '+z('plan')]].map(x=>'<div class="'+(fl===x[0]?'on':'')+(x[0]==='dringend'?' rd':'')+'" data-f7pffilter="'+x[0]+'">'+x[1]+'</div>').join('')+'</div>';
+  const sicht=rows.filter(r=>fl==='alle' || f7PfKat(r)===fl);
+  if(!sicht.length) h+='<div class="leer">'+(n ? 'nichts in dieser Gruppe' : '📭 Postfach leer · +50 Münzen')+'</div>';
+  const karte=(r, voll)=>{ const kat=f7PfKat(r), abt=f7PfAgentAbt(r.Agent), bezug=[f7LinkName(r.Organisation), f7LinkName(r.Projekt), f7LinkName(r.Person), r.Quelle].filter(Boolean).join(' · ');
+    let x='<div class="f7-c'+(kat==='dringend'?' u':'')+'" data-f7pfid="'+esc(r.id)+'"><div class="hd"><span>'+(kat==='dringend'?'🛡️ ':kat==='klaerung'?'📥 ':'📝 ')+esc(r.Agent||'Agent')+(abt?' · '+esc(abt):'')+'</span><span'+(kat==='dringend'?' class="red"':'')+'>'+(kat==='dringend' ? Math.round(num(r.Dringlichkeit))+' / 100' : (r['Sicherheit %']!=null ? 'Sicherheit '+Math.round(num(r['Sicherheit %']))+' %' : ''))+'</span></div><div class="ti">'+esc(r.Titel||'')+'</div>';
+    if(bezug || (r['Sicherheit %']!=null && kat==='dringend')) x+='<div class="ctx">'+esc(bezug)+(kat==='dringend' && r['Sicherheit %']!=null ? (bezug?' · ':'')+'Sicherheit '+Math.round(num(r['Sicherheit %']))+' %' : '')+'</div>';
+    if(kat==='klaerung'){ const opts=String(r['Output/Entwurf']||'').split('\n').map(l=>l.replace(/^\s*[-•]\s*/,'').trim()).filter(Boolean).slice(0,5);
+      x+='<div class="opt">'+opts.map((o,i)=>'<div class="'+(i?'':'ok')+'" data-f7pfantwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'<div data-f7pfantwort="">anders …</div></div>'; }
+    else { if(r['Output/Entwurf']) x+='<div class="dr">'+esc(String(r['Output/Entwurf'])).replace(/\n/g,'<br>')+'</div>'; if(r['Begründung']) x+='<div class="why">Warum: '+esc(r['Begründung'])+'</div>';
+      x+='<div class="bt"><div class="ok" data-f7pfent="freigegeben">✓ Freigeben</div><div data-f7pfent="angepasst">✏️ Anpassen</div><div data-f7pfent="abgelehnt">✗ Ablehnen</div><div data-f7pfent="besprochen">💬 Besprechen</div></div>'; }
+    return x+'</div>'; };
+  const dr=sicht.filter(r=>f7PfKat(r)==='dringend'), kl=sicht.filter(r=>f7PfKat(r)==='klaerung'), rest=sicht.filter(r=>f7PfKat(r)!=='dringend' && f7PfKat(r)!=='klaerung');
+  if(dr.length) h+='<h5 class="f7-h5 zw"><span class="red">🔴 Dringend</span><span>nach Dringlichkeit</span></h5>'+dr.map(r=>karte(r)).join('');
+  if(kl.length) h+='<h5 class="f7-h5 zw"><span>❓ Klärung</span><span></span></h5>'+kl.map(r=>karte(r)).join('');
+  if(rest.length){ const auf=S.ui.f7pfAuf||{}; h+='<h5 class="f7-h5 zw"><span>Weitere</span><span></span></h5>'+rest.map(r=>{ const kat=f7PfKat(r); if(auf[r.id]) return karte(r);
+    return '<div class="f7-row" data-f7pfid="'+esc(r.id)+'"><div>'+(kat==='plan'?'📅 ':'📝 ')+esc(r.Titel||'')+'<small>'+esc([r.Agent, kat==='plan' ? 'Planänderung' : 'Entwurf'].filter(Boolean).join(' · '))+'</small></div>'+(kat==='plan' ? '<b data-f7pfent="gesehen">✓ gesehen</b>' : '<b data-f7pfauf="1">öffnen</b>')+'</div>'; }).join(''); }
+  host.innerHTML=h;
+}
+function f7PfEntscheiden(id, ent, extra){
+  extra=extra||{}; const rows=f7Postfach()||[], r=rows.find(x=>x.id===id); if(!r) return;
+  const felder=Object.assign({ Status:'erledigt', Entscheidung:ent, 'Punkte gebucht':10 }, extra.felder||{});
+  FSLive.senden('datensatz_aendern', { tabelle:'Postfach', id, felder }).catch(e=>toast('Postfach: '+((e && e.message)||'Fehler')));
+  const L=F7.lager.postfach; if(L && Array.isArray(L.daten)) L.daten=L.daten.filter(x=>x.id!==id);
+  const H=f7PfHeute(); H.n++; try{ e4BonusBuchen(null, 10, 'Postfach · '+ent); }catch(e){}
+  if(L && L.daten && !L.daten.length && !H.leerBonus){ H.leerBonus=true; try{ e4BonusBuchen(null, 50, 'Postfach leer'); }catch(e){} toast('📭 Postfach leer · +50'); }
+  saveMeta(); f7PostfachStandSetzen((L && L.daten)||[]); haptik(10); renderPostfach();
+  if(ent==='besprochen') f7ChatOeffnen('Trainer', 'postfach', 'Zu „'+String(r.Titel||'')+'": ');
+}
+function f7PfAnpassen(id){ const r=(f7Postfach()||[]).find(x=>x.id===id); if(!r) return;
+  openSheet('✏️ Anpassen', '<p class="d"><b>'+esc(r.Titel||'')+'</b></p><div class="field"><label>Entwurf, so wie er rausgehen soll</label><textarea id="f7pfText" rows="6">'+esc(r['Output/Entwurf']||'')+'</textarea></div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-f7pfanpassengo="'+esc(id)+'">Freigeben mit Anpassung</button>'); }
+function f7PfAblehnen(id){ const r=(f7Postfach()||[]).find(x=>x.id===id); if(!r) return;
+  openSheet('✗ Ablehnen', '<p class="d"><b>'+esc(r.Titel||'')+'</b></p><div class="field"><label>Grund (Pflicht) · geht an den Agenten und ins Lernen</label><textarea id="f7pfGrund" rows="3" placeholder="Warum nicht?"></textarea></div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn warn" data-f7pfablehnengo="'+esc(id)+'">Ablehnen</button>'); }
+/* Zeit im Postfach: beim Verlassen der Seite mit 400 P/h gutschreiben (ab einer Minute) */
+function f7PostfachVerlassen(){ if(!F7.pfSeit) return; const min=(Date.now()-F7.pfSeit)/60000; F7.pfSeit=null; if(min>=1 && tagOffen()){ const p=Math.round(min/60*400); try{ e4BonusBuchen(null, p, 'Postfach-Zeit '+Math.round(min)+' Min'); }catch(e){} } }
+/* ── 7.6 · Abhaken: Wann · Schritte · Folgeaufgabe · Punkte · Kommentar ── */
+renderAbhakDialog=function(){
+  const t=abhakTmp, k=S.karten.find(x=>x.id===t.kid); if(!k) return;
+  if(t.akkuSkip===undefined) t.akkuSkip=true;   // der Akku-Regler ist nicht Teil des Zielbilds
+  const subs=untermenge(k.id), done=subs.filter(u=>u.done).length, offen=subs.length-done, satz=leiterSatz(k), lief=!!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id);
+  const zeitP=Math.round(punkteFuerZeit(k, Math.max(t.istMin, zeitquelleMin(k)))*(S.settings.zeitGewicht!=null?S.settings.zeitGewicht:1) + tickSumme(k, num(k.ticksHeute))*(S.settings.tickGewicht!=null?S.settings.tickGewicht:1));
+  const bonusVoll=Math.round(num(t.bonusDef)+subBonusErreicht(k)), bonus=subs.length && offen>0 && t.folge ? Math.round(bonusVoll*done/subs.length) : bonusVoll;
+  const jetztUhr=new Date(), hhmm=String(jetztUhr.getHours()).padStart(2,'0')+':'+String(jetztUhr.getMinutes()).padStart(2,'0');
+  let h='<div class="f7-sub">'+esc(k.titel||'')+(k.projekt ? ' · '+esc(k.projekt) : '')+'</div>';
+  h+='<h5 class="f7-h5">Wann</h5><div class="f7-tf"><div class="t">Fertig um<small>Vorschlag: jetzt (Tipp-Zeit)</small></div><input type="time" id="abFertigUm" value="'+(t.fertigUm||hhmm)+'"></div>'+
+    '<div class="f7-tf"><div class="t">Zeit auf der Karte<small>'+(lief || t.istMin>0 ? 'Uhr lief · änderbar' : 'Soll '+Math.round(num(k.sollMin))+' Min · änderbar')+'</small></div><div class="f7-min"><input type="number" inputmode="numeric" id="abIst" value="'+t.istMin+'"> Min.</div></div>';
+  if(subs.length){ h+='<h5 class="f7-h5">Schritte · '+done+' von '+subs.length+' erledigt</h5><div class="f7-st">'+subs.map(u=>'<div><span class="ck'+(u.done?' on':'')+'" data-absubdone="'+u.id+'">'+(u.done?'✓':'')+'</span>'+esc(u.titel||'Teilschritt')+'</div>').join('')+'</div>';
+    if(offen>0 && !istRoutineOderCounter(k)) h+='<div class="f7-fo">'+offen+' Schritt'+(offen>1?'e':'')+' offen → <b data-abfolge="1">'+(t.folge ? 'Folgeaufgabe' : 'keine Folgeaufgabe')+'</b>'+(t.folge ? ' „'+esc(String(k.titel||'').slice(0,40))+' abschließen" mit diesen '+offen+' Schritten, Datum morgen. Bonus hier für den erledigten Teil.' : ' · Tipp = anlegen')+'</div>'; }
+  h+='<h5 class="f7-h5">Punkte</h5><div class="f7-pts"><div><b>+'+fmtP(zeitP)+'</b>Zeit · '+fmtP(satz)+' P/h</div><div><b>+'+fmtP(bonus)+'</b>Abhakbonus'+(bonus!==bonusVoll?' anteilig':'')+'</div><div><b>+'+fmtP(zeitP+bonus)+'</b>gesamt</div></div>';
+  h+='<div class="f7-inp"><input type="text" id="abKommentar" placeholder="💬 Kommentar für den Trainer (optional) …"></div>';
+  // verborgene Felder für den bestehenden Bestätigungsweg
+  h+='<div hidden><input type="number" id="abPktN" value="'+zeitP+'"><input type="number" id="abBonus" value="'+bonus+'">'+(t.folge ? '<input id="abFolgeTitel" value="'+esc(String(k.titel||'')+' abschließen')+'"><input id="abFolgeDl" value="'+morgenIso()+'"><input id="abFolgeSoll" value="'+subs.filter(u=>!u.done).reduce((a,u)=>a+num(u.sollMin),0)+'">' : '')+'</div>';
+  openSheet('✓ Abhaken', h, '<button class="btn prim f7-go gruen" data-abgo="1">'+(t.folge && offen>0 ? 'Abhaken und Folgeaufgabe anlegen' : 'Abhaken')+'</button>');
+};
+{ const _alt=abhakDialogConfirm;
+  abhakDialogConfirm=function(){
+    const t=abhakTmp; if(!t) return; const k=S.karten.find(x=>x.id===t.kid);
+    const kom=el('abKommentar') ? el('abKommentar').value.trim() : '', fertig=el('abFertigUm') ? el('abFertigUm').value : '';
+    _alt();
+    if(fertig && /^\d{2}:\d{2}$/.test(fertig) && k){ const d=new Date(); const [hh,mm]=fertig.split(':').map(Number); d.setHours(hh, mm, 0, 0);
+      if(Math.abs(d.getTime()-Date.now())>90000){ const e=(S.intraday||[]).slice().reverse().find(x=>x && x.kartenId===k.id && x.typ==='abhaken'); if(e){ e.ts=d.toISOString(); DB.set('intraday', S.intraday); } } }
+    if(kom && k) f7ChatSenden('Trainer', '✓ „'+k.titel+'": '+kom, { art:'Kommentar', karte:k });
+  }; }
+/* ── 7.6 · Schieben ── */
+function f7Sch(){ return F7.sch; }
+function f7SchDatumRhythmus(k){ const heute=heuteApp(); if(!k.rhythmus) return anVorTage(heute, -1); for(let i=1;i<=31;i++){ const d=anVorTage(heute, -i); if(routineFaellig(k, d)) return d; } return anVorTage(heute, -1); }
+function f7SchWochenende(n){ const heute=heuteApp(); let d=anVorTage(heute, -1); while(new Date(d+'T12:00:00').getDay()!==6) d=anVorTage(d, -1); if(n===2) d=anVorTage(d, -7); return d; }
+oeffneSchieben=function(kid){
+  const k=S.karten.find(x=>x.id===kid); if(!k) return;
+  F7.sch={ kid, was:'datum', datum:morgenIso(), bis:anVorTage(heuteApp(), -7), grund:'', person:'' }; F7.blattNeu=f7SchiebenRender; f7SchiebenRender();
+};
+function f7SchiebenRender(){
+  const s=f7Sch(), k=S.karten.find(x=>x.id===s.kid); if(!k) return;
+  const heute=heuteApp(), ue=ueberfaelligTage(k, heute), muss=k.rhythmus && k.pflicht===true, abz=Math.max(0, num(S.settings.abzugOhneGrund,50)), n=num(k.schiebeZaehler);
+  const sub=[muss ? 'Muss-Routine' : k.rhythmus ? 'Kann-Routine' : 'Aufgabe', k.rhythmus && k.rhythmus.typ==='alleNTage' ? 'alle '+num(k.rhythmus.n)+' Tage' : '', ue>0 ? 'fällig seit '+fmtDatum(anVorTage(heute, ue)) : (k.faelligkeit ? 'fällig '+fmtDatum(k.faelligkeit) : '')].filter(Boolean).join(' · ');
+  let h='<div class="f7-sub">'+esc(k.titel||'')+' · '+esc(sub)+'</div>';
+  if(n>=2) h+='<div class="f7-warn">Zum '+(n+1)+'. Mal geschoben. Kein höherer Abzug, aber der Trainer fragt nach: zerlegen, als Onramp nutzen oder Rhythmus ändern?</div>';
+  const o=(id, ic, t, st)=>'<div class="f7-o'+(s.was===id?' on':'')+'" data-f7schwas="'+id+'"><span>'+ic+'</span><div class="t">'+t+'<small>'+st+'</small></div></div>';
+  h+='<h5 class="f7-h5">Was ist passiert?</h5>'+o('anderer','👥','Von jemand anderem erledigt','Person und Datum · Serie bleibt · 0 Punkte');
+  if(s.was==='anderer') h+='<div class="f7-inp klein"><input type="text" id="f7schPerson" placeholder="Wer?" value="'+esc(s.person||'')+'"></div>';
+  h+=o('datum','📅','Neues Datum','mit Grund 0 · ohne Grund −'+abz+' Münzen');
+  if(s.was==='datum'){ const rh=f7SchDatumRhythmus(k), we1=f7SchWochenende(1), we2=f7SchWochenende(2), chips=[[morgenIso(),'morgen'],[rh,'nach Rhythmus · '+fmtDatum(rh).slice(0,6)],[we1,'nächstes WE · '+fmtDatum(we1).slice(0,6)],[we2,'übernächstes WE']];
+    h+='<div class="f7-chips ein">'+chips.map(c=>'<div class="'+(s.datum===c[0]?'on':'')+'" data-f7schdatum="'+c[0]+'">'+esc(c[1])+'</div>').join('')+'<div class="'+(s.frei?'on':'')+'" data-f7schdatum="frei">frei …</div></div>'+(s.frei ? '<div class="f7-inp klein"><input type="date" id="f7schFrei" value="'+s.datum+'" min="'+morgenIso()+'"></div>' : ''); }
+  h+=o('aussetzen','⏸️','Aussetzen bis …','entschuldigt, z. B. Urlaub · Rhythmus läuft danach weiter');
+  if(s.was==='aussetzen') h+='<div class="f7-inp klein"><input type="date" id="f7schBis" value="'+s.bis+'" min="'+morgenIso()+'"></div>';
+  h+=o('archiv','🗄️','Nicht mehr nötig','archivieren, nie löschen');
+  h+='<h5 class="f7-h5">Grund</h5><div class="f7-inp"><input type="text" id="f7schGrund" placeholder="Warum? (ein Satz)" value="'+esc(s.grund||'')+'"><span data-f7mic="f7schGrund">🎙️</span></div>';
+  h+='<div class="f7-eff"><span class="g">mit Grund: 0 · geht an Trainer und Planungswissen</span><span class="r">ohne: −'+abz+'</span></div>';
+  h+='<div class="f7-tb" data-f7schchat="1">💬 Mit dem Trainer besprechen<span>Karte und Verlauf sind im Chat schon drin</span></div>';
+  const go=s.was==='anderer' ? 'Als erledigt eintragen' : s.was==='datum' ? 'Auf '+fmtDatum(s.datum)+' schieben' : s.was==='aussetzen' ? 'Aussetzen bis '+fmtDatum(s.bis) : 'Archivieren';
+  openSheet('↷ Schieben', h, '<button class="btn prim f7-go" data-f7schgo="1">'+go+'</button>');
+}
+function f7SchiebenGo(){
+  const s=f7Sch(), k=S.karten.find(x=>x.id===s.kid); if(!k) return;
+  const heute=heuteApp(), g=el('f7schGrund'), grund=(g ? g.value : s.grund||'').trim(), abz=Math.max(0, num(S.settings.abzugOhneGrund,50));
+  if(s.was==='anderer'){ const p=el('f7schPerson'), person=(p ? p.value : '').trim();
+    if(k.rhythmus){ k.letzteErfuellung=heute; k.streak=num(k.streak)+1; if(S.tag) (S.tag.routinenBilanz=S.tag.routinenBilanz||[]).push({ id:k.id, titel:k.titel, verpasst:false, entschuldigt:true, anderer:person||'jemand' }); logIntraday(k, { punkte:0, typ:'anderer', quelle:'uhr' }); }
+    else { overrideSetzen(k, 0); karteAbhaken(k.id, false); }
+    k.schiebeGrund=grund||null; beruehre(k); saveKarten(); saveTag(); closeSheet(); F7.blattNeu=null; renderAlles(); toast('👥 Von '+(person||'jemand anderem')+' erledigt · 0 Punkte');
+    if(grund || person) f7ChatSenden('Trainer', '👥 „'+k.titel+'" von '+(person||'jemand anderem')+' erledigt'+(grund ? ': '+grund : ''), { art:'Schiebe-Grund', karte:k });
+    return; }
+  if(s.was==='archiv'){ k.status='archiviert'; k.schiebeGrund=grund||null; beruehre(k); saveKarten(); closeSheet(); F7.blattNeu=null; renderAlles(); toast('🗄️ Archiviert — nie gelöscht');
+    if(k.airtableId) FSLive.senden('datensatz_aendern', { tabelle:'Aufgaben', id:k.airtableId, felder:{ Status:'Archiv' } }).catch(()=>{});
+    f7ChatSenden('Trainer', '🗄️ „'+k.titel+'" nicht mehr nötig'+(grund ? ': '+grund : ''), { art:'Schiebe-Grund', karte:k }); return; }
+  let ziel=s.datum; if(s.was==='aussetzen'){ const b=el('f7schBis'); ziel=(b && /^\d{4}-\d{2}-\d{2}$/.test(b.value)) ? b.value : s.bis; }
+  else if(s.frei){ const f=el('f7schFrei'); if(f && /^\d{4}-\d{2}-\d{2}$/.test(f.value)) ziel=f.value; }
+  if(!(ziel>heute)) ziel=morgenIso();
+  const mitAbzug=s.was==='datum' && !grund && (istAufgabeKarte(k) || (k.rhythmus && k.pflicht===true)), ab=mitAbzug ? abz : 0;
+  k.faelligkeit=ziel; k.schiebeGrund=grund||null;
+  schubProtokoll(k, ziel, ab);
+  if(s.was==='aussetzen' && k.rhythmus && S.tag && !(S.tag.routinenBilanz||[]).some(b=>b.id===k.id)) (S.tag.routinenBilanz=S.tag.routinenBilanz||[]).push({ id:k.id, titel:k.titel, verpasst:false, entschuldigt:true, bis:ziel });
+  ketteRausHeute(k); beruehre(k); saveKarten(); saveTag(); closeSheet(); F7.blattNeu=null; renderAlles();
+  toast((s.was==='aussetzen' ? '⏸️ Ausgesetzt bis ' : '↷ Auf ')+fmtDatum(ziel)+' ('+wochentagLang(ziel)+')'+(ab>0 ? ' · −'+ab+' Münzen' : grund ? ' · mit Grund' : '')); haptik(15);
+  if(k.airtableId) FSLive.senden('datensatz_aendern', { tabelle:'Aufgaben', id:k.airtableId, felder:{ Deadline:ziel, 'Schieben mit Grund':!!grund } }).catch(()=>{});
+  if(grund) f7ChatSenden('Trainer', '↷ „'+k.titel+'" → '+fmtDatum(ziel)+': '+grund, { art:'Schiebe-Grund', karte:k });
+  matrixAbfrageNach(k.id, 'schieben');
+}
+function f7SchiebenChat(){ const s=f7Sch(), k=S.karten.find(x=>x.id===s.kid); if(!k) return;
+  const schuebe=(S.intraday||[]).filter(e=>e && e.kartenId===k.id && e.typ==='schub').slice(-5).map(e=>fmtDatum(belFensterDatum(e.ts))+(e.ziel?' → '+fmtDatum(e.ziel):'')).join(', ');
+  closeSheet(); F7.blattNeu=null; f7ChatOeffnen('Trainer', 'karte', 'Zu „'+k.titel+'" ('+num(k.schiebeZaehler)+'× geschoben'+(schuebe ? ': '+schuebe : '')+'): '); }
+/* ── 7.7 · Planansicht ── */
+function f7Plan(){ if(!S.ui.f7plan || typeof S.ui.f7plan!=='object') S.ui.f7plan={ sicht:'heute' }; return S.ui.f7plan; }
+function f7PlanBloecke(datum){ const bl=tagesBloecke(datum)||[]; return bl.filter(b=>!b.parent).slice().sort((a,b)=>a.von-b.von); }
+function f7PlanIst(b){
+  // erste und letzte Sitzung des Tages im Zeitfenster des Blocks (Familie des Blocks), aus dem Stunden-Log
+  const heute=heuteApp(), kVon=new Map(S.karten.map(k=>[k.id,k])); let von=null, bis=null, n=0, erl=0, gesch=0;
+  (S.intraday||[]).forEach(e=>{ if(!e || !e.ts || belFensterDatum(e.ts)!==heute) return; const k=kVon.get(e.kartenId); if(!k) return;
+    if(SITZUNG_TYPEN.indexOf(e.typ)>=0 && num(e.minuten)>=1){ const x2=belX(e.ts), x1=x2-num(e.minuten)/60; if(x2<b.von-0.25 || x1>b.bis+0.25) return; if(b.typ==='dfm' && k.domain!=='dfm') return; if(b.typ==='privat' && k.domain==='dfm') return; n++; if(von==null || x1<von) von=x1; if(bis==null || x2>bis) bis=x2; }
+    if(e.typ==='abhaken'){ const x=belX(e.ts); if(x>=b.von && x<b.bis) erl++; } if(e.typ==='schub' && schubZaehlt(e)){ const x=belX(e.ts); if(x>=b.von && x<b.bis) gesch++; } });
+  return { von, bis, n, erl, gesch };
+}
+function f7PlanKarten(b, datum){
+  const bl=tagesBloecke(datum)||[], heute=heuteApp(), ids=new Set(); const out=[];
+  if(datum===heute){ aktiveKetteKarten().forEach(k=>{ if(karteBlockId(k, bl)===b.id && !ids.has(k.id)){ ids.add(k.id); out.push(k); } }); abhakLeisteKarten().forEach(k=>{ if(klRoutineBlock(k, bl)===b && !ids.has(k.id)){ ids.add(k.id); out.push(k); } }); }
+  else S.karten.filter(k=>k.status==='offen' && k.faelligkeit===datum && ((b.typ==='dfm')===(k.domain==='dfm'))).forEach(k=>{ if(!ids.has(k.id)){ ids.add(k.id); out.push(k); } });
+  return out;
+}
+function f7PlanHtml(){
+  const P=f7Plan(), heute=heuteApp(), sicht=P.sicht||'heute', datum=sicht==='morgen' ? anVorTage(heute, -1) : heute, ICON={ dfm:'💼', privat:'🌀', pause:'🌿', schlaf:'🌙' };
+  let h='<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> 🗓️ Plan · '+esc(fmtDatum(datum))+'<span class="f7-r"><span class="f7-seg klein">'+[['heute','Heute'],['morgen','Morgen'],['woche','Woche']].map(x=>'<div class="'+(sicht===x[0]?'on':'')+'" data-f7plansicht="'+x[0]+'">'+x[1]+'</div>').join('')+'</span></span></div></div>';
+  if(sicht==='woche'){ const W=f7KW(heute); let w='';
+    for(let i=0;i<7;i++){ const d=anVorTage(W.von, -i), bl=f7PlanBloecke(d), dfmStd=bl.filter(b=>b.typ==='dfm').reduce((a,b)=>a+(b.bis-b.von),0), n=S.karten.filter(k=>k.status==='offen' && k.faelligkeit===d).length, soll=S.karten.filter(k=>k.status==='offen' && k.faelligkeit===d).reduce((a,k)=>a+num(k.sollMin),0);
+      w+='<div class="f7-wt'+(d===heute?' jetzt':'')+'"><b>'+AN_WT[anWochentag(d)]+' '+anKurzDatum(d)+'</b><span>'+(dfmStd>0 ? fmtDauer(dfmStd*60)+' DFM geplant' : istWochenendTag(d) ? 'Wochenende' : 'kein Rahmen')+'</span><span>'+n+' Karte'+(n===1?'':'n')+(soll>0 ? ' · '+fmtDauer(soll) : '')+'</span></div>'; }
+    return h+'<div class="f7-woche">'+w+'</div><div class="f7-foot" data-f7planchat="1">💬 Plan mit dem Trainer ändern</div>'; }
+  const bl=f7PlanBloecke(datum), now=belX(jetztIso()), lb=datum===heute ? laufenderBlock(tagesBloecke()||[]) : null;
+  // Hinweis oben: Rest DFM heute gegen die verbleibende DFM-Blockzeit
+  if(datum===heute){ const rest=aktiveKetteKarten().filter(k=>k.status==='offen' && k.domain==='dfm').reduce((a,k)=>a+Math.max(0, num(k.sollMin)-heuteInvestiertMin(k)),0), frei=bl.filter(b=>b.typ==='dfm').reduce((a,b)=>a+Math.max(0, b.bis-Math.max(b.von, now)),0)*60;
+    const plan=(f7Postfach()||[]).filter(r=>f7PfKat(r)==='plan')[0];
+    h+='<div class="f7-sum'+(rest>frei?' warn':'')+'">Rest DFM heute: <b>'+fmtDauer(rest)+' geplant</b> in '+fmtDauer(frei)+' DFM-Zeit.'+(plan ? ' Trainer schlägt vor: '+esc(plan.Titel||'') : (rest>frei ? ' Das geht nicht auf — mit dem Trainer kürzen.' : ''))+'</div>'; }
+  const aend=datum===heute ? (f7ChatLaden()||[]).filter(r=>/plan/i.test(String(r.Art||'')) && String(r.Zeitstempel||'').slice(0,10)===heute) : [];
+  bl.forEach(b=>{ const ist=datum===heute ? f7PlanIst(b) : null, fertig=datum===heute && b.bis<=now && !(lb && lb.id===b.id), jetzt=lb && lb.id===b.id, karten=f7PlanKarten(b, datum), typ=b.typ==='dfm'?'d':b.typ==='privat'?'p':b.typ==='pause'?'e':'s';
+    const name=(ICON[b.typ]||'📦')+' '+esc(b.name||BLOCK_TYP_NAME[b.typ]||'Block');
+    h+='<div class="f7-b"><div class="tm'+(jetzt?' jetzt':'')+'">'+anFmtUhr(b.von)+(jetzt ? '<br>jetzt' : '')+'</div><div class="bx '+typ+(fertig?' done':'')+(jetzt?' now':'')+'">';
+    if(fertig){ h+='<div class="bh">'+name+'<span>'+(ist && ist.erl ? ist.erl+' ✓' : '')+(ist && ist.gesch ? ' · '+ist.gesch+' geschoben' : '')+(!ist || (!ist.erl && !ist.gesch) ? '✓' : '')+'</span></div>';
+      if(ist && ist.von!=null){ const abw=Math.round((ist.von-b.von)*60); h+='<div class="ist">Ist '+anFmtUhr(ist.von)+'–'+anFmtUhr(ist.bis)+' Uhr · '+fmtDauer((ist.bis-ist.von)*60)+(abw ? ' · <span class="'+(abw>0?'o':'g')+'">'+(abw>0?'+':'−')+Math.abs(abw)+' Min.</span>' : '')+'</div>'; } else h+='<div class="ist">keine Sitzung</div>'; }
+    else { h+='<div class="bh">'+name+'<span>'+(jetzt ? 'bis '+anFmtUhr(b.bis)+' Uhr' : fmtDauer((b.bis-b.von)*60))+'</span></div>';
+      karten.forEach(k=>{ const erl=k.status==='erledigt', laeuft=S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id, pz=S.tag && S.tag.pause && S.tag.pause.karteId===k.id && laeuft;
+        const rechts=erl ? '<small class="ok">✓ '+fmtUhr((k.abschluesse||[]).slice(-1)[0] && (k.abschluesse||[]).slice(-1)[0].ts || jetztIso())+'</small>' : pz ? '<small class="run">▶ bis '+fmtUhr(S.tag.pause.bis)+'</small>' : laeuft ? '<small class="run">▶ läuft</small>' : '<small>'+(num(k.sollMin)>0 ? fmtDauer(Math.max(0, num(k.sollMin)-heuteInvestiertMin(k))) : (istTickbar(k) ? Math.max(tickAnzahlHeute(k), num(k.ticksHeute))+'×' : ''))+'</small>';
+        h+='<div class="it" data-klfokus="'+k.id+'"><span>'+(k.erholung?'🌿 ':f7Onramps().some(o=>o.id===k.id)?'🚀 ':k.domain==='dfm' && matrixFeldVon(k)==='ziel'?'🎯 ':'')+esc(k.titel||'?')+(f7Onramps().some(o=>o.id===k.id)?' · Onramp':'')+'</span>'+rechts+'</div>'; });
+      if(jetzt) aend.forEach(a=>{ h+='<div class="chg">↻ '+fmtUhr(a.Zeitstempel)+' Trainer: '+esc(a.Text||'')+'</div>'; }); }
+    h+='</div></div>'; });
+  if(!bl.length) h+='<div class="leer">kein Tagesrahmen für diesen Tag</div>';
+  return h+'<div class="f7-foot" data-f7planchat="1">💬 Plan mit dem Trainer ändern</div>';
+}
+/* ══ Ebene 1 und Seiten: Zeichnen, Klicks, Haken ══ */
+{ const _alt=e1Rendern;
+  e1Rendern=function(){ const a=e1Art(); if(!a) return;
+    try{ if(a==='durchsuchen'){ el('dsBody').innerHTML=f7DurchsuchenHtml(); return; } if(a==='erfassen'){ el('erfBody').innerHTML=f7ErfassenHtml(); f7ErfasstStatus(); return; } if(a==='routinen'){ el('routBody').innerHTML=f7RoutinenHtml(); return; }
+      if(a==='chat'){ const b=el('chatBody'); b.innerHTML=f7ChatHtml(); b.scrollTop=b.scrollHeight; return; } if(a==='plan'){ el('planBody').innerHTML=f7PlanHtml(); return; } }catch(e){ console.warn('Paket 7', a, e); }
+    _alt(); }; }
+{ const _alt=renderSuche;
+  renderSuche=function(){
+    { const inp=el('suFreitext'); if(inp && document.activeElement!==inp && inp.value!==(S.ui.suFrage||'')) inp.value=S.ui.suFrage||''; if(inp) inp.placeholder='Suchen oder tippen …'; }
+    const q=suFrage(), body=el('suBody'); if(!body) return;
+    if(q){ _alt(); return; }
+    body.innerHTML=S.ui.suGruppe ? f7GruppeHtml(S.ui.suGruppe) : f7SucheStartHtml();
+    const cl=el('suClear'); if(cl) cl.hidden=true; }; }
+function oeffnePostfach(){ seiteZeigen('postfach'); }
+oeffneRoutinen=function(){ e1Oeffnen('routinen'); };
+function f7Klick(e){
+  const t=e.target; if(!t || !t.closest) return false; const d=x=>t.closest('['+x+']');
+  let z;
+  if(d('data-f7zurueck')){ const ds=f7Ds(); if(e1Art()==='durchsuchen' && ds.pfad.length){ ds.pfad.pop(); saveUi(); e1Rendern(); } else e1Oeffnen('suche'); return true; }
+  if((z=d('data-f7akt'))){ const a=z.dataset.f7akt; haptik(6); if(a==='erfassen') e1Oeffnen('erfassen'); else if(a==='routinen') e1Oeffnen('routinen'); else if(a==='pause') oeffnePause(); else if(a==='chat') f7ChatOeffnen('Trainer'); else if(a==='neu'){ e1Schliessen(); oeffneDetail(null); } else if(a==='durchsuchen'){ const ds=f7Ds(); ds.pfad=[]; saveUi(); e1Oeffnen('durchsuchen'); } return true; }
+  if((z=d('data-f7platz'))){ const id=z.dataset.f7platz; haptik(10); if(id==='pause'){ oeffnePause(); return true; } const k=id==='adhs' ? f7PauseKarte('adhs', true) : S.karten.find(x=>x.id===id); if(!k) return true; if(istTickbar(k)) kartenListeTick(k.id); else kartenListeCheck(k.id); e1Rendern(); return true; }
+  if((z=d('data-f7gruppe'))){ S.ui.suGruppe=z.dataset.f7gruppe; saveUi(); haptik(6); e1Rendern(); return true; }
+  if(d('data-f7gruppezu')){ S.ui.suGruppe=null; saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f7plan'))){ e.preventDefault(); f7Plan().sicht=z.dataset.f7plan||'heute'; saveUi(); e1Oeffnen('plan'); return true; }
+  if((z=d('data-f7plansicht'))){ f7Plan().sicht=z.dataset.f7plansicht; saveUi(); e1Rendern(); return true; }
+  if(d('data-f7planchat')){ f7ChatOeffnen('Trainer', 'plan', 'Plan heute ändern: '); return true; }
+  // Durchsuchen
+  if((z=d('data-f7dsmodus'))){ f7Ds().modus=z.dataset.f7dsmodus; saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f7abt'))){ const a=(f7Abteilungen()||[]).find(x=>x.id===z.dataset.f7abt); f7Ds().pfad=[{ art:'abteilung', id:z.dataset.f7abt, name:a?a.Name:'' }]; saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f7proj'))){ const p=(f7Projekte()||[]).find(x=>x.id===z.dataset.f7proj); f7Ds().pfad.push({ art:'projekt', id:z.dataset.f7proj, name:p?p.Projekt:'' }); saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f7chip'))){ f7ChipWahl(z.dataset.f7chip); return true; }
+  if((z=d('data-f7chipwert'))){ f7Ds().filter[z.dataset.f7chipkey]=z.dataset.f7chipwert; saveUi(); closeSheet(); e1Rendern(); return true; }
+  if((z=d('data-f7qk'))){ const [k,v]=z.dataset.f7qk.split(':'), f=f7Ds().filter; f[k]=f[k]===v ? 'alle' : v; saveUi(); e1Rendern(); return true; }
+  if(d('data-f7filtersave')){ f7FilterSpeichern(); return true; }
+  if((z=d('data-f7aufgabe'))){ f7AufgabeOeffnen(z.dataset.f7aufgabe); return true; }
+  // Erfassen
+  if((z=d('data-f7quelle'))){ f7QuelleWaehlen(z.dataset.f7quelle); return true; }
+  if((z=d('data-f7bezug'))){ f7BezugWaehlen(z.dataset.f7bezug); return true; }
+  if((z=d('data-f7bezugwahl'))){ const e2=f7Erf(); e2.bezug=z.dataset.f7bezugart; e2.bezugId=z.dataset.f7bezugwahl; e2.bezugName=z.dataset.f7bezugname; closeSheet(); e1Rendern(); return true; }
+  if(d('data-f7erfsenden')){ f7ErfassenSenden(); return true; }
+  // Routinen
+  if((z=d('data-f7routdom'))){ S.ui.f7routDom=z.dataset.f7routdom; saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f7routblock'))){ S.ui.f7routAuf=S.ui.f7routAuf===z.dataset.f7routblock ? null : z.dataset.f7routblock; saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f7rtick'))){ e.stopPropagation(); haptik(10); kartenListeTick(z.dataset.f7rtick); e1Rendern(); return true; }
+  if((z=d('data-f7rcheck'))){ e.stopPropagation(); haptik(12); kartenListeCheck(z.dataset.f7rcheck); e1Rendern(); return true; }
+  if((z=d('data-f7rplay'))){ e.stopPropagation(); haptik(10); leistePlay(z.dataset.f7rplay); fokusseiteNachStart(); return true; }
+  // Pause
+  if((z=d('data-f7pzart'))){ f7Pz().art=z.dataset.f7pzart; f7PauseRender(); return true; }
+  if((z=d('data-f7pzmin'))){ if(z.dataset.f7pzmin==='frei'){ const m=prompt('Dauer in Minuten', String(f7Pz().min)); if(m && num(m)>0) f7Pz().min=Math.round(num(m)); } else f7Pz().min=num(z.dataset.f7pzmin); f7PauseRender(); return true; }
+  if((z=d('data-f7pzwahl'))){ f7PauseWahl(z.dataset.f7pzwahl); return true; }
+  if((z=d('data-f7pzgesetzt'))){ const [was,id]=z.dataset.f7pzgesetzt.split(':'); if(was==='onramp') f7Pz().onrampId=id; else f7Pz().zielId=id; f7PauseRender(); return true; }
+  if(d('data-f7pzzurueck')){ f7PauseRender(); return true; }
+  if(d('data-f7pzstart')){ f7PauseStarten(); return true; }
+  if((z=d('data-f7onramp'))){ const [on,ziel]=z.dataset.f7onramp.split(':'); e4BrueckeSetzen(on, ziel, 'manuell'); closeSheet(); toast('🚀 Onramp gesetzt'); renderAlles(); return true; }
+  if((z=d('data-f7mic'))){ f7Mikro(z.dataset.f7mic); return true; }
+  // Chat
+  if((z=d('data-f7chatan'))){ const c=f7Chat(); c.an=z.dataset.f7chatan; c.anArt=null; c.anId=null; saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f7chatwahl'))){ const art=z.dataset.f7chatwahl, l=art==='abteilung' ? (f7Abteilungen()||[]).map(a=>({ id:a.id, name:a.Name })) : (f7Projekte()||[]).filter(p=>!/erledigt|archiv/i.test(String(p.Status||''))).map(p=>({ id:p.id, name:p.Projekt }));
+    openSheet(art==='abteilung' ? '🏢 Abteilung' : '📁 Projekt', '<div class="chips">'+l.map(x=>'<button class="chip" data-f7chatziel="'+esc(x.id)+'" data-f7chatart="'+art+'" data-f7chatname="'+esc(x.name)+'">'+esc(x.name)+'</button>').join('')+(l.length?'':'<div class="leer">lädt …</div>')+'</div>', '<button class="btn ghost sm" data-close="1">Schließen</button>'); return true; }
+  if((z=d('data-f7chatziel'))){ const c=f7Chat(); c.an=z.dataset.f7chatname; c.anArt=z.dataset.f7chatart; c.anId=z.dataset.f7chatziel; saveUi(); closeSheet(); e1Rendern(); return true; }
+  if((z=d('data-f7chatbezug'))){ const c=f7Chat(); c.bezug=c.bezug==='karte' ? null : 'karte'; saveUi(); e1Rendern(); return true; }
+  if(d('data-f7chatsenden')){ f7ChatAbschicken(); return true; }
+  if((z=d('data-f7chatantwort'))){ f7ChatAbschicken(z.dataset.f7chatantwort); return true; }
+  // Postfach
+  if((z=d('data-f7pffilter'))){ S.ui.f7pfFilter=z.dataset.f7pffilter; saveUi(); renderPostfach(); return true; }
+  if((z=d('data-f7pfauf'))){ const c=t.closest('[data-f7pfid]'); if(c){ S.ui.f7pfAuf=Object.assign({}, S.ui.f7pfAuf); S.ui.f7pfAuf[c.dataset.f7pfid]=true; saveUi(); renderPostfach(); } return true; }
+  if((z=d('data-f7pfantwort'))){ const c=t.closest('[data-f7pfid]'); if(!c) return true; let a=z.dataset.f7pfantwort; if(!a){ a=prompt('Antwort'); if(!a) return true; } f7PfEntscheiden(c.dataset.f7pfid, 'freigegeben', { felder:{ 'Pascals Anpassung':a } }); return true; }
+  if((z=d('data-f7pfent'))){ const c=t.closest('[data-f7pfid]'); if(!c) return true; const id=c.dataset.f7pfid, ent=z.dataset.f7pfent; if(ent==='angepasst') f7PfAnpassen(id); else if(ent==='abgelehnt') f7PfAblehnen(id); else f7PfEntscheiden(id, ent); return true; }
+  if((z=d('data-f7pfanpassengo'))){ const tx=el('f7pfText') ? el('f7pfText').value : ''; closeSheet(); f7PfEntscheiden(z.dataset.f7pfanpassengo, 'angepasst', { felder:{ 'Pascals Anpassung':tx } }); return true; }
+  if((z=d('data-f7pfablehnengo'))){ const g=el('f7pfGrund') ? el('f7pfGrund').value.trim() : ''; if(!g){ toast('Grund ist Pflicht'); return true; } closeSheet(); f7PfEntscheiden(z.dataset.f7pfablehnengo, 'abgelehnt', { felder:{ Ablehnungsgrund:g } }); return true; }
+  // Schieben
+  if((z=d('data-f7schwas'))){ f7Sch().was=z.dataset.f7schwas; f7SchiebenRender(); return true; }
+  if((z=d('data-f7schdatum'))){ const s=f7Sch(); if(z.dataset.f7schdatum==='frei'){ s.frei=!s.frei; } else { s.frei=false; s.datum=z.dataset.f7schdatum; } const g=el('f7schGrund'); if(g) s.grund=g.value; f7SchiebenRender(); return true; }
+  if(d('data-f7schgo')){ f7SchiebenGo(); return true; }
+  if(d('data-f7schchat')){ f7SchiebenChat(); return true; }
+  if(d('data-abgo')){ abhakDialogConfirm(); return true; }
+  return false;
+}
+document.addEventListener('click', e=>{ try{ if(f7Klick(e)){ e.stopPropagation(); } }catch(x){ console.warn('Paket 7 Klick', x); } }, true);
+document.addEventListener('input', e=>{ const t=e.target; if(!t) return; if(t.matches && t.matches('[data-f7erftext]')) f7Erf().text=t.value; if(t.matches && t.matches('[data-f7dssuche]')){ f7Ds().suche=t.value; clearTimeout(F7.dsT); F7.dsT=setTimeout(()=>e1Rendern(), 250); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target && e.target.id==='f7chatText'){ e.preventDefault(); f7ChatAbschicken(); } });
+/* Seite Postfach: beim Verlassen die Zeit gutschreiben; Stand des Postfachs alle 2 Minuten für das rote Band der Statusleiste */
+{ const _alt=ebeneSetzen; ebeneSetzen=function(p){ const vor=seiteAktuell(); _alt(p); if(vor==='postfach' && seiteAktuell()!=='postfach') f7PostfachVerlassen(); if(seiteAktuell()==='postfach' && !F7.pfSeit) F7.pfSeit=Date.now(); }; }
+function f7Takt(){ try{ f7PausePruefen(); }catch(e){} try{ if(FSLive.gekoppelt() && (!F7.lager.postfach || Date.now()-F7.lager.postfach.ts>120000)){ const r=f7Postfach(); } }catch(e){} }
 function ladeAlles(){
   S.karten   = DB.get('karten', []);
   // v2.5.0 · NEBENBEFUND: Die Unteraufgaben wurden erst NACH ladeAlles() in
@@ -10941,7 +11738,7 @@ function starteTicker(){
     kartenZeilenZeitLive();           // §6 (v3.7.0): gebuchte Zeit der laufenden Karte in den Kartenzeilen
     if(seiteAktuell()==='belohnung' && _sekTakt%5===0) renderBelohnung();   // Belohnungsseite live (alle 5 s, Perf)
     if(_sekTakt>0 && _sekTakt%60===0) diagrammeLive();   // v3.4.7: Tagesdiagramme live, nur sichtbare
-    if(_sekTakt%30===0){ try{ e4BrueckePruefen(); }catch(e){} }   // 4.0 · Paket 4: Brücke — Zielaufgabe nach 15 Min nicht gestartet?
+    if(_sekTakt%30===0){ try{ e4BrueckePruefen(); }catch(e){} try{ f7Takt(); }catch(e){} }   // 4.0 · Paket 4: Brücke — Zielaufgabe nach 15 Min nicht gestartet?
     _sekTakt++;
   }, 1000);
 }
@@ -18905,8 +19702,8 @@ function suFrage(){ return String(S.ui.suFrage||'').trim(); }
      S.fokus            unverändert: die GETRACKTE Karte (Uhr, Buchung) — auch pausiert
    Die Sichtbarkeit hängt per CSS allein an body[data-seite] und body[data-e1]. Ebene 3 (Animationen, e3Spielen) und die
    Dialoge (openSheet/closeSheet) sind flüchtig bzw. eine eigene Klasse und stehen nicht in diesem Zustand. */
-const SEITEN=['fokus','belohnung','statistik','einst'];
-const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch'];
+const SEITEN=['fokus','postfach','belohnung','statistik','einst'];   // 4.0 · Paket 7: Postfach
+const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch','durchsuchen','erfassen','routinen','chat','plan'];   // 4.0 · Paket 7
 let _e1=null;
 function seiteAktuell(){ const s=S.ui && S.ui.seite; return SEITEN.indexOf(s)>=0 ? s : 'fokus'; }
 function e1Art(){ return _e1 ? _e1.art : null; }
@@ -18931,7 +19728,7 @@ function ebeneDarstellen(){
 function ebeneRendern(){
   renderFokusleiste();
   const s=seiteAktuell();
-  if(s==='statistik') renderStatistik(); else if(s==='einst') renderEinst(); else if(s==='belohnung') renderBelohnung(); else renderFokus();
+  if(s==='statistik') renderStatistik(); else if(s==='einst') renderEinst(); else if(s==='belohnung') renderBelohnung(); else if(s==='postfach') renderPostfach(); else renderFokus();
   if(_e1) e1Rendern();
 }
 function e1Rendern(){
@@ -18951,7 +19748,7 @@ function ebeneSetzen(p){
   if(p.e1!==undefined){ const e=(typeof p.e1==='string') ? { art:p.e1 } : p.e1;
     _e1 = (e && E1_ARTEN.indexOf(e.art)>=0) ? { art:e.art, arg:e.arg||{} } : null; }
   if(vorE1==='tagebuch' && e1Art()!=='tagebuch'){ _tb=null; tagebuchLeeren(); }   // §1 (v3.8.1)
-  if(vorE1==='suche' && e1Art()!=='suche'){ S.ui.suFrage=''; const f=el('suFreitext'); if(f) f.value=''; }   // die Suche schliesst mit leerem Feld
+  if(vorE1==='suche' && e1Art()!=='suche'){ S.ui.suFrage=''; S.ui.suGruppe=null; const f=el('suFreitext'); if(f) f.value=''; }   // 4.0 · Paket 7: auch die Gruppe   // die Suche schliesst mit leerem Feld
   saveUi();
   ebeneDarstellen();
   if(seiteAktuell()!==vorSeite || p.oben){ try{ const m=document.querySelector('main'); if(m) m.scrollTop=0; }catch(e){} }
