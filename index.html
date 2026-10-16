@@ -86,15 +86,15 @@ select{appearance:none;-webkit-appearance:none;background-image:url("data:image/
 #statusbar{display:contents;font-variant-numeric:tabular-nums;cursor:pointer;-webkit-tap-highlight-color:transparent}   /* §3.1 (v3.5.0): Kinder liegen im Raster */
 #statusbar[hidden]{display:none}
 #statusbar .sb-r1{grid-column:1;grid-row:2;display:flex;align-items:center;gap:6px;min-width:0}
-:is(#statusbar,#e1Kopf) .sb-bar{position:relative;flex:1;min-width:0;height:12px;border-radius:6px;background:#0a0f1a;overflow:hidden}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar{position:relative;flex:1;min-width:0;height:12px;border-radius:6px;background:#0a0f1a;overflow:hidden}
 /* S1 (v1.3.2): Ist zweifarbig gestapelt (DFM blau · Privat gelb), Soll-Layer
    8:30–22:00-Fenster in Rot — Fläche bei Rückstand, schmaler Marker bei Vorsprung */
-:is(#statusbar,#e1Kopf) .sb-bar .ist{position:absolute;top:0;bottom:0}
-:is(#statusbar,#e1Kopf) .sb-bar .ist.dfm{left:0;background:#3b82f6}        /* §1.5 (v3.5.0): flaechig BLAU */
-:is(#statusbar,#e1Kopf) .sb-bar .ist.privat{background:#a855f7}            /* §1.5 (v3.5.0): flaechig LILA */
-:is(#statusbar,#e1Kopf) .sb-bar .prog{position:absolute;top:0;bottom:0;opacity:.3}   /* §3.2 (v3.5.0): Prognose bis Tagesende je Familie */
-:is(#statusbar,#e1Kopf) .sb-bar .soll{position:absolute;top:0;bottom:0;background:rgba(246,109,109,.55)}
-:is(#statusbar,#e1Kopf) .sb-bar .sollmark{position:absolute;top:-1px;bottom:-1px;width:2px;background:repeating-linear-gradient(180deg,#e8e9ec 0 2px,transparent 2px 4px);z-index:3}   /* §1.5 (v3.5.0): WEISS gepunktet */
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .ist{position:absolute;top:0;bottom:0}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .ist.dfm{left:0;background:#3b82f6}        /* §1.5 (v3.5.0): flaechig BLAU */
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .ist.privat{background:#a855f7}            /* §1.5 (v3.5.0): flaechig LILA */
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .prog{position:absolute;top:0;bottom:0;opacity:.3}   /* §3.2 (v3.5.0): Prognose bis Tagesende je Familie */
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .soll{position:absolute;top:0;bottom:0;background:rgba(246,109,109,.55)}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .sollmark{position:absolute;top:-1px;bottom:-1px;width:2px;background:repeating-linear-gradient(180deg,#e8e9ec 0 2px,transparent 2px 4px);z-index:3}   /* §1.5 (v3.5.0): WEISS gepunktet */
 #statusbar .sb-kleiste{display:block;height:6px;border-radius:3px;background:#1a1c20;margin:2px 3px 1px;overflow:hidden}   /* §1.2 (v3.3.0) */
 #statusbar .sb-kleiste i{display:block;height:100%;width:0}
 .ts-skala{display:block;position:relative;height:5px;border-radius:3px;background:#1a1c20;margin:4px 3px 1px}   /* §1.1 (v3.3.0) */
@@ -104,8 +104,8 @@ select{appearance:none;-webkit-appearance:none;background-image:url("data:image/
 .ts-skala .ts-ziel{position:absolute;top:-3px;bottom:-3px;width:0;border-left:2px dotted #e8e9ec}
 .ts-skala .ts-jetzt{position:absolute;top:50%;width:7.6px;height:7.6px;margin:-3.8px 0 0 -3.8px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.2)}
 .ts-skala .ts-karte{position:absolute;top:50%;width:6.4px;height:6.4px;margin:-3.2px 0 0 -3.2px;border-radius:50%}
-:is(#statusbar,#e1Kopf) .sb-bar .mark{position:absolute;top:-1px;bottom:-1px;width:1.5px;background:#d4af37;opacity:.9}   /* §3.2 (v3.5.0): Kauf-Schwellen GOLD */
-:is(#statusbar,#e1Kopf) .sb-bar .qmark{background:rgba(154,156,162,.4)!important;width:1px!important}   /* §3.2: Viertel-Striche GRAU 40 % */
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .mark{position:absolute;top:-1px;bottom:-1px;width:1.5px;background:#d4af37;opacity:.9}   /* §3.2 (v3.5.0): Kauf-Schwellen GOLD */
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .qmark{background:rgba(154,156,162,.4)!important;width:1px!important}   /* §3.2: Viertel-Striche GRAU 40 % */
 #statusbar .sbph{flex:none;font-size:9.5px;color:var(--mut2);white-space:nowrap}
 #statusbar .sbph b{margin-left:2px;font-weight:800}
 #statusbar .sbph.d b{color:#3b82f6}
@@ -1602,7 +1602,7 @@ body{background:var(--bg)}
 /* §9 (v2.4.0) · Kopfleiste und Umschalter neutral; aktiv = weisse Pille */
 #topbar{background:#000}
 #statusbar{background:#000}
-:is(#statusbar,#e1Kopf) .sb-bar{background:#1c1d20}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar{background:#1c1d20}
 #nav{background:rgba(10,10,11,.96);border-top:1px solid #1d1e21}
 #nav button.on{color:var(--txt)}
 .segmini button,.su-seg button{border-color:#2a2c30}
@@ -1898,19 +1898,19 @@ main{padding-left:8px;padding-right:8px}                       /* §1.3: Seitenr
 #topbar .sl-kr[hidden]{display:none}
 #topbar .sl-kr .uhr{font-size:19px;font-weight:700;color:#e8e9ec}
 #topbar .sl-kr .kp{font-size:12px;font-weight:700;color:#93c5fd}
-:is(#statusbar,#e1Kopf) .sb-bar{grid-column:1;position:relative;flex:none;height:20px;border-radius:10px;background:#1c1f25;overflow:hidden}
-:is(#statusbar,#e1Kopf) .sb-bar .ist.dfm{left:0;background:linear-gradient(90deg,#93c5fd,#3b82f6)}
-:is(#statusbar,#e1Kopf) .sb-bar .ist.privat{background:linear-gradient(270deg,#d8b4fe,#a855f7)}
-:is(#statusbar,#e1Kopf) .sb-bar .prog{opacity:.28}
-:is(#statusbar,#e1Kopf) .sb-bar .ist.dfm.prog{background:#3b82f6}
-:is(#statusbar,#e1Kopf) .sb-bar .ist.privat.prog{background:#a855f7}
-:is(#statusbar,#e1Kopf) .sb-bar .mark{width:2px;background:#d4af37;opacity:1}
-:is(#statusbar,#e1Kopf) .sb-bar .sollmark{top:-1px;bottom:-1px;width:2px;background:repeating-linear-gradient(180deg,#e8e9ec 0 2px,transparent 2px 5px)}
-:is(#statusbar,#e1Kopf) .sb-bar .zahl{position:absolute;top:0;bottom:0;display:flex;align-items:center;z-index:4;font-size:11.5px;font-weight:750;padding:0 7px;white-space:nowrap;color:#fff;text-shadow:0 0 3px rgba(0,0,0,.85),0 1px 1px rgba(0,0,0,.9)}
-:is(#statusbar,#e1Kopf) .sb-bar .zahl.d{left:0}
-:is(#statusbar,#e1Kopf) .sb-bar .zahl.p{right:0}
-:is(#statusbar,#e1Kopf) .sb-bar .zahl.s{transform:translateX(-50%);padding:0}
-:is(#statusbar,#e1Kopf) .sb-bar .zahl.s b{background:rgba(0,0,0,.72);border:1px solid rgba(232,233,236,.55);border-radius:6px;padding:0 5px;line-height:15px;font-weight:750;text-shadow:none}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar{grid-column:1;position:relative;flex:none;height:20px;border-radius:10px;background:#1c1f25;overflow:hidden}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .ist.dfm{left:0;background:linear-gradient(90deg,#93c5fd,#3b82f6)}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .ist.privat{background:linear-gradient(270deg,#d8b4fe,#a855f7)}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .prog{opacity:.28}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .ist.dfm.prog{background:#3b82f6}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .ist.privat.prog{background:#a855f7}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .mark{width:2px;background:#d4af37;opacity:1}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .sollmark{top:-1px;bottom:-1px;width:2px;background:repeating-linear-gradient(180deg,#e8e9ec 0 2px,transparent 2px 5px)}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .zahl{position:absolute;top:0;bottom:0;display:flex;align-items:center;z-index:4;font-size:11.5px;font-weight:750;padding:0 7px;white-space:nowrap;color:#fff;text-shadow:0 0 3px rgba(0,0,0,.85),0 1px 1px rgba(0,0,0,.9)}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .zahl.d{left:0}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .zahl.p{right:0}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .zahl.s{transform:translateX(-50%);padding:0}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .zahl.s b{background:rgba(0,0,0,.72);border:1px solid rgba(232,233,236,.55);border-radius:6px;padding:0 5px;line-height:15px;font-weight:750;text-shadow:none}
 #statusbar .sl-z3{grid-column:1;display:grid;grid-template-columns:44px 64px 1fr 8px 72px;column-gap:8px;align-items:stretch;height:72px;min-width:0}
 #statusbar .sb-cell{display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:0;text-align:left;overflow:hidden}
 #statusbar .akku .w{font-size:17px;font-weight:750;white-space:nowrap}
@@ -2142,9 +2142,9 @@ table.zt .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin
 @media (prefers-reduced-motion: reduce){ .mal-puls{animation:none} }
 .badge.zb{left:auto;top:auto;right:8px;bottom:8px;font-size:11px;font-weight:500}
 /* ══ HOTFIX 3.5.2 §1 · STATUSLEISTE (Draft Nr. 1) ══ */
-:is(#statusbar,#e1Kopf) .sb-bar .live{position:absolute;top:0;bottom:0;display:none;z-index:1;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 2px,transparent 2px 5px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
-:is(#statusbar,#e1Kopf) .sb-bar .live.dfm{background-color:#93c5fd}
-:is(#statusbar,#e1Kopf) .sb-bar .live.privat{background-color:#d8b4fe}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .live{position:absolute;top:0;bottom:0;display:none;z-index:1;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 2px,transparent 2px 5px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .live.dfm{background-color:#93c5fd}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .live.privat{background-color:#d8b4fe}
 #statusbar .sl-z3{grid-template-columns:64px 1fr 72px;column-gap:8px;height:72px}
 #statusbar .konto{justify-content:space-between;gap:0;padding:1px 0}
 #statusbar .konto div{font-size:12.5px;font-weight:700;line-height:1}
@@ -2216,11 +2216,11 @@ table.zt .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin
 .kl-chip span{display:block;height:32px;line-height:30px;padding:0 12px;border-radius:16px;background:#23262d;border:1px solid #2a2d33;color:#e8e9ec;font-size:12.5px;font-weight:650;white-space:nowrap;box-sizing:border-box}
 .kl-chip.on span{border-color:#fff}
 /* ══ 3.5.4 §1 · Statusleiste: Grenze GRUEN auf der erreichten Seite, rote Ueberschuss-Strecke (Draft Nr. 1) ══ */
-:is(#statusbar,#e1Kopf) .sb-bar .sollmark.okL{width:3px;margin-left:-.5px;background:linear-gradient(90deg,#3ecf8e 0 50%,transparent 50%)}
-:is(#statusbar,#e1Kopf) .sb-bar .sollmark.okR{width:3px;margin-left:-.5px;background:linear-gradient(90deg,transparent 50%,#3ecf8e 50%)}
-:is(#statusbar,#e1Kopf) .sb-bar .sollmark.okL.okR{background:#3ecf8e}
-:is(#statusbar,#e1Kopf) .sb-bar .rot{position:absolute;top:0;bottom:0;display:none;z-index:2}
-:is(#statusbar,#e1Kopf) .sb-bar .zahl.s b.rp{border:0;background:none;padding:0;text-shadow:0 0 3px #000,0 1px 1px #000}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .sollmark.okL{width:3px;margin-left:-.5px;background:linear-gradient(90deg,#3ecf8e 0 50%,transparent 50%)}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .sollmark.okR{width:3px;margin-left:-.5px;background:linear-gradient(90deg,transparent 50%,#3ecf8e 50%)}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .sollmark.okL.okR{background:#3ecf8e}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .rot{position:absolute;top:0;bottom:0;display:none;z-index:2}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .zahl.s b.rp{border:0;background:none;padding:0;text-shadow:0 0 3px #000,0 1px 1px #000}
 /* ══ 3.5.4 §2 · Fokus: Navigation oben · Der Tag: Ringe DFM / Privat (Draft Nr. 2) ══ */
 :is(#fokusAktiv,.fk-ohne) .knav.fk-swipe.fk-oben{margin:0 0 10px;grid-template-columns:auto 1fr auto}
 :is(#fokusAktiv,.fk-ohne) .knav.fk-swipe button.sw.vorn{justify-self:center;padding:0 10px}
@@ -2350,36 +2350,146 @@ img.objimg.laedt{opacity:0}
 .ik-fest{font-size:10.5px;color:#9a9ca2;margin-left:6px}
 /* ══ 3.7.0 §4 · Statusleiste: Punkteleiste oben, darunter Ring · Titel · Restzeit · Kartenpunkte; Töpfe-Zeile = Countdown ══ */
 #topbar .sl-z1{order:2}
-:is(#statusbar,#e1Kopf) .sb-bar{order:1}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar{order:1}
 #statusbar .sl-z3{order:3}
 #statusbar .konto .kf span{color:#e8e9ec;font-variant-numeric:tabular-nums}
 /* §4a · Pace-Leiste direkt unter dem Mini-Diagramm (5 px), darunter die Live-Beschriftungen 10 px tabular-nums */
 #statusbar .sl-pace .plbl{position:relative;display:block;height:12px;margin-top:1px;font-size:10px;line-height:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 #statusbar .sl-pace .plbl b{position:absolute;top:0;transform:translateX(-50%)}
 #statusbar .sl-pace .plbl b.pfeil{left:auto;right:0;transform:none}
+/* ══ 4.0 · Paket 5 · Statusleiste und Fokusseite nach Punkt 4 ══════════════════════════════════ */
+#topbar .inner.f4{display:block;padding:6px 8px 8px}
+#f4sb{font-variant-numeric:tabular-nums}
+#f4sb .sb-bar{height:22px}
+.f4-er{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:11.5px;color:#9a9ca2}
+.f4-er .t{flex:1;height:5px;border-radius:3px;background:#262a32;position:relative;overflow:hidden}
+.f4-er .t i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#99f6e4,#2dd4bf)}
+.f4-er .t s{position:absolute;top:0;bottom:0;width:0;border-left:1px dotted #fff;margin-left:-1px}
+.f4-er .w{color:#99f6e4;font-weight:700}
+.f4-kz{display:flex;align-items:center;gap:10px;margin-top:8px;min-width:0}
+.f4-ring{width:66px;height:66px;border-radius:50%;flex:none;padding:4px}
+.f4-ring .av{width:58px;height:58px;border-radius:50%;background:#1a1d22;position:relative;overflow:hidden;border:2px solid #000}
+.f4-ring .av img{position:absolute;left:50%;top:4px;height:92px;transform:translateX(-50%);pointer-events:none}
+.f4-kz .mid{flex:1;min-width:0}
+.f4-kz .ti{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f4-kz .ti.idle{color:#5d6d88}
+.f4-stufen{display:flex;align-items:center;gap:3px;margin-top:6px;min-width:0}
+.f4-stufen span{width:20px;height:8px;border-radius:2px;background:#262a32;flex:none}
+.f4-stufen.klein span{width:16px;height:7px}
+.f4-stufen .u{background:rgba(246,109,109,.25)}.f4-stufen .s{background:#e8e9ec}.f4-stufen .o{background:#3ecf8e}.f4-stufen .c{outline:2px solid #fff;outline-offset:1px}
+.f4-stufen em{font-style:normal;font-size:11.5px;color:#9a9ca2;margin-left:6px;line-height:1.15;min-width:0}
+.f4-kz .rz{text-align:right;flex:none}
+.f4-kz .rz .z{font-size:22px;font-weight:700;line-height:1.1}
+.f4-kz .rz .p{font-size:13px;font-weight:700}
+.f4-onr{margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:4px 8px;border-radius:7px;background:rgba(212,175,55,.14);border:1px solid rgba(212,175,55,.5);color:#f3dc8a;cursor:pointer}
+.f4-onr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f4-onr b{flex:none}
+.f4-onr.dr{background:rgba(246,109,109,.16);border-color:rgba(246,109,109,.7);color:#ffb4b4}
+.f4-r3{display:grid;grid-template-columns:92px minmax(0,1fr) 70px;gap:8px;margin-top:8px;align-items:stretch}
+.f4-r3 .kp{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;min-width:0}
+.f4-r3 .kp>div{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.f4-r3 .fb{display:flex;gap:2px;align-items:flex-end;height:14px}
+.f4-r3 .fb i{display:block;width:7px;border-radius:1px}
+.f4-r3 .lbl{font-size:11.5px;color:#9a9ca2;font-weight:500}
+.f4-r3 .rang{padding:0 6px;border:1.5px solid #e8e9ec;border-radius:6px;font-size:12px;line-height:16px}
+.f4-r3 .amp{width:9px;height:9px;border-radius:50%;background:#3ecf8e;flex:none}
+.f4-r3 .pf{background:#262a32;color:#9a9ca2;border-radius:9px;padding:0 6px;font-size:12px;line-height:17px}
+.f4-r3 .pf.an{background:#f66d6d;color:#fff}
+.f4-r3 .mitte{min-width:0}
+.f4-r3 .kurve{background:#0f1114;border-radius:8px;height:44px;position:relative;overflow:hidden}
+.f4-r3 .kurve svg{display:block;width:100%;height:44px}
+.f4-r3 .kurve b{position:absolute;left:22px;top:3px;font-size:15px}
+.f4-r3 .kurve .ph{position:absolute;right:8px;top:6px;font-size:24px;font-weight:700;line-height:1}
+.f4-pace{position:relative;height:12px;border-radius:6px;margin-top:9px;background:#262a32}
+.f4-pace i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.f4-pace .m{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff;margin-left:-1px}
+.f4-pace .r{position:absolute;top:-2px;color:#a855f7;font-size:13px;line-height:1;margin-left:-6px}
+.f4-pl2{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-top:3px;gap:6px;white-space:nowrap;overflow:hidden}
+.f4-r3 .mx{border-radius:8px;background:linear-gradient(90deg,rgba(246,109,109,.25),rgba(62,207,142,.3));position:relative;overflow:hidden;min-height:92px;cursor:pointer}
+.f4-r3 .mx svg{position:absolute;inset:0;width:100%;height:100%}
+/* 02 Karten-Kern */
+.f4kern .kkpis.f4{gap:10px}
+.f4kern .kkpi .w.gross{font-size:30px}
+.f4kern .kkpi .w{font-size:24px}
+.f4kern .kkpi.zeit .w{font-size:28px}
+.f4kern .kkpi .s{font-size:12.5px;color:#9a9ca2;margin-top:3px;white-space:normal}
+.f4-onb{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.55);color:#f3dc8a}
+.f4-onb.leer{opacity:.85}
+.f4-onb .ot{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}.f4-onb .ot span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f4-onb .om{font-weight:700;flex:none}
+.f4-onb .ok{display:flex;gap:6px;align-items:center;margin-top:7px;flex-wrap:wrap}
+.f4-onb .ok button{font:600 13px system-ui;color:#000;background:#d4af37;border:0;border-radius:8px;padding:6px 11px;min-height:32px}
+.f4-onb .ok button+button{background:#2a2a20;color:#f3dc8a;border:1px solid rgba(212,175,55,.6)}
+.f4-onb .oh{font-size:11.5px;color:#cdbb7a}
+/* 03 Tempo der Karte */
+.f4-kt .f4-kt-h{font-size:13.5px;color:#9a9ca2}
+.f4-kt-b{position:relative;height:64px;margin-top:6px}
+.f4-kt-b .bahn{position:absolute;left:0;right:0;top:30px;height:10px;border-radius:5px;background:#262a32}
+.f4-kt-b .ist{position:absolute;left:0;top:30px;height:10px;border-radius:5px;background:linear-gradient(90deg,#c7c9ce,#e8e9ec)}
+.f4-kt-b .str{position:absolute;top:30px;height:10px}
+.f4-kt-b .jetzt{position:absolute;top:26px;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#000;border:3px solid #e8e9ec}
+.f4-kt-b .raute{position:absolute;top:24px;margin-left:-11px;font-size:20px;line-height:1}
+.f4-kt-b .satz{position:absolute;top:27px;margin-left:-1.5px;width:3px;height:16px;background:#9a9ca2}
+.f4-kt-b .l1{position:absolute;top:0;left:0;font-weight:700;font-size:15px;white-space:nowrap}
+.f4-kt-b .l2{position:absolute;top:0;right:0;font-weight:700;font-size:15px;white-space:nowrap}
+.f4-kt-b .l1.re{left:auto;right:0}.f4-kt-b .l2.li{right:auto;left:0}
+.f4-kt-b .l3{position:absolute;right:0;top:48px;font-size:12.5px;color:#9a9ca2}
+.f4-s{font-size:12.5px;color:#9a9ca2;margin-top:4px}
+/* 04 Ringe */
+.f4-ringe{display:flex;justify-content:space-around;padding:4px 0}
+.f4-ringe .rg{position:relative;width:108px;height:108px}
+.f4-ringe .rg svg{position:absolute;inset:0;width:100%;height:100%}
+.f4-ringe .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.f4-ringe .c small{font-size:11px;font-weight:700}.f4-ringe .c b{font-size:20px;line-height:1.1}.f4-ringe .c span{font-size:10.5px;color:#9a9ca2}
+/* 05 Tempo und Blöcke */
+.f4-kp4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.f4-kp4 div{background:#1a1d22;border-radius:10px;padding:8px 10px;min-width:0}
+.f4-kp4 b{font-size:19px;white-space:nowrap}.f4-kp4 small{display:block;font-size:11.5px;color:#9a9ca2;margin-top:2px}
+/* 06 Tagesprognose */
+.f4-prog .r{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:10px}
+.f4-prog .lb{font-size:13px;font-weight:700;white-space:nowrap}
+.f4-prog .bar{position:relative;height:14px;border-radius:7px;background:#262a32}
+.f4-prog .bar i{position:absolute;top:0;bottom:0;box-sizing:border-box}
+.f4-prog .bar .z{position:absolute;top:-4px;bottom:-4px;border-left:1.5px dotted #fff}
+.f4-prog .df{font-size:12.5px;font-weight:700;text-align:right;max-width:92px;line-height:1.15}
+.f4-prog .sub{grid-column:2/4;font-size:11.5px;color:#9a9ca2;margin-top:-4px}
+/* 07 Outfit-Treppe */
+.f4-ot .hd{display:flex;justify-content:space-between;align-items:baseline;gap:6px}.f4-ot .hd b{font-size:17px}.f4-ot .hd span{font-size:12.5px;color:#9a9ca2;text-align:right}
+.f4-ot .st{display:flex;align-items:flex-end;gap:8px;height:150px;margin-top:12px;padding:0 4px}
+.f4-ot .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.f4-ot .col{width:100%;border-radius:6px 6px 2px 2px;display:flex;align-items:flex-start;justify-content:center;padding-top:5px;font-size:15px;box-sizing:border-box;text-align:center;line-height:1.3}
+.f4-ot .col small{font-size:11px}
+.f4-ot .col img{position:absolute;bottom:-60px;left:50%;transform:translateX(-50%);height:190px;opacity:.85;pointer-events:none}
+.f4-ot .lbl{font-size:12px;color:#9a9ca2;white-space:nowrap}
+.f4-ot .nx{margin-top:10px;padding:8px 10px;border-radius:9px;background:#1a1d22;font-size:13.5px}
+.f4-ot .lg{font-size:11.5px;color:#9a9ca2;margin-top:8px}
+/* 09 Matrix heute */
+.f4-mx .hd{display:flex;justify-content:space-between;align-items:baseline}.f4-mx .hd b{font-size:17px}.f4-mx .hd span{font-size:12.5px;color:#9a9ca2}
+.f4-mx .mx{position:relative;margin-top:10px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.f4-mx .q{padding:8px 10px;font-size:13px;color:#c9cbd0}.f4-mx .q b{display:block;font-size:20px;color:#e8e9ec}
+.f4-mx .q1{background:rgba(246,109,109,.16)}.f4-mx .q2{background:rgba(62,207,142,.14);text-align:right}.f4-mx .q3{background:rgba(246,109,109,.08);display:flex;flex-direction:column;justify-content:flex-end}.f4-mx .q4{background:rgba(62,207,142,.08);text-align:right;display:flex;flex-direction:column;justify-content:flex-end}
+.f4-mx .mx svg{position:absolute;inset:0;width:100%;height:100%}
+.f4-mx .bar{display:flex;height:12px;border-radius:6px;overflow:hidden;margin-top:12px}
+.f4-mx .legende i{width:10px;height:10px}
+/* 10 Flow und Belastung */
+.f4-fb .t{font-weight:700;font-size:17px}
+.f4-fb .st{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px}.f4-fb .st b{font-size:15px}.f4-fb .st span{font-weight:700;font-size:18px}
+.f4-fb .fl{position:relative;height:12px;border-radius:6px;background:#262a32;margin-top:8px}.f4-fb .fl i{position:absolute;top:0;bottom:0}.f4-fb .fl s{position:absolute;left:50%;top:-3px;bottom:-3px;border-left:1.5px dotted #fff}
+.f4-fb .k3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.f4-fb .k3 div{background:#1a1d22;border-radius:9px;padding:7px 9px}.f4-fb .k3 b{font-size:18px}.f4-fb .k3 small{display:block;font-size:11px;color:#9a9ca2}
+.f4-fb .ac{position:relative;margin-top:8px}.f4-fb .acb{position:relative;height:14px;border-radius:7px}.f4-fb .acb s{position:absolute;top:-4px;bottom:-4px;width:4px;margin-left:-2px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #000}
+.f4-fb .acl{display:flex;font-size:11.5px;color:#9a9ca2;text-align:center;margin-top:4px}.f4-fb .acl span{display:inline-block;overflow:hidden;white-space:nowrap}
+.f4-fb .acv{position:absolute;right:0;top:-30px;font-size:20px;font-weight:700}
+.f4-fb .am2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.f4-fb .am2 div{background:#1a1d22;border-radius:9px;padding:8px 9px;border-left:4px solid}.f4-fb .am2 b{font-size:18px}.f4-fb .am2 small{display:block;font-size:11px;color:#9a9ca2}.f4-fb .am2 em{display:block;font-style:normal;font-size:12px;font-weight:700}
+.f4-fb .rg{margin-top:10px;background:#1a1d22;border-radius:10px;padding:9px 10px}
+.f4-fb .rg .l{display:flex;justify-content:space-between;font-size:13.5px;gap:6px}.f4-fb .rg .b{position:relative;height:10px;border-radius:5px;background:#262a32;margin-top:7px}.f4-fb .rg .b i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,#c7c9ce,#e8e9ec)}.f4-fb .rg .b s{position:absolute;top:-3px;bottom:-3px;border-left:1.5px dotted #fff;margin-left:-1px}
+.f4-fb .rg small{display:block;font-size:11.5px;color:#9a9ca2;margin-top:5px}
 </style>
 </head>
 <body>
 
-<div id="topbar"><div class="inner">
-  <!-- §2 (v3.5.1): Statusleiste nach Draft — Zeile 1 Ring · Titel · Uhr/Kartenpunkte · Zeile 2 Punkteleiste mit Zahlen · Zeile 3 Akku · Konto · Punkte-Block · Tempoleiste senkrecht · Matrix -->
-  <div class="sl-z1">
-    <button class="tb-figur" id="btnFigur" aria-label="Belohnung und Shop"><span class="tb-ring" id="tbRing"><img id="tbFigurImg" alt=""></span></button>
-    <div class="mid" id="fkMid"><div class="title idle" id="fkTitle">Kein Fokus aktiv</div></div>
-    <div class="sl-kr" id="fkSub" hidden><div class="uhr timer" id="fkTimer">0:00</div><div class="kp ppm" id="fkPts"></div></div>
-  </div>
-  <div id="statusbar" hidden>
-    <div class="sb-bar" id="sBar"></div><!-- C3 (v3.8.0): Inhalt aus punkteleisteGeruest('sBar') — dieselbe Funktion füllt #e1Bar -->
-    <!-- §1 (v3.5.2): Zeile 3 — Akku · Wohlstand · Münzen · Töpfe untereinander | Mini-Kurve mit Gesamtpunkten und P/h, darunter Pace-Leiste + Trendpfeil | Matrix 72×72 -->
-    <div class="sl-z3">
-      <div class="sb-cell konto" id="sZKonto"><div class="ka" id="sZAkku"><i><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M6.2 0 L1.4 5.7 H4.5 L3.6 10 L8.6 4.1 H5.4 Z" fill="currentColor"/></svg></i><b class="w">– %</b></div><div class="kw" title="Farbe" aria-label="Farbe"><i></i><span id="sKW">0</span></div><div class="km" title="Münzen" aria-label="Münzen"><i></i><span id="sKM">0</span></div><div class="kf" title="Bis zum nächsten malbaren Feld" aria-label="Bis zum nächsten malbaren Feld"><i></i><span id="sKF">—</span></div></div>
-      <div class="sl-mitte">
-        <button class="sb-cell punkte tb-kurve grau" id="btnKurve" aria-label="Tagesverlauf — Punkte gegen Soll"><span class="sl-kurve" id="sKurve"></span><span class="gesamt" id="fkRight"></span><span class="tempo" id="sTempo"></span></button>
-        <div class="sl-pace" id="sZTempo" aria-hidden="true"></div>
-      </div>
-      <div class="sb-cell mx" id="sZMatrix" aria-label="Matrix-Verlauf 5 Stunden — zur Matrix-Spur"><span class="sb-mv" id="sMv"></span></div>
-    </div>
-  </div>
+<div id="topbar"><div class="inner f4">
+  <!-- 4.0 · Paket 5: die Statusleiste nach Zielbild 01 — gerendert von f4StatusleisteRender() -->
+  <div id="f4sb"></div>
 </div>
 </div>
 
@@ -2529,7 +2639,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-16-3';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-16-4';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -3871,6 +3981,389 @@ function migration400(){
   S.meta.engine4={ ts:jetztIso(), version:APP_VERSION, ab:heuteApp() };
   S.meta.einstGeaendertTs=jetztIso();
   saveSettings(); saveMeta();
+}
+/* ══════════════════════════════════════════════════════════════════════
+   4.0 · Paket 5 · STATUSLEISTE UND FOKUSSEITE nach Punkt 4 (Diagramme 01–10, Anordnung 4.5)
+   Gebaut nach Zielbild und Entwurf (261016_Punkt4_Bilder, 261016_Punkt4_Entwuerfe). Eine Grafik, eine Zeichenfunktion:
+   dieselben Funktionen zeichnen in Fokus und Statistik. Farbrollen 4.1: DFM BLAU · Privat LILA (Messwerte) · Koralle (warm),
+   Sonne (gelb), Türkis (kühl, 🌿 Erholung) nur für Farbe, Kulisse und Erholung. Formatregel: „08:44 Uhr“ · „45 Min.“ · „2 Std. 25 Min.“
+   ══════════════════════════════════════════════════════════════════════ */
+const F4={ WARM:'#ff7a59', SONNE:'#ffd23f', KUEHL:'#2dd4bf', KUEHL_HELL:'#99f6e4', GOLD_HELL:'#f3dc8a' };
+/* Soll-Werte der Tagesmap (Punkt 2.2) für die Kennzahlen von „Tempo und Blöcke“ */
+const F4_SOLL={ aufstehen:'08:15', fokus1:'09:45', senkeMin:105, schlaf:'22:30' };
+/* ── Formatregel (4.1) ─────────────────────────────────────────────── */
+function fmtUhr(ts){ if(!ts) return '—'; const d=new Date(ts); if(isNaN(d.getTime())) return '—'; return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' Uhr'; }
+function fmtUhrX(h){ if(h==null || !isFinite(h)) return '—'; return anFmtUhr(h)+' Uhr'; }
+function fmtDauer(min){ min=Math.max(0, Math.round(num(min))); if(min<=90) return min+' Min.'; const h=Math.floor(min/60), m=min%60; return h+' Std.'+(m ? ' '+m+' Min.' : ''); }
+function f4Zahl(v){ return fmtP(Math.round(num(v))); }
+/* ── Daten ─────────────────────────────────────────────────────────── */
+function f4ErholungMinHeute(){
+  const tid=aktuelleTagId(); let m=0;
+  (S.intraday||[]).forEach(e=>{ if(e && e.tagId===tid && e.erholung) m+=Math.max(num(e.minuten), num(e.tickMin)); });
+  if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs)){ const k=S.karten.find(x=>x.id===S.fokus.karteId); if(k && leiterArt(k)==='erholung') m+=(Date.now()-S.fokus.startMs)/60000; }
+  return m;
+}
+function f4ErholungZiel(){ return Math.max(1, num(S.settings.erholungZeitzielMin,120)); }
+/* geplante Erholungsminuten: Pausen- und Erholungsblöcke der Tagesstruktur, die noch nicht vorbei sind */
+function f4ErholungGeplant(){
+  let m=0; try{ const now=belX(jetztIso()); (tagesBloecke()||[]).filter(b=>!b.parent && (b.typ==='pause' || /erhol|abend|🌿/i.test(String(b.name||'')))).forEach(b=>{
+    const v=num(b.von)<5?num(b.von)+24:num(b.von), bi=num(b.bis)<5?num(b.bis)+24:num(b.bis); if(bi>now) m+=(bi-Math.max(v, now))*60; }); }catch(e){}
+  return Math.max(0, m);
+}
+/* Monotonie nach Foster: Ø Tageslast ÷ Standardabweichung über die letzten 7 Tage (heute live) */
+function f4Monotonie(){
+  const heute=heuteApp(), werte=[];
+  for(let i=6;i>=1;i--){ const d=anVorTage(heute, i); const h=(S.historie||[]).find(x=>x && x.datum===d && !x.luecke); if(h && h.urlaub) continue; werte.push(h ? e4Tageslast(h) : 0); }
+  if(S.tag && !urlaubHeute()) werte.push(Math.max(0, tagesPunkteLive()-0.5*e4ErholungPunkteTag(aktuelleTagId())));
+  if(werte.length<3) return { wert:null, stufe:'grau', text:'—' };
+  const m=werte.reduce((a,b)=>a+b,0)/werte.length, sd=Math.sqrt(werte.reduce((a,b)=>a+(b-m)*(b-m),0)/werte.length);
+  const w=sd>0 ? m/sd : (m>0 ? 9 : 0);
+  return { wert:w, stufe:w<1.5 ? 'gruen' : w<2 ? 'gelb' : 'rot', text:w<1.5 ? 'gut' : w<2 ? 'erhöht' : 'hoch', farbe:w<1.5 ? FARBE.GELBGRUEN : w<2 ? FARBE.GELB : FARBE.ROT };
+}
+function f4Belastung(){
+  let w=null; try{ w=acwrHeuteWerte(); }catch(e){}
+  const v=w ? w.v : null, zone=acwrZone(v), r=e4Rang(), mono=f4Monotonie();
+  const ampel=v!=null ? zone.c : (mono.wert!=null ? mono.farbe : FARBE.GRAU);
+  return { acwr:v, zone, mono, rang:r, ampel, dauerlast:num(r.dauerlast), spitzenlast:num(r.spitzenlast), schwelle:r.rang<10 ? e4RangSchwelle(r.rang+1) : null, eigene:e4RangSchwelle(r.rang) };
+}
+function f4PostfachStand(){ const p=(S.meta && S.meta.postfach) || {}; return { offen:num(p.offen), dringend:num(p.dringend), dringendText:p.dringendText||'', dringendBis:p.dringendBis||null }; }
+/* Pfeil der Statusleiste: r = P/h ist ÷ P/h nötig, Schwellen wie der Tempopfeil, Bewertungsfarben */
+function f4NoetigPfeil(g){
+  if(!(num(g.tempoZiel)>0)) return { sym:'✓', c:FARBE.GRUEN };
+  const r=num(g.tempoSchnitt)/num(g.tempoZiel); const st=tempopfeilStufe(r); return st || { sym:'→', c:FARBE.GELB };
+}
+function f4Bewertung(r){ return bewertungDiskret(r); }
+/* ── Mini-Kurve der Statusleiste (05): Punkte kumuliert WEISS, Prognose gestrichelt, Soll gepunktet ── */
+function f4MiniKurveSvg(g){
+  const W=250, H=44, heute=belFensterDatum(jetztIso()), now=belX(jetztIso());
+  const von=belX(new Date(g.startMs).toISOString()), bis=Math.max(von+1, belX(new Date(g.tagesEndeMs).toISOString()), now+0.25);
+  const K=diaTagKurve(heute,'alle'), max=Math.max(1, g.zielHeute, g.prognoseHeute, g.punkteHeute);
+  const X=x=>(x-von)/(bis-von)*W, Y=v=>H-2-Math.max(0,Math.min(1, v/max))*(H-6);
+  const pts=[]; for(let x=von; x<now; x+=Math.max(0.1,(now-von)/40)) pts.push({x:X(x), y:Y(K.wert(x))}); pts.push({x:X(now), y:Y(g.punkteHeute)});
+  const p=pts.length>1 ? '<path d="'+glattPfad(pts)+'" stroke="'+FARBE.WEISS+'" stroke-width="2.5" fill="none" stroke-linejoin="round"/>' : '';
+  const prog=g.prognoseHeute>g.punkteHeute ? '<path d="M'+X(now).toFixed(1)+','+Y(g.punkteHeute).toFixed(1)+' L'+W+','+Y(g.prognoseHeute).toFixed(1)+'" stroke="'+FARBE.WEISS+'" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>' : '';
+  const soll='<path d="M0,'+Y(0).toFixed(1)+' L'+W+','+Y(g.zielHeute).toFixed(1)+'" stroke="#fff" stroke-width="1" stroke-dasharray="2 3" opacity=".7" fill="none"/>';
+  return '<svg width="100%" height="44" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+soll+p+prog+'</svg>';
+}
+/* ── 01 · STATUSLEISTE ─────────────────────────────────────────────── */
+function f4StufenleisteHtml(o, klein){
+  if(!o) return '';
+  const stufen=[]; for(let s=o.start-2; s<=o.start+3; s++){ const cls=s<o.start ? 'u' : s===o.start ? 's' : (s<=o.stufe ? 'o' : ''); stufen.push('<span class="'+cls+(s===o.stufe?' c':'')+'"></span>'); }
+  const nx=e4OutfitNaechste();
+  return '<div class="f4-stufen'+(klein?' klein':'')+'">'+stufen.join('')+'<em>Outfit '+o.stufe+' · Start '+o.start+(nx ? ' · nächste: '+(nx==='erholung'?'🌿':'⚙') : ' · oben')+'</em></div>';
+}
+function f4RingFarbe(k){ if(!k || !(num(k.sollMin)>0)) return FARBE.GRUEN; const pct=istSekLive(k)/60/num(k.sollMin); return pct<=1 ? FARBE.GRUEN : pct<=1.2 ? FARBE.GELB : FARBE.ROT; }
+function f4RingAnteil(k){ if(!k) return 0; const soll=num(k.sollMin); if(soll>0) return Math.max(0, Math.min(1, istSekLive(k)/60/soll)); return ((istSekLive(k)%3600)/3600); }
+function f4StatusleisteHtml(){
+  const g=diaGroessen(), k=fokusKarte(), eb=energieBatterie(), konto_=S.belohnung ? konto() : 0, erh=f4ErholungMinHeute(), erhZ=f4ErholungZiel();
+  const o=S.tag ? e4Outfit() : null, pf=f4NoetigPfeil(g), pk=paceKarte(), B=f4Belastung(), pst=f4PostfachStand(), br=e4Bruecke(), W=e4BrueckeWerte();
+  const farbe=farbeHerkunftHeute(), fmax=Math.max(1, farbe.warm, farbe.gelb, farbe.kuehl);
+  const av=AVATAR_BILDER[Math.max(0, Math.min(AVATAR_BILDER.length-1, (typeof outfitHeute==='function'?outfitHeute():1)-1))];
+  const ringC=f4RingFarbe(k), ringP=Math.round(f4RingAnteil(k)*100);
+  let rz='', rp=''; if(k){ const r=restzeitAnzeige(k.sollMin, istSekLive(k)); rz='<div class="z" style="color:'+r.farbe+'">'+esc(r.text)+'</div>'; rp='<div class="p" style="color:'+famHell(k)+'">+'+fmtP(kartePunkte(k))+'</div>'; }
+  // Band Onramp (gold) · Band Dringend (rot)
+  let onr='';
+  if(br && br.onrampErledigtTs && !br.zielGestartetTs){ const rest=Math.max(0, num(W.zielMin,10)*60-(Date.now()-Date.parse(br.onrampErledigtTs))/1000); onr='<div class="f4-onr" data-f4ziel="'+esc(br.zielId||'')+'"><span>⏳ Onramp erledigt · Zielaufgabe starten</span><b>'+mmss(Math.round(rest))+' · +'+num(W.ziel,100)+'</b></div>'; }
+  if(pst.dringend>0) onr+='<div class="f4-onr dr" data-f4postfach="1"><span>❗ Dringend · '+esc(pst.dringendText||(pst.dringend+' Karte'+(pst.dringend===1?'':'n')))+'</span><b>📥 öffnen ›</b></div>';
+  // Tempo-Leiste: neutrale Bahn, Füllung 0 → live, Farbe = Bewertung live ÷ nötig, weißer Strich nötig, lila ◆ Ø der Karte
+  const live=pk ? num(pk.wert) : num(g.tempoSchnitt), noetig=num(g.tempoZiel), oe=pk ? num(pk.oe) : null;
+  const max=Math.max(1e-9, Math.max(live, noetig, oe||0)*1.15), P=v=>Math.max(0, Math.min(100, v/max*100)), fc=noetig>0 ? f4Bewertung(live/noetig) : FARBE.GRUEN;
+  const pace='<div class="f4-pace"><i style="width:'+P(live).toFixed(1)+'%;background:linear-gradient(90deg,'+farbeAlpha(fc,.45)+','+fc+')"></i>'+(noetig>0 ? '<span class="m" style="left:'+P(noetig).toFixed(1)+'%"></span>' : '')+
+    (oe!=null ? '<span class="r" style="left:'+P(oe).toFixed(1)+'%">◆</span>' : '')+'</div>'+
+    '<div class="f4-pl2">'+(oe!=null ? '<span style="color:'+FARBE.LILA+'">◆ Ø '+fmtP(oe)+'</span>' : '<span></span>')+'<span><span style="color:'+fc+'">live '+fmtP(live)+'</span>'+(noetig>0 ? ' · nötig '+fmtP(noetig) : ' · Ziel ✓')+'</span></div>';
+  const mv=matrixVerlaufSvg(matrixSpur().filter(p=>p && p.ts && Date.parse(p.ts)>=Date.now()-5*3600000), {klein:true});
+  return '<div class="sb-bar" id="sBar">'+punkteleisteGeruest('sBar')+'</div>'+
+    '<div class="f4-er"><span>🌿</span><div class="t"><i style="width:'+Math.min(100, erh/erhZ*100).toFixed(1)+'%"></i><s style="left:'+Math.min(100, 100).toFixed(1)+'%"></s></div><span class="w">'+Math.round(erh)+'</span><span>/ '+Math.round(erhZ)+' Min Erholung</span></div>'+
+    '<div class="f4-kz" data-f4titel="1">'+
+      '<div class="f4-ring" id="tbRing" style="background:conic-gradient('+ringC+' 0 '+ringP+'%,'+FARBE.LEER+' '+ringP+'% 100%)"><div class="av"><img src="'+av+'" alt="" draggable="false"></div></div>'+
+      '<div class="mid"><div class="ti'+(k?'':' idle')+'">'+(k ? esc(k.titel||'(ohne Titel)') : 'Kein Fokus aktiv')+'</div>'+f4StufenleisteHtml(o, true)+'</div>'+
+      '<div class="rz">'+rz+rp+'</div></div>'+onr+
+    '<div class="f4-r3">'+
+      '<div class="kp"><div><span style="color:'+(eb.akku!=null ? akkuFarbe(eb.akku) : FARBE.GRAU)+'">⚡</span>'+(eb.akku!=null ? Math.round(eb.akku)+' %' : '– %')+'</div>'+
+        '<div id="sZKonto"><span style="color:'+FARBE.GOLD+'">●</span><span style="color:'+FARBE.GOLD+'">'+fmtP(Math.round(konto_))+'</span></div>'+
+        '<div><span class="fb"><i style="height:'+Math.max(2, Math.round(farbe.warm/fmax*14))+'px;background:'+F4.WARM+'"></i><i style="height:'+Math.max(2, Math.round(farbe.gelb/fmax*14))+'px;background:'+F4.SONNE+'"></i><i style="height:'+Math.max(2, Math.round(farbe.kuehl/fmax*14))+'px;background:'+F4.KUEHL+'"></i></span><span class="lbl">Farbe</span></div>'+
+        '<div><span class="rang">R'+B.rang.rang+'</span><span class="amp" style="background:'+B.ampel+'"></span><span class="pf'+(pst.offen>0?' an':'')+'" data-f4postfach="1">📥 '+pst.offen+'</span></div></div>'+
+      '<div class="mitte" data-f4kurve="1"><div class="kurve">'+f4MiniKurveSvg(g)+'<b>'+fmtP(Math.round(g.punkteHeute))+'</b><span class="ph" style="color:'+pf.c+'">'+pf.sym+'</span></div>'+(urlaubHeute() ? '<div class="f4-pl2"><span>🏖 Urlaub</span></div>' : pace)+'</div>'+
+      '<div class="mx" data-f4matrix="1">'+mv+'</div></div>';
+}
+function f4StatusleisteRender(){
+  const host=el('f4sb'); if(!host) return;
+  if(!S.tag){ host.innerHTML='<div class="f4-kz"><div class="f4-ring" style="background:'+FARBE.LEER+'"><div class="av"><img src="'+AVATAR_BILDER[0]+'" alt=""></div></div><div class="mid"><div class="ti idle">Kein Tag gestartet</div></div></div>'; return; }
+  try{
+    host.innerHTML=f4StatusleisteHtml();
+    const g=diaGroessen(); punkteleisteZeichnen('sBar', g, S.belohnung?konto():0, punkteHeuteAnzeige());
+    if(_e1 && el('e1Bar')) punkteleisteZeichnen('e1Bar', g, S.belohnung?konto():0, punkteHeuteAnzeige());
+  }catch(e){ console.warn('Statusleiste', e); }
+}
+/* ── 02 · KARTEN-KERN: Onramp-Band ─────────────────────────────────── */
+function f4OnrampBandHtml(k){
+  if(!k || uhrLaeuftAuf(k)) return '';   // sichtbar, solange die Uhr der Fokuskarte nicht läuft
+  const br=e4Bruecke(), W=e4BrueckeWerte(), on=br && br.onrampId ? S.karten.find(x=>x.id===br.onrampId) : null;
+  if(on && br.zielId===k.id && !br.zielGestartetTs){
+    const l=uhrLaeuftAuf(on), min=Math.round(heuteInvestiertMin(on)), fertig=on.status==='erledigt';
+    return '<div class="f4-onb"><div class="ot"><span>🛫 Onramp · <b>'+esc(on.titel||'')+'</b></span><span class="om">'+(fertig ? '✓ erledigt' : min+' / '+Math.round(num(on.sollMin)||10)+' Min')+' · +'+num(W.onramp,100)+'</span></div>'+
+      '<div class="ok">'+(fertig ? '' : '<button data-f4onstart="'+on.id+'">'+(l?'⏸ Pause':'▶ Start')+'</button><button data-f4oncheck="'+on.id+'">✓</button>')+'<button data-f4onandere="'+k.id+'">andere ▾</button><span class="oh">danach diese Karte · Start in '+num(W.zielMin,10)+' Min = +'+num(W.ziel,100)+'</span></div></div>';
+  }
+  return '<div class="f4-onb leer"><div class="ot"><span>🛫 Onramp · <b>keine gewählt</b></span><span class="om">+'+num(W.onramp,100)+' · +'+num(W.ziel,100)+'</span></div><div class="ok"><button data-f4onandere="'+k.id+'">Onramp wählen ▾</button><span class="oh">leichte Karte unter 15 Min vor dieser Karte</span></div></div>';
+}
+/* ── 03 · TEMPO DER KARTE: Tagesschnitt jetzt → nach der Karte, grauer Strich = Satz ── */
+function f4KartenTempoHtml(k){
+  if(!k) return '';
+  const g=diaGroessen(), jetzt=Math.max(0, num(g.tempoSchnitt)), satz=leiterSatz(k);
+  const restMin=Math.max(0, num(k.sollMin)-istSekLive(k)/60), restP=Math.max(0, kartePunktePrognose(k)-kartePunkte(k));
+  const nach=(g.punkteHeute+restP)/Math.max(0.25, g.stundenBisher+restMin/60);
+  const max=Math.max(1, jetzt, nach, satz)*1.08, P=v=>Math.max(0, Math.min(100, v/max*100)), hoch=nach>=jetzt, c=hoch ? FARBE.GRUEN : FARBE.ORANGE;
+  const a=P(Math.min(jetzt, nach)), b=P(Math.max(jetzt, nach));
+  return '<div class="blk f4-kt"><div class="f4-kt-h">Was die Karte mit deinem Tagesschnitt macht · P/h</div>'+
+    '<div class="f4-kt-b"><div class="bahn"></div><div class="ist" style="width:'+P(jetzt).toFixed(1)+'%"></div><div class="str" style="left:'+a.toFixed(1)+'%;width:'+(b-a).toFixed(1)+'%;background:linear-gradient(90deg,'+farbeAlpha(c,.5)+','+c+')"></div>'+
+    '<div class="jetzt" style="left:'+P(jetzt).toFixed(1)+'%"></div><div class="raute" style="left:'+P(nach).toFixed(1)+'%;color:'+c+'">◆</div><div class="satz" style="left:'+P(satz).toFixed(1)+'%"></div>'+
+    // Beschriftung wie im Zielbild: der kleinere Wert steht links, der größere rechts (so überlappen sie nie)
+    '<div class="l1'+(hoch ? '' : ' re')+'">jetzt '+fmtP(jetzt)+'</div><div class="l2'+(hoch ? '' : ' li')+'" style="color:'+c+'">→ '+fmtP(nach)+' nach der Karte</div><div class="l3">Satz der Karte '+fmtP(satz)+'</div></div>'+
+    '<div class="f4-s">Annahme: Abschluss in der Soll-Zeit · senkt die Karte den Schnitt, sind Strecke und ◆ orange</div></div>';
+}
+/* ── 04 · RINGE DES TAGES: DFM · Privat · 🌿 Erholung ───────────────── */
+function f4RingSvg(name, hell, farbe, frac, mitte, unten, ueber){
+  const r=52, u=2*Math.PI*r, q=Math.max(0, Math.min(1, frac)), gid=svgId('rg');
+  return '<div class="rg"><svg viewBox="0 0 120 120" role="img" aria-label="'+name+' '+unten+'"><defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+hell+'"/><stop offset="1" stop-color="'+farbe+'"/></linearGradient></defs>'+
+    '<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+FARBE.LEER+'" stroke-width="9"/>'+
+    (q>0 ? '<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="url(#'+gid+')" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+(q*u).toFixed(1)+' '+u.toFixed(1)+'" transform="rotate(-90 60 60)"/>' : '')+
+    (ueber>0 ? '<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+FARBE.ROT+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+(Math.min(1,ueber)*u).toFixed(1)+' '+u.toFixed(1)+'" transform="rotate(-90 60 60)"/>' : '')+
+    '</svg><div class="c"><small style="color:'+hell+'">'+name+'</small><b>'+mitte+'</b><span>'+unten+'</span></div></div>';
+}
+function f4RingeHtml(){
+  const g=diaGroessen(), z=familienZeitHeute(), erh=f4ErholungMinHeute(), erhZ=f4ErholungZiel();
+  const t=(p, zl)=>ringTeile(p, zl);
+  const D=t(g.dfm, g.zielDfm), Pq=t(g.privat, g.zielPrivat), E=t(erh, erhZ);
+  return '<div class="f4-ringe" data-ringlive="1">'+
+    f4RingSvg('DFM', FARBE.BLAU_HELL, FARBE.BLAU, D.q, hMin(z.dfm), fmtP(g.dfm)+' / '+fmtP(g.zielDfm), D.ue)+
+    f4RingSvg('Privat', FARBE.LILA_HELL, FARBE.LILA, Pq.q, hMin(z.privat), fmtP(g.privat)+' / '+fmtP(g.zielPrivat), Pq.ue)+
+    f4RingSvg('🌿 Erholung', F4.KUEHL_HELL, F4.KUEHL, E.q, hMin(erh), 'von '+hMin(erhZ), E.ue)+'</div>';
+}
+/* ── 05 · TEMPO UND BLÖCKE ──────────────────────────────────────────── */
+function f4Tage(pred, n){
+  const heute=belFensterDatum(jetztIso()), tage={};
+  intradayStatistik().forEach(e=>{ if(e && e.ts && num(e.punkte)!==0) tage[belFensterDatum(e.ts)]=true; });
+  return Object.keys(tage).filter(d=>d<heute && !tagIstUrlaub(d) && pred(d)).sort().slice(-(n||4));
+}
+function f4TempoVergleich(T){
+  const heute=belFensterDatum(jetztIso()), wt=belWochentag(heute);
+  const tempo=(d, x)=>{ const a=diaTagKurve(d,'dfm'), b=diaTagKurve(d,'privat'); return a.wert(x)-a.wert(x-1)+b.wert(x)-b.wert(x-1); };
+  const mittel=tage=>tage.length ? diaGlaetten(T.xs.map(x=>tage.reduce((q,d)=>q+tempo(d, x),0)/tage.length)) : null;
+  const wtTage=f4Tage(d=>belWochentag(d)===wt, 4);
+  const typ=wt===6 ? { name:'Samstag', pred:d=>belWochentag(d)===6 } : wt===0 ? { name:'Sonntag', pred:d=>belWochentag(d)===0 } : { name:'Werktag', pred:d=>!istWochenendTag(d) };
+  const typTage=f4Tage(typ.pred, 4);
+  return { wt:mittel(wtTage), wtN:wtTage.length, wtName:AN_WT_LANG[wt], typ:mittel(typTage), typN:typTage.length, typName:typ.name };
+}
+/* Ist-Sitzungen mit 🌿 (Erholung) für den Ist-Streifen */
+function f4BloeckeStrahl(){
+  const b=tagesBloeckeStrahl(), heute=belFensterDatum(jetztIso()), kVon=new Map(S.karten.map(k=>[k.id,k]));
+  const ist=[]; (S.intraday||[]).forEach(e=>{ if(!e || !e.ts || SITZUNG_TYPEN.indexOf(e.typ)<0 || num(e.minuten)<1 || belFensterDatum(e.ts)!==heute) return;
+    const x=belX(e.ts), k=kVon.get(e.kartenId); ist.push({ von:x-num(e.minuten)/60, bis:x, typ:(k && leiterArt(k)==='erholung') ? 'erholung' : (e.domaene==='privat'?'privat':'dfm') }); });
+  if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs)){ const k=S.karten.find(x=>x.id===S.fokus.karteId);
+    ist.push({ von:belX(new Date(S.fokus.startMs).toISOString()), bis:belX(jetztIso()), typ:(k && leiterArt(k)==='erholung') ? 'erholung' : ((k && k.domain==='privat')?'privat':'dfm'), laeuft:true }); }
+  return { plan:b.plan, ist };
+}
+function f4TempoKennzahlen(){
+  const heute=belFensterDatum(jetztIso()), sollX=t=>{ const [h,m]=t.split(':').map(Number); return h+m/60; };
+  const amp=(diffMin, inv)=>{ const d=inv ? -diffMin : diffMin; return d<=0 ? FARBE.GRUEN : d<=15 ? FARBE.GELBGRUEN : d<=30 ? FARBE.GELB : d<=60 ? FARBE.ORANGE : FARBE.ROT; };
+  const out=[];
+  // Aufstehen
+  const auf=(S.tag && S.tag.morgen && S.tag.morgen.aufstehTs) ? belX(S.tag.morgen.aufstehTs) : (S.tag && S.tag.startTs ? belX(S.tag.startTs) : null);
+  out.push({ w:fmtUhrX(auf), c:auf!=null ? amp((auf-sollX(F4_SOLL.aufstehen))*60) : FARBE.GRAU, s:'Aufstehen · Soll '+F4_SOLL.aufstehen+' Uhr' });
+  // Fokus 1 begonnen = erste DFM-Sitzung heute
+  const sitz=(S.intraday||[]).filter(e=>e && e.ts && SITZUNG_TYPEN.indexOf(e.typ)>=0 && num(e.minuten)>=1 && e.domaene==='dfm' && belFensterDatum(e.ts)===heute)
+    .map(e=>({ von:belX(e.ts)-num(e.minuten)/60, bis:belX(e.ts) })).sort((a,b)=>a.von-b.von);
+  if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs)){ const k=S.karten.find(x=>x.id===S.fokus.karteId); if(k && k.domain==='dfm') sitz.push({ von:belX(new Date(S.fokus.startMs).toISOString()), bis:belX(jetztIso()) }); }
+  const f1=sitz.length ? sitz[0].von : null;
+  out.push({ w:fmtUhrX(f1), c:f1!=null ? amp((f1-sollX(F4_SOLL.fokus1))*60) : FARBE.GRAU, s:'Fokus 1 begonnen · Soll '+F4_SOLL.fokus1+' Uhr' });
+  // Senke = längste Lücke zwischen DFM-Sitzungen zwischen 12 und 17 Uhr (läuft die Lücke noch, bis jetzt)
+  let senke=null; const now=belX(jetztIso());
+  for(let i=0;i<sitz.length;i++){ const e=sitz[i].bis, n=i+1<sitz.length ? sitz[i+1].von : (now>e ? now : e); if(e>=12 && e<=17.5){ const l=(n-e)*60; if(senke==null || l>senke) senke=l; } }
+  out.push({ w:senke!=null ? fmtDauer(senke) : '—', c:senke!=null ? amp(senke-F4_SOLL.senkeMin) : FARBE.GRAU, s:'Senke · Soll ≤ '+fmtDauer(F4_SOLL.senkeMin) });
+  // Ø Schlafbeginn: letzte Nacht (Schlafen-Uhr)
+  const sl=S.meta && S.meta.schlaf && S.meta.schlaf.letzte && S.meta.schlaf.letzte.startTs ? belX(S.meta.schlaf.letzte.startTs) : null;
+  out.push({ w:fmtUhrX(sl!=null ? sl%24 : null), c:sl!=null ? amp((sl-sollX(F4_SOLL.schlaf))*60) : FARBE.GRAU, s:'Ø Schlafbeginn · Soll '+F4_SOLL.schlaf+' Uhr' });
+  return out;
+}
+function f4TempoBloeckeInnen(id){
+  const T=heuteWochentagsKurven(), V=f4TempoVergleich(T), H=196; let zielT=0; try{ zielT=num(diaGroessen().tempoZiel); }catch(e){}
+  diaRegistrieren(id||'f4tt', { T, V, H, plan:tempoPlanKurve(T), zielT, bl:f4BloeckeStrahl(), zeichnen:f4TempoZeichnen });
+  const legende='<div class="legende"><span style="color:'+FARBE.ORANGE+'">━ heute</span>'+
+    (V.wt ? '<span style="color:'+farbeAlpha(FARBE.ORANGE,.75)+'">━ Ø '+V.wtName+' ('+V.wtN+' Tage)</span>' : '')+
+    (V.typ ? '<span style="color:'+farbeAlpha(FARBE.ORANGE,.6)+'">╌ Ø '+V.typName+' ('+V.typN+' Tage)</span>' : '')+
+    '<span style="color:'+FARBE.WEISS+'">╌ Prognose</span><span>▭ Plan · ▬ Ist: <b style="color:'+FARBE.BLAU_HELL+'">DFM</b> <b style="color:'+FARBE.LILA_HELL+'">Privat</b> <b style="color:'+F4.KUEHL+'">🌿</b></span></div>';
+  return '<div data-dialive="f4tt" data-diaopt=\''+JSON.stringify({id:id||'f4tt'})+'\'>'+diaScrollRahmenHtml(id||'f4tt', H, T.bis-T.von, T.dauer, 'P/h')+legende+'</div>';
+}
+function f4TempoBloeckeHtml(id){
+  const kp=f4TempoKennzahlen();
+  return '<div class="blk f4-tb"><div class="blk-h">Tempo und Blöcke<span class="r">wischen ▸</span></div>'+f4TempoBloeckeInnen(id)+
+    '<div class="f4-kp4">'+kp.map(x=>'<div><b style="color:'+x.c+'">'+esc(x.w)+'</b><small>'+esc(x.s)+'</small></div>').join('')+'</div></div>';
+}
+function f4TempoZeichnen(sc, D){
+  const T=D.T, V=D.V||{}, fl=sc.firstElementChild, svg=fl && fl.querySelector('svg'); if(!svg) return;
+  const Wpx=Math.max(1, fl.offsetWidth), span=Math.max(1e-9, T.bis-T.von), H=D.H, pT=14, yC=146, yPl=156, yIs=176, hB=12;
+  let mx=0; [T.heute, D.plan, V.wt, V.typ].forEach(a=>(a||[]).forEach(v=>{ if(v!=null && v>mx) mx=v; }));
+  if(num(D.zielT)<=Math.max(150, mx)*2.5) mx=Math.max(mx, num(D.zielT));
+  const hi=Math.max(150, Math.ceil(mx*1.1/150)*150), lo=0;
+  const X=x=>(x-T.von)/span*Wpx, Y=v=>pT+(1-(Math.max(lo, Math.min(hi, v))-lo)/Math.max(1e-9, hi-lo))*(yC-pT);
+  const marken=[1,2,3].map(i=>lo+(hi-lo)*i/3); let g='';
+  marken.forEach(v=>{ const y=Y(v).toFixed(1); g+='<line x1="0" y1="'+y+'" x2="'+Wpx+'" y2="'+y+'" stroke="'+FARBE.RASTER+'" stroke-width="1"/>'; });
+  if(D.zielT>0 && D.zielT<=hi){ const y=Y(D.zielT); g+='<line x1="0" y1="'+y.toFixed(1)+'" x2="'+Wpx+'" y2="'+y.toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3"/><text x="'+(X(T.von)+4).toFixed(1)+'" y="'+(y-3).toFixed(1)+'" font-size="10" fill="'+FARBE.WEISS+'">nötig '+fmtP(D.zielT)+'</text>'; }
+  const punkte=a=>{ const q=[]; (a||[]).forEach((v,i)=>{ if(v!=null) q.push({x:X(T.xs[i]), y:Y(v), i}); }); return q; };
+  const y0=Y(0).toFixed(1), zu=q=>' L'+q[q.length-1].x.toFixed(1)+' '+y0+' L'+q[0].x.toFixed(1)+' '+y0+' Z';
+  const linie=(a, attr)=>{ const q=punkte(a); return q.length>1 ? '<path d="'+glattPfad(q)+'" fill="none" '+attr+' stroke-linejoin="round" stroke-linecap="round"/>' : ''; };
+  g+=linie(V.typ, 'stroke="'+FARBE.ORANGE+'" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="4 3"');
+  g+=linie(V.wt, 'stroke="'+FARBE.ORANGE+'" stroke-opacity=".6" stroke-width="1.5"');
+  const pH=punkte(T.heute);
+  if(pH.length>1){ const d=glattPfad(pH); g+='<path d="'+d+zu(pH)+'" fill="'+farbeAlpha(FARBE.ORANGE,.22)+'" stroke="none"/><path d="'+d+'" fill="none" stroke="'+FARBE.ORANGE+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'; }
+  const pP=punkte(D.plan).filter(q=>T.xs[q.i]>=T.jetztX); if(pP.length>1) g+='<path d="'+glattPfad(pP)+'" fill="none" stroke="'+FARBE.WEISS+'" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round"/>';
+  // Plan- und Ist-Streifen
+  if(D.bl){ const fam=t=>t==='privat' ? FARBE.LILA : t==='dfm' ? FARBE.BLAU : t==='erholung' ? F4.KUEHL : FARBE.GRAU, famH=t=>t==='privat' ? FARBE.LILA_HELL : t==='dfm' ? FARBE.BLAU_HELL : t==='pause' ? F4.KUEHL : FARBE.GRAU;
+    g+='<text x="0" y="'+(yPl+10)+'" font-size="9" fill="'+FARBE.GRAU+'">Plan</text><text x="0" y="'+(yIs+10)+'" font-size="9" fill="'+FARBE.GRAU+'">Ist</text>';
+    D.bl.plan.forEach(b=>{ const xa=X(b.von)+1, w=Math.max(2, X(b.bis)-X(b.von)-2), n=Math.floor((w-6)/5.4);
+      g+='<rect x="'+xa.toFixed(1)+'" y="'+yPl+'" width="'+w.toFixed(1)+'" height="'+hB+'" rx="3" fill="none" stroke="'+famH(b.typ)+'" stroke-width="1" stroke-dasharray="3 2"/>'+
+         (n>=3 ? '<text x="'+(xa+w/2).toFixed(1)+'" y="'+(yPl+9.5)+'" text-anchor="middle" font-size="9" fill="'+FARBE.WEISS+'">'+esc(String(b.name).slice(0,n))+'</text>' : ''); });
+    D.bl.ist.forEach(b=>{ const xa=X(b.von), w=Math.max(1.5, X(b.bis)-xa); g+='<rect x="'+xa.toFixed(1)+'" y="'+yIs+'" width="'+w.toFixed(1)+'" height="'+hB+'" rx="2" fill="'+fam(b.typ)+'"/>'; }); }
+  const x0=T.von+sc.scrollLeft/Wpx*span, x1=x0+sc.clientWidth/Wpx*span, schritt=(x1-x0)>8 ? 2 : 1;
+  for(let hh=Math.ceil(T.von); hh<=T.bis+1e-9; hh+=schritt) g+='<text x="'+X(hh).toFixed(1)+'" y="'+(H-3)+'" text-anchor="middle" font-size="9.5" fill="'+FARBE.GRAU+'">'+(hh%24)+'</text>';
+  const jx=X(T.jetztX), e=pH.length ? pH[pH.length-1] : null;
+  g+='<line x1="'+jx.toFixed(1)+'" y1="'+pT+'" x2="'+jx.toFixed(1)+'" y2="'+yC+'" stroke="rgba(255,255,255,.35)"/>'+(e ? '<circle cx="'+jx.toFixed(1)+'" cy="'+e.y.toFixed(1)+'" r="6" fill="rgba(255,255,255,.2)"/><circle cx="'+jx.toFixed(1)+'" cy="'+e.y.toFixed(1)+'" r="3" fill="#fff"/>' : '')+
+     '<text x="'+(jx+(jx>Wpx-34 ? -4 : 4)).toFixed(1)+'" y="'+(pT+2)+'" text-anchor="'+(jx>Wpx-34 ? 'end' : 'start')+'" font-size="10" fill="#fff">jetzt</text>';
+  svg.setAttribute('viewBox', '0 0 '+Wpx+' '+H); svg.setAttribute('width', Wpx); svg.innerHTML=g;
+  const ya=sc.parentNode && sc.parentNode.querySelector('.dia-tv-y');
+  if(ya) ya.innerHTML='<em>P/h</em>'+marken.map(v=>'<span style="top:'+(Y(v)-6).toFixed(0)+'px">'+anFmt(v)+'</span>').join('');
+}
+/* ── 06 · TAGESPROGNOSE je Familie ──────────────────────────────────── */
+function f4PrognoseHtml(){
+  const t=tagesprognoseHeute(), g=diaGroessen(), erh=f4ErholungMinHeute(), erhZ=f4ErholungZiel(), erhPlan=f4ErholungGeplant();
+  const zeile=(name, hell, voll, ist, karte, plan, ziel, einheit, sub)=>{
+    const max=Math.max(1, ist+karte+plan, ziel), P=v=>Math.max(0, Math.min(100, v/max*100)), ende=ist+karte+plan, d=ende-ziel, ok=d>=0;
+    const diffTxt=(ok?'+':'−')+(einheit==='min' ? fmtDauer(Math.abs(d)) : fmtP(Math.abs(d)))+(ok ? ' ✓' : '');
+    const c=ok ? FARBE.GRUEN : f4Bewertung(ende/Math.max(1,ziel));
+    return '<div class="r"><span class="lb" style="color:'+hell+'">'+name+'</span><div class="bar">'+
+      (ist>0 ? '<i style="left:0;width:'+P(ist).toFixed(1)+'%;border-radius:7px 0 0 7px;background:linear-gradient(90deg,'+hell+','+voll+')"></i>' : '')+
+      (karte>0 ? '<i style="left:'+P(ist).toFixed(1)+'%;width:'+(P(ist+karte)-P(ist)).toFixed(1)+'%;background:'+FARBE.WEISS+'"></i>' : '')+
+      (plan>0 ? '<i style="left:'+P(ist+karte).toFixed(1)+'%;width:'+(P(ende)-P(ist+karte)).toFixed(1)+'%;border:1.5px dashed '+voll+';border-left:0;border-radius:0 7px 7px 0"></i>' : '')+
+      '<span class="z" style="left:'+P(ziel).toFixed(1)+'%"></span></div><span class="df" style="color:'+c+'">'+diffTxt+'</span><span class="sub">'+sub+'</span></div>';
+  };
+  const kD=t.karteFam==='dfm' ? t.karte : 0, kP=t.karteFam==='privat' ? t.karte : 0;
+  return '<div class="blk f4-prog"><div class="blk-h">Tagesprognose</div>'+
+    zeile('DFM', FARBE.BLAU_HELL, FARBE.BLAU, t.dfm, kD, t.restDfm, g.zielDfm, 'p', fmtP(t.dfm)+' erreicht'+(kD>0 ? ' · +'+fmtP(kD)+' laufende Karte' : '')+(t.restDfm>0 ? ' · +'+fmtP(t.restDfm)+' geplant' : '')+' · Ziel '+fmtP(g.zielDfm))+
+    zeile('Privat', FARBE.LILA_HELL, FARBE.LILA, t.privat, kP, t.restPrivat, g.zielPrivat, 'p', fmtP(t.privat)+' erreicht'+(kP>0 ? ' · +'+fmtP(kP)+' laufende Karte' : '')+(t.restPrivat>0 ? ' · +'+fmtP(t.restPrivat)+' geplant' : '')+' · Ziel '+fmtP(g.zielPrivat))+
+    zeile('🌿 Erh.', F4.KUEHL_HELL, F4.KUEHL, erh, 0, erhPlan, erhZ, 'min', fmtDauer(erh)+' erreicht'+(erhPlan>0 ? ' · +'+fmtDauer(erhPlan)+' geplant' : '')+' · Ziel '+fmtDauer(erhZ))+'</div>';
+}
+/* ── 07 · OUTFIT-TREPPE ─────────────────────────────────────────────── */
+function f4OutfitTreppeHtml(){
+  const o=S.tag ? e4Outfit() : null; if(!o) return '';
+  const r=e4Rang(), nx=e4OutfitNaechste(), naechste=Math.min(num(S.settings.outfitStufen,13), o.stufe+1);
+  const cols=[]; const H=[22,40,60,82,104,128];
+  for(let i=0;i<6;i++){ const s=o.start-2+i, h=H[i], gew=o.verlauf.filter(v=>v.stufe===s && (v.art==='leistung'||v.art==='erholung'))[0];
+    let st='', inner='', lbl=(s<o.start ? String(s-o.start) : s===o.start ? 'Start' : '+'+(s-o.start)), lblSt='';
+    const jetzt=s===o.stufe;
+    if(s<o.start){ st='background:rgba(246,109,109,.18);border:1px dashed rgba(246,109,109,.5)'; if(s>=o.stufe && o.stufe<o.start) st='background:'+farbeAlpha(FARBE.ROT,.45)+';border:1px dashed rgba(246,109,109,.7)'; }
+    else if(s===o.start){ st='background:'+FARBE.WEISS+';color:#000'; inner='●'; lblSt='color:'+FARBE.WEISS+';font-weight:700'; }
+    else if(s<=o.stufe){ st='background:linear-gradient('+FARBE.GRUEN+',#2a9e6c)'; inner='<span>'+(gew ? (gew.art==='leistung'?'⚙':'🌿')+'<br><small>'+fmtUhr(gew.ts)+'</small>' : '')+'</span>'; }
+    else if(s===naechste && s<=o.decke){ st='background:transparent;border:1.5px dashed '+FARBE.WEISS+';position:relative;overflow:hidden'; inner=(nx==='erholung'?'🌿':'⚙')+'<img src="'+AVATAR_BILDER[e4OutfitBild(s)-1]+'" alt="">'; }
+    else st='background:'+FARBE.LEER;
+    if(jetzt){ st+=';outline:2px solid #fff;outline-offset:2px'; lbl+=' jetzt'; lblSt='color:'+FARBE.GRUEN+';font-weight:700'; }
+    cols.push('<div class="c"><div class="col" style="height:'+h+'px;'+st+'">'+inner+'</div><span class="lbl" style="'+lblSt+'">'+lbl+'</span></div>'); }
+  const hinweis=nx ? 'Nächste Stufe: <b>'+(nx==='leistung' ? '⚙ DFM-Fokusblock abschließen' : '🌿 Erholung — Pause oder Erholungskarte')+'</b> · die oberste Stufe nur mit Leistung und Erholung' : 'Oberste Stufe des Tages erreicht';
+  return '<div class="blk f4-ot"><div class="hd"><b>Outfit heute · Stufe '+o.stufe+'</b><span>Rang '+r.rang+' · Start '+o.start+' · nächstes Outfit '+naechste+'</span></div>'+
+    '<div class="st">'+cols.join('')+'</div><div class="nx">'+hinweis+'</div>'+
+    '<div class="lg">⚙ Stufe aus Leistung · 🌿 Stufe aus Erholung · rot gestrichelt = Erschöpfung senkt bis −2 · Mittellinie der Diagramme = Start</div></div>';
+}
+/* ── 08 · TAGESVERLAUF: dieselbe Funktion wie die Statistik (belTagesDiagramm), 4-Tage-Regel und Outfit-Marken darin ── */
+function f4TagesverlaufHtml(){ let tv=''; try{ tv=belTagesDiagramm({fokus:true}); }catch(e){ tv=''; } return '<div class="blk"><div class="blk-h">Tagesverlauf<span class="r">Punkte kumuliert je Familie</span></div>'+tv+'</div>'; }
+function f4OutfitMarken(){ const o=S.tag && S.tag.outfit; return o ? o.verlauf.filter(v=>v.art==='leistung'||v.art==='erholung').map(v=>({ x:belX(v.ts), sym:v.art==='leistung'?'⚙':'🌿' })) : []; }
+/* ── 09 · MATRIX HEUTE: 4:3, Spur mit Uhrzeiten, Balken mit 🌿-Anteil, „ohne Karte“ ── */
+function f4MatrixHeuteHtml(opt){
+  opt=opt||{}; const z=matrixZeitFelder(), spA=matrixSpur().filter(e=>e && e.ts), sp=spA.filter(e=>!e.uebersprungen), ue=spA.length-sp.length;
+  const W=400, Hh=300, X=v=>(Math.max(-1,Math.min(1,num(v)))+1)/2*W, Y=v=>(1-Math.max(-1,Math.min(1,num(v))))/2*Hh;
+  const erhMin=Math.min(z.felder.werkzeug, f4ErholungMinHeute()), wz=Math.max(0, z.felder.werkzeug-erhMin);
+  let g='<svg viewBox="0 0 '+W+' '+Hh+'" preserveAspectRatio="none" data-tbmatrix="1" data-rand="0"><line x1="'+W/2+'" y1="0" x2="'+W/2+'" y2="'+Hh+'" stroke="rgba(255,255,255,.15)"/><line x1="0" y1="'+Hh/2+'" x2="'+W+'" y2="'+Hh/2+'" stroke="rgba(255,255,255,.15)"/>';
+  const pp=sp.map(e=>({x:X(e.x), y:Y(e.y), ts:e.ts}));
+  if(pp.length>1) g+='<path d="'+pp.map((q,i)=>(i?'L':'M')+q.x.toFixed(1)+' '+q.y.toFixed(1)).join(' ')+'" stroke="'+FARBE.WEISS+'" stroke-opacity=".5" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>';
+  pp.forEach((q,i)=>{ const letzte=i===pp.length-1;
+    if(letzte) g+='<circle cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="9" fill="rgba(255,255,255,.2)"/><circle cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="5" fill="#fff"/><text x="'+(q.x+12).toFixed(1)+'" y="'+(q.y+4).toFixed(1)+'" font-size="11" fill="#fff" font-weight="700">jetzt</text>';
+    else { g+='<circle cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="4" fill="'+FARBE.GRAU+'"/>'; if(i>=pp.length-4) g+='<text x="'+(q.x-22).toFixed(1)+'" y="'+(q.y+18).toFixed(1)+'" font-size="11" fill="#c9cbd0">'+fmtUhr(q.ts)+'</text>'; } });
+  g+='</svg>';
+  const seg=[['Ablenkung', z.felder.ablenkung, FARBE.ROT], ['Zustand', z.felder.zustand, '#b85a5a'], ['Werkzeug', wz, FARBE.GRUEN], ['🌿 davon Erholung', erhMin, F4.KUEHL], ['Ziel', z.felder.ziel, FARBE.GELBGRUEN], ['ohne Karte', z.unbekannt, MX_LEISTE_UNBEKANNT]];
+  const ges=Math.max(1e-9, seg.reduce((a,q)=>a+num(q[1]),0));
+  const q=(cls, name, min)=>'<div class="q '+cls+'">'+(cls==='q1'||cls==='q2' ? name+'<b>'+fmtDauer(min)+'</b>' : '<b>'+fmtDauer(min)+'</b>'+name)+'</div>';
+  return '<div class="blk f4-mx"><div class="hd"><b>Matrix heute</b><span>Tipp = Tagebuch</span></div>'+
+    '<div class="mx">'+q('q1','Ablenkung',z.felder.ablenkung)+q('q2','Werkzeug',z.felder.werkzeug)+q('q3','Zustand',z.felder.zustand)+q('q4','Ziel',z.felder.ziel)+g+'</div>'+
+    '<div class="bar">'+seg.map(s=>'<i style="width:'+(num(s[1])/ges*100).toFixed(1)+'%;background:'+s[2]+'"></i>').join('')+'</div>'+
+    '<div class="legende">'+seg.map(s=>'<span><i style="background:'+s[2]+'"></i>'+s[0]+' '+fmtDauer(s[1])+'</span>').join('')+'</div>'+
+    '<div class="legende" style="margin-top:6px">● deine Positionen heute ('+sp.length+' gesetzt · '+ue+' übersprungen)</div></div>';
+}
+/* ── 10 · FLOW UND BELASTUNG ────────────────────────────────────────── */
+function f4FlowBelastungHtml(opt){
+  opt=opt||{}; const f=flowHeuteWerte(), B=f4Belastung(), z=acwrZonen(), pr=x=>Math.max(0, Math.min(100, x/z.max*100));
+  const ohneGrund=((S.tag&&S.tag.log)||[]).filter(e=>e && e.art==='schub' && num(e.punkte)<0).length;
+  const n=f.netto, max=Math.max(1, f.neu, f.erledigt), a=Math.min(50, Math.abs(n)/max*50), c=n>0 ? FARBE.ROT : n<0 ? FARBE.GRUEN : FARBE.WEISS, txt=n>0 ? n+' mehr rein' : n<0 ? (-n)+' mehr raus' : 'ausgeglichen';
+  const fl='<div class="st"><b>Aufgabenflow heute</b><span style="color:'+c+'">'+txt+'</span></div><div class="fl">'+(n!==0 ? '<i style="'+(n<0 ? 'left:50%;width:'+a.toFixed(1)+'%;border-radius:0 6px 6px 0;background:linear-gradient(90deg,'+farbeAlpha(FARBE.GRUEN,.5)+','+FARBE.GRUEN+')' : 'right:50%;width:'+a.toFixed(1)+'%;border-radius:6px 0 0 6px;background:linear-gradient(270deg,'+farbeAlpha(FARBE.ROT,.5)+','+FARBE.ROT+')')+'"></i>' : '')+'<s></s></div>'+
+    '<div class="k3"><div><b>'+f.neu+'</b><small>rein</small></div><div><b>'+f.erledigt+'</b><small>erledigt</small></div><div><b>'+ohneGrund+'</b><small>geschoben ohne Grund</small></div></div>';
+  const teile=[['zu wenig', 0, z.u, '#8a6d1f', FARBE.GELB], ['optimal', z.u, z.o, '#2a9e6c', FARBE.GRUEN], ['hoch', z.o, z.e, FARBE.ORANGE, '#d9822b'], ['Risiko', z.e, z.max, '#c94f4f', FARBE.ROT]];
+  const ac='<div class="st" style="margin-top:14px"><b>Belastung (ACWR)</b></div><div class="ac"><div class="acb" style="background:linear-gradient(90deg,'+teile.map(t=>t[3]+' '+pr(t[1]).toFixed(1)+'%,'+t[4]+' '+pr(t[2]).toFixed(1)+'%').join(',')+')">'+(B.acwr!=null ? '<s style="left:'+pr(B.acwr).toFixed(1)+'%"></s>' : '')+'</div>'+
+    '<div class="acl">'+teile.map(t=>'<span style="width:'+(pr(t[2])-pr(t[1])).toFixed(1)+'%">'+t[0]+'</span>').join('')+'</div><div class="acv" style="color:'+B.zone.c+'">'+(B.acwr!=null ? B.acwr.toFixed(2).replace('.',',') : '—')+'</div></div>';
+  const erh=f4ErholungMinHeute(), erhZ=f4ErholungZiel(), ec=erh>=erhZ ? FARBE.GRUEN : erh>=erhZ*0.5 ? FARBE.ORANGE : FARBE.ROT;
+  const kach='<div class="am2"><div style="border-color:'+(B.mono.farbe||FARBE.GRAU)+'"><em style="color:'+(B.mono.farbe||FARBE.GRAU)+'">'+B.mono.text+'</em><b>'+(B.mono.wert!=null ? B.mono.wert.toFixed(1).replace('.',',') : '—')+'</b><small>Monotonie (Woche)</small></div>'+
+    '<div style="border-color:'+ec+'"><em style="color:'+ec+'">'+(erh>=erhZ ? 'erreicht' : erh>=erhZ*0.5 ? 'knapp' : 'zu wenig')+'</em><b>'+fmtDauer(erh)+'</b><small>Erholung heute / '+fmtDauer(erhZ)+'</small></div></div>';
+  const r=B.rang, sw=B.schwelle, anteil=sw ? Math.max(0, Math.min(1, B.dauerlast/sw)) : 1;
+  const rg='<div class="rg"><div class="l"><span><b>Rang '+r.rang+'</b> · Dauerlast '+fmtP(B.dauerlast)+' / Tag</span><span style="color:'+FARBE.GRAU+'">'+(sw ? 'Rang '+(r.rang+1)+' ab '+fmtP(sw) : 'höchster Rang')+'</span></div>'+
+    '<div class="b"><i style="width:'+(anteil*100).toFixed(1)+'%"></i>'+(sw ? '<s style="left:'+Math.min(100, 100).toFixed(1)+'%"></s>' : '')+'</div>'+
+    '<small>'+(sw ? num(S.settings.rangAufstiegTage,7)+' Tage am Stück über '+fmtP(sw)+' = Aufstieg · ' : '')+'Abstieg erst nach '+num(S.settings.rangAbstiegTage,14)+' Tagen unter '+fmtP(B.eigene)+'</small></div>';
+  const inhalt=fl+ac+kach+rg;
+  return opt.roh ? inhalt : '<div class="blk f4-fb"><div class="t">Flow und Belastung</div>'+inhalt+'</div>';
+}
+/* ── Anordnung Fokusseite (4.5) ─────────────────────────────────────── */
+function f4DerTagHtml(){
+  let h=''; const t=(fn)=>{ try{ h+=fn(); }catch(e){ console.warn('Der Tag', e); } };
+  t(()=>'<div class="blk f4-dt"><div class="blk-h">Der Tag</div>'+f4RingeHtml()+'</div>'); t(f4TempoBloeckeHtml); t(f4TagesverlaufHtml); t(f4PrognoseHtml); t(f4OutfitTreppeHtml);
+  return h;
+}
+function f4KartenKernHtml(k){
+  const laeuft=S.fokus && S.fokus.karteId===k.id && S.fokus.laeuft, famK=famFarbe(k), famH=famHell(k);
+  const ring='<div class="kring"><svg viewBox="0 0 132 132">'+
+    '<defs><linearGradient id="gRot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+FARBE.ROT+'"/><stop offset="1" stop-color="#c94f4f"/></linearGradient>'+
+    '<linearGradient id="gProg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+famH+'"/><stop offset="1" stop-color="'+famK+'"/></linearGradient></defs>'+
+    '<circle cx="66" cy="66" r="58" fill="none" stroke="'+FARBE.LEER+'" stroke-width="10"/><circle cx="66" cy="66" r="48" fill="none" stroke="'+FARBE.LEER+'" stroke-width="4" opacity=".6"/>'+
+    '<circle id="tZeitArc" cx="66" cy="66" r="58" fill="none" stroke="'+FARBE.GRUEN+'" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 '+RING_C.toFixed(1)+'" transform="rotate(-90 66 66)"/>'+
+    '<circle id="tRotArc" cx="66" cy="66" r="58" fill="none" stroke="url(#gRot)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 '+RING_C.toFixed(1)+'" transform="rotate(-90 66 66)"/>'+
+    '<circle id="tProgArc" cx="66" cy="66" r="48" fill="none" stroke="url(#gProg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 '+RING_CP.toFixed(1)+'" transform="rotate(-90 66 66)"/>'+
+    '<g id="tTicks"></g><circle id="tKopfHalo" class="tkopfpuls" r="7" fill="#3ecf8e" cx="66" cy="8" opacity="0"/><circle id="tKopfDot" r="3.5" fill="#fff" cx="66" cy="8" opacity="0"/></svg>'+
+    '<span class="kfoto"><img src="'+AVATAR_BILDER[(typeof outfitHeute==='function'?outfitHeute():1)-1]+'" alt="" draggable="false" onerror="this.style.display=\'none\'"></span></div>';
+  const kopf='<div class="kreihe">'+ring+'<div class="kkpis f4">'+
+    '<div class="kkpi"><div class="w gross" id="tKpiPunkte">–</div><div class="s" id="tKpiPunkteSub">gesamt</div></div>'+
+    '<div class="kkpi"><div class="w" id="tKpiTempo">–</div><div class="s">Satz der Karte · Tempo letzte 60 Min</div></div>'+
+    '<div class="kkpi zeit"><div class="w trest" id="tRest">–</div><div class="s" id="tRestSub"></div></div>'+
+    '<div class="kkpi"><div class="w" id="tKpiSchritte">–</div><div class="s">Schritte abgehakt</div><div class="kschritte" id="tKpiSeg"></div></div></div></div>';
+  const kOffen=aktiveKetteKarten().filter(x=>x.status==='offen'), kPos=kOffen.findIndex(x=>x.id===k.id);
+  const ketteKnopf='<button type="button" class="kl-chip fk-kette" data-fkkette="'+k.id+'" aria-label="Kette wählen"><span>'+esc(aktiveKetteName())+' · '+(kPos>=0 ? (kPos+1)+' / '+kOffen.length : 'nicht enthalten')+'</span></button>';
+  const titel='<div class="ktitel fk-haupttitel" data-detail="'+k.id+'">'+esc(k.titel||'(ohne Titel)')+'</div>'+ketteKnopf+
+    '<div class="kmeta"><b style="color:'+famH+'">'+(k.domain==='dfm'?'DFM':'Privat')+'</b> · '+MX_FELD_NAME[matrixFeldVon(k)]+' · '+E4_ART_NAME[leiterArt(k)].replace(/^DFM[ -]?/,'').replace('Privat-','')+'</div>';
+  const aufgabeErledigt='<div class="taufgabe"><div class="tsub">✓ erledigt'+(k.tagId?' am '+esc(String(k.tagId).slice(0,10)):'')+' · ⏱ <b>'+tZeitKurz(istSekLive(k)/60)+'</b> · <b>'+fmtP(kartePunkte(k))+' P</b> gebucht</div>'+zaehlerZeileHtml(k)+
+    '<div class="kbed"><button class="kbtn breit" data-detail="'+k.id+'">✎ Punkte anpassen</button><button class="kbtn breit" style="margin-left:auto" data-wiederholen="'+k.id+'">↻ Wiederholen</button></div></div>';
+  const aufgabe='<div class="taufgabe">'+zaehlerZeileHtml(k)+'<div class="kbed">'+
+    '<button class="kbtn pp tpp" data-fktoggle="'+k.id+'" aria-label="Play/Pause" style="background:linear-gradient(180deg,'+famH+','+famK+')">'+(uhrLaeuftAuf(k)?'⏸':'▶')+'</button>'+
+    '<button class="kbtn tedit" data-detail="'+k.id+'" aria-label="Bearbeiten">✎</button><button class="kbtn tedit" data-fkschieben="'+k.id+'" aria-label="Schieben">⏭</button>'+
+    (istAufgabeKarte(k) ? '<button class="kbtn ok tcheck" data-fkcheck="'+k.id+'" aria-label="Erledigt">✓</button>' : '')+'</div></div>';
+  const nv=fokusNavHtml(k), einflug=_fokusEinflug ? ' von-'+_fokusEinflug : ''; _fokusEinflug=null;
+  return '<div id="fokusAktiv" class="blk kern tkern f4kern '+(laeuft?'laeuft ':'')+(k.status==='erledigt'?'erledigt ':'')+(nv.imVerlauf?'imverlauf ':'')+einflug+'" style="--famk:'+famK+';--famh:'+famH+';border-left:4px solid '+famK+'">'+
+    nv.oben+titel+f4OnrampBandHtml(k)+kopf+(k.status==='erledigt' && !uhrFrei(k)?aufgabeErledigt:aufgabe)+nv.unten+'</div>';
+}
+function f4NaechstesHtml(k){ return '<div class="blk kl-blk f4-next"><div class="blk-h">Was als Nächstes kommt</div>'+kettenListeHtml({ karte:k, kontext:'fokus' })+'</div>'; }
+function renderFokus(){
+  rangCacheBauen();
+  const host=el('fokusView'); if(!host) return;
+  const k=angezeigteKarte();
+  const banner=tagOffen() ? ((S.tag.morgen && S.tag.morgen.aufstehTs) ? '' : tagBannerHtml()) : tagBannerHtml();   // 4.5: Banner nur morgens, solange „Aufstehen“ fehlt
+  _fokusExakt=true;
+  try{
+    if(!k){ const nv=fokusNavHtml(null); host.innerHTML=banner+'<div class="blk fk-ohne">'+nv.oben+'</div>'+f4NaechstesHtml(null)+(S.tag ? f4DerTagHtml()+f4MatrixHeuteHtml()+f4FlowBelastungHtml() : ''); return; }
+    host.innerHTML=banner+f4KartenKernHtml(k)+'<div id="f4KarteTempo">'+f4KartenTempoHtml(k)+'</div>'+fokusSubsHtml(k)+f4NaechstesHtml(k)+(S.tag ? f4DerTagHtml()+f4MatrixHeuteHtml()+f4FlowBelastungHtml() : '');
+  } finally { _fokusExakt=false; }
+  fokusTacho(k);
 }
 function ladeAlles(){
   S.karten   = DB.get('karten', []);
@@ -6340,72 +6833,7 @@ function fokusKurveHtml(){
   return '<div class="fkurve"><button class="fkurve-kopf" data-fkurve="1"><span class="caret">'+(zu?'▸':'▾')+'</span> Tageskurve</button>'+
     (zu?'':'<div class="fkurve-body">'+diagrammKurveTag(tagSnapshot(heuteApp()),'alle')+'</div>')+'</div>';
 }
-function renderFokus(){
-  rangCacheBauen();
-  const host=el('fokusView'); if(!host) return;
-  const k=angezeigteKarte();
-  const tagKnoepfe=tagBannerHtml();   // C4 (v3.8.0): Tag abschließen / Aufstehen ganz oben auf der Fokusseite
-  if(!k){
-    // keine Karte im Fokus → die Kettenliste wie in der Ansicht „+"
-    const nv=fokusNavHtml(null);
-    host.innerHTML=tagKnoepfe+'<div class="blk fk-ohne">'+nv.oben+'</div>'+kartenBlockHtml(null)+'<div class="blk fk-ohne">'+nv.unten+'</div>'+zeitstrahlHtml();
-    return;
-  }
-  const laeuft = S.fokus && S.fokus.karteId===k.id && S.fokus.laeuft;
-  // §5 (v1.11.0): Die Kleidung zeigt den Tag — Bild-Slot = heutiges Outfit.
-  // §3 Nr. 1 (v3.5.1): Ring = 50 % der Blockbreite mit Outfit-Foto innen (wie 3.4.8): Aussenring abgelaufene Zeit im
-  // Verlauf Gruen → Cyan (ueber Soll Rot-Verlauf), Innenring Fortschritt der Schritte, Kopf-Punkt am Bogenende
-  const famK=famFarbe(k), famH=famHell(k);
-  const ring='<div class="kring"><svg viewBox="0 0 132 132">'+
-    '<defs><linearGradient id="gLauf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ecf8e"/><stop offset="1" stop-color="#6dd3e0"/></linearGradient>'+
-    '<linearGradient id="gRot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+FARBE.ROT+'"/><stop offset="1" stop-color="#c94f4f"/></linearGradient>'+
-    '<linearGradient id="gProg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+famH+'"/><stop offset="1" stop-color="'+famK+'"/></linearGradient></defs>'+
-    '<circle cx="66" cy="66" r="58" fill="none" stroke="'+FARBE.LEER+'" stroke-width="10"/>'+
-    '<circle cx="66" cy="66" r="48" fill="none" stroke="'+FARBE.LEER+'" stroke-width="4" opacity=".6"/>'+
-    '<circle id="tZeitArc" cx="66" cy="66" r="58" fill="none" stroke="url(#gLauf)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 '+RING_C.toFixed(1)+'" transform="rotate(-90 66 66)"/>'+
-    '<circle id="tRotArc" cx="66" cy="66" r="58" fill="none" stroke="url(#gRot)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 '+RING_C.toFixed(1)+'" transform="rotate(-90 66 66)"/>'+
-    '<circle id="tProgArc" cx="66" cy="66" r="48" fill="none" stroke="url(#gProg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 '+RING_CP.toFixed(1)+'" transform="rotate(-90 66 66)"/>'+
-    '<g id="tTicks"></g>'+
-    '<circle id="tKopfHalo" class="tkopfpuls" r="7" fill="#3ecf8e" cx="66" cy="8" opacity="0"/>'+
-    '<circle id="tKopfDot" r="3.5" fill="#fff" cx="66" cy="8" opacity="0"/>'+
-    '</svg><span class="kfoto"><img src="'+AVATAR_BILDER[(typeof outfitHeute==='function'?outfitHeute():1)-1]+'" alt="" draggable="false" onerror="this.style.display=\'none\'"></span></div>';
-  const kopf='<div class="kreihe">'+ring+'<div class="kkpis">'+
-      '<div class="kkpi zeit"><div class="w trest" id="tRest">–</div><div class="s" id="tRestSub"></div></div>'+
-      '<div class="kkpi"><div class="w" id="tKpiTempo">–</div><div class="s">diese Karte</div></div>'+
-      '<div class="kkpi"><div class="w" id="tKpiPunkte" style="color:'+FARBE.GOLD+'">–</div><div class="s">Punkte heute · Münzen und Farbe</div></div>'+
-      '<div class="kkpi"><div class="w" id="tKpiSchritte">–</div><div class="s">Schritte abgehakt</div><div class="kschritte" id="tKpiSeg"></div></div>'+
-    '</div></div>';
-  // C6 (v3.8.0): Zeile unter dem Titel — die aktive Kette mit der Position der Karte; Tipp öffnet die Kettenauswahl (Ebene 1)
-  const kOffen=aktiveKetteKarten().filter(x=>x.status==='offen'), kPos=kOffen.findIndex(x=>x.id===k.id);
-  const ketteKnopf='<button type="button" class="kl-chip fk-kette" data-fkkette="'+k.id+'" aria-label="Kette wählen"><span>'+esc(aktiveKetteName())+' · '+(kPos>=0 ? (kPos+1)+' / '+kOffen.length : 'nicht enthalten')+'</span></button>';
-  const titel='<div class="ktitel fk-haupttitel" data-detail="'+k.id+'">'+esc(k.titel||'(ohne Titel)')+'</div>'+ketteKnopf+
-    '<div class="kmeta"><b style="color:'+famH+'">'+(k.domain==='dfm'?'DFM':'Privat')+'</b> · '+MX_FELD_NAME[matrixFeldVon(k)]+' · <span id="tGesamtP">'+fmtP(kartePunkteGeplant(k))+'</span> P gesamt</div>';
-  // §7 (v1.12.0): ERLEDIGTE Karte im Verlauf — gebuchte Zeit und Punkte, zwei Aktionen: Punkte anpassen · Wiederholen.
-  const aufgabeErledigt='<div class="taufgabe"><div class="tsub">✓ erledigt'+(k.tagId?' am '+esc(String(k.tagId).slice(0,10)):'')+
-    ' · ⏱ <b>'+tZeitKurz(istSekLive(k)/60)+'</b> · <b>'+fmtP(kartePunkte(k))+' P</b> gebucht</div>'+zaehlerZeileHtml(k)+
-    '<div class="kbed">'+
-    '<button class="kbtn breit" data-detail="'+k.id+'">✎ Punkte anpassen</button>'+
-    '<button class="kbtn breit" style="margin-left:auto" data-wiederholen="'+k.id+'">↻ Wiederholen</button>'+
-    '</div></div>';
-  // Bedienleiste: ⏸ ✎ ⏭ … ✓ (✓ nur auf Aufgaben — Routinen und Counter tragen +1 in ihrer Zaehler-Zeile)
-  const aufgabe='<div class="taufgabe">'+zaehlerZeileHtml(k)+
-    '<div class="kbed">'+
-    '<button class="kbtn pp tpp" data-fktoggle="'+k.id+'" aria-label="Play/Pause" style="background:linear-gradient(180deg,'+famH+','+famK+')">'+(uhrLaeuftAuf(k)?'⏸':'▶')+'</button>'+
-    '<button class="kbtn tedit" data-detail="'+k.id+'" aria-label="Bearbeiten">✎</button>'+
-    '<button class="kbtn tedit" data-fkschieben="'+k.id+'" aria-label="Schieben">⏭</button>'+
-    (istAufgabeKarte(k) ? '<button class="kbtn ok tcheck" data-fkcheck="'+k.id+'" aria-label="Erledigt">✓</button>' : '')+
-    '</div></div>';
-  // C5 (v3.8.0): ◀ Verlauf · nächste ▶ oben UND unten; oben dazwischen „⤒ Nach vorn", unten dazwischen „In Kette"
-  const nv=fokusNavHtml(k), imVerlauf=nv.imVerlauf, navOben=nv.oben, swipeLeiste=nv.unten;
-  const einflug=_fokusEinflug ? ' von-'+_fokusEinflug : ''; _fokusEinflug=null;
-  host.innerHTML = tagKnoepfe+
-    '<div id="fokusAktiv" class="blk kern tkern '+(laeuft?'laeuft ':'')+(k.status==='erledigt'?'erledigt ':'')+(imVerlauf?'imverlauf ':'')+einflug+'" style="--famk:'+famK+';--famh:'+famH+'">'+
-      navOben+titel+kopf+'<div id="tTempo" class="tl-wrap"></div>'+(k.status==='erledigt' && !uhrFrei(k)?aufgabeErledigt:aufgabe)+swipeLeiste+'</div>'+
-    fokusSubsHtml(k)+
-    // §3 (v3.5.1): Der Tag · Tempo und Bloecke · Matrix heute · Flow und Belastung · Karten
-    fokusBloecke350(k);
-  fokusTacho(k);   // Ring, Restzeit, Kennzahlen, Tempo-Leiste befüllen
-}
+/* 4.0 · Paket 5: renderFokus steht im Modul F4 (Anordnung 4.5) */
 /* Live-Aktualisierung des Fokus-Tachos (v0.38-Port): Ring-Bögen, Restzeit,
    Unteraufgaben-Panel, Akku/Punkte/Zeit-Kacheln, 4 KPIs, Plan-Balken. */
 /* ══════════════════════════════════════════════════════════════════════
@@ -7098,7 +7526,7 @@ function diagrammeLive(){
   try{ document.querySelectorAll('[data-dialive]').forEach(el=>{ if(!el.offsetParent) return;
     const sc=el.querySelector('.dia-tv-scroll'); if(sc) _tvScroll[tvOrt(sc)]={ left:sc.scrollLeft, ts:Date.now() };
     const dopt=el.dataset.diaopt ? JSON.parse(el.dataset.diaopt) : {};
-    let h=''; try{ h=el.dataset.dialive==='tt' ? heuteGegenTypischHtml(dopt) : el.dataset.dialive==='mx' ? '<div class="mv-gross" data-dialive="mx">'+matrixVerlaufSvg(matrixSpur())+'</div>' : belTagesDiagramm(dopt); }catch(e){ return; }
+    let h=''; try{ h=el.dataset.dialive==='f4tt' ? f4TempoBloeckeInnen(dopt.id) : el.dataset.dialive==='tt' ? heuteGegenTypischHtml(dopt) : el.dataset.dialive==='mx' ? '<div class="mv-gross" data-dialive="mx">'+matrixVerlaufSvg(matrixSpur())+'</div>' : belTagesDiagramm(dopt); }catch(e){ return; }
     if(h) el.outerHTML=h; });
     document.querySelectorAll('[data-ringlive]').forEach(el=>{ if(el.offsetParent) el.outerHTML=tagesRingeHtml(); }); }catch(e){}   // §2 (v3.5.4): Ring-Zeit laeuft mit
 }
@@ -7135,6 +7563,7 @@ function tvZeichnen(sc, D){
     if(D.zielX!=null && D.zielX<=D.bis){ const xz=X(D.zielX).toFixed(1); g+='<line x1="'+xz+'" y1="'+pT+'" x2="'+xz+'" y2="'+(H-pB)+'" stroke="'+FARBE.WEISS+'" stroke-opacity=".6" stroke-width="1" stroke-dasharray="4 3"/><text x="'+xz+'" y="'+(pT+8)+'" text-anchor="middle" font-size="8" fill="'+FARBE.WEISS+'">🎯 ~'+belUhr(D.zielX)+'</text>'; }
     else g+='<text x="'+xr.toFixed(1)+'" y="'+(pT+8)+'" text-anchor="end" font-size="8" fill="'+FARBE.GRAU+'">🎯 außer Reichweite ▸</text>';
   } else g+='<text x="'+xr.toFixed(1)+'" y="'+(pT+8)+'" text-anchor="end" font-size="8" fill="'+FARBE.GRAU+'">'+Math.round(D.selGes)+' P gesamt</text>';
+  (D.marken||[]).forEach(m=>{ g+='<text x="'+X(m.x).toFixed(1)+'" y="'+(H-pB-3)+'" text-anchor="middle" font-size="12" style="paint-order:stroke" stroke="#000" stroke-width="3" fill="#fff">'+m.sym+'</text>'; });   // 4.0 · Paket 5: Outfit-Stufen unter der Zeitachse
   svg.setAttribute('viewBox', '0 0 '+Wpx+' '+H); svg.setAttribute('width', Wpx); svg.innerHTML=g;
   const ya=sc.parentNode && sc.parentNode.querySelector('.dia-tv-y');
   if(ya) ya.innerHTML='<em>P</em>'+[0,1,2,3].map(i=>{ const v=lo+(hi-lo)*i/3; return '<span style="top:'+(Y(v)-6).toFixed(0)+'px">'+anFmt(v)+'</span>'; }).join('');
@@ -7871,6 +8300,7 @@ function fokusTacho(k){
   const zeitArc=el('tZeitArc'); if(!zeitArc || !k) return;
   const rotArc=el('tRotArc'), progArc=el('tProgArc'), dot=el('tKopfDot'), halo=el('tKopfHalo'), rest=el('tRest'), sub=el('tRestSub');
   const geplant=num(k.sollMin), sek=istSekLive(k), min=sek/60;
+  try{ zeitArc.setAttribute('stroke', f4RingFarbe(k)); }catch(e){}   // 4.0 · Paket 5: Ring in der Farbe der Restzeit (grün · gelb bis 20 % · rot)
   // §3 Nr. 1 (v3.5.1): Restzeit tickt jede Sekunde synchron zum Ring (mm:ss, ab einer Stunde h:mm:ss)
   if(geplant>0){
     const pct=min/geplant, ueber=pct>1 ? Math.min(1, pct-1) : 0, restSek=Math.round(geplant*60-sek);
@@ -7915,7 +8345,7 @@ function fokusStats(k){
   // (die Zahl steht allein — „16.882/5.800" passte bei 375 px nicht in die Kachel)
   if(el('tPktW')){ el('tPktW').textContent=fmtP(istHeute); el('tPktSub').textContent='von '+fmtP(ziel)+' · '+Math.round(istHeute/ziel*100)+' %'; }
   // §2 (v2.6.0): die Tempo-Leiste lebt mit dem Sekundentakt
-  if(el('tTempo')){ let tl=''; try{ tl=tempoLeisteHtml(tempoWerte(k)); }catch(e){ tl=''; } el('tTempo').innerHTML=tl; }
+  if(el('f4KarteTempo')){ try{ el('f4KarteTempo').innerHTML=f4KartenTempoHtml(k); }catch(e){} }   // 4.0 · Paket 5 (03): Tempo der Karte
   let zeitIst=0, zeitPlan=0; S.karten.forEach(x=>{ if(!imTagesstrom(x)) return; zeitIst+=heuteInvestiertMin(x); zeitPlan+=num(x.sollMin); });
   if(el('tZeitW')){ el('tZeitW').textContent=tZeitKurz(zeitIst)+'/'+tZeitKurz(zeitPlan); el('tZeitSub').textContent='Aufg '+(zeitPlan>0?Math.round(num(k.sollMin)/zeitPlan*100):0)+'%'; }
 }
@@ -7923,13 +8353,12 @@ function fokusStats(k){
    laut Standard) · Punkte heute (GOLD) · Schritte „3 von 5" mit Segmentleiste. Die Restzeit schreibt fokusTacho. */
 function fokusKpis(k){
   const tE=el('tKpiTempo'); if(!tE) return;
-  let kt=null, zielT=0, pf=''; try{ kt=tempoWerte(k).karte; }catch(e){}
-  try{ zielT=num(diaGroessen().tempoZiel); }catch(e){}
-  try{ pf=tempopfeilSvg(tempoVerhaeltnis(), 15); }catch(e){}
-  const live=kt && kt.live!=null, r=kt ? (live ? kt.live : kt.prognose) : null;
-  tE.innerHTML = r!=null ? '<span style="color:'+diaAmpel(r, zielT)+'">'+fmtP(r)+' P/h</span>'+pf : '<span style="color:'+FARBE.GRAU+'">– P/h</span>';
-  if(tE.nextElementSibling) tE.nextElementSibling.textContent = (r!=null && !live) ? 'diese Karte · Prognose' : 'diese Karte';
-  const zi=zielUndIstHeute(); el('tKpiPunkte').textContent=fmtP(zi.we ? zi.ist : punkteHeuteAnzeige());
+  // 4.0 · Paket 5 (02): 1 Gesamtpunkte der Karte, groß · 2 Satz der Karte (P/h) mit Tempopfeil (letzte 60 Min gegen die 60 davor)
+  let pf=''; try{ pf=tempopfeilSvg(tempoVerhaeltnis(), 15); }catch(e){}
+  tE.innerHTML='<span>'+fmtP(leiterSatz(k))+' <small>P/h</small></span>'+pf;
+  { const bisher=Math.max(0, kartePunkte(k)), ges=Math.max(bisher, kartePunktePrognose(k)), ab=(k.status==='erledigt' || durchgangAktiv(k)) ? 0 : Math.max(0, abhakbonusDefault(k));
+    el('tKpiPunkte').innerHTML=fmtP(ges)+' <small>P</small>';
+    if(el('tKpiPunkteSub')) el('tKpiPunkteSub').textContent='gesamt · bisher +'+fmtP(bisher)+(ab>0 ? ' · bei ✓ +'+fmtP(ab)+' Abhakbonus' : ''); }
   const subs=untermenge(k.id).filter(u=>!istUnterZaehler(u)), fertig=subs.filter(u=>u.done).length;
   el('tKpiSchritte').textContent = subs.length ? fertig+' von '+subs.length : '–';
   el('tKpiSeg').innerHTML = subs.map(u=>'<i'+(u.done?' class="ok"':'')+'></i>').join('');
@@ -8215,34 +8644,9 @@ function restBisTermin(k){
 }
 /* Fokus-Leiste (fixer Layer über allen Tabs). */
 function renderFokusleiste(){
-  const bar=el('topbar'), k=fokusKarte();
-  const laeuft = S.fokus && S.fokus.laeuft;
-  bar.classList.toggle('laeuft', !!laeuft);
-  // §2 (v3.5.1): kein Play/Pause mehr in der Statusleiste — rechts Uhr (WEISS) und Kartenpunkte (Familie, hell)
-  if(k){
-    el('fkTitle').textContent=k.titel||'(ohne Titel)';
-    el('fkTitle').classList.remove('idle');
-    el('fkSub').hidden=false;
-    { const rz=restzeitAnzeige(k.sollMin, istSekLive(k)), t=el('fkTimer'); t.textContent=rz.text; t.style.color=rz.farbe; }   // §1 (v3.5.4): Restzeit mit Vorzeichen und Ampel
-    el('fkPts').textContent='+'+fmtP(kartePunkte(k));
-    el('fkPts').style.color=famHell(k);
-  } else {
-    el('fkTitle').textContent='Kein Fokus aktiv';
-    el('fkTitle').classList.add('idle');
-    el('fkSub').hidden=true;
-  }
-  el('fkRight').textContent=fmtP(Math.round(tagesPunkteLive()));
-  // Ring um das Outfit fuellt sich bis zum naechsten Outfit; blinkt, wenn alle Toepfe voll sind (§6.4)
-  { const r=el('tbRing'); if(r){ let f=0; try{ f=outfitFortschritt().frac; }catch(e){ f=0; }
-      try{ r.style.setProperty('--frac', (Math.max(0,Math.min(1,num(f)))*100).toFixed(1)+'%'); }catch(e){}
-      let voll=false; try{ voll=(typeof ausmalAlleVoll==='function') && ausmalAlleVoll(); }catch(e){ voll=false; }
-      r.classList.toggle('blinkt', !!voll); } }
-  { const fi=el('tbFigurImg');
-    if(fi){ const of=(typeof outfitHeute==='function')?outfitHeute():1;
-      const src=AVATAR_BILDER[Math.max(0,Math.min(AVATAR_BILDER.length-1,(of||1)-1))];
-      if(src && fi.src!==src) fi.src=src; } }
+  // 4.0 · Paket 5: Kartenzeile, Ring und Restzeit sind Teil der Statusleiste (f4StatusleisteRender)
+  const bar=el('topbar'); if(bar) bar.classList.toggle('laeuft', !!(S.fokus && S.fokus.laeuft));
   renderStatusbar();
-  layoutTopbar();     // Topbar-Höhe (inkl. fkNav) immer nachziehen, auch bei geschlossenem Tag
 }
 /* Statusleiste (v1.3.2, S1–S3): 3-teilige Energie-Batterie · Tagesziel-
    Fortschrittsbalken (Ist DFM blau + Privat gelb gestapelt / Soll-Layer 8:30–22:00
@@ -8750,36 +9154,11 @@ function punkteleisteZeichnen(pfx, g, k, istHeute){
     zd.style.display=zeigD?'':'none'; zp.style.display=zeigP?'':'none'; }
 }
 function renderStatusbar(){
-  renderAmpelKurve();
+  // 4.0 · Paket 5: die Statusleiste nach Zielbild 01 (f4StatusleisteRender); Kopf der Ebene 1 bekommt dieselbe Punkteleiste
   { const b1=el('e1Bar'); if(b1) b1.hidden=!S.tag; }
-  const bar=el('statusbar'); if(!bar) return;
-  if(!S.tag){ bar.hidden=true; return; }   // §6 (v3.7.2): nach dem Abschluss bleibt die Leiste — Werte des abgeschlossenen Tages inkl. Nachträge
-  bar.hidden=false;
-  try{
-  const eb=energieBatterie();
-  const istHeute=punkteHeuteAnzeige();
-  const k=(S.belohnung?konto():0);
-  const g=diaGroessen();
-  punkteleisteZeichnen('sBar', g, k, istHeute);
-  if(_e1) punkteleisteZeichnen('e1Bar', g, k, istHeute);   // C3 (v3.8.0): zweite Darstellung im Kopf der Ebene 1 — dieselbe Funktion
-  // Zeile 3 · Spalte 1: Akku (Blitz und Zahl in der Akku-Ampel) · Wohlstand · Muenzen · Toepfe
-  { const c=el('sZAkku'); if(c){ const w=c.querySelector('.w'), f=eb.akku!=null ? akkuFarbe(eb.akku) : FARBE.GRAU; w.textContent=(eb.akku!=null ? Math.round(eb.akku)+' %' : '– %'); w.style.color=f; c.style.color=f; } }
-  // Konto: ◆ Wohlstand WEISS · ● Muenzen GOLD · Farbkreis volle Toepfe/5
-  { let w=0; try{ w=ausmalW(); }catch(e){}
-    if(el('sKW')) el('sKW').textContent=fmtP(Math.round(w)); if(el('sKM')) el('sKM').textContent=fmtP(Math.round(k));
-    // §4 (v3.7.0): Countdown in Farbpunkten bis zum nächsten malbaren Feld des aktiven Topfes
-    if(el('sKF')){ const c=topfCountdown(); el('sKF').textContent=c.text; el('sKF').style.color=c.farbe; } }
-  // Spalte 2 oben: im Diagramm links oben die Gesamtpunkte, rechts unten die P/h-Zahl (= Ø heute) in der Farbe der Pace-Leiste
-  { const t=el('sTempo'); if(t){
-      if(urlaubHeute()){ t.textContent='🏖'; t.style.color=FARBE.WEISS; }
-      else { t.style.color=paceFarbe(g.tempoSchnitt, g.tempoZiel); t.textContent=fmtP(Math.round(g.tempoSchnitt))+' P/h'; } } }
-  // Spalte 2 unten: Pace-Leiste — Ampelzonen relativ zu „nötig", Strich = Ø heute, Raute = laufende Karte, Pfeil = Karte gegen Ø
-  if(el('sZTempo')){ el('sZTempo').innerHTML=urlaubHeute() ? '' : paceLeisteHtml(g); paceBeschriftungenEntzerren(el('sZTempo')); }
-  // Matrix 72×72 — Spur der letzten 5 Stunden
-  if(el('sMv')) el('sMv').innerHTML=matrixVerlaufSvg(matrixSpur().filter(p=>p && p.ts && Date.parse(p.ts)>=Date.now()-5*3600000), {klein:true});   // §1 (v3.5.3): Matrixverlauf wie 3.4.8
-  momentRangCheck();   // §6 (1.9.0): Rang/Stern/Meilenstein/Joker zentral erkennen
-  try{ ausmalVerteilen(); }catch(e){}   // §6.4 (v3.5.0): Wohlstand-Zufluss in den aktiven Topf
-  }catch(e){ /* Statusleiste bleibt sichtbar, auch wenn ein Wert scheitert */ }
+  try{ f4StatusleisteRender(); }catch(e){ console.warn('Statusleiste', e); }
+  try{ momentRangCheck(); }catch(e){}
+  try{ ausmalVerteilen(); }catch(e){}
   layoutTopbar();
 }
 /* Tap auf die Statusleiste: bis die Live-Kurve (Punkt 2) da ist, in den
@@ -9318,7 +9697,8 @@ function familienRingSvg(name, farbe, hell, punkte, ziel, min){
     '<text x="60" y="68" fill="#fff" font-size="22" font-weight="750" text-anchor="middle">'+hMin(min)+'</text>'+
     '<text x="60" y="84" fill="'+FARBE.GRAU+'" font-size="11" text-anchor="middle">'+fmtP(punkte)+' / '+fmtP(ziel)+'</text></svg>';
 }
-function tagesRingeHtml(){
+function tagesRingeHtml(){ return f4RingeHtml(); }   // 4.0 · Paket 5 (04): drei Ringe DFM · Privat · 🌿 Erholung
+function tagesRingeHtmlAlt(){
   const g=diaGroessen(), z=familienZeitHeute();
   return '<div class="ringe" data-ringlive="1"><div class="rg">'+familienRingSvg('DFM', FARBE.BLAU, FARBE.BLAU_HELL, g.dfm, g.zielDfm, z.dfm)+'</div>'+
     '<div class="rg">'+familienRingSvg('Privat', FARBE.LILA, FARBE.LILA_HELL, g.privat, g.zielPrivat, z.privat)+'</div></div>';
@@ -9721,6 +10101,10 @@ function kartenListeCheck(kid){
 }
 function fokusKlick350(e){
   const t=e.target; if(!t || !t.closest) return;
+  // 4.0 · Paket 5 (02): Onramp-Band — ▶/⏸ · ✓ · andere (öffnet die Kartenauswahl; die Gruppe Onramps kommt mit Paket 7)
+  { const os=t.closest('[data-f4onstart]'); if(os){ e.stopPropagation(); haptik(10); leistePlay(os.dataset.f4onstart); renderAlles(); return; }
+    const oc=t.closest('[data-f4oncheck]'); if(oc){ e.stopPropagation(); haptik(12); kartenListeCheck(oc.dataset.f4oncheck); return; }
+    const oa=t.closest('[data-f4onandere]'); if(oa){ e.stopPropagation(); haptik(6); if(typeof oeffneOnrampWahl==='function') oeffneOnrampWahl(oa.dataset.f4onandere); else e1Oeffnen('plus'); return; } }
   if(kettenListeKlick(e)) return;   // §5 (v3.7.0): die Kettenliste hat EINEN Handler fuer alle Orte
   const uz=t.closest('[data-uztick]'); if(uz){ e.stopPropagation(); haptik(10); unterZaehlerTick(uz.dataset.uztick); return; }
 }
@@ -16679,7 +17063,7 @@ function belTagesDiagramm(opt){
   const endX = istHeute ? Math.max(diaTagesEndeX(), fn.bis>24.01 ? fn.bis : 0) : fn.bis;
   const K={ dfm:diaTagKurve(sel,'dfm'), privat:diaTagKurve(sel,'privat'), alle:diaTagKurve(sel,'alle') };   // §1: Punkte ueber die Bearbeitungszeit
   const fenster={}; (S.intraday||[]).forEach(e=>{ if(e.ts && num(e.punkte)>0) fenster[belFensterDatum(e.ts)]=true; });
-  const wtF=Object.keys(fenster).filter(fd=>fd!==sel && belWochentag(fd)===wt);
+  const wtF=Object.keys(fenster).filter(fd=>fd!==sel && belWochentag(fd)===wt && !tagIstUrlaub(fd)).sort().slice(-4);   // 4.0 · Paket 5: höchstens die letzten 4 passenden Tage, ohne Urlaub
   const wtK={}; ['dfm','privat','alle'].forEach(d=>{ wtK[d]=wtF.map(fd=>diaTagKurve(fd,d)); });
   let bisX=endX; if(istHeute) bisX=Math.max(bisX, nowX+3);
   wtF.forEach(fd=>{ const e=diaTagKurve(fd,'alle').ende; if(e!=null && e>bisX) bisX=e; });
@@ -16708,7 +17092,7 @@ function belTagesDiagramm(opt){
   [[zeigD,'dfm'],[zeigP,'privat']].forEach(([z,d])=>{ if(z) serien.push({pts:serie(K[d]), st:DIA_LINIE[d].heute, kopf:istHeute, haupt:true}); });
   // Tagesziele je Familie, weiss gepunktet
   const ziele=[]; if(zeigD) ziele.push({y:belZielDfm(), label:'Ziel DFM'}); if(zeigP) ziele.push({y:tagesZielDomain('privat'), label:'Ziel Privat'});
-  diaRegistrieren(diaId, { von:vonX, bis:bisX, dauer, nowX, istHeute, H:150, serien, ziele, zielX, selGes, zeichnen:tvZeichnen });
+  diaRegistrieren(diaId, { von:vonX, bis:bisX, dauer, nowX, istHeute, H:150, serien, ziele, zielX, selGes, zeichnen:tvZeichnen, marken:istHeute ? f4OutfitMarken() : [] });   // 4.0 · Paket 5: ⚙/🌿-Marken der Outfit-Stufen
   // F1: Filterzeile — Domänen-Segment + Tagesauswahl (Datumsfeld + ‹ › Schritt)
   const dseg=(v,l)=>'<button class="'+(dom===v?'on':'')+'" data-statdom="'+v+'">'+l+'</button>';
   const controls='<div class="statfilter"><span class="segmini">'+dseg('alle','Alle')+dseg('dfm','DFM')+dseg('privat','Privat')+'</span>'+
@@ -16718,7 +17102,7 @@ function belTagesDiagramm(opt){
     (istHeute?'':'<button data-statheute="1">heute</button>')+'</span></div>';
   const linie=(c, o, dash)=>'<i style="'+(dash ? 'border-top:2px dashed '+farbeAlpha(c, o)+';height:0;border-radius:0' : 'background:'+c+';height:3px')+'"></i>';
   const legende='<div class="legende">'+(zeigD ? '<span>'+linie(FARBE.BLAU)+'DFM</span>' : '')+(zeigP ? '<span>'+linie(FARBE.LILA)+'Privat</span>' : '')+
-    (wtF.length ? '<span>'+linie(zeigD ? FARBE.BLAU : FARBE.LILA, .5, true)+'Ø '+AN_WT_LANG[wt]+' je Familie</span>' : '')+
+    (wtF.length ? '<span>'+linie(zeigD ? FARBE.BLAU : FARBE.LILA, .5, true)+'Ø '+AN_WT_LANG[wt]+' je Familie ('+wtF.length+' Tag'+(wtF.length===1?'':'e')+')</span>' : '')+
     (mitPrognose ? '<span>'+linie(FARBE.WEISS, 1, true)+'Prognose</span>' : '')+'</div>';
   const hint = wtF.length===0 ? '<div class="stathint">Noch kein Vergleichstag ('+AN_WT_LANG[wt]+') — Ø erscheint ab dem ersten getrackten '+AN_WT_LANG[wt]+'.</div>'
     : (wtF.length===1 ? '<div class="stathint">Ø basiert auf 1 Vergleichstag ('+AN_WT_LANG[wt]+').</div>' : '');   // H1
@@ -19188,7 +19572,16 @@ el('sheetBody').addEventListener('click', e=>{
 // §2 (v3.5.1): der Play/Pause-Knopf der Statusleiste ist entfallen (Bedienung in der Fokusansicht)
 /* C4 (v3.8.0): Tipp auf Zeile 2 der Statusleiste (Ring · Titel · Uhr) → die Fokusseite zeigt die GETRACKTE Karte (ohne sie die
    Kettenliste); die Figur führt weiter zum Shop */
-{ const z1=document.querySelector('#topbar .sl-z1'); (z1||el('fkMid')).addEventListener('click', e=>{ if(e.target.closest('#btnFigur')) return; fokusZeigen(null); }); }
+/* 4.0 · Paket 5: ein Handler für die ganze Statusleiste */
+el('topbar').addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
+  if(t.closest('[data-f4postfach]')){ if(typeof oeffnePostfach==='function') oeffnePostfach(); else toast('Postfach folgt (Paket 7)'); return; }
+  const z=t.closest('[data-f4ziel]'); if(z){ if(z.dataset.f4ziel) fokusZeigen(z.dataset.f4ziel); return; }
+  if(t.closest('[data-f4matrix]')){ oeffneTagebuch(); return; }
+  if(t.closest('[data-f4kurve]')){ seiteZeigen('statistik'); return; }
+  if(t.closest('.f4-ring')){ zurBelohnung(); return; }
+  if(t.closest('[data-f4titel]')){ fokusZeigen(null); return; }
+  ebeneSetzen({ seite:'fokus', e1:null });
+});
 /* §10 (v3.7.2): langer Druck (500 ms) auf die Statusleiste öffnet das Status-Sheet; der kurze Tipp bleibt (Fokusansicht) */
 let _slLangTimer=null, _slLangWar=false;
 function statusLangDruckBinden(elm){
@@ -19200,12 +19593,7 @@ function statusLangDruckBinden(elm){
   elm.addEventListener('pointermove', e=>{ if(_slLangTimer && (Math.abs(e.movementX||0)+Math.abs(e.movementY||0))>12) ende(); });
   elm.addEventListener('click', e=>{ if(_slLangWar){ _slLangWar=false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 }
-statusLangDruckBinden(el('statusbar')); statusLangDruckBinden(document.querySelector('#topbar .sl-z1'));
-el('statusbar').addEventListener('click', e=>{
-  if(e.target.closest('#sZMatrix')){ oeffneTagebuch(); return; }   // §2 (v3.7.1): Tipp auf die Matrix = Tagebuch
-  if(e.target.closest('#btnKurve')) return;   // §2 (v3.5.1): der Punkte-Block fuehrt zur Statistik (eigener Handler)
-  ebeneSetzen({ seite:'fokus', e1:null });
-});
+statusLangDruckBinden(el('topbar'));   // 4.0 · Paket 5: langer Druck auf die ganze Leiste
 
 // Fokus-View: Toggle / Häkchen / Karussell / Farbstreifen / Unteraufgaben / Stapelwahl
 // Bug 2: Karussell-Pfeile im Topbar (außerhalb von #fokusView)
@@ -20248,7 +20636,6 @@ function stapelFuerKarte(kid){ for(const st of S.stapel){ try{ if(stapelKarten(s
 function zurBelohnung(){
   seiteZeigen('belohnung');   // §10 (v3.7.0): der Wechsel der Hauptansicht beginnt oben, sonst kein Hochscrollen
 }
-el('btnFigur').addEventListener('click', zurBelohnung);
 el('fokusView').addEventListener('click', fokusKlick350, true);
 // §5 (v3.7.0): Kettenliste ausserhalb der Fokusansicht (Suche, „+", „In Kette") — derselbe Handler; Sortierwahl per change
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest || t.closest('#fokusView') || !t.closest('[data-klliste]')) return; kettenListeKlick(e); }, true);
@@ -20282,11 +20669,6 @@ document.addEventListener('click', e=>{ const z=e.target && e.target.closest ? e
 }, true);
 el('sheetBody').addEventListener('click', e=>{ const t=e.target.closest('[data-maltopfunter]'); if(t){ e.stopPropagation(); topfUnterStation(num(t.dataset.maltopfunter)); closeSheet(); renderBelohnung(); return; }
   const m=e.target.closest('[data-mfxset]'); if(m){ e.stopPropagation(); matrixfeldSetzen(m.dataset.kid, m.dataset.mfxset); closeSheet(); renderStatistik(); renderMfAnsicht(); } }, true);   // §6.4/§8.2 (v3.5.0)
-el('btnKurve').addEventListener('click', ()=>{
-  // §1 (v2.6.0): Tipp auf die Mini-Kurve oeffnet die Statistik, OBEN
-  // (dort stehen jetzt Matrix und direkt darunter der Tagesverlauf).
-  seiteZeigen('statistik');   // §10 (v3.7.0): der Seitenwechsel beginnt oben
-});
 function zurMatrixSpur(){
   // §2 (v3.5.1): die Matrix-Spur liegt im Detail von „Matrix heute" — aufklappen und dorthin
   S.ui.statOffen=Object.assign({}, S.ui.statOffen, {matrixHeute:true}); saveUi();
