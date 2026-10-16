@@ -2529,7 +2529,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-16-2';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-16-3';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -3003,15 +3003,33 @@ function haptik(ms){ try{ navigator.vibrate && navigator.vibrate(ms||10); }catch
    ══════════════════════════════════════════════════════════════════════ */
 /* §3.8 Settings (alle live einstellbar). Werte = sinnvolle Startbelegung. */
 const DEFAULT_SETTINGS = {
+  // ══ 4.0 · Paket 4 · Punkte-Engine nach Punkt 5 (alle Werte über die Sync-Tür, Bereich engine4) ══
+  leiter: { geldnah:600, kommunikation:400, ohneGeld:300, privatWerkzeug:200, erholung:200, ablenkung:0 },   // 5.3 Stundenleiter, Punkte je Stunde
+  tickAktivierung: 10,         // 5.3: Tick = Satz × echte Tick-Minuten ÷ 60 + 10
+  startBonus: 25,              // 5.5: jede Karte beim Anfangen
+  bruecke: { onramp:100, ziel:100, abzug:150, zielMin:10, fristMin:15 },   // 5.5 Onramp-Brücke
+  abhakbonusAbSollMin: 15,     // 5.5: Abhakbonus nur ab 15 Min Soll
+  abzugOhneGrund: 50,          // 5.6: Aufgabe oder Muss-Routine ohne Grund geschoben
+  wochenserieBonus: 300,       // 5.7: DFM-Routinen werktags bzw. am Wochenende komplett
+  positionStaffel: [30, 10, 0],   // 5.4: Position 1–5 je 30 · 6–8 je 10 · ab 9 0
+  rangSchwellen: [0, 5700, 6200, 6700, 7250, 7800, 8450, 9100, 9850, 10600],   // 5.9: R1 bis 5.700 · R2 ab 5.700 … R10 ab 10.600 (Ø P/Tag, 28 Tage)
+  rangTage: 28, spitzenTage: 7, rangAufstiegTage: 7, rangAbstiegTage: 14,
+  outfitStufen: 13, outfitPlus: 3, outfitMinus: 2,   // 5.8
+  shopPreise: [3000, 4500, 6000, 8000, 44000, 65000, 87000, 110000, 130000, 175000, 220000, 260000],   // 5.10 je Stufe, × Kategorie-Faktor
+  shopFreiAb: { 5:3, 6:4, 7:5, 8:6, 9:7, 10:8, 11:9, 12:10 },   // 5.10 Rang-Sperre: Stufen 5–8 ab Rang 3–6, 9–12 ab Rang 7–10
+  rangSperre: true,            // 7.8: in den Einstellungen abschaltbar, Standard an
+  grundwoche: { kw:'2026-W41', dfm:23324, privat:20313, gesamt:43637, werktagDfm:4465, werktagPrivat:3223, wochenendeDfm:998, wochenendePrivat:4199, erholungMin:455 },
+  zielsteuerungSchritt: 250,   // 5.3: sonntags +250, wenn 4 von 5 Werktagen im Ziel und Belastung grün
+  postfachPunkte: { karte:10, leer:50, mail:10, satz:400 },   // 5.5 Postfach-Karte, Postfach leer, Mail beantwortet
   basisProStd: 120,            // Alt-Einzelwert (nur Migrationsreferenz); Domänenwerte unten (A9)
   basisProStdDfm: 180,         // A9: Basis-Rate DFM (1,5× privat)
   basisProStdPrivat: 120,      // A9: Basis-Rate privat
   abhakbonusDfm: 0,            // ALT (bis v1.12) — nur noch Migrationsreferenz; ersetzt durch standardWert* (§2 v1.13.0)
   abhakbonusPrivat: 0,
-  subBonusDfm: 100,            // U6-C: Punkte pro Unteraufgabe je Domäne (bisher hart 100)
-  subBonusPrivat: 100,
-  zeitGewicht: 1.5,            // §2.2 (v1.12.0): Gewicht des Zeit-Terms (1,15→1,5)
-  tickGewicht: 0.8,            // §2.2 (v1.12.0): Gewicht des Tick-Terms (1→0,8)
+  subBonusDfm: 0,              // 4.0 · Paket 4: Unteraufgaben-Bonus nicht in Punkt 5 (war 100)
+  subBonusPrivat: 0,
+  zeitGewicht: 1,              // 4.0 · Paket 4: die Stundenleiter zählt 1:1 (war 1,5)
+  tickGewicht: 1,              // 4.0 · Paket 4 (war 0,8)
   standardWertDfm: 0,          // §2 (v1.13.0): EIN Standardwert je Domäne — speist Abhakbonus UND Tick-Wert
   standardWertPrivat: 0,
   sollFormWerktag: [[0,5],[6,9]],   // §5.1 (v1.13.0): Soll-FORM relativ zum Tagesstart — ~5 h Fokus · 1 h Senke · ~3 h Fokus, danach Bonus
@@ -3021,7 +3039,7 @@ const DEFAULT_SETTINGS = {
   // fast überall auf 1,0. Der Feld-Faktor tritt EXAKT an ihre Stelle, deshalb
   // ist „Ziele" = 1,0: ein Tag aus reiner Zielarbeit landet auf den Punkt dort,
   // wo er unter v1.13.4 landete (Kalibrier-Beleg in der Abnahme).
-  matrixFaktor: { ziel:1.0, zustand:0.9, werkzeug:0.8, ablenkung:0 },
+  matrixFaktor: { ziel:1.0, zustand:1.0, werkzeug:1.0, ablenkung:0 },   // 4.0 · Paket 4: der Satz kommt aus der Stundenleiter (leiterSatz), der Faktor wirkt nicht mehr
   // ══ Nachtrag §2 (v2.0.0) · DER ABHAKBONUS TRÄGT DIE BARRIERE ══════════
   // Mit komplex/energie/blockade ist der Träger für „das fällt mir schwer"
   // weggefallen. Der Abhakbonus übernimmt ihn: Barriere, Priorität und
@@ -3037,13 +3055,13 @@ const DEFAULT_SETTINGS = {
   // Routinen und Counter nach Domaene. Ein eigener Wert an der Karte schlaegt
   // die Tabelle. Die Aufgaben-Spalte uebernimmt bei der Migration Pascals
   // Geraetewerte (siehe migration280).
-  abhakbonusTabelle: {
+  abhakbonusTabelle: {   // 4.0 · Paket 4 (5.5): Werkzeug 200 · Ziel 150, nur ab 15 Min Soll, für jede Kartenart
     aufgabe:       { werkzeug:200, ziel:150, zustand:0, ablenkung:0 },
-    routineDfm:    { werkzeug:60,  ziel:60,  zustand:0, ablenkung:0 },
-    routinePrivat: { werkzeug:25,  ziel:25,  zustand:0, ablenkung:0 } },
+    routineDfm:    { werkzeug:200, ziel:150, zustand:0, ablenkung:0 },
+    routinePrivat: { werkzeug:200, ziel:150, zustand:0, ablenkung:0 } },
   // §2.2 (v2.8.0): Daempfung der ZEIT- und TICKpunkte von Routinen und Countern
   // (private Aufgaben werden nie gedaempft; der Abhakbonus nie — Entscheidung Pascal)
-  daempfungPrivat: 0.5,
+  daempfungPrivat: 1,          // 4.0 · Paket 4: keine Dämpfung privater Routinen (war 0,5)
   // §1 (v2.8.2): Neustart innerhalb dieser Minuten nach der Pause = derselbe Durchgang (kein zweiter Bonus)
   durchgangPauseMin: 5,
   // ══ §2/§7/§10 (v3.0.0) · Routinen-System — alles Settings, keine Konstanten ══
@@ -3052,7 +3070,7 @@ const DEFAULT_SETTINGS = {
   serienfaktorMax: 2.0,        // … bis hoechstens ×2,0 (Entscheidung Pascal)
   tagesZielPrivatSockel: 750,  // §10: privates Tagesziel = Maximum der faelligen Routinen + 750
   tagesEckPunkte: 150,         // §9 (v3.7.0): Tagesstart und Tagesabschluss geben je so viel DFM UND Privat (Abhak-Punkte ohne Zeit)
-  syncPunkte: { dfm:25, privat:25 },   // §3a (v3.7.1): jeder Export/Import gibt so viel DFM und Privat (Abhak-Punkte ohne Zeit)
+  syncPunkte: { dfm:0, privat:0 },     // 4.0 · Paket 4 (5.4): Sync-Punkte entfallen mit der Live-Verbindung
   schlafBedarfStd: 7,          // §7: Bedarf je Nacht — was fehlt, wird Schlafschuld
   schlafLadungProStd: 12,      // §7: Akku-Prozent je Stunde Schlaf (Claude schaerft nach)
   schlafSchuldProzentJeStd: 5, // §7: je Stunde Schlafschuld braucht der Akku so viel % mehr
@@ -3060,7 +3078,7 @@ const DEFAULT_SETTINGS = {
   schlafPunkteStufen: [{abStd:7, punkte:100},{abStd:6, punkte:70},{abStd:5, punkte:30}],   // §7: darunter 0, kein Abzug fuer langen Schlaf
   schlafAufstehenUm: '08:00',  // §6: Prognose „Aufstehen um 08:00 → Akku X %"
   // ══ §2/§3 (v3.1.0) · Sync-Tür — was bisher fest im Code stand, ist jetzt ein Parameter ══
-  tagesZielPrivatModus: 'auto', // auto (Routinen, sobald eine Karte modus traegt) · routinen · fest
+  tagesZielPrivatModus: 'fest', // 4.0 · Paket 4: festes Ziel aus der Grundwoche (war auto)
   weModus: 'gemeinsam',        // Wochenende: gemeinsames Budget Sa+So · getrennt (je Tag das volle WE-Ziel)
   erholungZeitzielMin: 120,    // Karten mit rolle „erholung": Zeitziel, wenn die Karte keins traegt
   erholungAkkuJe120Min: 30,    // … und Akku-Ladung (Prozent je 120 Minuten)
@@ -3079,13 +3097,13 @@ const DEFAULT_SETTINGS = {
   daempfungDfm: 1.0,
   // §2: Bonus für Bewegung nach rechts. Voller Ausschlag (ganz links → ganz
   // rechts) = dieser Wert; wer schon rechts stand, bekommt fast nichts.
-  bewegungsBonus: 500,
+  bewegungsBonus: 0,           // 4.0 · Paket 4: nicht in Punkt 5 (war 500)
   // §6.3/§9.2 (v3.5.0): Ausmalen — Topf-Fassung = groesstes Feld × Aufschlag, Doppeltipp-Zoom, Banner-Dauer
   ausmalen: { topfAufschlag: 1.2, zoomDoppeltipp: 2.5, bannerSek: 8 },
   // §9: ab so vielen ausgewerteten Matrix-Taps schlägt die App das GELERNTE
   // Werkzeug vor statt des Akku-Startwerts.
   vorschlagLernSchwelle: 12,
-  geldGewicht: 0.5,            // geldFaktor = 1 + geldScoreNorm × geldGewicht (nur dfm)
+  geldGewicht: 0,              // 4.0 · Paket 4: der Geld-Impact entscheidet nur die Art (geldnah 600), kein Faktor mehr (war 0,5)
   // §5 (v2.6.0, Entscheidung Pascal): der Deckel faellt. Bis v2.5 kappte er
   // bei ×1,5 — Geld-Score 200 und 300 brachten exakt dieselben Punkte. Ab
   // jetzt linear: 100 → ×1,25 · 200 → ×1,5 · 300 → ×1,75 · 500 → ×2,25.
@@ -3098,14 +3116,14 @@ const DEFAULT_SETTINGS = {
   // des Ziels — gute Tage übertreffen es, schwache bleiben sichtbar darunter.
   // Privat ist eine Setzung (Privat_Zeit existiert erst seit 01.09.) und
   // wird nach zwei Wochen Tracking geprüft.
-  tagesZielDfm: 5000,          // war 7000
+  tagesZielDfm: 4500,          // 4.0 · Paket 4: Werktag DFM 4.500 (Grundwoche KW 41); war 5000
   // Privat korrigiert (2. Nachtrag): 3.000 wären 22 % gewesen und hätten
   // Privat dauerhaft rot aussehen lassen. 800 liegt knapp über dem
   // gerechneten Routinentag (669 P): ein normaler Tag verfehlt es leicht,
   // ein guter übertrifft es.
-  tagesZielPrivat: 800,        // war 5000 → 3000 → 800
-  zielWeDfm: 1800,             // Wochenend-Kontingent DFM (Sa+So gemeinsam), war 2500
-  zielWePrivat: 1600,          // Wochenend-Kontingent Privat (Sa+So), war 10000 → 6000 → 1600
+  tagesZielPrivat: 2800,       // 4.0 · Paket 4: Werktag Privat 2.800; war 800
+  zielWeDfm: 1000,             // 4.0 · Paket 4: Wochenende Sa+So zusammen DFM 1.000; war 1800
+  zielWePrivat: 4200,          // 4.0 · Paket 4: Wochenende Sa+So zusammen Privat 4.200; war 1600
   tageszielPunkteProStd: 100,  // ALT (M3-Pace) — durch tagesZielDfm/Privat ersetzt, intern belassen
   pfeilZone1: 5, pfeilZone2: 15, pfeilZone3: 40,  // v1.1: Pace-Pfeil-Zonen (% Abw. vom Soll) — v0.38-Port
   levelSchwellen: [0,6000,18000,37500,67500,105000,150000,210000,285000,375000,480000,600000],  // ALT (vor U4) — Level kommt jetzt aus punkteProLevel
@@ -3160,7 +3178,14 @@ const EINST_SCHEMA={
     bewegungsBonus:Z('bewegungsBonus',{min:0}), privatSockel:Z('tagesZielPrivatSockel',{min:0}) },
   belohnung:{ punkteProLevel:Z('punkteProLevel',{min:100}) },   // §1 (v3.6.1): preisFaktor entfallen (ein Paket mit dem Feld wird angenommen, der Wert ignoriert)
   ausmalen:{ topfAufschlag:Z('ausmalen.topfAufschlag',{min:1}), zoomDoppeltipp:Z('ausmalen.zoomDoppeltipp',{min:1}), bannerSek:Z('ausmalen.bannerSek',{min:1}) },   // §9.2 (v3.5.0)
-  tagesform:{ werktag:{p:'sollFormWerktag', t:'fenster'} }
+  tagesform:{ werktag:{p:'sollFormWerktag', t:'fenster'} },
+  // 4.0 · Paket 4: die Punkte-Engine nach Punkt 5 — der Scoring-Spezialist ändert sie nur über das Postfach und ein Paket
+  engine4:{ leiter:{p:'leiter', t:'tabelle'}, tickAktivierung:Z('tickAktivierung',{min:0}), startBonus:Z('startBonus',{min:0}), bruecke:{p:'bruecke', t:'tabelle'},
+    abhakbonusAbSollMin:Z('abhakbonusAbSollMin',{min:0}), abzugOhneGrund:Z('abzugOhneGrund',{min:0}), wochenserieBonus:Z('wochenserieBonus',{min:0}),
+    positionStaffel:{p:'positionStaffel', t:'zahlen'}, rangSchwellen:{p:'rangSchwellen', t:'zahlen'}, rangTage:Z('rangTage',{min:7, max:120}), spitzenTage:Z('spitzenTage',{min:1, max:28}),
+    rangAufstiegTage:Z('rangAufstiegTage',{min:1, max:60}), rangAbstiegTage:Z('rangAbstiegTage',{min:1, max:120}), outfitStufen:Z('outfitStufen',{min:3, max:20}),
+    outfitPlus:Z('outfitPlus',{min:0, max:10}), outfitMinus:Z('outfitMinus',{min:0, max:10}), shopPreise:{p:'shopPreise', t:'zahlen'}, shopFreiAb:{p:'shopFreiAb', t:'tabelle'},
+    rangSperre:{p:'rangSperre', t:'bool'}, grundwoche:{p:'grundwoche', t:'tabelle'}, zielsteuerungSchritt:Z('zielsteuerungSchritt',{min:0}), postfachPunkte:{p:'postfachPunkte', t:'tabelle'} }
 };
 const STAT_SCHEMA={
   module:{ reihenfolge:{p:'statistik.reihenfolge', t:'module'}, ausgeblendet:{p:'statistik.ausgeblendet', t:'moduleAlle'} },
@@ -3227,6 +3252,18 @@ function schemaPruefen(f, roh){
     Object.keys(roh).forEach(k=>{ if(FELDER4.indexOf(k)<0){ unbekannt.push(k); return; }
       const v=roh[k]; if(v===null) schritte.push([f.p+'.'+k, std(f.p+'.'+k)]); else if(Number.isFinite(Number(v))) schritte.push([f.p+'.'+k, Number(v)]); else unbekannt.push(k+' (keine Zahl)'); });
     return { ok:true, anzeige:roh, schritte, unbekannt };
+  }
+  if(t==='tabelle'){   // 4.0 · Paket 4: Objekt mit Zahlen (oder Texten) je Schlüssel, null = Standard des Schlüssels
+    if(!roh || typeof roh!=='object' || Array.isArray(roh)) return { fehler:'Objekt {schlüssel: wert} erwartet' };
+    const schritte=[], unbekannt=[], stdO=std(f.p)||{};
+    Object.keys(roh).forEach(k=>{ if(!(k in stdO)){ unbekannt.push(k); return; } const v=roh[k];
+      if(v===null) schritte.push([f.p+'.'+k, stdO[k]]); else if(Number.isFinite(Number(v)) && typeof stdO[k]==='number') schritte.push([f.p+'.'+k, Number(v)]);
+      else if(typeof stdO[k]==='string' && typeof v==='string') schritte.push([f.p+'.'+k, v]); else unbekannt.push(k+' (falscher Typ)'); });
+    return { ok:true, anzeige:roh, schritte, unbekannt };
+  }
+  if(t==='zahlen'){   // 4.0 · Paket 4: Liste von Zahlen
+    if(!Array.isArray(roh) || !roh.length || !roh.every(x=>Number.isFinite(Number(x)))) return { fehler:'Liste von Zahlen erwartet' };
+    return { ok:true, anzeige:roh, schritte:[[f.p, roh.map(Number)]] };
   }
   if(t==='module' || t==='moduleAlle'){
     const erlaubt=(t==='module' ? STAT_MODULE : STAT_MODULE.concat(STAT_DETAIL)).map(x=>x[0]);
@@ -3297,6 +3334,7 @@ function syncTuerAnwenden(vs){
   });
   if(vs.statistik && vs.statistik.aenderungen.some(a=>a.bereich==='zeitfenster')) S.ui.analyseZeitraum=null;   // das Paket setzt den Standard — die gemerkte Wahl faellt
   saveSettings(); saveMeta(); saveUi();
+  try{ e4EinstellungsHistorie(teile); }catch(e){}   // 4.0 · Paket 4 (5.11): Eintrag in der Einstellungs-Historie
   return n;
 }
 function protokollEintrag(art, grund, zeilen, extra){
@@ -3383,6 +3421,7 @@ function neueKarte(f={}){
     // §5 (v2.6.0): Geld-Impact ist eine ZAHL 0 … 500 (vorher: geldScore vom
     // Chat). Der Geld-Score wird daraus live gerechnet (geldScoreVon).
     geldImpact: 0,                    // nur dfm
+    arbeitsart: null,                 // 4.0 · Paket 4: „Kommunikation“ → Stundenleiter 400 P/h (Feld Arbeitsart in FocusSystem)
     // §1 (v2.7.0): Block des Tagesrahmens, zu dem die Karte gehoert — gilt
     // fuer den Tag in blockTag (die Zuordnung ist eine Tagesplanung).
     block: null, blockTag: null,
@@ -3524,9 +3563,314 @@ function settingsMerge(gespeichert){
   // ALTE Default noch gesetzt ist (nie einen bewusst geänderten Wert überschreiben):
   if(Array.isArray(s.levelSchwellen) && s.levelSchwellen[11]===40000) s.levelSchwellen = DEFAULT_SETTINGS.levelSchwellen.slice();
   if(s.basisProStd===12)  s.basisProStd = 120;   // A8: Basis 12→120
-  if(s.zeitGewicht===1)   s.zeitGewicht = 1.15;  // A8: Zeit-Gewicht 1→1,15
+  if(s.zeitGewicht===1 && !s.leiter)   s.zeitGewicht = 1.15;  // A8: Zeit-Gewicht 1→1,15 · 4.0 · Paket 4: nicht mehr, sobald die Engine 4.0 (leiter) in den Einstellungen steht
   delete s.preisFaktor;   // §1 (v3.6.1): der Shop-Preis-Faktor ist entfallen — die Preise kommen allein aus der Formel 3.6.0
   return s;
+}
+/* ══════════════════════════════════════════════════════════════════════
+   4.0 · Paket 4 · PUNKTE-ENGINE nach Punkt 5 (Belohnungen Punkte & Spiel-Ebene)
+   Stundenleiter · Ticks · Boni (Start, Onramp-Brücke, Abhakbonus, Wochenserie)
+   · Feste Punkte · Abzüge nur in Münzen · Farbe nach Herkunft · Rang aus der
+   Dauerlast · Outfit über den Tag · Shop-Preise und Rang-Sperre · Grundwoche
+   KW 41 · Ziele · Zielsteuerung. Mess-Ebene (Zeit, Punkte, Belastung) und
+   Spiel-Ebene (Farbe, Outfit, Kulisse, Münzen, Rang) bleiben getrennt.
+   Alle Werte stehen in den Einstellungen (Bereich engine4 der Sync-Tür).
+   ══════════════════════════════════════════════════════════════════════ */
+/* Kartenkatalog (Punkt 5.7): die DFM-Routinen nach Namen, wenn die Karte keine Arbeitsart trägt */
+const E4_KATALOG_ART=[ ['pipeline & briefing','geldnah'], ['mom','geldnah'], ['mails & post','kommunikation'], ['whatsapp','kommunikation'],
+  ['linkedin','kommunikation'], ['tagesübergang','ohneGeld'], ['tagesabschluss','ohneGeld'], ['tagesplanung','ohneGeld'], ['wochenplanung','ohneGeld'], ['buchhaltung','ohneGeld'] ];
+const E4_ARTEN=['geldnah','kommunikation','ohneGeld','privatWerkzeug','erholung','ablenkung'];
+const E4_ART_NAME={ geldnah:'DFM geldnah', kommunikation:'DFM-Kommunikation', ohneGeld:'DFM ohne Geld', privatWerkzeug:'Privat-Werkzeug', erholung:'Erholung', ablenkung:'Ablenkung' };
+function e4Leiter(){ return Object.assign({}, DEFAULT_SETTINGS.leiter, (S.settings && S.settings.leiter)||{}); }
+function e4KatalogArt(titel){
+  const t=String(titel||'').toLowerCase();
+  for(const [key, art] of E4_KATALOG_ART){ if(t.indexOf(key)===0 || t.indexOf(' '+key)>=0 || t===key) return art; }
+  return null;
+}
+/* Die Art der Karte aus Matrixfeld, Domäne, Geld-Impact und Kartenkatalog (Punkt 5.3) */
+function leiterArt(k){
+  if(!k) return 'ohneGeld';
+  if(k.rolle==='schlafen' || k.rolle==='erholung' || erholungAktiv(k) || erholungsKarte(k)) return 'erholung';
+  if(matrixFeldVon(k)==='ablenkung') return 'ablenkung';
+  if(k.domain!=='dfm') return 'privatWerkzeug';
+  if(k.arbeitsart==='Kommunikation') return 'kommunikation';
+  const kat=e4KatalogArt(k.titel); if(kat) return kat;
+  if(istSonderRolle(k) || k.rolle==='tagesuebergang' || k.rolle==='position' || k.rolle==='sync') return 'ohneGeld';
+  return geldImpactVon(k)>0 ? 'geldnah' : 'ohneGeld';
+}
+function leiterSatz(k){ const L=e4Leiter(); return Math.max(0, num(L[leiterArt(k)], 0)); }
+/* Farbtopf nach Herkunft (Punkt 5.2): DFM warm · Privat-Werkzeug gelb · Erholung und Schlaf kühl */
+function leiterFarbe(k){ const a=leiterArt(k); return a==='erholung' ? 'kuehl' : (k && k.domain==='dfm') ? 'warm' : 'gelb'; }
+/* Tick = Satz der Karte × echte Tick-Minuten ÷ 60 + Aktivierung; beim ersten Tick des Tages der Abhakbonus (ab 15 Min Soll) */
+function e4TickAbhak(k, nr){ return (nr===1 && k && !istSonderRolle(k)) ? Math.max(0, abhakbonusDefault(k)) : 0; }
+function e4TickBasis(k, min, nr, opt){
+  opt=opt||{};
+  if(!k || istSonderRolle(k)) return 0;
+  return leiterSatz(k)*Math.max(0, num(min))/60 + num(S.settings.tickAktivierung, 10) + (opt.ohneAbhak ? 0 : e4TickAbhak(k, nr));
+}
+/* Startbonus +25: jede Karte beim Anfangen, einmal je Tag */
+function e4StartBonus(k){
+  if(!k || !S.tag || !tagBuchbar() || istSonderRolle(k) || k.rolle==='position' || k.rolle==='sync') return 0;
+  const tid=aktuelleTagId(), p=Math.max(0, num(S.settings.startBonus, 25));
+  if(!(p>0) || k.startBonus4===tid) return 0;
+  const alt=(k.startBonus && k.startBonus.tag===tid) ? k.startBonus : { tag:tid, punkte:0, n:0 };
+  k.startBonus={ tag:tid, punkte:num(alt.punkte)+p, n:num(alt.n)+1 }; k.startBonus4=tid;
+  logIntraday(k,{punkte:p, typ:'startbonus'});
+  try{ momentBuchung(p); }catch(e){}
+  return p;
+}
+/* Abhakbonus heute über alle Karten (Aufgaben beim ✓, Routinen beim ersten Tick) — bringt Münzen, keine Farbe */
+function abhakbonusHeute(){
+  let b=aufgabenBonusHeute();
+  S.karten.forEach(k=>{ if(!k || istAufgabeKarte(k)) return; ticksHeuteV3(k).forEach(t=>{ b+=Math.max(0, num(t.abhak)); }); });
+  return b;
+}
+/* Abzüge des Tages (nur Münzen): Schieben ohne Grund, Muss-Routine verpasst, Brücke nicht gehalten */
+function tagesAbzuege(){
+  if(!S.tag) return 0;
+  let a=num(S.tag.abzuegeBilanz);
+  (S.tag.log||[]).forEach(e=>{ if(e && (e.art==='abzug' || e.art==='schub') && num(e.punkte)<0) a+=Math.abs(num(e.punkte)); });
+  return a;
+}
+/* Schieben und Überspringen (Punkt 5.6): nur ohne Grund, nur Aufgabe oder Muss-Routine, −50 in Münzen */
+function e4SchiebeAbzug(k, mitGrund){
+  if(!k || urlaubHeute() || mitGrund) return 0;
+  if(istAufgabeKarte(k) || k.pflicht===true) return Math.max(0, num(S.settings.abzugOhneGrund, 50));
+  return 0;
+}
+/* ── Onramp-Brücke (Punkt 5.5) ─────────────────────────────────────────
+   Beim Start der Pause legen Trainer und Pascal Onramp und Zielaufgabe fest (e4BrueckeSetzen, Pausen-Dialog Punkt 7.4).
+   Onramp erledigt +100 · Zielaufgabe innerhalb von zielMin gestartet +100 · nach fristMin nicht gestartet: Frage nach dem
+   Grund; mit Grund 0, ohne Grund −abzug Münzen. */
+function e4Bruecke(){ return (S.tag && S.tag.bruecke && typeof S.tag.bruecke==='object') ? S.tag.bruecke : null; }
+function e4BrueckeWerte(){ return Object.assign({}, DEFAULT_SETTINGS.bruecke, (S.settings && S.settings.bruecke)||{}); }
+function e4BrueckeSetzen(onrampId, zielId, art){
+  if(!S.tag) return null;
+  S.tag.bruecke={ onrampId:onrampId||null, zielId:zielId||null, art:art||null, pauseTs:jetztIso(), onrampErledigtTs:null, zielGestartetTs:null, gefragt:false, grund:null, bonusOnramp:0, bonusZiel:0, abzug:0 };
+  saveTag(); return S.tag.bruecke;
+}
+function e4BonusBuchen(k, p, was){
+  if(!(p>0) || !S.tag) return 0;
+  (S.tag.log=S.tag.log||[]).push({ itemId:k?k.id:null, titel:k?(k.titel||''):was, domain:k?k.domain:'dfm', art:'bonus', punkte:p, ts:jetztIso(), grund:was||'' });
+  logIntraday({ id:null, domain:k?k.domain:'dfm' },{punkte:p, typ:'bonus'});   // ohne Karte im Stunden-Log: der Bonus gehört dem Tag, nicht der Karte (kein Ausgleich)
+  try{ momentBuchung(p); }catch(e){}
+  return p;
+}
+function e4BrueckeErledigt(k){
+  const b=e4Bruecke(); if(!b || !k || b.onrampId!==k.id || b.onrampErledigtTs) return;
+  const W=e4BrueckeWerte(); b.onrampErledigtTs=jetztIso(); b.bonusOnramp=e4BonusBuchen(k, num(W.onramp,100), 'Onramp erledigt');
+  saveTag(); try{ toast('🚀 Onramp erledigt +'+Math.round(b.bonusOnramp)+' · jetzt die Zielaufgabe starten'); }catch(e){}
+}
+function e4BrueckeStart(k){
+  const b=e4Bruecke(); if(!b || !k || b.zielId!==k.id || b.zielGestartetTs) return;
+  const W=e4BrueckeWerte(); b.zielGestartetTs=jetztIso();
+  if(b.onrampErledigtTs && (Date.now()-Date.parse(b.onrampErledigtTs))/60000<=num(W.zielMin,10)){ b.bonusZiel=e4BonusBuchen(k, num(W.ziel,100), 'Zielaufgabe gestartet'); try{ toast('🎯 Zielaufgabe gestartet +'+Math.round(b.bonusZiel)); }catch(e){} }
+  saveTag();
+}
+function e4BrueckePruefen(){
+  const b=e4Bruecke(); if(!b || !b.onrampErledigtTs || b.zielGestartetTs || b.gefragt) return;
+  const W=e4BrueckeWerte();
+  if((Date.now()-Date.parse(b.onrampErledigtTs))/60000<num(W.fristMin,15)) return;
+  if(sheetOffen()) return;
+  b.gefragt=true; saveTag();
+  const z=S.karten.find(x=>x.id===b.zielId);
+  openSheet('Brücke · Zielaufgabe nicht gestartet',
+    '<p class="d">Die Onramp ist erledigt, aber „<b>'+esc(z?(z.titel||''):'Zielaufgabe')+'</b>" läuft nach '+num(W.fristMin,15)+' Minuten noch nicht. Was ist passiert?</p>'+
+    '<div class="field"><label>Grund (mit Grund kein Abzug)</label><textarea id="e4Grund" style="min-height:54px"></textarea></div>',
+    '<button class="btn ghost sm" data-e4bruecke="ohne">Kein Grund · −'+num(W.abzug,150)+' Münzen</button><button class="btn prim" data-e4bruecke="grund">Grund senden</button>');
+}
+function e4BrueckeAntwort(mitGrund){
+  const b=e4Bruecke(); if(!b) { closeSheet(); return; }
+  const W=e4BrueckeWerte(), g=el('e4Grund') ? String(el('e4Grund').value||'').trim() : '';
+  if(mitGrund && g){ b.grund=g; }
+  else { const z=S.karten.find(x=>x.id===b.zielId); b.abzug=num(W.abzug,150);
+    (S.tag.log=S.tag.log||[]).push({ itemId:b.zielId, titel:z?(z.titel||''):'', domain:z?z.domain:'dfm', art:'abzug', punkte:-b.abzug, ts:jetztIso(), grund:'Brücke nicht gehalten' });
+    logIntraday({ id:null, domain:z?z.domain:'dfm' },{punkte:-b.abzug, typ:'abzug'}); }
+  saveTag(); closeSheet(); renderAlles();
+}
+/* ── Stundenleiter je Tag: Punkte und Minuten je Art aus dem Stunden-Log (ohne Boni, Punkt 4 Modul 13) ── */
+function e4LeiterTag(tagId){
+  const out={}; E4_ARTEN.forEach(a=>{ out[a]={ punkte:0, min:0 }; });
+  const kVon=new Map(S.karten.map(k=>[k.id,k]));
+  (S.intraday||[]).forEach(e=>{ if(!e || e.tagId!==tagId) return;
+    if(['timer','autopause','nachtrag','korrektur','tick','unterzaehler'].indexOf(e.typ)<0) return;
+    const k=kVon.get(e.kartenId); if(!k) return; const a=leiterArt(k);
+    out[a].punkte+=Math.max(0, num(e.punkte)) - (e.typ==='tick' ? 0 : 0); out[a].min+=Math.max(num(e.minuten), num(e.tickMin)); });
+  return out;
+}
+/* Farbe nach Herkunft (Punkt 5.2): alle Punkte außer Abhakbonus und Abzüge; Eckpunkte DFM warm, Privat gelb; Schlaf kühl */
+function e4FarbeTag(tagId, heute){
+  const f={ warm:0, gelb:0, kuehl:0 }, kVon=new Map(S.karten.map(k=>[k.id,k]));
+  (S.intraday||[]).forEach(e=>{ if(!e || e.tagId!==tagId || num(e.punkte)<=0) return;
+    if(e.typ==='abzug' || e.typ==='schub' || e.typ==='sync') return;
+    const k=kVon.get(e.kartenId); const farbe=e.typ==='schlaf' ? 'kuehl' : (k ? leiterFarbe(k) : 'gelb');
+    f[farbe]+=num(e.punkte); });
+  const log=heute ? ((S.tag&&S.tag.log)||[]) : (((S.historie||[]).find(h=>h.tagId===tagId)||{}).log||[]);
+  log.forEach(e=>{ if(!e || (e.art!=='eck' && e.art!=='bonus') || num(e.punkte)<=0) return; f[e.domain==='dfm' ? 'warm' : 'gelb']+=num(e.punkte); });
+  // Abhakbonus bringt keine Farbe
+  const ab=heute ? abhakbonusHeute() : num(((S.historie||[]).find(h=>h.tagId===tagId)||{}).aufgabenBonus);
+  let rest=ab; ['warm','gelb','kuehl'].forEach(c=>{ const d=Math.min(f[c], rest); f[c]-=d; rest-=d; });
+  return { warm:Math.round(f.warm), gelb:Math.round(f.gelb), kuehl:Math.round(f.kuehl) };
+}
+function farbeHerkunftHeute(){ return S.tag ? e4FarbeTag(S.tag.tagId, true) : { warm:0, gelb:0, kuehl:0 }; }
+function e4ErholungPunkteTag(tagId){ let p=0; (S.intraday||[]).forEach(e=>{ if(e && e.tagId===tagId && (e.erholung || e.typ==='schlaf')) p+=Math.max(0, num(e.punkte)); }); return p; }
+/* ── Rang aus der Dauerlast (Punkt 5.9) ────────────────────────────────
+   Tageslast = Punkte des Tages, Erholungspunkte zählen −0,5, nie unter 0. Dauerlast = Ø über 28 Tage, Spitzenlast = Ø über 7 Tage
+   (Kalendertage, Urlaub ausgenommen, Tage ohne Eintrag zählen 0). Aufstieg nach 7 Tagen über der nächsten Schwelle, Abstieg
+   nach 14 Tagen unter der eigenen. Gerechnet jeden Morgen beim Aufstehen. */
+function e4Tageslast(h){
+  if(!h) return 0;
+  const erh=h.erholungPunkte!=null ? num(h.erholungPunkte) : e4ErholungPunkteTag(h.tagId);
+  return Math.max(0, num(h.punkteBilanz) - 0.5*erh);
+}
+function e4LastMittel(datum, tage){
+  const bis=datum||heuteApp(), von=anVorTage(bis, tage); let sum=0, n=0;
+  const proTag={}; (S.historie||[]).forEach(h=>{ if(!h || h.luecke || !h.datum || h.datum<von || h.datum>=bis) return; proTag[h.datum]=(proTag[h.datum]||0)+(h.urlaub ? 0 : e4Tageslast(h)); if(h.urlaub) proTag[h.datum]=null; });
+  for(let i=1;i<=tage;i++){ const d=anVorTage(bis, i); const v=proTag[d]; if(v===null) continue; sum+=num(v); n++; }
+  return n ? sum/n : 0;
+}
+function e4Dauerlast(datum){ return e4LastMittel(datum, Math.max(7, num(S.settings.rangTage,28))); }
+function e4Spitzenlast(datum){ return e4LastMittel(datum, Math.max(1, num(S.settings.spitzenTage,7))); }
+function e4RangSchwellen(){ const s=S.settings && S.settings.rangSchwellen; return (Array.isArray(s) && s.length>=2) ? s.map(x=>num(x)) : DEFAULT_SETTINGS.rangSchwellen.slice(); }
+function e4RangVon(dl){ const s=e4RangSchwellen(); let r=1; for(let i=1;i<s.length;i++){ if(dl>=s[i]) r=i+1; } return Math.min(10, r); }
+function e4RangSchwelle(r){ const s=e4RangSchwellen(); return r<=1 ? 0 : num(s[r-1], Infinity); }
+function e4Rang(){
+  if(!S.meta.rang4 || typeof S.meta.rang4!=='object'){ const dl=e4Dauerlast(); S.meta.rang4={ rang:e4RangVon(dl), seit:heuteApp(), tageUeber:0, tageUnter:0, dauerlast:dl, spitzenlast:e4Spitzenlast(), gerechnet:null }; }
+  return S.meta.rang4;
+}
+function e4RangMorgens(datum){
+  const r=e4Rang(); if(r.gerechnet===datum) return r;
+  const dl=e4Dauerlast(datum), sl=e4Spitzenlast(datum), auf=Math.max(1, num(S.settings.rangAufstiegTage,7)), ab=Math.max(1, num(S.settings.rangAbstiegTage,14));
+  r.dauerlast=dl; r.spitzenlast=sl; r.gerechnet=datum;
+  if(r.rang<10 && dl>=e4RangSchwelle(r.rang+1)) r.tageUeber=num(r.tageUeber)+1; else r.tageUeber=0;
+  if(r.rang>1 && dl<e4RangSchwelle(r.rang)) r.tageUnter=num(r.tageUnter)+1; else r.tageUnter=0;
+  if(r.tageUeber>=auf){ r.rang=Math.min(10, r.rang+1); r.seit=datum; r.tageUeber=0; r.aufstieg=datum;
+    (S.meta.ausstellung=S.meta.ausstellung||[]).push({ anlass:'Rang '+r.rang, datum, muenzen:0 }); try{ toast('🏆 Rang '+r.rang+' erreicht'); }catch(e){} }
+  else if(r.tageUnter>=ab){ r.rang=Math.max(1, r.rang-1); r.seit=datum; r.tageUnter=0; }
+  saveMeta(); return r;
+}
+/* ── Outfit über den Tag (Punkt 5.8) ───────────────────────────────────
+   13 Stufen. Start täglich = Rang-Stufe, bis +3 im Wechsel aus Leistung (DFM-Fokusblock: 90 Minuten DFM-Sitzungen seit der letzten
+   Leistungsstufe) und Erholung (Erholungskarte ab 15 Minuten oder Pause per Dialog); eine Stufe tiefer je Erschöpfungssignal
+   (Spitzenlast über Dauerlast, Schlafschuld, Akku 0), höchstens 2 unter den Start. Unterlast senkt nicht. */
+const E4_OUTFIT_NAMEN=['Jogginghose','Hoodie','T-Shirt und Jeans','Poloshirt','Hemd leger','Hemd und Chino','Hemd und Blazer','Sakko','Anzug ohne Krawatte','Anzug','Anzug mit Krawatte','Dreiteiler','Maßanzug / Abendgarderobe'];
+function e4OutfitErschoepfung(){
+  const r=e4Rang(); let m=0;
+  if(num(r.spitzenlast)>num(r.dauerlast) && num(r.dauerlast)>0) m++;
+  if(num(S.meta.schlaf && S.meta.schlaf.schuldStd)>0) m++;
+  if(S.tag && S.tag.akku!=null && num(S.tag.akku)<=0) m++;
+  return Math.min(Math.max(0, num(S.settings.outfitMinus,2)), m);
+}
+function e4OutfitStart(){
+  if(!S.tag) return null;
+  const r=e4Rang(), start=Math.max(1, Math.min(num(S.settings.outfitStufen,13), num(r.rang,1))), malus=e4OutfitErschoepfung();
+  S.tag.outfit={ start, stufe:Math.max(1, start-malus), max:Math.max(1, start-malus), decke:Math.min(num(S.settings.outfitStufen,13), start+num(S.settings.outfitPlus,3)),
+    naechste:null, verlauf:[{ ts:jetztIso(), stufe:Math.max(1, start-malus), art:'start' }], dfmSeitLeistungMin:0 };
+  if(malus) S.tag.outfit.verlauf.push({ ts:jetztIso(), stufe:S.tag.outfit.stufe, art:'erschoepfung', anzahl:malus });
+  return S.tag.outfit;
+}
+function e4Outfit(){ if(S.tag && !S.tag.outfit) e4OutfitStart(); return S.tag ? S.tag.outfit : null; }
+function e4OutfitSchritt(art){
+  const o=e4Outfit(); if(!o || !tagOffen()) return false;
+  if(o.naechste && o.naechste!==art) return false;        // im Wechsel: erst die andere Art
+  if(o.stufe>=o.decke) return false;
+  o.stufe=Math.min(o.decke, o.stufe+1); o.max=Math.max(o.max, o.stufe); o.naechste=(art==='leistung' ? 'erholung' : 'leistung');
+  o.verlauf.push({ ts:jetztIso(), stufe:o.stufe, art });
+  saveTag(); try{ toast((art==='leistung'?'⚙':'🌿')+' Outfit-Stufe '+o.stufe+' · '+E4_OUTFIT_NAMEN[o.stufe-1]); }catch(e){}
+  return true;
+}
+function e4OutfitNaechste(){ const o=e4Outfit(); if(!o) return null; if(o.stufe>=o.decke) return null; return o.naechste || 'leistung'; }
+function e4OutfitBild(stufe){ const n=Math.max(1, Math.min(num(S.settings.outfitStufen,13), num(stufe,1))); return Math.max(1, Math.min(20, Math.round(1+(n-1)*19/Math.max(1, num(S.settings.outfitStufen,13)-1)))); }
+function e4OutfitName(stufe){ return E4_OUTFIT_NAMEN[Math.max(0, Math.min(E4_OUTFIT_NAMEN.length-1, num(stufe,1)-1))]; }
+/* Nach jeder eingebuchten Sitzung: DFM-Minuten sammeln (Leistung), Erholungskarte ab 15 Minuten (Erholung) */
+function e4NachSitzung(k, min){
+  const o=e4Outfit(); if(!o || !k || !(min>0)) return;
+  if(leiterArt(k)==='erholung'){ if(min>=15) e4OutfitSchritt('erholung'); return; }
+  if(k.domain==='dfm'){ o.dfmSeitLeistungMin=num(o.dfmSeitLeistungMin)+min; if(o.dfmSeitLeistungMin>=90){ if(e4OutfitSchritt('leistung')) o.dfmSeitLeistungMin=0; } saveTag(); }
+}
+function e4Pause(){ return e4OutfitSchritt('erholung'); }   // Pause per Dialog (Punkt 7.4)
+/* Beim Aufstehen: Rang rechnen, Outfit starten */
+function e4TagStart(){ try{ e4RangMorgens(S.tag.datum); e4OutfitStart(); }catch(e){ console.warn('e4TagStart', e); } }
+/* ── Shop (Punkt 5.10): Preise je Stufe × Kategorie-Faktor; Rang-Sperre abschaltbar ── */
+function e4Preis(kat, n){
+  const p=(S.settings && Array.isArray(S.settings.shopPreise) && S.settings.shopPreise.length>=12) ? S.settings.shopPreise : DEFAULT_SETTINGS.shopPreise;
+  const basis=num(p[Math.max(0, Math.min(11, n-1))], 0)*num(KAT_PREISFAKTOR[kat],1);
+  return Math.max(5, Math.round(basis/5)*5);
+}
+function e4ShopFreiAb(n){ const t=Object.assign({}, DEFAULT_SETTINGS.shopFreiAb, (S.settings && S.settings.shopFreiAb)||{}); const r=num(t[n], 0); return r>0 ? r : 1; }
+function e4RangSperreAn(){ return S.settings.rangSperre!==false; }
+function e4ShopSperre(n){ if(!e4RangSperreAn()) return null; const ab=e4ShopFreiAb(n); return e4Rang().rang<ab ? 'frei ab R'+ab : null; }
+/* ── Ziele und Zielsteuerung (Punkt 5.3): sonntags +250, wenn das Ziel an 4 von 5 Werktagen erreicht und die Belastung grün war ── */
+function e4Zielsteuerung(datum){
+  const heute=datum||heuteApp(); const d=new Date(heute+'T12:00:00'); const so=d.getDay()===0 ? heute : anVorTage(heute, (d.getDay()||7));
+  const tage=[]; for(let i=6;i>=2;i--) tage.push(anVorTage(so, i));   // Mo–Fr der Woche, die an diesem Sonntag endet
+  let dfm=0, priv=0, gruen=true, n=0;
+  tage.forEach(t=>{ const h=(S.historie||[]).find(x=>x && x.datum===t && !x.luecke); if(!h) return; n++;
+    if(num(h.punkteDfm!=null ? h.punkteDfm : (h.zeitDfmPunkte))>=num(S.settings.tagesZielDfm,4500) || num(h.zielDfmErreicht)) dfm++;
+    if(h.zielPrivatErreicht) priv++;
+    if(h.belastungsampel && h.belastungsampel!=='grün') gruen=false; });
+  const schritt=num(S.settings.zielsteuerungSchritt,250);
+  return { woche:so, tage:n, dfmImZiel:dfm, privatImZiel:priv, belastungGruen:gruen, vorschlag:(dfm>=4 && gruen) ? schritt : 0 };
+}
+/* ── Wochenserie DFM (Punkt 5.7): werktags komplett +300 und ein Ausstellungsstück; Wochenende komplett +300 ── */
+function e4WochenserieTag(datum){
+  const h=(S.historie||[]).find(x=>x && x.datum===datum && !x.luecke); const aus=h ? (h.routinenAuswertung||[]) : (S.tag && S.tag.datum===datum ? (S.tag.routinenAuswertung||[]) : null);
+  if(!aus) return null;
+  const dfm=aus.filter(a=>a && a.id && a.domain==='dfm' && a.faellig); if(!dfm.length) return null;
+  return dfm.every(a=>a.erfuellt);
+}
+function e4Wochenserie(datum){
+  const wt=new Date(datum+'T12:00:00').getDay(); let tage=null, anlass='';
+  if(wt===5){ tage=[4,3,2,1,0].map(i=>anVorTage(datum, i)); anlass='Wochenserie werktags'; }
+  else if(wt===0){ tage=[1,0].map(i=>anVorTage(datum, i)); anlass='Wochenserie Wochenende'; }
+  if(!tage) return 0;
+  const st=tage.map(e4WochenserieTag); if(st.some(x=>x!==true)) return 0;
+  const p=Math.max(0, num(S.settings.wochenserieBonus,300));
+  e4BonusBuchen(null, p, anlass);
+  (S.meta.ausstellung=S.meta.ausstellung||[]).push({ anlass, datum, muenzen:0 });
+  try{ FSLive.senden('datensatz_anlegen', { tabelle:'Ausstellungsstücke', felder:{ Anlass:anlass, Datum:datum, 'Münzen':0 } }); }catch(e){}
+  return p;
+}
+/* ── Spielstand nach FocusSystem (privat.spielstand, Zeile „aktuell“) ── */
+function e4SpielstandMelden(){
+  try{
+    if(!FSLive.gekoppelt()) return;
+    const r=e4Rang(), o=(S.tag && S.tag.outfit)||null, f=farbeHerkunftHeute();
+    const felder={ 'Münzen-Saldo':Math.round(konto()), 'Rang':r.rang, 'Rang seit':r.seit||null, 'Rang-Sperre':e4RangSperreAn(),
+      'Outfit-Stufe Start':o?o.start:null, 'Outfit-Stufe aktuell':o?o.stufe:null, 'Outfit-Stufe Tageshöchst':o?o.max:null,
+      'Farbtopf warm':f.warm, 'Farbtopf gelb':f.gelb, 'Farbtopf kühl':f.kuehl, 'Tank':Math.round(num(S.meta.ausmalen && S.meta.ausmalen.tank)),
+      'Aktuelle Kulisse':num(S.meta.ausmalen && S.meta.ausmalen.kulisse, null), 'Galerie':JSON.stringify((S.meta.ausmalen && S.meta.ausmalen.fertig)||[]) };
+    const senden=(id)=>FSLive.senden('datensatz_aendern', { tabelle:'Spielstand', id, felder });
+    if(S.meta.spielstandId) return senden(S.meta.spielstandId);
+    FSLive.lesen('datensaetze_auflisten', { tabelle:'Spielstand', filter:[{feld:'Stand', operator:'gleich', wert:'aktuell'}], limit:1 })
+      .then(d=>{ const z=d && d.datensaetze && d.datensaetze[0]; if(z){ S.meta.spielstandId=z.id; saveMeta(); senden(z.id); } }).catch(()=>{});
+  }catch(e){}
+}
+/* ── Einstellungs-Historie (Punkt 5.11): jedes übernommene Einstellungs-Paket als Eintrag in FocusSystem ── */
+const E4_HIST_BEREICH={ ziele:'Ziele', abhakbonus:'Abhakbonus', engine4:'Punkte-Engine', punkte:'Punkte-Engine' };
+function e4EinstellungsHistorie(teile){
+  try{
+    (teile||[]).forEach(t=>{ if(!t || t.art!=='einstellungen' || !t.aenderungen.length) return;
+      const bereiche=Array.from(new Set(t.aenderungen.map(a=>a.bereich)));
+      const inhalt=t.aenderungen.map(a=>a.bereich+'.'+a.feld+': '+JSON.stringify(a.vorher)+' → '+JSON.stringify(a.nachher)).join('\n');
+      let b='Punkte-Engine'; if(bereiche.length===1) b=E4_HIST_BEREICH[bereiche[0]]||'Punkte-Engine';
+      if(bereiche.length===1 && bereiche[0]==='engine4'){ const f=t.aenderungen[0].feld; b=f==='leiter' ? 'Stundenleiter' : f==='rangSchwellen' ? 'Rang-Schwellen' : f==='shopPreise' ? 'Shop-Preise' : (f==='bruecke'||f==='startBonus'||f==='wochenserieBonus') ? 'Boni' : f==='abzugOhneGrund' ? 'Abzüge' : 'Punkte-Engine'; }
+      FSLive.senden('datensatz_anlegen', { tabelle:'Einstellungs-Historie', felder:{ Bezeichnung:'App '+APP_VERSION+' · '+bereiche.join(', '), 'Gültig ab':heuteApp(), Bereich:b,
+        Inhalt:inhalt.slice(0, 5000), Grund:String((t.aenderungen[0]&&t.aenderungen[0].grund)||'').slice(0,300), Freigegeben:true } }); });
+  }catch(e){}
+}
+/* ── Umstellung auf die Engine 4.0: Einstellungen einmalig setzen (Werte aus Punkt 5, Grundwoche KW 41). Nichts wird gelöscht. ── */
+function migration400(){
+  if(S.meta.engine4 && S.meta.engine4.ts) return;
+  DB.set('settings_bak400', { ts:jetztIso(), settings:JSON.parse(JSON.stringify(S.settings)) });
+  const setz=(p, v)=>pfadSchreiben(S.settings, p, JSON.parse(JSON.stringify(v)));
+  ['leiter','tickAktivierung','startBonus','bruecke','abhakbonusAbSollMin','abzugOhneGrund','wochenserieBonus','positionStaffel','rangSchwellen','rangTage','spitzenTage',
+   'rangAufstiegTage','rangAbstiegTage','outfitStufen','outfitPlus','outfitMinus','shopPreise','shopFreiAb','rangSperre','grundwoche','zielsteuerungSchritt','postfachPunkte',
+   'tagesZielDfm','tagesZielPrivat','tagesZielPrivatModus','zielWeDfm','zielWePrivat','weModus','syncPunkte','bewegungsBonus','subBonusDfm','subBonusPrivat',
+   'zeitGewicht','tickGewicht','daempfungDfm','daempfungPrivat','abhakbonusTabelle','matrixFaktor','geldGewicht','erholungZeitzielMin','tagesEckPunkte'].forEach(p=>setz(p, DEFAULT_SETTINGS[p]));
+  S.meta.engine4={ ts:jetztIso(), version:APP_VERSION, ab:heuteApp() };
+  S.meta.einstGeaendertTs=jetztIso();
+  saveSettings(); saveMeta();
 }
 function ladeAlles(){
   S.karten   = DB.get('karten', []);
@@ -4274,6 +4618,7 @@ function ladeAlles(){
   if(!S.meta.reset35){ try{ reset35Durchfuehren(); }catch(e){ S.meta.reset35={ ts:jetztIso(), fehler:String(e&&e.message||e) }; saveMeta(); } }
   // §2 (v3.6.0): Shop neu — einmalige Übernahme (Stufen 0, Münzen-Gutschrift, Sicherung shop360_bak)
   if(!S.meta.shop360){ try{ shop360Durchfuehren(); }catch(e){ S.meta.shop360={ ts:jetztIso(), fehler:String(e&&e.message||e) }; saveMeta(); } }
+  try{ migration400(); }catch(e){ console.warn('migration400', e); }   // 4.0 · Paket 4: Einstellungen der Punkte-Engine nach Punkt 5
   try{ feldkarten353Start(); }catch(e){}   // §5 (v3.5.3): Ausmal-Stand auf neue Feldkarten uebernehmen (ruht, solange FELDKARTEN_353 = false)
   try{ kulissenReparaturPruefen(); }catch(e){}   // §1 (v3.7.2): fertige Kulisse mit gesperrter nächster → sofort frei und Wechsel
   // v1.1: additive Tag-/Fokus-Felder auf Altdaten nachziehen (Migrationspfad)
@@ -4419,10 +4764,8 @@ function matrixFaktor(k){
   return Number.isFinite(Number(v)) ? Number(v) : (f==='ziel'?1:0);
 }
 function rate(k){
-  const base = (k.punkteProStd!=null && Number.isFinite(Number(k.punkteProStd)))
-    ? Number(k.punkteProStd)
-    : basisRate(k);
-  return base * matrixFaktor(k) * geldFaktor(k);
+  // 4.0 · Paket 4: der Satz kommt aus der Stundenleiter (Punkt 5.3); Basis-Rate, Matrixfaktor, Geld-Faktor und punkteProStd wirken nicht mehr
+  return leiterSatz(k);
 }
 /* Akku %/Std dieser Karte (v0.38 akkuRate): Karten-Override sonst Settings. */
 /* ══ §4 (v1.10.0) · Der Akku wird GEMESSEN ══════════════════════════════
@@ -4481,15 +4824,8 @@ function akkuLetzteMessung(kid){
 /* Zeit-Punkte, optional zeitgestaffelt (§4-Port punkteFuerZeit): bisMin aufsteigend,
    letzte Stufe bisMin=null = „danach". Ohne Staffel: flache Rate. */
 function punkteFuerZeit(k, min, datum){
-  // §2.2 (v2.8.0): Routinen/Counter gedaempft (je Domaene), Aufgaben nie
-  const dm=daempfung(k, datum);
-  const st=k.zeitStufen;
-  if(Array.isArray(st) && st.length){
-    let p=0, ab=0;
-    for(const s of st){ const bis=(s.bisMin==null?Infinity:num(s.bisMin)); p += Math.max(0, Math.min(min,bis)-ab)/60 * num(s.punkteProStd); ab=bis; if(min<=bis) break; }
-    return p * geldFaktor(k) * dm;
-  }
-  return min/60 * rate(k) * dm;
+  // 4.0 · Paket 4: Sitzungen bekommen den Satz ihrer Art auf die echten Minuten (Punkt 5.3); keine Dämpfung, keine Zeitstufen
+  return Math.max(0, num(min))/60 * leiterSatz(k);
 }
 /* Ist-Sekunden inkl. gerade laufendem Timer (nur für die fokussierte Karte). */
 function istSekLive(k){
@@ -4583,7 +4919,7 @@ function kartePunkte(k){
   // damit wächst der Abzug ab Minute 120 sichtbar auf Fokusseite/Statusleiste.
   // §2 (v2.0.0): der Bewegungsbonus dieser Karte — festgeschrieben beim
   // Verlassen (Position vorher gegen Position nachher), nie live geschätzt.
-  return zeitTerm + tickTerm + subBonusErreicht(k) + num(k.bewegungsBonus) + (istV3(k) ? staffelPunkteHeute(k) : startBonusHeute(k))   // §1 (v2.8.2) · v3: Bonus je Tick
+  return zeitTerm + tickTerm + subBonusErreicht(k) + num(k.bewegungsBonus) + (istV3(k) ? staffelPunkteHeute(k)+startBonusHeute(k) : startBonusHeute(k))   // §1 (v2.8.2) · v3: Bonus je Tick · 4.0: Startbonus für jede Karte
          + uz - num(k.strafPunkte);
 }
 /* Prognose inkl. ALLER Unteraufgaben-Boni (erledigt + offen) — für „geplant". */
@@ -4665,7 +5001,7 @@ function fokusZeitEinbuchen(bisMs){
   let _sitzung=null;
   // §1.3/§1.5 (v3.4.0): eine reine Messung (Tageslimit erreicht) zaehlt als Ist-Zeit — ohne Punkte, ohne Pflicht-Abzug
   if(k && nurZeit && S.tag){ if(!S.tag.nurZeitSek || typeof S.tag.nurZeitSek!=='object') S.tag.nurZeitSek={}; S.tag.nurZeitSek[k.id]=num(S.tag.nurZeitSek[k.id])+sek; }
-  if(k){ k.istSek=num(k.istSek)+sek; akkuBuchen(k, sek/60); beruehre(k); _sitzung=logIntraday(k,{minuten:sek/60,typ:'timer'}); if(nurZeit) _sitzung.nurZeit=true; if(ende<Date.now()) _sitzung.ts=new Date(ende).toISOString(); if(!nurZeit) durchgangPause(k, sek); }   // v1.1: Akku-Drift; A7 berührt; B0 Log; §1 (v2.8.2) Durchgang pausiert
+  if(k){ k.istSek=num(k.istSek)+sek; akkuBuchen(k, sek/60); beruehre(k); _sitzung=logIntraday(k,{minuten:sek/60,typ:'timer'}); if(nurZeit) _sitzung.nurZeit=true; if(ende<Date.now()) _sitzung.ts=new Date(ende).toISOString(); if(!nurZeit) durchgangPause(k, sek); try{ e4NachSitzung(k, sek/60); }catch(e){} }   // v1.1: Akku-Drift; A7 berührt; B0 Log; §1 (v2.8.2) Durchgang pausiert · 4.0: Outfit-Stufen
   // 4.0 · Paket 1: keine Dauerlauf-Strafe mehr beim Pausieren.
   S.fokus.sessionSek=num(S.fokus.sessionSek)+sek;               // v1.1: Session-Summe (v0.38-Port)
   S.fokus.laeuft=false; S.fokus.startMs=0;
@@ -4721,6 +5057,7 @@ function fokusStarten(kid, quelle, opt){
       : (dg.tick ? ('+1 · „'+String(zk.titel||'').slice(0,24)+'"') : ('+'+fmtP(dg.bonus)+' P Abhakbonus · „'+String(zk.titel||'').slice(0,24)+'" läuft')));
     // §1.2 (v3.4.0): die Uhr laeuft, bis Pascal pausiert — der Auto-Stopp nach tickMinuten (v3.2.0 §1.3) ist entfallen
   }
+  if(zk && !warSchonLauf){ try{ e4StartBonus(zk); e4BrueckeStart(zk); }catch(e){} saveKarten(); }   // 4.0 · Paket 4: Startbonus +25 je Karte und Tag, Zielaufgabe der Brücke
   beruehre(zk);              // A7: Timer-Start zählt als Interaktion
   S.ui.fokusAnzeige={ pos:0, frei:null };   // C4 (v3.8.0): die getrackte Karte ist die Mitte der Fokusseite
   saveFokus(); saveUi(); if(S.fokus.laeuft) starteTicker(); renderAlles();
@@ -8496,7 +8833,7 @@ function kartePunkteHeute(k){
     // §1 (v2.8.2): ein beim Start gebuchter Bonus zaehlt sofort, auch ohne Minuten
     const sb=(k.startBonus && k.startBonus.tag===tid) ? num(k.startBonus.punkte) : 0;
     if(istPflicht(k)) return ((k.pflichtHeute && k.pflichtHeute.tag===tid) ? num(k.pflichtHeute.punkte) : 0) + unterZaehlerPunkte(k);   // §2 (v2.9.0)
-    if(istV3(k)) return staffelPunkteHeute(k) + unterZaehlerPunkte(k);   // §1 (v3.0.0): Bonus je Tick (Modus zeit) + Unter-Zaehler
+    if(istV3(k)) return staffelPunkteHeute(k) + sb + unterZaehlerPunkte(k);   // §1 (v3.0.0): Bonus je Tick (Modus zeit) + Unter-Zaehler · 4.0: + Startbonus
     return ((num(k.ticksHeute)>0 && istTickKarte(k)) ? tickPunkte(k) : 0) + sb + unterZaehlerPunkte(k);
   }
   let pk = kartePunkte(k);
@@ -8519,7 +8856,7 @@ function kartePunkteHeute(k){
 function tagesPunkteDomain(dom){
   let p=0;
   S.karten.forEach(k=>{ if(k.domain===dom) p+=kartePunkteHeute(k); });
-  if(S.tag && Array.isArray(S.tag.log)) S.tag.log.forEach(e=>{ if((e.art==='schub'||e.art==='korrektur'||e.art==='abzug'||e.art==='eck'||e.art==='sync') && e.domain===dom) p+=num(e.punkte); });   // §3 (v2.7.0): + Korrekturen · §2 (v3.0.0): + Routinen-Abzuege · §9 (v3.7.0): + Eckpunkte · §3a (v3.7.1): + Sync-Punkte
+  if(S.tag && Array.isArray(S.tag.log)) S.tag.log.forEach(e=>{ if((e.art==='korrektur'||e.art==='eck'||e.art==='bonus') && e.domain===dom) p+=num(e.punkte); });   // §3 (v2.7.0): + Korrekturen · §9 (v3.7.0): + Eckpunkte · 4.0 · Paket 4: + Boni (Brücke, Wochenserie); Abzüge und Schübe gehen nur von den Münzen ab (5.1)
   // §3 (v2.9.1): Ist der Tag schon abgeschlossen, landet eine Korrektur der
   // Tageswerte im Snapshot — „heute" zeigt sie trotzdem (Stand 26.09.: 2.825
   // blieb stehen, obwohl das Protokoll 1.865 und das Konto −960 zeigte)
@@ -8534,7 +8871,7 @@ function tagesPunkteDomain(dom){
   return p;
 }
 function tagesPunkteLive(){
-  return tagesPunkteDomain('dfm') + tagesPunkteDomain('privat') - (S.tag ? num(S.tag.abzuegeBilanz) : 0);
+  return tagesPunkteDomain('dfm') + tagesPunkteDomain('privat');   // 4.0 · Paket 4: Abzüge nur in Münzen (tagesAbzuege), nie in den Punkten
 }
 /* A1: getrenntes Tagesziel je Domäne (Punkte) + Anteil des wachen Tages (16 h
    linear ab Tagesstart) für die Pace. */
@@ -9627,6 +9964,7 @@ function starteTicker(){
     kartenZeilenZeitLive();           // §6 (v3.7.0): gebuchte Zeit der laufenden Karte in den Kartenzeilen
     if(seiteAktuell()==='belohnung' && _sekTakt%5===0) renderBelohnung();   // Belohnungsseite live (alle 5 s, Perf)
     if(_sekTakt>0 && _sekTakt%60===0) diagrammeLive();   // v3.4.7: Tagesdiagramme live, nur sichtbare
+    if(_sekTakt%30===0){ try{ e4BrueckePruefen(); }catch(e){} }   // 4.0 · Paket 4: Brücke — Zielaufgabe nach 15 Min nicht gestartet?
     _sekTakt++;
   }, 1000);
 }
@@ -9670,6 +10008,7 @@ function tagStarten(akkuProzent, datumTest){
   const datum=datumTest||heuteIso();   // datumTest: nur fuer Tests (Tage nacheinander durchspielen)
   S.tag = neuerTag(datum, naechsterLaufindex(datum));
   S.tag.akku = (akkuProzent==null?null:Math.round(akkuProzent));
+  e4TagStart();   // 4.0 · Paket 4: Rang aus der Dauerlast (5.9), Outfit-Start auf der Rang-Stufe (5.8)
   // §5.5 (v1.13.0): Mit dem Tagesstart beginnt ein neuer Plan — die
   // ungeplant-Marken des Vortags fallen (die Kette JETZT ist der Plan).
   S.karten.forEach(k=>{ if(k.ungeplant) delete k.ungeplant; });
@@ -9997,9 +10336,7 @@ function routineErledigtBuchen(k){
 }
 /* Generierter Abzug-Vorschlag beim Schieben (§4): grob nach Priorität/Punkten. */
 function abzugVorschlag(k){
-  if(urlaubHeute()) return 0;   // §5 (1.8.1)
-  // §12.2 (v1.12.0): Vorschlag = 10 % der Prognose (auf 10 gerundet)
-  return Math.max(10, Math.round(Math.max(0,kartePunkteGeplant(k))*0.1/10)*10);
+  return e4SchiebeAbzug(k, false);   // 4.0 · Paket 4 (5.6): −50 nur für Aufgabe oder Muss-Routine ohne Grund, sonst 0
 }
 /* Karte im Abschluss schieben — mit sofort gebuchtem Punkteabzug. */
 function karteSchieben(k, datum, uhrzeit, abzug){
@@ -10053,8 +10390,9 @@ function tagAbschlussFinalisieren(){
     const faktor=streakFaktor();
     const bonus=Math.max(0, num(S.tag.spielBonus));   // §6 (v1.11.0): Kauf-Tagespunkte (Altbestand — seit §4.3 v1.13.0 hebt der Kauf den Faktor)
     // §4.3 (v1.13.0): der Upgrade-Faktor wirkt auf die MÜNZEN (Spiel-Ebene)
-    const zufluss=Math.round(Math.max(0, bilanz)*faktor + bonus);
-    S.meta.muenzenGesamt=num(S.meta.muenzenGesamt)+zufluss;
+    const abz=tagesAbzuege();   // 4.0 · Paket 4 (5.2): Münzen 1:1 aus den Punkten, Abzüge gehen nur hier ab
+    const zufluss=Math.round(Math.max(0, bilanz)*faktor + bonus - abz);
+    S.meta.muenzenGesamt=Math.max(0, num(S.meta.muenzenGesamt)+zufluss);
     // rangPunkte ist seit v1.11.0 reine Lebenswerk-Summe (Statistik) — sie
     // wächst mit dem echten Verdienst; Kauf-Bonus/Upgrade-Faktor zählen nicht.
     S.meta.rangPunkte=num(S.meta.rangPunkte)+Math.round(Math.max(0, bilanz)*faktor);
@@ -10080,8 +10418,16 @@ function tagAbschlussFinalisieren(){
     streak:S.tag.streak, erledigtHeute:num(S.tag.erledigtHeute),
     rang:(function(){ try{ return rangMass().rang; }catch(e){ return null; } })(),   // §5.3/§9.1 (v3.5.0): taeglicher Rang im Snapshot
     // §5–§7 (v3.0.0): Morgen, Abschluss und Routinen-Wertung reisen mit dem Tag
-    morgen:S.tag.morgen||null, abschluss:S.tag.abschluss||null, routinenAuswertung:S.tag.routinenAuswertung||null
+    morgen:S.tag.morgen||null, abschluss:S.tag.abschluss||null, routinenAuswertung:S.tag.routinenAuswertung||null,
+    // 4.0 · Paket 4: Werte der Engine je Tag — Punkte je Leiter-Art, Abhakbonus (Münzen, keine Farbe), Abzüge (Münzen), Erholungspunkte,
+    // Farbe nach Herkunft, Outfit-Verlauf, Rang und Lasten, Ziele je Familie
+    aufgabenBonus:abhakbonusHeute(), abzuege4:tagesAbzuege(), erholungPunkte:e4ErholungPunkteTag(S.tag.tagId), leiter:e4LeiterTag(S.tag.tagId), farbe:farbeHerkunftHeute(),
+    outfit:S.tag.outfit||null, rang4:(function(){ try{ const r=e4Rang(); return { rang:r.rang, dauerlast:r.dauerlast, spitzenlast:r.spitzenlast }; }catch(e){ return null; } })(),
+    punkteDfm:Math.round(tagesPunkteDomain('dfm')), punktePrivat:Math.round(tagesPunkteDomain('privat')), zielDfm:tagesZielDomain('dfm'), zielPrivat:tagesZielDomain('privat'),
+    bruecke:S.tag.bruecke||null
   });
+  try{ const w=e4Wochenserie(S.tag.datum); if(w){ const h=S.historie[S.historie.length-1]; h.punkteBilanz=num(h.punkteBilanz)+w; S.tag.punkteBilanz=h.punkteBilanz; S.meta.wohlstand=num(S.meta.wohlstand)+w; S.meta.muenzenGesamt=num(S.meta.muenzenGesamt)+w; } }catch(e){}   // 4.0 · Paket 4 (5.7)
+  try{ e4SpielstandMelden(); }catch(e){}
   saveTag(); saveHistorie(); saveMeta(); saveKarten();
 }
 /* §3.2 (v1.10.0): Beim Öffnen wird ein offener Vortag nur noch SICHTBAR
@@ -10849,8 +11195,7 @@ function karteTickMinus(k){
    × Rate), auf 5 gerundet, min. 10. */
 function datumPlus1(iso){ const d=new Date((iso||heuteApp())+'T12:00:00'); d.setDate(d.getDate()+1);
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function schiebeVorschlag(k){ if(urlaubHeute()) return 0;   // §5 (1.8.1): keine Minuspunkte im Urlaub
-  const prog=num(k.sollMin)/60*rate(k); return Math.max(10, Math.round(prog*0.1/5)*5); }
+function schiebeVorschlag(k){ return e4SchiebeAbzug(k, false); }   // 4.0 · Paket 4 (5.6)
 /* ══ §1.2 (v1.13.0) · Verschieben braucht IMMER eine echte Datumsauswahl —
    Date-Picker mit erkennbarem Wochentag + Schnellziele morgen / nächster
    Montag / nächste Woche. Ein gemeinsamer Baustein für jeden Schiebe-Weg. ══ */
@@ -10882,7 +11227,7 @@ function oeffneSchieben(kid){
     datumsWahlHtml(morgenIso())+
     '<div class="field"><label>Minuspunkte (nur bei „mit Punktverlust")</label>'+
     '<input type="number" inputmode="numeric" id="schiebAbzug" value="'+v+'">'+
-    '<div class="hint">Vorschlag = 10 % der Punkte-Prognose, auf 5 gerundet (min. 10). Wird sofort vom '+(k.domain==='dfm'?'DFM':'Privat')+'-Tagesscore abgezogen (nicht in der Kartenleistung).</div></div>';
+    '<div class="hint">Ohne Grund −'+num(S.settings.abzugOhneGrund,50)+' Münzen bei Aufgaben und Muss-Routinen (Punkt 5.6). Mit Grund kostet das Schieben nichts; Abzüge gehen nur von den Münzen ab, nie von Punkten oder Farbe.</div></div>';
   openSheet('Aufgabe schieben', h,
     '<button class="btn ghost sm" data-schiebohne="'+k.id+'">ohne Punktverlust</button>'+
     '<button class="btn warn sm" data-schiebmit="'+k.id+'">mit Punktverlust</button>');
@@ -10955,6 +11300,7 @@ function karteAbhaken(kid, fromDetail){
     if(k.rhythmus) routineErledigtBuchen(k);              // Streak + zuletztRoutine
     if(S.tag) S.tag.letzteAktivitaetTs=jetztIso();
     logPunktSchreiben(k);                                 // v1.1: Punkt-Ereignis (Verlauf/Kennzahlen)
+    try{ e4BrueckeErledigt(k); }catch(e){}                 // 4.0 · Paket 4: Onramp der Brücke erledigt +100
     // §3 (v2.7.0): Punkte nachgetragener Sitzungen stehen schon zu IHRER Zeit
     // im Log — beim Abhaken nur der Rest, sonst zaehlten sie doppelt
     // v2.9.0: auch Startbonus (v2.8.2) und Pflicht-Ertraege stehen schon zu IHRER Zeit im Log
@@ -11279,9 +11625,11 @@ function abhakbonusTabelleWert(spalte, feld){
 }
 function abhakbonusDefault(k){
   if(istPflicht(k)) return 0;   // §2 (v2.9.0): der Pflicht-Wert ersetzt den Abhakbonus
+  if(!k || istSonderRolle(k) || num(k.sollMin)<num(S.settings.abhakbonusAbSollMin,15)) return 0;   // 4.0 · Paket 4 (5.5): nur ab 15 Min Soll
   return k.abhakbonus!=null ? num(k.abhakbonus) : abhakbonusTabelleWert(abhakSpalte(k), matrixFeldVon(k));
 }
 function daempfung(k, datum){
+  return 1;   // 4.0 · Paket 4: keine Dämpfung — die Stundenleiter gilt für jede Karte
   if(!k || abhakArt(k)!=='routine') return 1;
   const ab=S.meta && S.meta.daempfungAb;
   if(datum && ab && String(datum).slice(0,10)<ab) return 1;   // vor dem Update: ungedaempft
@@ -11409,8 +11757,8 @@ function pflichtLiveDelta(k){
    nr, basis, faktor, punkte, min, uhr, eingabe}]} — mit Zeitstempel, fuer
    den Export. Die Serie wertet der Tagesabschluss (routinenAuswerten). */
 function istV3(k){ const m=k && k.modus; return m==='zeit' || m==='pflicht' || m==='staffel'; }
-function modusVon(k){ if(istV3(k)) return k.modus; return (k && k.pflicht===true) ? 'pflicht' : 'zeit'; }
-function istStaffel(k){ return !!(k && (k.modus==='staffel' || k.rolle==='schlafen')); }
+function modusVon(k){ if(k && k.rolle==='schlafen') return 'staffel'; if(istV3(k)) return 'zeit'; return 'zeit'; }   // 4.0 · Paket 4: feste Pflicht- und Staffelwerte entfallen (5.7); Muss/Kann bleibt am Feld pflicht
+function istStaffel(k){ return !!(k && k.rolle==='schlafen'); }   // 4.0 · Paket 4: nur Schlafen rechnet nach Stufen
 /* Aufstehen, Tagesabschluss und Schlafen haben eigene Wege; „erholung" ist eine normale Karte mit Standardwerten */
 function istSonderRolle(k){ return !!(k && (k.rolle==='aufstehen' || k.rolle==='tagesabschluss' || k.rolle==='schlafen')); }
 /* §2 (v3.1.0, Entscheidung Pascal): rolle „erholung" nimmt Zeitziel und Akku-Ladung aus den Einstellungen, wenn sie keine eigenen traegt */
@@ -11483,10 +11831,10 @@ function kartenStatusHeute(k){
 function naechsterTickWert(k){
   if(!k || kartenStatusHeute(k)==='erledigt') return null;
   const m=modusVon(k);
-  if(k.modus==='staffel') return logRund(staffelWert(k, tickAnzahlHeute(k)+1)*(k.serienfaktor ? (num(k.serienFaktor,1)||1) : 1));
-  if(m==='pflicht') return pflichtWerte(k).wert;
-  if(!istV3(k) && istTickKarte(k)) return tickWertEff(k);
-  return abhakbonusDefault(k);
+  if(k.rolle==='schlafen') return logRund(staffelWert(k, tickAnzahlHeute(k)+1));
+  if(istSonderRolle(k)) return 0;
+  // 4.0 · Paket 4: Tick = Satz × Tick-Minuten ÷ 60 + Aktivierung (+ Abhakbonus beim ersten Tick), Serienfaktor nur privat
+  return logRund(e4TickBasis(k, tickMinutenVon(k), tickAnzahlHeute(k)+1)*((k.serienfaktor && k.domain!=='dfm') ? (num(k.serienFaktor,1)||1) : 1));
 }
 /* ══ §1.2 (v3.2.0) · DIE ZAEHLER-ZEILE — in jeder Ansicht dieselbe ══════
    „+1 · n/Ziel · Wert des naechsten Ticks" unter dem Titel jeder Routine und
@@ -11655,11 +12003,10 @@ function routineTick(k, opt){
   const datum=appDatum(), m=modusVon(k);
   if(tickAnzahlHeute(k)===0){ serienFaktorFortschreiben(k, datum); k.letzterTickTag=datum; }
   const nr=tickAnzahlHeute(k)+1, min=(opt.uhr || istSonderRolle(k)) ? 0 : tickMinutenVon(k);   // Aufstehen/Abschluss/Schlafen zaehlen keine Zeit
-  let basis=0, faktor=1;
-  if(m==='staffel'){ basis=staffelWert(k,nr); faktor=k.serienfaktor ? (num(k.serienFaktor,1)||1) : 1; }
-  else if(m==='pflicht') basis=pflichtWerte(k).wert;
-  else basis=abhakbonusDefault(k);
-  const t={ ts:jetztIso(), nr, basis, faktor, punkte:logRund(basis*faktor), min, uhr:!!opt.uhr, gebucht:min>0 };   // §7 (v3.7.0): gebucht = Minuten liegen in der Ist-Zeit
+  let basis=0, faktor=1, abhak=0;
+  if(k.rolle==='schlafen'){ basis=staffelWert(k,nr); }
+  else { abhak=e4TickAbhak(k, nr); basis=e4TickBasis(k, min, nr); faktor=(k.serienfaktor && k.domain!=='dfm') ? (num(k.serienFaktor,1)||1) : 1; }   // 4.0 · Paket 4 (5.3): Satz × Minuten ÷ 60 + 10, Serienfaktor nur privat
+  const t={ ts:jetztIso(), nr, basis, faktor, punkte:logRund(basis*faktor), min, uhr:!!opt.uhr, gebucht:min>0, abhak };   // §7 (v3.7.0): gebucht = Minuten liegen in der Ist-Zeit · 4.0: abhak = Anteil Abhakbonus (Münzen, keine Farbe)
   if(!leer(opt.eingabe)) t.eingabe=opt.eingabe;
   tickLogHeute(k).push(t);
   k.ticksHeute=nr;
@@ -11707,7 +12054,7 @@ function unterTick(uid){
   const u=(S.unteraufgaben||[]).find(x=>x.id===uid); if(!u) return null;
   const k=S.karten.find(x=>x.id===u.parentId);
   if(limitErreicht(u)){ toast('„'+String(u.titel||'').slice(0,24)+'" ist für heute erledigt'); return null; }
-  const nr=tickAnzahlHeute(u)+1, basis=staffelWert(u, nr);
+  const nr=tickAnzahlHeute(u)+1, basis=k ? e4TickBasis(k, tickMinutenVon(u), nr, {ohneAbhak:true}) : 0;   // 4.0 · Paket 4: Unter-Zähler nach dem Satz der Karte
   const t={ ts:jetztIso(), nr, basis, faktor:1, punkte:logRund(basis) };
   tickLogHeute(u).push(t);
   if(limitErreicht(u)) u.done=true;
@@ -11786,6 +12133,9 @@ function routinenAuswerten(datum, entscheid, probe){
     if(!erf && e!=='ueberspringen' && !leer(k.abzugJeTagUeberfaellig) && ue>0){
       abzug+=Math.abs(num(k.abzugJeTagUeberfaellig)); grund=(grund?grund+' · ':'')+ue+'. Tag überfällig'; }
     if(e==='abzug' && !abzug){ abzug=Math.abs(num(k.abzugOhneStreak||k.abzugJeTagUeberfaellig||S.settings.abschlussAbzugStandard||0)); grund='im Abschluss mit Abzug übersprungen'; }
+    // 4.0 · Paket 4 (5.6): Abzug nur für eine verpasste Muss-Routine ohne Grund, höchstens −50 (in Münzen); Kann-Routinen 0
+    abzug=0; grund='';
+    if(!erf && faellig && e!=='ueberspringen' && k.pflicht===true && k.rhythmus && !urlaubHeute()){ abzug=Math.max(0, num(S.settings.abzugOhneGrund,50)); grund='Muss-Routine verpasst, ohne Grund'; }
     if(!probe){
       k.streak=streak; k.letzteErfuellung=letzte; if(k.serienfaktor) k.serienFaktor=faktor;
       if(abzug) routineAbzugBuchen(k, abzug, grund);
@@ -12021,6 +12371,7 @@ function syncKarte(anlegen){
   S.karten.push(k); saveKarten(); return k;
 }
 function syncPunkteBuchen(anlass){
+  return 0;   // 4.0 · Paket 4 (5.4): Sync-Punkte entfallen mit der Live-Verbindung
   if(!S.tag || !tagBuchbar()) return 0;
   const k=syncKarte(true), min=Math.max(0, num(k.tickMinuten, 2));
   // Tick der Karte (0 Punkte, 2 Min gebucht)
@@ -13995,6 +14346,7 @@ function syncImport(text, opt){
     if(inc.abhakbonus!==undefined)     lok.abhakbonus   = inc.abhakbonus==null?null:num(inc.abhakbonus);   // auch negativ
     if(inc.timerFlag!==undefined)      lok.timerFlag=!!inc.timerFlag;
     if(inc.faelligkeit!==undefined) lok.faelligkeit=inc.faelligkeit;   // DEADLINE
+    if(inc.arbeitsart!==undefined) lok.arbeitsart=inc.arbeitsart==null ? null : String(inc.arbeitsart);   // 4.0 · Paket 4
     if(inc.uhrzeit!==undefined) lok.uhrzeit=inc.uhrzeit;               // Uhrzeit↔Airtable-Deadline
     if(inc.freeze!==undefined) lok.freeze=!!inc.freeze;               // M1 (v1.1.0): freeze true setzt / false löst; fehlend = unverändert
     // App-Hoheit (Status offen/erledigt, Ist, Punkte) wird NIE vom Import
@@ -14947,7 +15299,7 @@ function stufenFaktor(kat, n){
   return 3.0*Math.pow(1.35, davor);
 }
 function tempoFaktor(){ const b=num(S.belohnung && S.belohnung.tempoBasis); return b>0 ? Math.max(1, oePStd7()/b) : 1; }
-function preisVon(kat, n){ return Math.max(5, Math.round(preisStufe1(kat)*stufenFaktor(kat, n)*tempoFaktor()/5)*5); }
+function preisVon(kat, n){ return e4Preis(kat, n); }   // 4.0 · Paket 4 (5.10): feste Preise je Stufe × Kategorie-Faktor
 /* Preis der NÄCHSTEN Stufe dieser Kategorie */
 function preisFuer(kat){ return preisVon(kat, stufenGekauft(kat)+1); }
 /* ══ §4 (v3.6.0) · KOPPLUNGEN ═════════════════════════════════════════════════════════════
@@ -14979,6 +15331,7 @@ function gleichgewichtSperre(kat, stufen){
 function kaufSperre(kat){
   const naechste = stufeVon(kat, stufenGekauft(kat)+1);
   if(!naechste) return 'komplett';
+  { const rs=e4ShopSperre(stufenGekauft(kat)+1); if(rs) return rs; }   // 4.0 · Paket 4 (5.10): Rang-Sperre, in den Einstellungen abschaltbar
   const fehlt=(naechste.braucht||[]).filter(r=>BELOHNUNG[r[0]] && stufenGekauft(r[0])<num(r[1]));
   if(fehlt.length) return 'braucht '+fehlt.map(r=>BELOHNUNG[r[0]].name+' Stufe '+r[1]).join(' und ');
   const gl=gleichgewichtSperre(kat);
@@ -15458,6 +15811,7 @@ function outfitVon(F){
    (S.tag.outfitMax, gepflegt in spielMomentCheck). Morgens startet ein
    frisches S.tag ohne outfitMax → Stufe 1. */
 function outfitHeute(){
+  if(S.tag && S.tag.outfit) return e4OutfitBild(S.tag.outfit.stufe);   // 4.0 · Paket 4 (5.8): Outfit des Tages aus Rang-Stufe, Leistung und Erholung
   const roh=outfitVon(outfitF());
   return Math.max(1, roh, tagOffen()?num(S.tag&&S.tag.outfitMax,1):1);
 }
@@ -16826,7 +17180,7 @@ function aufgabenBonusHeute(){
 function ausmalW(){
   const ab=(S.meta && S.meta.reset35 && S.meta.reset35.ts) ? String(S.meta.reset35.ts).slice(0,10) : '';
   let w=0; (S.historie||[]).forEach(h=>{ if(h && !h.luecke && h.datum && h.datum>=ab) w+=Math.max(0, num(h.punkteBilanz)-num(h.aufgabenBonus)); });
-  if(tagOffen() && S.tag.datum>=ab){ const r=S.meta.reset35, lo=(r && r.tagId===aktuelleTagId()) ? num(r.liveOffset) : 0; w+=Math.max(0, Math.max(0, tagesPunkteLive())-lo-aufgabenBonusHeute()); }
+  if(tagOffen() && S.tag.datum>=ab){ const r=S.meta.reset35, lo=(r && r.tagId===aktuelleTagId()) ? num(r.liveOffset) : 0; w+=Math.max(0, Math.max(0, tagesPunkteLive())-lo-abhakbonusHeute()); }   // 4.0 · Paket 4: kein Abhakbonus als Farbe, bei keiner Kartenart
   return w;
 }
 /* §2 (v3.6.1): die EINE Zahl für „Farbe" in der Oberfläche — gesamte Farbe seit dem Reset inkl. heute live (= wohlstandSeitReset
@@ -19123,7 +19477,7 @@ el('sheet').addEventListener('click', e=>{
   const a3sc=t.closest('[data-abv3schieb]'); if(a3sc){ const id=a3sc.dataset.abv3schieb;
     abv3.schieben=(abv3.schieben && abv3.schieben.id===id) ? null : { id, datum:morgenIso() }; renderAbschlussV3(); return; }
   const a3sg=t.closest('[data-abv3schiebgo]'); if(a3sg){ const id=a3sg.dataset.abv3schiebgo;
-    const d=schiebDatumLesen(); abschlussV3Schieben(id, d, el('abv3Kom')?el('abv3Kom').value:'', el('abv3Abzug')?num(el('abv3Abzug').value):0);
+    const d=schiebDatumLesen(), kom=el('abv3Kom')?String(el('abv3Kom').value||''):''; abschlussV3Schieben(id, d, kom, kom.trim() ? 0 : (el('abv3Abzug')?num(el('abv3Abzug').value):0));   // 4.0 · Paket 4: mit Grund 0
     abv3.schieben=null; renderAbschlussV3(); toast('Geschoben auf '+fmtDatum(d)); return; }
   if(t.closest('[data-abv3dl]')){ const nm=abschlussV3Download(); toast('⬇︎ '+nm); return; }
   if(t.closest('[data-abv3copy]')){ abschlussV3Kopieren(); return; }
@@ -19217,6 +19571,8 @@ el('sheet').addEventListener('click', e=>{
     const box=el('abFolgePri'); if(box) box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c===afp)); } return; }
   if(t.closest('[data-abgo]')){ abhakDialogConfirm(); return; }
 
+  // 4.0 · Paket 4: Antwort im Brücke-Dialog
+  const e4b=t.closest('[data-e4bruecke]'); if(e4b){ e4BrueckeAntwort(e4b.dataset.e4bruecke==='grund'); return; }
   // ── Sync (§8)
   const sm=t.closest('[data-syncmode]'); if(sm){ syncVoll=(sm.dataset.syncmode==='voll'); renderSyncSheet(); return; }
   if(t.closest('[data-syncbestaetigt]')){
