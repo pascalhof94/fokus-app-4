@@ -3073,7 +3073,8 @@ function matrixVorschlag(feld, dom){
 }
 /* 4.0 · Paket 1: Auto-Pause (v1.6.1 §4) ersatzlos entfernt. Kein automatischer Stopp des Timers mehr.
    Historische Einträge im Stunden-Log mit typ 'autopause' bleiben lesbar und zählen wie 'timer'. */
-const PAUSENTIMER_MAX_MIN  = 120;   // Dauerlauf ohne Pause → ab hier negative Rate (nur keineAutoPause-Karten)
+/* 4.0 · Paket 1: Pausentimer-Sonderregel (keineAutoPause, negative Rate ab 120 Min) ersatzlos entfernt.
+   Eine überzogene Pause wirkt nur noch über „Brücke nicht gehalten“ (Punkt 5, Punkt 7.4). */
 function neueKarte(f={}){
   const k = Object.assign({
     id: uuid(),
@@ -3129,8 +3130,7 @@ function neueKarte(f={}){
     // jetzt BEIDSEITIG, die App darf sie setzen (vorher Airtable-Hoheit).
     faelligkeit: null,                // "YYYY-MM-DD" | null — die Deadline, beidseitig
     uhrzeit: null,                    // "HH:MM" | null — Uhrzeit der Deadline ⇒ Termin
-    keineAutoPause: false,            // §5 (1.6.1): Pausentimer — keine Auto-Pause, dafür negative Rate ab PAUSENTIMER_MAX_MIN
-    strafPunkte: 0,                   // §5 (1.6.1): aufgelaufene Dauerlauf-Strafe (app-only, mindert kartePunkte)
+    strafPunkte: 0,                   // 4.0 · Paket 1: wird nicht mehr befüllt (Pausentimer-Sonderregel entfernt); alte Werte bleiben lesbar
     sollMin: 0,
     istSek: 0,                        // getrackte Zeit (nur am Parent) — misst, speist die Punkte aber NICHT mehr (§2)
     // §1 (v2.0.0): Die Einordnung in die Matrix. Ersetzt komplex/energie/
@@ -4249,21 +4249,7 @@ function tickSumme(k, bis){
    explizit gesetzt; leer = 0). Erreicht = erledigte, Offen = noch offene. */
 function subBonusErreicht(k){ return untermenge(k.id).reduce((s,u)=>s+(u.done && !istUnterZaehler(u)?num(u.bonusPunkte):0),0); }   // §3.2 (v3.0.0): Unter-Zaehler rechnen ueber ihre Ticks
 function subBonusOffen(k){ return untermenge(k.id).reduce((s,u)=>s+(!u.done && !istUnterZaehler(u)?num(u.bonusPunkte):0),0); }
-/* §1 (v1.7.1): Dauerlauf-Strafe des Pausentimers — EINE Formel für beide Wege.
-   pausenStrafe(k, laufMin) = Wert der Minuten über PAUSENTIMER_MAX_MIN mit
-   umgekehrtem Vorzeichen (Differenz = doppelter Wert, Höhe unverändert seit
-   v1.6.1). fokusZeitEinbuchen schreibt sie beim Pausieren fest;
-   pausenStrafeLive liefert den WACHSENDEN Anteil des gerade laufenden Timers,
-   damit der Abzug sofort sichtbar ist statt erst nach der Pause. */
-function pausenStrafe(k, laufMin){
-  if(!k || !k.keineAutoPause || !(laufMin>PAUSENTIMER_MAX_MIN)) return 0;
-  const wert=punkteFuerZeit(k, laufMin)-punkteFuerZeit(k, PAUSENTIMER_MAX_MIN);
-  return 2*wert*(S.settings.zeitGewicht!=null?S.settings.zeitGewicht:1);
-}
-function pausenStrafeLive(k){
-  if(!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id && S.fokus.startMs) || S.fokus.nurZeit) return 0;   // §1.3 (v3.4.0): reine Messung ohne Punkte
-  return pausenStrafe(k, (Date.now()-S.fokus.startMs)/60000);
-}
+/* 4.0 · Paket 1: Dauerlauf-Strafe des Pausentimers (pausenStrafe, pausenStrafeLive) ersatzlos entfernt. */
 /* §1.1 (v3.1.0): Ein beim Abhaken gewaehlter Wert (punkteOverride) gilt bei
    Routinen und Countern NUR an dem Tag, an dem er gesetzt wurde. Befund
    27.09.: Werte vom Vortag (darin noch die Prognose von vor v2.9.1) hingen an
@@ -4290,9 +4276,9 @@ function kartePunkte(k){
   if(overrideGilt(k)) return num(k.punkteOverride);   // U6-A: beim Abhaken gewählter Ist-Punktwert schlägt die Berechnung · §1.1 (v3.1.0): nur an seinem Tag
   const uz=unterZaehlerPunkte(k);   // §3.2 (v3.0.0): Unter-Zaehler zaehlen zur Karte
   // §2 (v2.9.0): Pflicht — der gebuchte Ertrag (live mit dem laufenden Durchgang) ersetzt Zeit-, Tick- und Bonuspunkte
-  if(istPflicht(k)) return pflichtHeuteP(k) + pflichtLiveDelta(k) + subBonusErreicht(k) + num(k.bewegungsBonus) - num(k.strafPunkte) - pausenStrafeLive(k) + uz;
+  if(istPflicht(k)) return pflichtHeuteP(k) + pflichtLiveDelta(k) + subBonusErreicht(k) + num(k.bewegungsBonus) - num(k.strafPunkte) + uz;
   // §1 (v3.0.0): Staffel — die Werte der heutigen Ticks (mit Serienfaktor) ersetzen die Zeitpunkte; Zeit wird nur gemessen
-  if(istStaffel(k)) return staffelPunkteHeute(k) + uz + subBonusErreicht(k) + num(k.bewegungsBonus) - num(k.strafPunkte) - pausenStrafeLive(k);
+  if(istStaffel(k)) return staffelPunkteHeute(k) + uz + subBonusErreicht(k) + num(k.bewegungsBonus) - num(k.strafPunkte);
   const zeitTerm = punkteFuerZeit(k, zeitquelleMin(k)) * (S.settings.zeitGewicht!=null?S.settings.zeitGewicht:1);
   // §1 (v3.0.0): im Modus zeit traegt der Tick den Abhakbonus (tickLog) — die alten Tick-Werte gelten nur ohne modus
   const tickTerm = istV3(k) ? 0 : tickSumme(k, num(k.ticksHeute)) * (S.settings.tickGewicht!=null?S.settings.tickGewicht:1) * geldFaktor(k) * daempfung(k);   // §2.2 (v2.8.0)
@@ -4302,7 +4288,7 @@ function kartePunkte(k){
   // §2 (v2.0.0): der Bewegungsbonus dieser Karte — festgeschrieben beim
   // Verlassen (Position vorher gegen Position nachher), nie live geschätzt.
   return zeitTerm + tickTerm + subBonusErreicht(k) + num(k.bewegungsBonus) + (istV3(k) ? staffelPunkteHeute(k) : startBonusHeute(k))   // §1 (v2.8.2) · v3: Bonus je Tick
-         + uz - num(k.strafPunkte) - pausenStrafeLive(k);
+         + uz - num(k.strafPunkte);
 }
 /* Prognose inkl. ALLER Unteraufgaben-Boni (erledigt + offen) — für „geplant". */
 /* ══ Nachtrag §1 · DIE PROGNOSE ═══════════════════════════════════════
@@ -4384,11 +4370,7 @@ function fokusZeitEinbuchen(bisMs){
   // §1.3/§1.5 (v3.4.0): eine reine Messung (Tageslimit erreicht) zaehlt als Ist-Zeit — ohne Punkte, ohne Pflicht-Abzug
   if(k && nurZeit && S.tag){ if(!S.tag.nurZeitSek || typeof S.tag.nurZeitSek!=='object') S.tag.nurZeitSek={}; S.tag.nurZeitSek[k.id]=num(S.tag.nurZeitSek[k.id])+sek; }
   if(k){ k.istSek=num(k.istSek)+sek; akkuBuchen(k, sek/60); beruehre(k); _sitzung=logIntraday(k,{minuten:sek/60,typ:'timer'}); if(nurZeit) _sitzung.nurZeit=true; if(ende<Date.now()) _sitzung.ts=new Date(ende).toISOString(); if(!nurZeit) durchgangPause(k, sek); }   // v1.1: Akku-Drift; A7 berührt; B0 Log; §1 (v2.8.2) Durchgang pausiert
-  // §5 (v1.6.1) / §1 (v1.7.1): Beim Pausieren wird die bis dahin live angezeigte
-  // Dauerlauf-Strafe festgeschrieben — DIESELBE Formel wie pausenStrafeLive,
-  // dadurch springt der Wert beim Pausieren nicht. Reset des Zählers folgt
-  // direkt darunter (startMs=0); jede Pause startet die 120 Minuten neu.
-  if(k && !nurZeit) k.strafPunkte=num(k.strafPunkte)+pausenStrafe(k, sek/60);
+  // 4.0 · Paket 1: keine Dauerlauf-Strafe mehr beim Pausieren.
   S.fokus.sessionSek=num(S.fokus.sessionSek)+sek;               // v1.1: Session-Summe (v0.38-Port)
   S.fokus.laeuft=false; S.fokus.startMs=0;
   // §4 (v2.9.1): die Sitzung traegt die Punkte, die sie der Tagesbilanz bringt
@@ -10367,12 +10349,6 @@ function renderDetail(){
     h+='<div class="field"><label>Akku-Wirkung</label><div class="hint" style="margin-top:0">'+
       'Es greift: <b>'+greift+'</b>'+(mess?' · '+mess+' Messung(en) an dieser Karte':' · noch keine Messung — beim Abschluss wird gefragt')+'</div></div>';
   }
-  // §5 (v1.6.1): Pausentimer-Sonderregel je Karte
-  h+='<div class="field"><label>Pausentimer</label><div class="chips">'+
-    '<button class="chip '+(k.keineAutoPause?'on lila':'')+'" data-dnoauto="1">'+(k.keineAutoPause?'✓ keine Auto-Pause':'normale Auto-Pause')+'</button></div>'+
-    '<div class="hint">'+(k.keineAutoPause
-      ? 'Läuft bewusst unbeaufsichtigt. Ab '+PAUSENTIMER_MAX_MIN+' Min am Stück ohne Pause kippt die Rate ins Negative.'
-      : 'Nach '+AUTOPAUSE_MIN+' Min ohne Interaktion pausiert der Timer automatisch und fragt nach der echten Dauer.')+'</div></div>';
   // §2 (v2.0.0): Was die Karte bringt — offen gerechnet, damit der Wert
   // VORHER feststeht statt sich aus der Uhr zu ergeben.
   h+='<div class="field"><label>Was diese Karte einbringt</label><div class="hint" style="margin-top:0">'+
@@ -12023,7 +11999,8 @@ function kartenFelderBekannt(){
     'unteraufgaben','korrektur','grund','vomGeraet','geldScore','kommentarFuerClaude','sitzungen','kettenPosition',
     // was der Export nur zum Lesen beilegt (ein zurueckgeschickter Export ist kein Fehler)
     'istMin','punkteIst','punktePrognose','tickProtokoll','punkteUnterZaehler','ziel','zielErreicht','overrideTag','istMinHeute','tickMin','statusHeute',
-    'serienFaktor','streak','letzteErfuellung','ticksHeute','zeitmessung','schiebeZaehler','wiederOffenTag','flowBaseline','flowDoneBaseline','ungeplant','posVorher']));
+    'serienFaktor','streak','letzteErfuellung','ticksHeute','zeitmessung','schiebeZaehler','wiederOffenTag','flowBaseline','flowDoneBaseline','ungeplant','posVorher',
+    'keineAutoPause']));   // 4.0 · Paket 1: altes Feld wird ignoriert, nicht gemeldet
   return _kartenFelder;
 }
 const UNTER_FELDER_BEKANNT=new Set(['id','parentId','titel','sollMin','done','bonusPunkte','airtableId','staffel','staffelDanach','tagesziel','tageslimit',
@@ -13720,7 +13697,6 @@ function syncImport(text, opt){
     // §2 (v2.8.1): null setzt den eigenen Wert zurueck (danach gilt die Tabelle) — ein FEHLENDES Feld laesst ihn stehen
     if(inc.abhakbonus!==undefined)     lok.abhakbonus   = inc.abhakbonus==null?null:num(inc.abhakbonus);   // auch negativ
     if(inc.timerFlag!==undefined)      lok.timerFlag=!!inc.timerFlag;
-    if(inc.keineAutoPause!==undefined) lok.keineAutoPause=!!inc.keineAutoPause;
     if(inc.faelligkeit!==undefined) lok.faelligkeit=inc.faelligkeit;   // DEADLINE
     if(inc.uhrzeit!==undefined) lok.uhrzeit=inc.uhrzeit;               // Uhrzeit↔Airtable-Deadline
     if(inc.freeze!==undefined) lok.freeze=!!inc.freeze;               // M1 (v1.1.0): freeze true setzt / false löst; fehlend = unverändert
@@ -19123,8 +19099,6 @@ el('sheet').addEventListener('click', e=>{
     if(entwurfNeu && !num(entwurf.sollMin)) Object.assign(entwurf, matrixVorschlag(f, entwurf.domain));
     entwurf.matrixFeld=f;
     renderDetail(); return; }
-  // §5 (v1.6.1): Pausentimer-Flag je Karte
-  if(t.closest('[data-dnoauto]')){ entwurf.keineAutoPause=!entwurf.keineAutoPause; renderDetail(); return; }
 
   // Tick-Kurve: erstes „Erstellen" springt auf 3 Schritte (Vorauswahl), jeder
   // weitere Klick fügt einen an; der ＋-Button bleibt immer.
