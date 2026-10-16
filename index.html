@@ -2509,7 +2509,7 @@ img.objimg.laedt{opacity:0}
 .f6-gr{display:grid;grid-template-columns:58px repeat(var(--n,7),1fr);gap:4px 0;align-items:center;margin-top:4px;font-size:12px}
 .f6-gr span{text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .f6-gr .l{text-align:left;font-weight:700}
-.f6-gr .d{width:18px;height:18px;border-radius:50%;margin:auto}
+.f6-gr .d{display:block;width:18px;height:18px;border-radius:50%;margin:auto}
 /* 13 Stundenleiter */
 .f6-sl{display:grid;grid-template-columns:104px minmax(0,1fr) 92px;gap:8px;align-items:center;margin-top:9px;font-size:13px}
 .f6-sl .n b{display:block;font-size:13px;line-height:1.15}.f6-sl .n small{color:#9a9ca2;font-size:11px}
@@ -4498,7 +4498,8 @@ function f6Leistung(F, dom){
   let haupt;
   if(labels.length<3) haupt=anSammelt(labels.length,3);
   else{
-    const W=360, H=210, pL=30, pR=10, pT=16, pB=26, hi=Math.max(1, Math.max.apply(null, echt.concat([noetig, prog||0, med||0])))*1.1;
+    // Skala aus den Tageswerten; liegt „nötig" weit darüber, steht die Linie am oberen Rand (die Kurve bleibt lesbar)
+    const W=360, H=210, pL=30, pR=10, pT=16, pB=26, hiDaten=Math.max(1, Math.max.apply(null, echt.concat([prog||0, med||0])))*1.1, hi=(noetig>0 && noetig<=hiDaten*1.6) ? Math.max(hiDaten, noetig*1.08) : hiDaten, noetigY=Math.min(noetig, hi*0.97);
     const A=f6Achse(labels.length, W, H, pL, pR, pT, pB, 0, hi), pts=[]; ph.forEach((v,i)=>{ if(v!=null) pts.push({x:A.X(i), y:A.Y(v), v, i}); });
     let s='';
     [0, hi/3, 2*hi/3, hi].forEach(v=>{ s+='<line x1="'+pL+'" y1="'+A.Y(v).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(v).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/><text x="'+(pL-4)+'" y="'+(A.Y(v)+3).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">'+fmtP(Math.round(v))+'</text>'; });
@@ -4508,7 +4509,7 @@ function f6Leistung(F, dom){
       s+='<path d="'+glattPfad(pts)+'" stroke="url(#'+gid+')" stroke-width="2.5" fill="none" stroke-linejoin="round"/>'; }
     pts.forEach(q=>{ s+='<circle cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="2" fill="'+FARBE.GRAU+'"/>'; });
     if(med!=null) s+='<line x1="'+pL+'" y1="'+A.Y(med).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(med).toFixed(1)+'" stroke="'+FARBE.GRAU+'" stroke-dasharray="5 4"/><text x="'+(W-pR-70)+'" y="'+(A.Y(med)-4).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">Median '+fmtP(Math.round(med))+'</text>';
-    if(noetig>0) s+='<line x1="'+pL+'" y1="'+A.Y(noetig).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(noetig).toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3"/><text x="'+(W-pR-2)+'" y="'+(A.Y(noetig)-4).toFixed(1)+'" font-size="10" fill="#e8e9ec" text-anchor="end">nötig ≈ '+fmtP(Math.round(noetig))+'</text>';
+    if(noetig>0) s+='<line x1="'+pL+'" y1="'+A.Y(noetigY).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(noetigY).toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3"/><text x="'+(W-pR-2)+'" y="'+(A.Y(noetigY)-4).toFixed(1)+'" font-size="10" fill="#e8e9ec" text-anchor="end">nötig ≈ '+fmtP(Math.round(noetig))+(noetigY<noetig ? ' ↑' : '')+'</text>';
     const iH=labels.indexOf(heute); if(iH>=0 && ph[iH]!=null){ const x=A.X(iH), y=A.Y(ph[iH]);
       if(prog!=null && Math.abs(prog-ph[iH])>1) s+='<path d="M'+x.toFixed(1)+','+y.toFixed(1)+' L'+x.toFixed(1)+','+A.Y(prog).toFixed(1)+'" stroke="'+diaAmpel(prog, noetig)+'" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/><circle cx="'+x.toFixed(1)+'" cy="'+A.Y(prog).toFixed(1)+'" r="3" fill="none" stroke="#e8e9ec" stroke-dasharray="2 2"/>';
       s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="6" fill="rgba(255,255,255,.2)"/><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3" fill="#fff"/>'; }
@@ -4763,7 +4764,7 @@ function f6Belastung(F, dom){
   const mono=B.mono;
   haupt+='<div class="f6-sec" data-f6auf="bel2">2 · Monotonie je Woche (Foster)<small>'+(f6Auf('bel2')?'▴':'▾')+'</small><span style="color:'+(mono.farbe||FARBE.GRAU)+';margin-left:auto">'+(mono.wert!=null ? (Math.round(mono.wert*10)/10).toFixed(1).replace('.',',')+' '+mono.text : '—')+'</span></div>';
   { const W=360, H=90, pL=26, pR=6, mx=Math.max(2.5, Math.max.apply(null, wochen.map(x=>x.wert||0))*1.1), Y=v=>12+(1-Math.min(mx,v)/mx)*(80-12), bw=(W-pL-pR)/4*0.62;
-    let s='<line x1="'+pL+'" y1="'+Y(2).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(2).toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3" opacity=".7"/><text x="'+(W-pR)+'" y="'+(Y(2)-4).toFixed(1)+'" font-size="9.5" fill="#e8e9ec" text-anchor="end">Grenze 2,0</text>';
+    let s='<line x1="'+pL+'" y1="'+Y(2).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(2).toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3" opacity=".7"/><text x="'+(pL+2)+'" y="'+(Y(2)-4).toFixed(1)+'" font-size="9.5" fill="#e8e9ec">Grenze 2,0</text>';
     wochen.forEach((w,i)=>{ const cx=pL+(i+0.5)*(W-pL-pR)/4; if(w.wert!=null){ const c=w.wert<1.5 ? FARBE.GELBGRUEN : w.wert<2 ? FARBE.GELB : FARBE.ROT;
         s+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+Y(w.wert).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(80-Y(w.wert)).toFixed(1)+'" rx="4" fill="'+c+'"'+(w.laeuft?' opacity=".6"':'')+'/>'; }
       s+='<text x="'+cx.toFixed(1)+'" y="'+(H)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="middle">KW '+w.kw+(w.laeuft?' (läuft)':'')+'</text>'; });
