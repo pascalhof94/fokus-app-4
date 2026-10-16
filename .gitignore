@@ -1,0 +1,18 @@
+# Nur die App selbst wird veröffentlicht (GitHub Pages ist öffentlich!).
+# Spezifikation, vertrauliche Belohnungs-Inhalte, Referenzfotos und
+# lokale Arbeitsdateien bleiben ausschließlich lokal.
+spec/
+assets/
+CLAUDE.md
+.claude/
+.DS_Store
+*.rtf
+
+# UI-Testharness: Screenshots sind Werkzeug, kein Repo-Inhalt
+tests/ui/screens/
+
+# ECHTE Nutzerdaten — enthalten Kundennamen, Projekte und private Routinen.
+# Das Repo liegt hinter GitHub Pages (oeffentlich): diese Dateien duerfen
+# NIE committet werden. Die Tests laufen ohne sie gruen (Rueckfall auf
+# tests/ui/fixture-real.js), damit das Repo auch ohne sie baut.
+tests/ui/pascal-*.json

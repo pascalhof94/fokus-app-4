@@ -1,0 +1,340 @@
+/* jsc test: v1.1 Status/Fokus-Kennzahlen (akkuLive, heuteInvestiertMin, pace,
+   energieBatterie, tagesStreakStand). Extrahiert echte Fns aus neu.html. */
+var src = readFile('neu.html');
+function extract(name){
+  var m = new RegExp('\\nfunction ' + name + '\\s*\\(').exec(src);
+  if(!m) throw 'nicht gefunden: ' + name;
+  var p = src.indexOf('(', m.index + m[0].length - 1), d = 0, k = p;
+  for(; k < src.length; k++){ var c = src[k]; if(c==='(') d++; else if(c===')'){ d--; if(d===0) break; } }
+  var b = src.indexOf('{', k), depth = 0, j = b;
+  for(; j < src.length; j++){ var c2 = src[j]; if(c2==='{') depth++; else if(c2==='}'){ depth--; if(depth===0) return src.substring(m.index+1, j+1); } }
+  throw 'kein Ende: ' + name;
+}
+// v2.6.0 §5: Geld-Konstanten gespiegelt (nicht extrahierbar) — Geld-Impact 0 … 500, Stufen fuer Altpakete
+var GELD_STUFE={ hoch:300, mittel:200, niedrig:100 }, GELD_MAX=500;
+// v2.7.0: Sitzungs-Typen gespiegelt (§3 Korrekturen) — feste Bewertung/Sitzungs-id als Funktionen extrahiert
+var SITZUNG_TYPEN=['timer','autopause','nachtrag','korrektur'];
+var NAMES = ['num',
+  // v3.1.0 §1.1: ein Override gilt bei Routinen/Countern nur an seinem Tag
+  'overrideGilt','istRoutineOderCounter','tickAnzahlHeute',
+  // v3.4.0 §1.3: Messzeit nach dem Tageslimit (zaehlt als Ist-Zeit, bringt keine Zeitpunkte)
+  'nurZeitSek',
+  // v3.2.0: Ticker und Aufgabe/Routine-Unterscheidung
+  'tickQuelle','tickerVon','tickerSicherstellen','brauchtTicker','istAufgabeKarte',
+  // v3.0.0 §1–§3: Routinen-System (Modus, Staffel, Unter-Zaehler, privates Tagesziel)
+  'istV3','modusVon','istStaffel','leer','unterZaehler','unterZaehlerPunkte','istUnterZaehler','staffelPunkteHeute','ticksHeuteV3','privatZielDynamisch','routineMaxPunkte','staffelBisZiel','ausnahmeTag','wochentagNr','wtNorm','heuteIso','jetztIso','heuteApp','istSekLive','geldFaktor','hatFestMin','sitzungIdVon','korrekturPunkteVerrechnen','daempfung','abhakArt','startBonusHeute','durchgangAktiv','istPflicht','pflichtWerte','pflichtErtrag','pflichtHeuteP','pflichtLiveDelta','durchgangLaeuft','pflichtHakenZusatz','abhakSpalte','abhakbonusTabelleWert','geldImpactNorm','geldTageBis','geldImpactAusScore','geldBezugstag','geldImpactVon','geldScoreVon','basisRate','rate','akkuRate',
+  'tickSumme','punkteFuerZeit','zeitquelleMin','subBonusErreicht','pausenStrafe','pausenStrafeLive','kartePunkte','kartenArt','laufendeSek',
+  'heuteInvestiertMin','akkuLive','aktuelleTagId','tagOffen','kartePunkteHeute','tagesPunkteDomain','tagesPunkteLive',
+  'punkteHeuteAnzeige','tagesZielDomain','wachTagAnteil','punkteHeuteDomain','istTickKarte','tickPunkte',
+  'tagStundenVergangen','anZielDfmTag','paceWerte','imTagesstrom','energieBatterie','routinenSerieBeste',
+  'fokusKarte','untermenge',
+  // §2 (v1.12.0): die Soll-Treppen-Familie
+  'istWochenendTag','fensterAnteil','sollFensterStunden','restFensterStd','jetztStunde',
+  'zielTag','zielTagGesamt','sollStand','sollStandGesamt','weIstDomain','zielUndIstHeute','sollFensterAktiv',
+  // §5.1 (v1.13.0): Start-verankerte Form + Rahmen + Faktor
+  'sollFormWerktag','tagesStartStunde','tagesRahmen','rahmenFenster',
+  // §2 (v1.13.0): Standardwerte
+  'standardWert','tickWertEff','abhakbonusFeldDefault','abhakbonusDefault',
+  // §3.1/§3.2 (v1.13.0): Vier-Kategorien-Quote + Rein/Raus-Zählwerk
+  'routinenQuoteHeute','routineFaellig','routErledigtHeute','anFlowReihe','schubZaehlt','reinRausTag',
+  // Zahlenbeleg 22: Mess-Ebene rechnet roh
+  'belFensterDatum','tagesRateDetail','tagesRate','aktiveRateTage','tagIstUrlaub','medianVon','oePStd7',
+  'leistungsSchwelle','leistungsRangVon','rangMass',
+  // §4 (v1.13.1): Sitzungszeiten aus dem Intraday-Log
+  'kartenSitzungenHeute',
+  // Nachtrag v1.13.1 §5: Plankurve zieht NUR ueber die Ketten
+  'planKurveInfo','ketteKarten','karteVerborgen','tagesKette','tagesKetteDom','ketteState','ketteAutoIds',   // §8 (v3.7.0): ketteKarten blendet rolle tagebuch/position aus
+  'ketteHistLog','kettenHistKappen','ketteSetzen','kartePunktePrognose','kartePunkteGeplant','kartePunkteBei','subBonusOffen'];
+/* §1 (v1.7.1): kartePunkte zieht die Pausentimer-Strafe live ab — die beiden
+   Helfer werden mit extrahiert, die Konstante hier gespiegelt (Konstanten sind
+   nicht extrahierbar). Mit S.fokus=null liefert pausenStrafeLive stets 0. */
+var PAUSENTIMER_MAX_MIN = 120;
+var RANG_MAX = 20;
+var AKKU_MAX = 150;   // §6.2 (v1.13.0)
+var KETTENHIST_TAGE = 7, KETTENHIST_ENTPRELL_S = 10;   // (v1.13.4)
+var DEFAULT_SETTINGS = { abhakbonusTabelle:{ aufgabe:{werkzeug:200,ziel:150,zustand:0,ablenkung:0}, routineDfm:{werkzeug:60,ziel:60,zustand:0,ablenkung:0}, routinePrivat:{werkzeug:25,ziel:25,zustand:0,ablenkung:0} },   // v2.8.0 §2.1
+  daempfungPrivat:0.5, daempfungDfm:1, basisProStd:120, zeitGewicht:1.15, tickGewicht:1, geldGewicht:0.5, geldDeckel:1.5,
+  geldScoreRef:200, tagesZielDfm:5000, tagesZielPrivat:3000, tageszielPunkteProStd:100, akkuProStd:-8,
+  basisProStdPrivat:120, standardWertDfm:0, standardWertPrivat:0, sollFormWerktag:[[0,5],[6,9]] };
+var S = { karten:[], unteraufgaben:[], tag:null, fokus:null, historie:[], intraday:[], meta:{wohlstand:0}, settings:DEFAULT_SETTINGS };
+var _rangMemo=null, _rangMemoKey='';
+function untermengeStub(){ return []; }
+eval(extract('num'));
+var WT_KURZ={ mo:1, di:2, mi:3, do:4, fr:5, sa:6, so:7 };   // v3.0.0: Konstante gespiegelt
+eval(NAMES.filter(function(n){return n!=='num'&&n!=='untermenge';}).map(extract).join('\n'));
+function untermenge(id){ return S.unteraufgaben.filter(function(u){return u.parentId===id;}); }
+// §2 (v1.12.0): weIstDomain braucht am Sonntag den Samstags-Snapshot — hier
+// gestubbt (kein Historien-Aufbau in dieser Suite; die Treppe selbst wird
+// direkt geprueft).
+function tagSnapshot(){ return null; }
+function anVorTage(iso,n){ return iso; }
+function snapPunkte(){ return 0; }
+function saveMeta(){}
+function saveKarten(){}
+var MATRIX_FELDER = ['ablenkung','zustand','werkzeug','ziel'];
+function matrixFeldVon(k){ var f=k&&k.matrixFeld;
+  if(MATRIX_FELDER.indexOf(f)>=0) return f;
+  var n=Number(f); if(isFinite(n)&&n>=1&&n<=4) return MATRIX_FELDER[n-1];
+  return 'ziel'; }
+function matrixFaktor(k){ var t=(S.settings&&S.settings.matrixFaktor)||{};
+  var f=matrixFeldVon(k); var v=t[f];
+  return isFinite(Number(v))?Number(v):(f==='ziel'?1:0); }
+// §5.1 (v1.13.0): Uhrzeit fixieren (14:00) — die Treppe hängt am Tagesstart,
+// die Erwartungen unten sind damit laufzeitunabhängig. Zuweisung NACH dem
+// eval, damit sie die extrahierte Fassung ersetzt.
+jetztStunde = function(){ return 14; };
+
+var fails=0; function ok(n,c){ print((c?'OK   ':'FAIL ')+n); if(!c) fails++; }
+function karte(f){ return Object.assign({ id:'x', domain:'privat', status:'offen', titel:'T',
+  matrixFeld:'ziel', sollMin:60, istSek:0, ticksHeute:0, ticksAktiv:false, tickWert:0, tickWerteHeute:[],
+  punkteProStd:null, akkuProStd:null, zeitStufen:null, rhythmus:null, faelligkeit:heuteApp() }, f||{}); }
+
+var HEUTE=heuteApp();
+// 1) heuteInvestiertMin: Tagesbasis abziehen, 16h-Deckel
+var k1=karte({ id:'a', istSek:3600 });          // 60 min gesamt
+S.karten=[k1]; S.fokus=null;
+S.tag={ tagId:HEUTE+'-1', datum:heuteIso(), startTs:jetztIso(), akku:80, istMinutenStart:{a:20}, abzuegeBilanz:0, log:[] };
+ok('heuteInvestiertMin = ist − Basis (60−20=40)', Math.round(heuteInvestiertMin(k1))===40);
+S.tag.istMinutenStart={};
+ok('heuteInvestiertMin ohne Basis = 60', Math.round(heuteInvestiertMin(k1))===60);
+
+// 2) akkuLive: gebuchter Stand ohne laufenden Fokus = tag.akku
+S.tag.akku=75; S.fokus=null;
+ok('akkuLive ohne Fokus = tag.akku', akkuLive()===75);
+ok('akkuLive null wenn akku null', (function(){ S.tag.akku=null; var r=akkuLive(); S.tag.akku=75; return r===null; })());
+
+// 3) paceWerte: Soll folgt der START-VERANKERTEN Treppe (§5.1 v1.13.0)
+S.tag.istMinutenStart={a:0}; k1.istSek=3600; // 60 min invest → zeitpunkte
+// §5.1: Tagesstart FIX auf 9:00 heute — Form [[0,5],[6,9]] ⇒ Fenster 9–14 + 15–18.
+S.tag.startTs=heuteIso()+'T09:00:00';
+// §2 (v1.12.0): Ziel-Settings der neuen Welt setzen (Punkteformel-Tests oben
+// laufen bewusst weiter mit den alten Gewichten aus DEFAULT_SETTINGS).
+S.settings.tagesZielDfm=7000; S.settings.tagesZielPrivat=5000;
+S.settings.zielWeDfm=2500; S.settings.zielWePrivat=10000;
+var pw=paceWerte();
+/* Soll folgt der TREPPE — am Wochenende gilt das gemeinsame Kontingent. */
+if(istWochenendTag(heuteApp())){
+  ok('paceWerte am WE: gemeinsames Kontingent, we-Flag', pw.we===true && Math.abs(pw.ziel-12500)<1);
+} else {
+  ok('Fenster hängen am Start (9:00 → 9–14 · 15–18)',
+    JSON.stringify(sollFensterAktiv())==='[[9,14],[15,18]]');
+  var sollErwartet=(7000+5000)*fensterAnteil();
+  ok('paceWerte.soll folgt der Soll-Treppe', Math.abs(pw.soll-sollErwartet)<1);
+  ok('Senke ist Plateau: Soll um 14:30 = Soll um 14:00', Math.abs(sollStandGesamt(null,14.5)-sollStandGesamt(null,14))<0.001);
+  ok('Treppe: Soll um 12:00 = Ziel × 3/8 (3 von 8 aktiven Std)', Math.abs(sollStandGesamt(null,12)-(12000*3/8))<1);
+  ok('Rest im Fenster um 14:00 = 3 Std (15–18)', Math.abs(restFensterStd(14)-3)<0.001);
+  // §5.1: späterer Start verschiebt ALLES mit — Anker 11:00 ⇒ 11–16 · 17–20
+  S.tag.startTs=heuteIso()+'T11:00:00';
+  ok('später Start verschiebt die Form mit (11:00 → 11–16 · 17–20)',
+    JSON.stringify(sollFensterAktiv())==='[[11,16],[17,20]]');
+  ok('kein Rückstand durch späten Start: Soll um 12:00 = Ziel × 1/8', Math.abs(sollStandGesamt(null,12)-(12000*1/8))<1);
+  S.tag.startTs=heuteIso()+'T09:00:00';
+  // §5.2: läuft der Tag ÜBER das Form-Ende hinaus, streckt sich die Treppe mit
+  jetztStunde=function(){ return 19.5; };
+  var fs2=sollFensterAktiv();
+  ok('Treppe streckt sich: letztes Fenster endet JETZT (19,5)', Math.abs(fs2[fs2.length-1][1]-19.5)<0.001);
+  ok('gestreckt: Soll jetzt = volles Ziel', Math.abs(sollStandGesamt(null,19.5)-12000)<1);
+  jetztStunde=function(){ return 14; };
+  // §5.3: ein Tagesrahmen schlägt die Form — je Domäne die eigenen Segmente
+  S.meta.tagesRahmen={ datum:heuteApp(), segmente:[
+    {von:8,bis:12,typ:'dfm'},{von:12,bis:13,typ:'pause'},{von:13,bis:17,typ:'privat'} ] };
+  ok('Rahmen schlägt Form: DFM-Soll um 12:00 = volles DFM-Ziel', Math.abs(sollStand('dfm',null,12)-7000)<1);
+  ok('Rahmen: Privat-Soll um 12:00 = 0 (Segment beginnt 13:00)', Math.abs(sollStand('privat',null,12))<1);
+  ok('Rahmen: pause zählt nicht als aktiv', JSON.stringify(rahmenFenster(S.meta.tagesRahmen.segmente))==='[[8,12],[13,17]]');
+  delete S.meta.tagesRahmen;
+}
+ok('paceWerte.ist >= 0 endlich', pw.ist>=0 && isFinite(pw.ist));
+/* Der Test war wochenend-blind: am Wochenende liefert paceWerte bewusst den
+   WE-Zweig (sollRate 0, kein Zeitverlauf — das Kontingent gilt fuer Sa+So
+   gemeinsam). Geprueft wird deshalb je nach Tagestyp das Richtige. */
+ok('paceWerte liefert die drei §1.5-Werte (istRate/restRate/sollRate)',
+  pw.we ? (pw.istRate===0 && pw.sollRate===0 && ('restRate' in pw))
+        : (pw.istRate!=null && pw.sollRate>0 && ('restRate' in pw)));
+// A3: Tick-Karte-Erkennung + Tick-Punkte
+/* §7/§9 (v1.8.0): Tick-Modell — maßgeblich ist ticksAktiv, timerFlag ist nur
+   noch Zeitmessung, und tickPunkte summiert die heutigen Einzelwerte
+   (Fallback: tickWert je Tick). Eine Routine mit ticksAktiv bleibt Routine
+   (kartenArt) UND ist tickbar — der historische Bug. */
+ok('istTickKarte: ticksAktiv', istTickKarte(karte({ticksAktiv:true}))===true);
+ok('istTickKarte: Routine MIT ticksAktiv ist tickbar', istTickKarte(karte({rhythmus:{typ:'taeglich'}, ticksAktiv:true}))===true);
+ok('kartenArt: Routine mit Ticks bleibt Routine', kartenArt(karte({rhythmus:{typ:'taeglich'}, ticksAktiv:true}))==='Routine');
+ok('istTickKarte: timerFlag allein tickt NICHT mehr', istTickKarte(karte({timerFlag:true}))===false);
+ok('istTickKarte: normale Aufgabe = false', istTickKarte(karte({}))===false);
+// (v2.8.0: DFM-Counter — Daempfung 1,0; die private Daempfung prueft der Punkt danach)
+ok('tickPunkte: ticksHeute × tickWert (Fallback)', Math.round(tickPunkte(karte({domain:'dfm', ticksAktiv:true, tickWert:8, ticksHeute:2})))===16);
+ok('tickPunkte: Einzelwerte schlagen den Default', Math.round(tickPunkte(karte({domain:'dfm', ticksAktiv:true, tickWert:8, ticksHeute:2, tickWerteHeute:[10,-5]})))===5);
+ok('tickPunkte: negativer tickWert zulässig', Math.round(tickPunkte(karte({domain:'dfm', ticksAktiv:true, tickWert:-15, ticksHeute:2})))===-30);
+ok('v2.8 §2.2: privater Counter gedaempft ×0,5 (eigener Tickwert 8 × 2 → 8)', Math.round(tickPunkte(karte({domain:'privat', ticksAktiv:true, tickWert:8, ticksHeute:2})))===8);
+
+// 4) energieBatterie: gruen+gelb = akku, dunkel = 100−akku
+S.tag.akku=60; S.fokus=null;
+var kv=karte({ id:'v', sollMin:120, istSek:0, faelligkeit:HEUTE, akkuProStd:-20 }); // Verbraucher
+S.karten=[kv]; S.tag.istMinutenStart={v:0};
+var eb=energieBatterie();
+ok('Batterie akku=60', Math.round(eb.akku)===60);
+ok('gruen+gelb = akku', Math.abs((eb.gruen+eb.gelb)-60)<0.01);
+ok('dunkel = 100−akku', Math.abs(eb.dunkel-40)<0.01);
+ok('Verbraucher erzeugt gelb (verplant>0)', eb.gelb>0);
+// Lader verkleinert verplant
+var kl=karte({ id:'l', sollMin:120, istSek:0, faelligkeit:HEUTE, akkuProStd:20 });
+S.karten=[kv,kl]; S.tag.istMinutenStart={v:0,l:0};
+var eb2=energieBatterie();
+ok('Lader senkt gelb ggü. nur Verbraucher', eb2.gelb<=eb.gelb);
+
+/* 5) §3 (v2.0.0): Die Serie ist die der ROUTINEN, nicht die der Tage in
+      Folge mit Tagesabschluss. „Katzen fuettern seit 40 Tagen" ist eine
+      Aussage ueber Pascal, „Tagesabschluss seit 12 Tagen" eine ueber die App. */
+var _kv=S.karten;
+S.karten=[ {id:'r1',rhythmus:{typ:'taeglich'},titel:'Katzen fuettern',streak:40},
+           {id:'r2',rhythmus:{typ:'taeglich'},titel:'Gesicht waschen',streak:12},
+           {id:'a1',rhythmus:null,titel:'Aufgabe',streak:99} ];
+ok('§3: laengste Routinen-Serie = 40', routinenSerieBeste().tage===40);
+ok('§3: sie traegt ihren Titel', routinenSerieBeste().titel==='Katzen fuettern');
+ok('§3: eine AUFGABE mit streak zaehlt nicht als Serie', routinenSerieBeste().tage!==99);
+S.karten=[];
+ok('§3: ohne Routinen ist die Serie 0', routinenSerieBeste().tage===0);
+S.karten=_kv;
+
+// 6) punkteHeuteAnzeige nie negativ
+S.tag={ tagId:HEUTE+'-1', datum:heuteIso(), startTs:jetztIso(), akku:75, istMinutenStart:{}, abzuegeBilanz:9999, log:[] };
+S.karten=[]; S.fokus=null;
+ok('punkteHeuteAnzeige nie negativ', punkteHeuteAnzeige()===0);
+
+// ══ 7) §2 (v1.13.0): Standardwerte — erben live, Override dauerhaft ══
+S.settings.standardWertDfm=40; S.settings.standardWertPrivat=15;
+var kErbt=karte({ id:'e1', domain:'privat', tickWert:null, abhakbonus:null, ticksAktiv:true, ticksHeute:2, tickWerteHeute:[] });
+var kOvr =karte({ id:'e2', domain:'privat', tickWert:0,    abhakbonus:5 });
+ok('§2: tickWert null erbt den Standard (15)', tickWertEff(kErbt)===15);
+/* Nachtrag §2 (v2.0.0): Der Abhakbonus erbt nicht mehr vom Domaenen-
+   Standardwert, sondern vom MATRIXFELD — er traegt jetzt die Barriere.
+   Der Tick-Wert erbt weiterhin vom Domaenen-Standard (anderes Ding). */
+/* v2.8.0 §2.1: die Tabelle je ART ersetzt den einen Wert je Matrixfeld
+   (Aufgaben-Spalte = Pascals Werte: Werkzeug 200 · Ziel 150 · 0 · 0). */
+ok('v2.8 §2.1: Aufgabe Werkzeug 200 (Tabelle, DFM und Privat gleich)',
+  abhakbonusDefault(karte({domain:'privat', matrixFeld:'werkzeug', abhakbonus:null}))===200 &&
+  abhakbonusDefault(karte({domain:'dfm', matrixFeld:'werkzeug', abhakbonus:null}))===200);
+ok('v2.8 §2.1: Aufgabe Zustand 0 · Ziel 150',
+  abhakbonusDefault(karte({domain:'privat', matrixFeld:'zustand', abhakbonus:null}))===0 &&
+  abhakbonusDefault(karte({domain:'dfm', matrixFeld:'ziel', abhakbonus:null}))===150);
+ok('v2.8 §2.1: Routine DFM 60 · Routine Privat 25 (Werkzeug)',
+  abhakbonusDefault(karte({domain:'dfm', matrixFeld:'werkzeug', rhythmus:{typ:'taeglich'}}))===60 &&
+  abhakbonusDefault(karte({domain:'privat', matrixFeld:'werkzeug', rhythmus:{typ:'taeglich'}}))===25);
+ok('Nachtrag §2: Ablenkungen tragen 0', abhakbonusDefault(karte({matrixFeld:'ablenkung'}))===0);
+ok('§2: Standard-Änderung wirkt SOFORT auf erbende Tick-Karten', (function(){ S.settings.standardWertPrivat=25; var r=tickWertEff(kErbt)===25; S.settings.standardWertPrivat=15; return r; })());
+ok('§2: Override bleibt Override (kein Erben)', tickWertEff(kOvr)===0 && abhakbonusDefault(kOvr)===5);
+ok('§2: tickSumme nutzt den geerbten Wert (2×15=30)', Math.round(tickSumme(kErbt,2))===30);
+
+// ══ 8) §3.1 (v1.13.0): Routinen-Quote — vier Kategorien, Summe = 100 % ══
+S.tag={ tagId:HEUTE+'-1', datum:heuteIso(), startTs:heuteIso()+'T09:00:00', akku:75, istMinutenStart:{}, abzuegeBilanz:0, log:[],
+  routinenBilanz:[ {id:'r2', titel:'R2', geschoben:true}, {id:'r3', titel:'R3', entschuldigt:true} ] };
+S.karten=[
+  karte({ id:'r1', domain:'privat', rhythmus:{typ:'taeglich'}, status:'erledigt', tagId:aktuelleTagId() }),
+  karte({ id:'r2', domain:'privat', rhythmus:{typ:'taeglich'}, faelligkeit:datumPlus1x(HEUTE) }),
+  karte({ id:'r3', domain:'privat', rhythmus:{typ:'taeglich'} }),
+  karte({ id:'r4', domain:'privat', rhythmus:{typ:'taeglich'} })
+];
+function datumPlus1x(iso){ return iso; }
+var q=routinenQuoteHeute('alle');
+ok('§3.1: vier Kategorien je 1 (erledigt/geschoben/entschuldigt/verpasst)',
+  q.erledigt===1 && q.geschoben===1 && q.entschuldigt===1 && q.verpasst===1);
+ok('§3.1 ZAHLENBELEG: Summe der vier Kategorien = 100 % ('+q.erledigt+'+'+q.geschoben+'+'+q.entschuldigt+'+'+q.verpasst+' = '+q.gesamt+')',
+  q.erledigt+q.geschoben+q.entschuldigt+q.verpasst===q.gesamt && q.gesamt===4);
+
+// ══ 9) §3.2 (v1.13.0): alle VIER Rein-Ereignisse zählen — je ein Beleg ══
+var GESTERN='2026-01-01', HEUTE2='2026-01-02';
+S.karten=[
+  karte({ id:'f1', domain:'dfm', erstelltTs:HEUTE2+'T09:00:00' }),                                  // 1: neu angelegt
+  karte({ id:'f2', domain:'dfm', erstelltTs:HEUTE2+'T10:00:00', vorgaengerAppId:'f3' }),           // 2: Folgeaufgabe (rein)
+  karte({ id:'f3', domain:'dfm', erstelltTs:GESTERN+'T09:00:00', status:'erledigt', tagId:HEUTE2+'-1' }),  // …ihre Vorgängerin: raus
+  karte({ id:'f4', domain:'dfm', erstelltTs:GESTERN+'T09:00:00' }),                                 // 3: geschoben MIT Ankunft heute
+  karte({ id:'f5', domain:'dfm', erstelltTs:GESTERN+'T08:00:00' })                                  // 4: wiedereröffnet heute
+];
+S.intraday=[
+  { ts:HEUTE2+'T11:00:00', kartenId:'f3', domaene:'dfm', punkte:500, minuten:0, typ:'abhaken' },
+  { ts:GESTERN+'T18:00:00', kartenId:'f4', domaene:'dfm', punkte:-20, minuten:0, typ:'schub', ziel:HEUTE2 },   // v3.5.1: Schiebung MIT Abzug
+  { ts:HEUTE2+'T12:00:00', kartenId:'f5', domaene:'dfm', punkte:0, minuten:0, typ:'wiederoffen' }
+];
+var fl=anFlowReihe('alle'), rrH=reinRausTag(fl, HEUTE2), rrG=reinRausTag(fl, GESTERN);
+ok('§3.2 BELEG rein=4 heute (neu + Folge + Schub-Ankunft + wiedereröffnet)', rrH.rein===4);
+ok('§3.2 BELEG raus=1 heute (Vorgängerin abgehakt)', rrH.raus===1);
+ok('§3.2 BELEG geschoben zählt am AUSGANGSTAG (gestern=1, heute=0), kein Abgang', rrG.geschoben===1 && rrH.geschoben===0 && rrG.raus===0);
+// v3.5.1 §6 (a): Schieben OHNE Abzug setzt nur das Datum — es erhöht „geschoben" nicht und zählt nicht als „rein" am Zieltag;
+// eine offene Karte beim Tagesabschluss (quelle tagesabschluss) zählt auch ohne Abzug
+S.intraday.push({ ts:HEUTE2+'T13:00:00', kartenId:'f4', domaene:'dfm', punkte:0, minuten:0, typ:'schub', ziel:GESTERN });
+var fl351=anFlowReihe('alle'), a351=reinRausTag(fl351, HEUTE2), g351=reinRausTag(fl351, GESTERN);
+ok('v3.5.1 (a) Schieben ohne Abzug erhöht geschoben nicht (heute bleibt 0) und zählt nicht als rein am Zieltag', a351.geschoben===0 && g351.rein===rrG.rein && schubZaehlt(S.intraday[S.intraday.length-1])===false);
+S.intraday.push({ ts:HEUTE2+'T23:00:00', kartenId:'f4', domaene:'dfm', punkte:0, minuten:0, typ:'schub', ziel:GESTERN, quelle:'tagesabschluss' });
+ok('v3.5.1 (a) offene Karte beim Tagesabschluss zählt als geschoben (auch ohne Abzug)', reinRausTag(anFlowReihe('alle'), HEUTE2).geschoben===1);
+S.intraday.splice(S.intraday.length-2, 2);
+
+// ══ 10) §4.3 (v1.13.0) ZAHLENBELEG 22: Faktor 2 — Mess-Ebene bleibt roh ══
+S.tag={ tagId:HEUTE+'-1', datum:heuteIso(), startTs:heuteIso()+'T09:00:00', endeTs:null, akku:75, istMinutenStart:{}, abzuegeBilanz:0, log:[] };
+S.karten=[]; S.historie=[];
+S.intraday=[];
+for(var off=1; off<=4; off++){
+  var dd='2026-02-0'+off;
+  S.intraday.push({ ts:dd+'T09:00:00', kartenId:'m'+off, domaene:'dfm', punkte:0, minuten:120, typ:'timer' });
+  S.intraday.push({ ts:dd+'T12:00:00', kartenId:'m'+off, domaene:'dfm', punkte:400+off*10, minuten:0, typ:'abhaken' });
+}
+/* §3 (v2.0.0): Der Upgrade-Faktor ist ERSATZLOS entfallen — er stand in F
+   in Zaehler UND Nenner und kuerzte sich heraus. Statt seiner Wirkung wird
+   jetzt belegt, dass er WEG ist: ein gesetztes meta.upgradeFaktor darf die
+   Anzeige nicht mehr veraendern. */
+_rangMemo=null; _rangMemoKey='';
+var medianRoh=rangMass().median, oeRoh=oePStd7(), sollF1=paceWerte().soll;
+_rangMemo=null; _rangMemoKey='';
+S.meta.upgradeFaktor=2;   // Altfeld — muss folgenlos bleiben
+var medianF2=rangMass().median, oeF2=oePStd7(), sollF2=paceWerte().soll;
+ok('§3 BELEG: Rang-Median unveraendert ('+Math.round(medianRoh)+' P/Std)', medianRoh!=null && medianRoh===medianF2);
+ok('§3 BELEG: oePStd7 unveraendert ('+Math.round(oeRoh)+')', Math.abs(oeRoh-oeF2)<0.001);
+ok('§3 BELEG: Alt-Feld upgradeFaktor=2 aendert das Anzeige-Soll NICHT ('+Math.round(sollF1)+' = '+Math.round(sollF2)+')',
+  Math.abs(sollF2-sollF1)<1);
+ok('§3 BELEG: die Funktion upgradeFaktor existiert nicht mehr', typeof this.upgradeFaktor==='undefined');
+delete S.meta.upgradeFaktor;
+
+// ══ 11) §4 (v1.13.1): Sitzungen des Tages — von = Ende − Dauer, laufende mit ══
+var hf=belFensterDatum(jetztIso());
+S.intraday=[
+  { ts:hf+'T10:30:00', kartenId:'z1', domaene:'dfm', punkte:0, minuten:45, typ:'timer' },
+  { ts:hf+'T14:00:00', kartenId:'z1', domaene:'dfm', punkte:0, minuten:20, typ:'nachtrag' },
+  { ts:hf+'T15:00:00', kartenId:'anders', domaene:'dfm', punkte:0, minuten:30, typ:'timer' },
+  { ts:hf+'T16:00:00', kartenId:'z1', domaene:'dfm', punkte:100, minuten:0, typ:'abhaken' }
+];
+S.fokus=null;
+var sz=kartenSitzungenHeute('z1');
+ok('§4.1.13.1: zwei Sitzungen der Karte (Timer + Nachtrag), fremde/zeitlose raus', sz.length===2);
+ok('§4.1.13.1 BELEG: von = bis − Dauer (45 Min exakt)',
+  Math.round((Date.parse(sz[0].bis)-Date.parse(sz[0].von))/60000)===45 && sz[0].min===45);
+ok('§4.1.13.1: Nachtrag als solcher gekennzeichnet', sz[1].nachtrag===true && sz[1].min===20);
+S.fokus={ karteId:'z1', laeuft:true, startMs:Date.now()-10*60000, sessionSek:0 };
+var sz2=kartenSitzungenHeute('z1');
+ok('§4.1.13.1: laufende Sitzung reist mit (laufend:true, ~10 Min)',
+  sz2.length===3 && sz2[2].laufend===true && Math.abs(sz2[2].min-10)<=1);
+S.fokus=null; S.intraday=[];
+
+// ══ 12) NACHTRAG v1.13.1 §5: Die Plankurve enthaelt AUSSCHLIESSLICH die
+// Ketten — keine Stapel, keine ueberfaelligen ohne Ketteneintrag, keine
+// Deadline-Treffer. Guard gegen ein spaeteres Verbreitern der Quelle. ══
+S.settings.zeitGewicht=1;   // glatte Zahlen: 60 min × 400 P/Std = 400 P je Karte
+S.karten=[]; S.unteraufgaben=[]; S.meta.ketten=null; S.meta.kettenHistorie={};
+S.tag={ tagId:HEUTE+'-1', datum:heuteIso(), startTs:heuteIso()+'T09:00:00', endeTs:null, akku:75, istMinutenStart:{}, abzuegeBilanz:0, log:[] };
+for(var pi=1; pi<=6; pi++) S.karten.push(karte({ id:'pl'+pi, domain:'dfm', sollMin:60, punkteProStd:400, istSek:0, ticksHeute:0, abhakbonus:0 }));   // v2.8: Bonus 0, der Test misst die Kette
+// faellig, aber bewusst NICHT in der Kette (10.000 P Prognose)
+S.karten.push(karte({ id:'plFremd', domain:'dfm', sollMin:600, punkteProStd:1000, istSek:0, ticksHeute:0, abhakbonus:0 }));
+// reiner Stapelbestand ohne Faelligkeit (5.000 P Prognose)
+S.karten.push(karte({ id:'plBestand', domain:'dfm', sollMin:300, punkteProStd:1000, istSek:0, ticksHeute:0, abhakbonus:0, faelligkeit:null }));
+tagesKetteDom('dfm');   // Auto-Befuellung (6 + plFremd)
+ketteSetzen(['pl1','pl2','pl3','pl4','pl5','pl6'],'dfm');   // explizit: nur die 6
+ok('Nachtrag §5: Kette traegt exakt die 6 geplanten Karten',
+  JSON.stringify(tagesKetteDom('dfm'))==='["pl1","pl2","pl3","pl4","pl5","pl6"]');
+var plan12=planKurveInfo();
+var planEnde=Math.round(plan12.wert(23));
+ok('Nachtrag §5 BELEG: 6 × 400 P geplant → Plan endet bei 2400 (nicht 17.400)',
+  planEnde===2400);
+ok('Nachtrag §5: entfernte Faellige (10.000 P) und Stapelbestand (5.000 P) fliessen NICHT ein',
+  planEnde===2400 && Math.round(kartePunkteGeplant(S.karten[6]))===10000 && Math.round(kartePunkteGeplant(S.karten[7]))===5000);
+ok('Nachtrag §5: Quelle ist Profil × Kette (kein Rahmen aktiv)', plan12.quelle==='Profil × Kette');
+
+print('');
+if(fails){ print(fails+' FEHLGESCHLAGEN'); throw 'Test rot'; }
+print('alle Status/Fokus-Kennzahlen gruen');
