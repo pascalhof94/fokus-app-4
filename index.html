@@ -2740,6 +2740,10 @@ body.breit #f4sb{display:grid;grid-template-columns:repeat(3,minmax(300px,372px)
 body.breit #f4sb .sb-bar{grid-column:1;grid-row:1}body.breit #f4sb .f4-er{grid-column:1;grid-row:2}body.breit #f4sb .f4-kz{grid-column:1;grid-row:3}
 body.breit #f4sb .f4-r3{grid-column:2;grid-row:1/4;margin-top:0}
 body.breit #f4sb .f4-onr{grid-column:3;margin-top:0}
+/* 4.0 · Paket 11 · Tagesübergang */
+.f11-schritte button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px;line-height:1.1}.f11-schritte button small{font-size:10px;font-weight:600;opacity:.8}.f11-schritte button.fertig{opacity:.55}
+.f11-kn{display:flex;gap:4px;flex-wrap:wrap;width:100%}.f11-kn .chip{min-height:36px;font-size:12.5px}
+.abv3-z .t{flex:1 1 100%;min-width:0;font-weight:700}.abv3-z .t small{display:block;font-weight:500;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
@@ -2912,7 +2916,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-8';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-9';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -5182,7 +5186,7 @@ function f7Link(v){ return Array.isArray(v) ? v.map(x=>(x && typeof x==='object'
 function f7LinkName(v){ const l=f7Link(v); return l.length ? l.map(x=>x.name).join(', ') : ''; }
 function f7Neu(){ try{ if(_e1) e1Rendern(); if(seiteAktuell()==='postfach') renderPostfach(); if(sheetOffen() && F7.blattNeu) F7.blattNeu(); }catch(e){ console.warn('f7Neu', e); } }
 function f7Abteilungen(){ return f7Lager('abteilungen', 10*60000, ()=>f7Alle({ tabelle:'Abteilungen', felder:['Name','Emoji','Leitung','Teams','Claude-Raum'], sortierung:[{feld:'Name', richtung:'auf'}] })); }
-function f7Projekte(){ return f7Lager('projekte', 5*60000, ()=>f7Alle({ tabelle:'Projekte', felder:['Projekt','Status','Intern/Extern','Abteilung','Owner','Privat','Oberprojekt'], sortierung:[{feld:'Projekt', richtung:'auf'}] })); }
+function f7Projekte(){ return f7Lager('projekte', 5*60000, ()=>f7Alle({ tabelle:'Projekte', felder:['Projekt','Status','Intern/Extern','Abteilung','Owner','Privat','Oberprojekt','Ablageordner'], sortierung:[{feld:'Projekt', richtung:'auf'}] })); }
 function f7Agenten(){ return f7Lager('agenten', 10*60000, ()=>f7Alle({ tabelle:'Personen', felder:['Name','Abteilung','Art'], filter:[{ feld:'Art', operator:'gleich', wert:'Agent' }] })); }
 function f7GespeicherteFilter(){ return f7Lager('filter', 5*60000, ()=>f7Alle({ tabelle:'Gespeicherte Filter', felder:['Name','Emoji','Bereich','Filter','Reihenfolge'], sortierung:[{feld:'Reihenfolge', richtung:'auf'}] })); }
 /* Aufgaben eines Projekts bzw. einer Abteilung (offen = Status ≠ Erledigt) */
@@ -5369,7 +5373,8 @@ function f7ErfassenHtml(){
     (lk ? '<div class="'+(e.bezug==='karte'?'on':'')+'" data-f7bezug="karte">▶ laufende Karte</div>' : '')+
     '<div class="'+(e.bezug==='abteilung'?'on':'')+'" data-f7bezug="abteilung">🏢 '+(e.bezug==='abteilung' && e.bezugName ? esc(e.bezugName) : 'Abteilung')+' ▾</div>'+
     '<div class="'+(e.bezug==='projekt'?'on':'')+'" data-f7bezug="projekt">📁 '+(e.bezug==='projekt' && e.bezugName ? esc(e.bezugName) : 'Projekt')+' ▾</div>'+
-    '<div class="'+(e.bezug==='person'?'on':'')+'" data-f7bezug="person">👤 '+(e.bezug==='person' && e.bezugName ? esc(e.bezugName) : 'Person')+' ▾</div></div>';
+    '<div class="'+(e.bezug==='person'?'on':'')+'" data-f7bezug="person">👤 '+(e.bezug==='person' && e.bezugName ? esc(e.bezugName) : 'Person')+' ▾</div></div>'+
+    ((e.bezug==='projekt' && e.bezugId && typeof f11Ablageordner==='function' && f11Ablageordner(e.bezugId)) ? '<div class="f7-info">📂 Ablage: '+esc(f11Ablageordner(e.bezugId))+'</div>' : '');   // 4.0 · Paket 11 (3.9)
   h+='<div class="f7-send" data-f7erfsenden="1">Abschicken</div>';
   if(warte>0) h+='<div class="f7-q">📤 '+warte+' '+(warte===1?'Eintrag wartet':'Einträge warten')+' auf den Mac mini · '+(warte===1?'wird':'werden')+' automatisch geschickt</div>';
   const l=f7ErfasstListe().slice(-8).reverse();
@@ -5977,6 +5982,188 @@ document.addEventListener('input', e=>{ const t=e.target; if(t && t.id==='slSuch
 document.addEventListener('keydown', e=>{ const t=e.target; if(t && t.id==='slSuche' && e.key==='Enter'){ e.preventDefault(); if(e1Art()!=='suche') e1Oeffnen('suche'); } });
 if(F9_MQ){ try{ F9_MQ.addEventListener('change', f9Anwenden); }catch(e){ try{ F9_MQ.addListener(f9Anwenden); }catch(x){} } }
 setTimeout(f9Anwenden, 300);
+/* ══════════════════════════════════════════════════════════════════════
+   4.0 · Paket 11 · TAGESÜBERGANG UND ABLAGE (Punkt 2 und 3)
+   Ein neuer App-Tag beginnt nur mit „Aufstehen". Die feste Karte „Tagesübergang" ersetzt „Tagesabschluss" und „Tagesplanung":
+   Reste des Vortags → Vortag buchen → Feedback des Trainers → Tagesplan → Rückfragen → Freigabe → Tag in der App.
+   Abends: keine Aufgaben, keine Kritik, kein Export — Routinen nachtragen, Reflexion, „Schlafen" und die Ansicht „Geschafft".
+   Die Tagesbilanz des gebuchten Tages geht als ein Datensatz je Tag nach FocusSystem (Tabelle Tagesbilanz).
+   ══════════════════════════════════════════════════════════════════════ */
+const F11={ auf:null, schritt:1, weiter:false };
+function f11Datum(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00'); return ['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]+' '+iso.slice(8,10)+'.'+iso.slice(5,7)+'.'; }
+function tagesuebergangKarte(){ return S.karten.find(k=>k.rolle==='tagesuebergang' && k.status!=='archiviert') || null; }
+function reflexionKarte(){ return S.karten.find(k=>k.rolle==='reflexion' && k.status!=='archiviert') || null; }
+function vortagOffen(){ return !!(S.tag && tagOffen() && S.tag.datum<heuteIso()); }
+/* Die festen Karten von 4.0 anlegen (Punkt 2.9): Tagesübergang, Reflexion, Nacht vorbereiten mit drei Schritten;
+   Tagesabschluss und Tagesplanung werden archiviert, nie gelöscht */
+function migration401(){
+  if(S.meta.migration401 && S.meta.migration401.ts) return;
+  const fest=(id, titel, extra)=>{ let k=S.karten.find(x=>x.id===id || (extra.rolle && x.rolle===extra.rolle && x.status!=='archiviert')); if(k) return k;
+    k=Object.assign(neueKarte({ titel, domain:'privat' }), { id, status:'offen', matrixFeld:'werkzeug', immerSichtbar:true, rhythmus:{ typ:'taeglich' }, modus:'pflicht', erstelltTs:jetztIso() }, extra); S.karten.push(k); return k; };
+  fest('k3-tagesuebergang', 'Tagesübergang', { rolle:'tagesuebergang', pflicht:true, sollMin:15, tagesabschnitt:'morgens' });
+  fest('k3-reflexion', 'Reflexion', { rolle:'reflexion', pflicht:false, sollMin:5, tagesabschnitt:'abends' });
+  const n=fest('k3-nacht-vorbereiten', 'Nacht vorbereiten', { pflicht:true, sollMin:5, tagesabschnitt:'abends' });
+  if(n && !S.unteraufgaben.some(u=>u.parentId===n.id)){ ['Wecker prüfen','Watch aufziehen','Sleepcycle starten'].forEach((t,i)=>S.unteraufgaben.push(neueUnteraufgabe(n.id, { id:'k3-nacht-'+(i+1), titel:t, sollMin:1 }))); DB.set('unteraufgaben', S.unteraufgaben); }
+  S.karten.forEach(k=>{ if(k.status==='archiviert') return;
+    if(k.rolle==='tagesabschluss' || (!k.rolle && /^Tagesplanung$/i.test(String(k.titel||'')))){ k.status='archiviert'; k.archiviertTs=jetztIso(); k.archivGrund='4.0 · aufgegangen im Tagesübergang'; } });
+  S.meta.migration401={ ts:jetztIso(), version:APP_VERSION }; saveKarten(); saveMeta();
+}
+/* ── Aufstehen: liegt noch ein offener Vortag, läuft zuerst der Tagesübergang (die Angaben aus dem Aufstehen-Dialog warten) ── */
+{ const _alt=aufstehenBestaetigenUI;
+  aufstehenBestaetigenUI=function(){
+    const t=aufstehenTmp||{};
+    if(vortagOffen()){
+      F11.auf={ akku:t.akku!=null ? t.akku : null, prog:t.prog!==undefined ? t.prog : null, tapTs:t.tapTs||jetztIso(), nacht:t.nacht||null,
+        ein:(t.frageSchlaf && el('aufEinschlaf')) ? String(el('aufEinschlaf').value||'').trim() : '', kom:el('aufKom') ? String(el('aufKom').value||'') : '' };
+      aufstehenTmp=null; closeSheet(); oeffneTagesuebergang(1); return; }
+    _alt(); }; }
+function oeffneTagesuebergang(schritt){ if(schritt) F11.schritt=schritt; F7.blattNeu=renderTagesuebergang; renderTagesuebergang(); }
+function f11Reste(){
+  const d=S.tag ? S.tag.datum : heuteApp(), ent=(S.tag && S.tag.abschlussEntscheid)||{};
+  const aufg=S.karten.filter(k=>k.status==='offen' && !k.freeze && istAufgabeKarte(k) && k.faelligkeit && k.faelligkeit<=d && !ent[k.id]);
+  const rout=S.karten.filter(k=>k.status==='offen' && !k.freeze && k.rhythmus && !istSonderRolle(k) && k.rolle!=='tagesuebergang' && k.rolle!=='reflexion' && routineFaellig(k, d) && !zielErreicht(k) && !ent[k.id]);
+  return { aufg, rout };
+}
+function renderTagesuebergang(){
+  const st=F11.schritt, NAMEN=['Reste','Buchen','Feedback','Plan','Freigabe'], vortag=vortagOffen();
+  let h='<div class="abv3-schritte f11-schritte">'+NAMEN.map((n,i)=>'<button class="'+(st===i+1?'on':'')+(i+1<st?' fertig':'')+'" data-f11schritt="'+(i+1)+'">'+(i+1)+'<small>'+n+'</small></button>').join('')+'</div>';
+  if(st===1){
+    const R=f11Reste(), d=S.tag ? f11Datum(S.tag.datum) : '';
+    h+='<p class="d">Reste vom <b>'+esc(d)+'</b>: abhaken, schieben oder überspringen. Alles zählt auf gestern.</p>';
+    if(!R.aufg.length && !R.rout.length) h+='<div class="leer">Nichts offen — weiter zu „Buchen".</div>';
+    const zeile=(k, sub)=>'<div class="abv3-z"><span class="t">'+esc(k.titel||'?')+'<small>'+sub+'</small></span><span class="f11-kn"><button class="chip" data-f11haken="'+k.id+'">✓ abhaken</button><button class="chip" data-f11schieb="'+k.id+'">↷ schieben</button><button class="chip" data-f11skip="'+k.id+'">⏭ überspringen</button></span></div>';
+    R.aufg.forEach(k=>{ h+=zeile(k, esc(fmtDatum(k.faelligkeit))+(k.domain==='dfm' ? ' · DFM' : ' · privat')); });
+    R.rout.forEach(k=>{ h+=zeile(k, 'Routine'+(k.pflicht===true ? ' · Muss' : '')+(num(k.streak)>0 ? ' · 🔥 '+num(k.streak) : '')); });
+    openSheet('☀️ Tagesübergang', h, '<button class="btn prim" data-f11schritt="2">Weiter · Vortag buchen</button>'); return;
+  }
+  if(st===2){
+    const p=Math.round(tagesPunkteLive()), zd=zielUndIstHeute('dfm'), zp=zielUndIstHeute('privat');
+    if(vortag) h+='<p class="d">Der Vortag <b>'+esc(f11Datum(S.tag.datum))+'</b> wird gebucht: <b>'+fmtP(p)+' P</b>'+(zd && zd.ziel ? ' · DFM '+fmtP(Math.round(zd.ist))+' von '+fmtP(Math.round(zd.ziel)) : '')+(zp && zp.ziel ? ' · Privat '+fmtP(Math.round(zp.ist))+' von '+fmtP(Math.round(zp.ziel)) : '')+'. Routinen werden gewertet, die Bilanz geht nach FocusSystem. Danach beginnt der neue Tag'+(F11.auf && F11.auf.akku!=null ? ' mit Akku '+Math.round(num(F11.auf.akku))+' %' : '')+'.</p>'+
+      '<div class="hint">Abzüge gibt es nur für Verpasstes ohne Grund, in Münzen. Übersprungenes kostet nichts.</div>';
+    else h+='<div class="leer">Der Vortag ist gebucht. Heute läuft seit '+(S.tag && S.tag.startTs ? belUhr(kalStunde(S.tag.startTs)) : '—')+'.</div>';
+    openSheet('☀️ Tagesübergang', h, '<button class="btn ghost sm" data-f11schritt="1">‹ Reste</button>'+(vortag ? '<button class="btn prim" data-f11buchen="1">Vortag buchen · Tag starten</button>' : '<button class="btn prim" data-f11schritt="3">Weiter · Feedback</button>')); return;
+  }
+  if(st===3){
+    let fb=null; try{ fb=(f7ChatLaden()||[]).filter(r=>/trainer/i.test(String(r.Auftraggeber||''))&&/feedback|antwort/i.test(String(r.Art||''))&&String(r.Zeitstempel||'').slice(0,10)===heuteApp()).slice(-1)[0]; }catch(e){}
+    h+='<p class="d"><b>Feedback des Trainers zum Vortag</b> — auch Unangenehmes, belegt.</p>'+(fb ? '<div class="f7-m t">'+esc(String(fb.Text||'')).replace(/\n/g,'<br>')+'<small>Trainer · '+esc(fmtUhr(fb.Zeitstempel))+'</small></div>'
+      : '<div class="leer">'+(FSLive.gekoppelt() ? 'Der Trainer ist angefragt — seine Antwort erscheint hier und im Chat.' : 'Nicht mit dem Mac mini verbunden — das Feedback kommt später im Chat.')+'</div>');
+    openSheet('☀️ Tagesübergang', h, '<button class="btn ghost sm" data-f11chat="1">💬 Rückfragen</button><button class="btn prim" data-f11schritt="4">Weiter · Tagesplan</button>'); return;
+  }
+  if(st===4){
+    let plan=''; try{ plan=f7PlanHtml().replace(/^[\s\S]*?<\/div><\/div>/, '').replace(/<div class="f7-foot"[\s\S]*$/, ''); }catch(e){ plan='<div class="leer">kein Plan</div>'; }
+    h+='<p class="d"><b>Tagesplan</b> · der Vorschlag des Trainers kommt als Paket in die App; bis dahin gilt der Rahmen.</p>'+plan;
+    openSheet('☀️ Tagesübergang', h, '<button class="btn ghost sm" data-f11plananfordern="1">Plan anfordern</button><button class="btn ghost sm" data-f11chat="1">💬 Rückfragen</button><button class="btn prim" data-f11schritt="5">Weiter · Freigabe</button>'); return;
+  }
+  h+='<p class="d"><b>Freigabe.</b> Der Plan gilt, der Tag läuft in der App. Der Tagesübergang bringt 150 DFM + 150 Privat auf heute.</p>';
+  openSheet('☀️ Tagesübergang', h, '<button class="btn ghost sm" data-f11schritt="4">‹ Plan</button><button class="btn prim" data-f11fertig="1">Tag in der App</button>');
+}
+/* Schritt 2: Vortag buchen — Routinen werten und Tag schließen (wie der alte Abschluss, ohne Export), Bilanz nach FocusSystem, dann „Aufstehen" für heute */
+function f11VortagBuchen(){
+  if(!vortagOffen()){ F11.schritt=3; renderTagesuebergang(); return; }
+  const a=F11.auf||{};
+  F11.weiter=true;
+  // die 150 + 150 des Abschlusses gibt es in 4.0 nicht mehr am Vortag, sondern durch den Tagesübergang auf heute
+  S.tag.eckpunkte=Object.assign({}, S.tag.eckpunkte||{}); if(!S.tag.eckpunkte.abschluss) S.tag.eckpunkte.abschluss='4.0 · Tagesübergang';
+  try{ abschlussV3Schliessen(); }catch(e){ console.warn('Übergang: buchen', e); }
+  try{ tagEndgueltigSchliessen(); }catch(e){ console.warn('Übergang: schließen', e); }
+  const h=(S.historie||[]).find(x=>S.tag && x.tagId===S.tag.tagId) || null, vortagDatum=S.tag ? S.tag.datum : null;
+  try{ f11TagesbilanzSenden(h, S.tag); }catch(e){ console.warn('Übergang: Bilanz', e); }
+  closeSheet();
+  const m=aufstehenBestaetigen(a.akku!=null ? a.akku : null, { einschlafUm:a.ein||null, kommentar:a.kom||'', tapTs:a.tapTs||jetztIso(), nacht:a.nacht||null, prog:a.prog });
+  try{ const k=tagesuebergangKarte(); if(S.tag && tagOffen()){ S.tag.uebergang={ ts:jetztIso(), karte:k ? k.id : null, vortag:vortagDatum }; tagesEckpunkteBuchen('uebergang', k); saveTag(); } }catch(e){ console.warn('Übergang: Eckpunkte', e); }
+  try{ f7ChatSenden('Trainer', 'Tagesübergang: Vortag '+(vortagDatum ? f11Datum(vortagDatum) : '')+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.', { art:'Feedback' }); }catch(e){}
+  F11.auf=null; renderAlles();
+  if(m) toast('☀️ Vortag gebucht · Tag gestartet'+(a.akku!=null ? ' · Akku '+Math.round(num(a.akku))+' %' : ''));
+  setTimeout(()=>oeffneTagesuebergang(3), 250);
+}
+/* Die Tagesbilanz des gebuchten Tages nach FocusSystem (privat.tagesbilanz): ein Datensatz je Tag, vorhandener wird fortgeschrieben */
+function f11TagesbilanzSenden(h, tag){
+  if(!h || !h.datum || !FSLive.gekoppelt()) return;
+  const L=h.leiter||{}, lp=a=>Math.round(num(L[a] && L[a].punkte)), f=h.farbe||{}, r4=h.rang4||{}, aus=h.routinenAuswertung||[], bil=h.routinenBilanz||[], mo=h.morgen||{};
+  let erhMin=0; (S.intraday||[]).forEach(e=>{ if(e && e.tagId===h.tagId && e.erholung) erhMin+=Math.max(num(e.minuten), num(e.tickMin)); });
+  let istMin=0; (S.intraday||[]).forEach(e=>{ if(e && e.tagId===h.tagId) istMin+=Math.max(num(e.minuten), num(e.tickMin)); });
+  let acwr=null, zone=null; try{ const w=acwrHeuteWerte(); acwr=w ? w : null; zone=acwr && acwr.v!=null ? acwrZone(acwr.v) : null; }catch(e){}
+  const ampel=zone ? (zone.c===FARBE.ROT ? 'rot' : zone.c===FARBE.ORANGE ? 'gelb' : 'grün') : null;
+  const dfmOk=num(h.zielDfm)>0 && num(h.punkteDfm)>=num(h.zielDfm), privOk=num(h.zielPrivat)>0 && num(h.punktePrivat)>=num(h.zielPrivat);
+  const felder={ Tag:h.datum, 'Punkte DFM':Math.round(num(h.punkteDfm)), 'Punkte Privat':Math.round(num(h.punktePrivat)), 'Ziel DFM':Math.round(num(h.zielDfm)), 'Ziel Privat':Math.round(num(h.zielPrivat)),
+    'Ziel erreicht':(dfmOk && privOk) ? 'ja' : 'nein', Tagesstart:h.startTs||null, Tagesende:h.endeTs||null, 'Tagesübergang':jetztIso(), 'Ist-Minuten gesamt':Math.round(istMin), Urlaub:!!h.urlaub,
+    Schlafdauer:mo.schlafMin!=null ? Math.round(num(mo.schlafMin)) : null, Schlafschuld:mo.schlafschuldStd!=null ? Math.round(num(mo.schlafschuldStd)*10)/10 : null, Erholungsminuten:Math.round(erhMin),
+    'ACWR-Last':acwr && acwr.akut!=null ? Math.round(num(acwr.akut)) : null, 'ACWR-Wert':acwr && acwr.v!=null ? Math.round(num(acwr.v)*100)/100 : null, Belastungsampel:ampel,
+    'Punkte geldnah':lp('geldnah'), 'Punkte Kommunikation':lp('kommunikation'), 'Punkte ohne Geld':lp('ohneGeld'), 'Punkte Privat-Werkzeug':lp('privatWerkzeug'), 'Punkte Erholung':Math.round(num(h.erholungPunkte)),
+    Boni:Math.round(num(h.aufgabenBonus)), 'Abzüge':Math.round(num(h.abzuege4)), 'Münzen':Math.round(num(h.spielZufluss)), 'Farbe warm':Math.round(num(f.warm)), 'Farbe gelb':Math.round(num(f.gelb)), 'Farbe kühl':Math.round(num(f.kuehl)),
+    'Outfit-Verlauf':h.outfit ? JSON.stringify(h.outfit) : null, Dauerlast:r4.dauerlast!=null ? Math.round(num(r4.dauerlast)) : null, Spitzenlast:r4.spitzenlast!=null ? Math.round(num(r4.spitzenlast)) : null, 'Rang am Tag':r4.rang!=null ? num(r4.rang) : null,
+    'Routinen erledigt':aus.filter(a=>a && a.erfuellt).length, 'Routinen verpasst':aus.filter(a=>a && a.faellig && !a.erfuellt && !bil.some(b=>b && b.id===a.id && (b.entschuldigt || b.geschoben))).length,
+    'Routinen entschuldigt':bil.filter(b=>b && b.entschuldigt).length, 'Routinen geschoben':bil.filter(b=>b && b.geschoben).length, 'Aufgaben raus':Math.round(num(h.erledigtHeute)) };
+  Object.keys(felder).forEach(k=>{ if(felder[k]===null || felder[k]===undefined) delete felder[k]; });
+  FSLive.lesen('datensaetze_auflisten', { tabelle:'Tagesbilanz', filter:[{ feld:'Tag', operator:'gleich', wert:h.datum }], limit:1 })
+    .then(d=>{ const z=d && d.datensaetze && d.datensaetze[0]; return z ? FSLive.senden('datensatz_aendern', { tabelle:'Tagesbilanz', id:z.id, felder }) : FSLive.senden('datensatz_anlegen', { tabelle:'Tagesbilanz', felder }); })
+    .catch(()=>FSLive.senden('datensatz_anlegen', { tabelle:'Tagesbilanz', felder }).catch(()=>{}));
+}
+function f11Fertig(){
+  closeSheet(); F7.blattNeu=null;
+  try{ const k=tagesuebergangKarte(); if(k && k.status==='offen' && tickAnzahlHeute(k)===0) routineTick(k, {still:true}); }catch(e){}
+  if(S.tag){ S.tag.uebergang=Object.assign(S.tag.uebergang||{}, { freigabe:jetztIso() }); saveTag(); }
+  seiteZeigen('fokus'); renderAlles(); toast('☀️ Tag in der App'); haptik(12);
+}
+/* ── Reflexion am Abend: der Akku und drei Fragen — keine Kritik, kein Export ── */
+function oeffneReflexion(){
+  if(!S.tag){ toast('Kein offener Tag'); return; }
+  const a=abschlussV3Stand(), r=a.reflexion||{}, akku=(r.akku!=null ? num(r.akku) : Math.round(num(akkuLive(), 50)));
+  let h='<div class="field akkubox"><label>Akku jetzt <b id="f11AkkuV">'+Math.round(akku)+' %</b></label><input type="range" min="0" max="100" step="5" id="f11Akku" value="'+Math.round(akku)+'"></div>'+
+    '<div class="field"><label>'+esc(reflexionsFrage(0))+'</label><input id="f11Wort" value="'+esc(r.wort||'')+'"></div>'+
+    '<div class="field"><label>'+esc(reflexionsFrage(1))+'</label><textarea id="f11Gab" style="min-height:54px">'+esc(r.energieGegeben||'')+'</textarea></div>'+
+    '<div class="field"><label>'+esc(reflexionsFrage(2))+'</label><textarea id="f11Kost" style="min-height:54px">'+esc(r.energieGekostet||'')+'</textarea></div>';
+  openSheet('🌙 Reflexion', h, '<button class="btn ghost sm" data-close="1">Später</button><button class="btn prim" data-f11reflexion="1">Speichern</button>');
+  const s=el('f11Akku'); if(s) s.addEventListener('input', ()=>{ const v=el('f11AkkuV'); if(v) v.textContent=Math.round(num(s.value))+' %'; });
+}
+function f11ReflexionSpeichern(){
+  const a=abschlussV3Stand(); if(!a) return;
+  a.reflexion=Object.assign(a.reflexion||{}, { akku:el('f11Akku') ? num(el('f11Akku').value) : null, wort:el('f11Wort') ? el('f11Wort').value : '', energieGegeben:el('f11Gab') ? el('f11Gab').value : '', energieGekostet:el('f11Kost') ? el('f11Kost').value : '', ts:jetztIso() });
+  if(a.reflexion.akku!=null) S.tag.akku=Math.round(a.reflexion.akku);
+  try{ const k=reflexionKarte(); if(k && k.status==='offen' && tickAnzahlHeute(k)===0) routineTick(k, {still:true}); }catch(e){}
+  saveTag(); closeSheet(); renderAlles(); toast('🌙 Reflexion gespeichert');
+  try{ const r=a.reflexion; if(r.wort || r.energieGegeben || r.energieGekostet) f7ChatSenden('Trainer', 'Reflexion: '+[r.wort, r.energieGegeben ? 'Energie gegeben: '+r.energieGegeben : '', r.energieGekostet ? 'Energie gekostet: '+r.energieGekostet : ''].filter(Boolean).join(' · ')+' · Akku '+Math.round(num(r.akku))+' %', { art:'Reflexion' }); }catch(e){}
+}
+/* ── Geschafft: nach „Schlafen starten" nur Erreichtes — erledigte Karten, Punkte, Ziele ── */
+function geschafftHtml(){
+  const erl=klErledigtHeute(), p=Math.round(tagesPunkteLive()), zd=zielUndIstHeute('dfm'), zp=zielUndIstHeute('privat');
+  let erh=0; try{ erh=Math.round(f4ErholungMinHeute()); }catch(e){}
+  let h='<div class="f7-pts"><div><b>'+fmtP(p)+'</b>Punkte heute</div><div><b>'+erl.length+'</b>erledigt</div><div><b>'+fmtDauer(erh)+'</b>Erholung</div></div>';
+  const ziel=(name, z, farbe)=>{ const ist=z ? Math.round(num(z.ist)) : 0, soll=z ? Math.round(num(z.ziel)) : 0;
+    return '<div class="f7-tf"><div class="t" style="color:'+farbe+'">'+name+'<small>'+fmtP(ist)+(soll ? ' von '+fmtP(soll) : '')+'</small></div><b>'+(soll && ist>=soll ? '✓ erreicht' : soll ? Math.min(100, Math.round(ist/soll*100))+' %' : '—')+'</b></div>'; };
+  h+='<h5 class="f7-h5">Ziele</h5>'+ziel('DFM', zd, FARBE.BLAU)+ziel('Privat', zp, FARBE.LILA);
+  if(erl.length) h+='<h5 class="f7-h5">Heute geschafft</h5><div class="kl">'+erl.slice(0,25).map(k=>{ try{ return kartenZeileHtml(k, {erl:true}); }catch(e){ return '<div class="abv3-z"><span class="t">'+esc(k.titel||'')+'</span></div>'; } }).join('')+'</div>';
+  try{ const o=S.tag && S.tag.outfit; if(o && num(o.max)>num(o.start)) h+='<div class="f7-info">👔 Outfit heute bis Stufe '+num(o.max)+' · '+esc(e4OutfitName(o.max))+'</div>'; }catch(e){}
+  return h+'<p class="d" style="margin-top:10px">Gute Nacht. Morgen beginnt mit „Aufstehen".</p>';
+}
+{ const _alt=schlafUmschalten;
+  schlafUmschalten=function(){ const war=schlafLaeuft(); _alt();
+    if(!war && schlafLaeuft()) setTimeout(()=>{ try{ openSheet('🌙 Geschafft', geschafftHtml(), '<button class="btn prim" data-close="1">Gute Nacht</button>'); }catch(e){ console.warn('Geschafft', e); } }, 250); }; }
+/* ── Die festen Karten starten ihre Ansicht statt einer Uhr ── */
+{ const _alt=fokusStarten;
+  fokusStarten=function(kid, quelle, opt){ const zk=S.karten.find(x=>x.id===kid);
+    if(zk && zk.rolle==='tagesuebergang'){ if(vortagOffen() || !tagOffen()) oeffneAufstehen(); else oeffneTagesuebergang(S.tag && S.tag.uebergang && S.tag.uebergang.freigabe ? 4 : 2); return; }
+    if(zk && zk.rolle==='reflexion'){ oeffneReflexion(); return; }
+    return _alt(kid, quelle, opt); }; }
+{ const _alt=leistePlay; leistePlay=function(kid){ const k=S.karten.find(x=>x.id===kid); if(k && (k.rolle==='tagesuebergang' || k.rolle==='reflexion')){ fokusStarten(kid); renderAlles(); return; } return _alt(kid); }; }
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; let z;
+  if((z=t.closest('[data-f11schritt]'))){ e.stopPropagation(); oeffneTagesuebergang(num(z.dataset.f11schritt)); return; }
+  if(t.closest('[data-f11buchen]')){ e.stopPropagation(); f11VortagBuchen(); return; }
+  if(t.closest('[data-f11fertig]')){ e.stopPropagation(); f11Fertig(); return; }
+  if(t.closest('[data-f11chat]')){ e.stopPropagation(); closeSheet(); F7.blattNeu=null; f7ChatOeffnen('Trainer', 'uebergang', ''); return; }
+  if(t.closest('[data-f11plananfordern]')){ e.stopPropagation(); f7ChatSenden('Trainer', 'Bitte den Tagesplan für heute als Paket in die App.', { art:'Tagesplan' }); toast('Plan beim Trainer angefragt'); return; }
+  if((z=t.closest('[data-f11haken]'))){ e.stopPropagation(); F11.weiter=true; closeSheet(); abhakDialog(z.dataset.f11haken); return; }
+  if((z=t.closest('[data-f11schieb]'))){ e.stopPropagation(); F11.weiter=true; closeSheet(); oeffneSchieben(z.dataset.f11schieb); return; }
+  if((z=t.closest('[data-f11skip]'))){ e.stopPropagation(); if(S.tag){ S.tag.abschlussEntscheid=Object.assign({}, S.tag.abschlussEntscheid); S.tag.abschlussEntscheid[z.dataset.f11skip]='ueberspringen'; saveTag(); } renderTagesuebergang(); return; }
+  if(t.closest('[data-f11reflexion]')){ e.stopPropagation(); f11ReflexionSpeichern(); return; } }, true);
+/* nach Abhaken oder Schieben aus Schritt 1 zurück in den Tagesübergang */
+{ const _alt=closeSheet; closeSheet=function(){ const titel=el('sheetTitel') ? el('sheetTitel').textContent : ''; _alt();
+  if(F11.auf && vortagOffen()){ if(titel==='☀️ Tagesübergang' && !F11.weiter){ F11.auf=null; F7.blattNeu=null; toast('Tagesübergang unterbrochen — weiter über die Karte „Tagesübergang"'); }
+    else setTimeout(()=>{ if(!sheetOffen() && F11.auf && vortagOffen()) oeffneTagesuebergang(1); }, 350); }
+  F11.weiter=false; }; }
+/* ── Ablage (Punkt 3.9): die Erfassung aus einem Projekt zeigt dessen Ablageordner — kein Agent rät einen Ablageort ── */
+function f11Ablageordner(projektId){ const p=(f7Projekte()||[]).find(x=>x.id===projektId); return p ? String(p.Ablageordner||'') : ''; }
+
 function ladeAlles(){
   S.karten   = DB.get('karten', []);
   // v2.5.0 · NEBENBEFUND: Die Unteraufgaben wurden erst NACH ladeAlles() in
@@ -6723,7 +6910,8 @@ function ladeAlles(){
   if(!S.meta.reset35){ try{ reset35Durchfuehren(); }catch(e){ S.meta.reset35={ ts:jetztIso(), fehler:String(e&&e.message||e) }; saveMeta(); } }
   // §2 (v3.6.0): Shop neu — einmalige Übernahme (Stufen 0, Münzen-Gutschrift, Sicherung shop360_bak)
   if(!S.meta.shop360){ try{ shop360Durchfuehren(); }catch(e){ S.meta.shop360={ ts:jetztIso(), fehler:String(e&&e.message||e) }; saveMeta(); } }
-  try{ migration400(); }catch(e){ console.warn('migration400', e); }   // 4.0 · Paket 4: Einstellungen der Punkte-Engine nach Punkt 5
+  try{ migration400(); }catch(e){ console.warn('migration400', e); }
+  try{ migration401(); }catch(e){ console.warn('migration401', e); }   // 4.0 · Paket 11: feste Karten Tagesübergang, Reflexion, Nacht vorbereiten   // 4.0 · Paket 4: Einstellungen der Punkte-Engine nach Punkt 5
   try{ feldkarten353Start(); }catch(e){}   // §5 (v3.5.3): Ausmal-Stand auf neue Feldkarten uebernehmen (ruht, solange FELDKARTEN_353 = false)
   try{ kulissenReparaturPruefen(); }catch(e){}   // §1 (v3.7.2): fertige Kulisse mit gesperrter nächster → sofort frei und Wechsel
   // v1.1: additive Tag-/Fokus-Felder auf Altdaten nachziehen (Migrationspfad)
@@ -14346,7 +14534,7 @@ function tagesEckpunkteBuchen(anlass, k){
   if(!S.tag.eckpunkte || typeof S.tag.eckpunkte!=='object') S.tag.eckpunkte={};
   if(S.tag.eckpunkte[anlass]) return 0;
   const P=Math.max(0, num(S.settings.tagesEckPunkte,150)); if(!(P>0)) return 0;
-  const titel=anlass==='aufstehen' ? 'Tagesstart' : 'Tagesabschluss';
+  const titel=anlass==='aufstehen' ? 'Tagesstart' : anlass==='uebergang' ? 'Tagesübergang' : 'Tagesabschluss';   // 4.0 · Paket 11
   ['dfm','privat'].forEach(dom=>{
     (S.tag.log=S.tag.log||[]).push({ itemId:'eck-'+anlass, karte:k ? k.id : null, titel, domain:dom, art:'eck', punkte:P, ts:jetztIso() });
     const e=logIntraday({ id:null, domain:dom }, { punkte:P, typ:'abhaken' }); e.eck=anlass; });
@@ -14598,7 +14786,7 @@ function v3FelderUebernehmen(z, inc, unter){
     serienfaktor:bool, immerSichtbar:bool, vorlaufTage:zahl, gruppePflicht:text,
     folgekarte:v=>(v && typeof v==='object') ? JSON.parse(JSON.stringify(v)) : null,
     akkuLadung:zahl, eingabe:v=>leer(v) ? null : eingabeVon({eingabe:v}),
-    rolle:v=>(v==='aufstehen'||v==='tagesabschluss'||v==='schlafen'||v==='erholung'||v==='tagebuch'||v==='position'||v==='sync') ? v : null };   // §8 (v3.7.0): position · §3a (v3.7.1): sync
+    rolle:v=>(v==='aufstehen'||v==='tagesabschluss'||v==='schlafen'||v==='erholung'||v==='tagebuch'||v==='position'||v==='sync'||v==='tagesuebergang'||v==='reflexion') ? v : null };   // 4.0 · Paket 11: tagesuebergang · reflexion   // §8 (v3.7.0): position · §3a (v3.7.1): sync
   Object.keys(F).forEach(f=>{ if(inc[f]!==undefined) z[f]=F[f](inc[f]); });
 }
 /* ══ §4 (v3.1.0) · KARTENDETAILS VOLLSTAENDIG ══════════════════════════
