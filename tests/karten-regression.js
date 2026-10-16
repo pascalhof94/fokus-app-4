@@ -39,7 +39,7 @@ function removeEventListener(){}
 var matchMedia=window.matchMedia;
 var location=window.location;
 
-var src=readFile('neu.html');
+var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
 var testCode = readFile('tests/karten-regression-body.js');
 (0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + testCode);

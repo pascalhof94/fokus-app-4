@@ -3,7 +3,7 @@
    seit v1.7.1 entfernt — der Sync-Import ist jetzt der einzige und getestete
    Weg, Karten (auch private, samt Routinen-Bausteinen und Gruppen) anzulegen.
    Extrahiert die echten Funktionen aus neu.html. */
-var src = readFile('neu.html');
+var src = readFile('index.html');
 function extract(name){
   var m = new RegExp('\\nfunction ' + name + '\\s*\\(').exec(src);
   if(!m) throw 'Funktion nicht gefunden: ' + name;

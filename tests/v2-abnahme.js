@@ -51,6 +51,6 @@ function FD(){ var a=Array.prototype.slice.call(arguments); if(!(this instanceof
 FD.now=function(){ return _jetzt; }; FD.parse=_RD.parse; FD.UTC=_RD.UTC; FD.prototype=_RD.prototype;
 Date=FD;
 
-var src=readFile('neu.html');
+var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
 (0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v2-abnahme-body.js'));

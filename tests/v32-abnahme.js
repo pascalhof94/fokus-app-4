@@ -41,6 +41,6 @@ var innerWidth=375, innerHeight=812, devicePixelRatio=2;
 function addEventListener(){} function removeEventListener(){}
 var matchMedia=window.matchMedia; var location=window.location;
 
-var src=readFile('neu.html');
+var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
 (0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v32-abnahme-body.js'));

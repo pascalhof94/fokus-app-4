@@ -1,6 +1,6 @@
 /* jsc test: v1.1 Status/Fokus-Kennzahlen (akkuLive, heuteInvestiertMin, pace,
    energieBatterie, tagesStreakStand). Extrahiert echte Fns aus neu.html. */
-var src = readFile('neu.html');
+var src = readFile('index.html');
 function extract(name){
   var m = new RegExp('\\nfunction ' + name + '\\s*\\(').exec(src);
   if(!m) throw 'nicht gefunden: ' + name;

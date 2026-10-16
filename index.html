@@ -5,16 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Fokus">
+<meta name="apple-mobile-web-app-title" content="Fokus 4">
 <meta name="theme-color" content="#0d1420">
-<title>Fokus</title>
-<link rel="manifest" href="manifest-neu.json">
-<link rel="apple-touch-icon" href="apple-touch-icon-neu.png">
+<title>Fokus 4.0</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <style>
 /* ══════════════════════════════════════════════════════════════════════
-   Fokus App v1.0 „Debug" — neu.html (Single-File, Vanilla JS)
-   Eigenständig neben index.html (v0.38). index.html + deren fokus2.*-Keys
-   bleiben unangetastet. Neuer Speicher-Präfix: fokus2_ (Unterstrich).
+   Fokus App 4.0 — index.html (Single-File, Vanilla JS)
+   4.0 · Paket 0: Kopie von App 3.8.1 (neu.html) im eigenen Repo fokus-app-4.
+   Eigener Speicher: Präfix fokus4_. Schlüssel mit fokus2_ werden nie
+   geschrieben und nie gelöscht.
    DFM-CI-Dark wie die alte App (Spez. §12 / §8-Farben der alten App).
    ══════════════════════════════════════════════════════════════════════ */
 :root{
@@ -2523,13 +2525,15 @@ img.objimg.laedt{opacity:0}
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '3.8.1';
+const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-05-4';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-16-1';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
-const PREFIX  = 'fokus2_';                 // NEU (Unterstrich) — alte App nutzt 'fokus2.' (Punkt)
+const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
+const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
+const CACHE_NAME_PREFIX = 'fokus4-';       // 4.0 · Paket 0: eigener Cache-Name des Service-Workers (sw.js)
 
 /* ══════════════════════════════════════════════════════════════════════
    1 · Speicher-Wrapper (§1: dünner get/set/list, DB später austauschbar)
@@ -2571,7 +2575,7 @@ const DB = {
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
 
 /* ══ (v1.13.4) · Speicher-Diagnose & -Aufräumen ══════════════════════════
-   iOS-Safari-Quota ≈ 5 MB. MESSEN statt raten: jeden fokus2_-Schlüssel mit
+   iOS-Safari-Quota ≈ 5 MB. MESSEN statt raten: jeden fokus4_-Schlüssel mit
    Größe listen. AUFRÄUMEN: (a) Migrations-Sicherungen — je Art bleibt NUR
    die jüngste (die älteren sind Vollkopien, die nie jemand liest);
    (b) Kettenhistorie auf die letzten Tage kappen (der Export trägt ohnehin
@@ -2585,7 +2589,7 @@ function speicherBelegung(){
   rows.sort((a,b)=>b.kb-a.kb);
   return { rows, kb:sum/1024 };
 }
-/* Löschbare Sicherungen: fokus2_<art>_bak<nr> — je Art bleibt die höchste Nr. */
+/* Löschbare Sicherungen: fokus4_<art>_bak<nr> — je Art bleibt die höchste Nr. */
 function speicherBaks(){
   const re=/^(.+)_bak(\d+)$/, byArt={};
   DB.list().forEach(k=>{ const m=re.exec(k); if(!m) return;
@@ -21036,25 +21040,21 @@ function zeigeMigration1110(){
 init();
 
 /* ── Offline-PWA (§12) ────────────────────────────────────────────────
-   neu.html teilt sich den bestehenden network-first Service Worker (sw.js):
-   dieselbe scriptURL + Scope wie index.html ⇒ idempotent, index.html und
-   dessen SW bleiben komplett unangetastet. Online lädt der SW immer frisch,
-   offline aus dem Cache. Nach dem ersten Online-Öffnen sind neu.html +
-   manifest-neu.json gecacht (Avatar-Bilder pre-cacht sw.js bereits) ⇒
-   neu.html läuft offline als eigenes Homescreen-Icon (manifest-neu.json).
-   Zweites root-scoped SW wäre falsch (würde mit index.html um die Kontrolle
-   konkurrieren) — daher bewusst geteilt statt separat. */
+   4.0 · Paket 0: eigener network-first Service Worker (sw.js) mit eigenem
+   Cache-Namen (fokus4-…) und Scope nur auf den Ordner dieses Repos. Online
+   lädt der SW immer frisch, offline aus dem Cache. Nach dem ersten
+   Online-Öffnen sind index.html, manifest.json und die Icons gecacht. */
 if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
   addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(()=>{});
     // Beim ersten Besuch kontrolliert der SW die Erst-Anfrage noch nicht →
-    // neu.html + manifest-neu.json explizit in den SW-Cache legen, sobald er
-    // bereit ist. Damit läuft neu.html schon nach dem ersten Online-Öffnen
-    // offline (Avatar-Bilder/Icons pre-cacht sw.js ohnehin).
+    // index.html + manifest.json + Icons explizit in den SW-Cache legen,
+    // sobald er bereit ist. Damit läuft die App schon nach dem ersten
+    // Online-Öffnen offline.
     navigator.serviceWorker.ready.then(async ()=>{
       try{
-        const name=(await caches.keys()).find(k=>k.indexOf('fokus-')===0);
-        if(name){ await (await caches.open(name)).addAll(['neu.html','manifest-neu.json','icon-neu-192.png','icon-neu-512.png','apple-touch-icon-neu.png']); }
+        const name=(await caches.keys()).find(k=>k.indexOf(CACHE_NAME_PREFIX)===0);
+        if(name){ await (await caches.open(name)).addAll(['index.html','manifest.json','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png','favicon-32.png']); }
       }catch(e){}
     });
   });
@@ -21072,11 +21072,11 @@ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
 async function updateCheck(){
   if(location.protocol.indexOf('http')!==0) return;   // nur online (nicht file://)
   try{
-    const res=await fetch('neu.html', {cache:'reload'});
+    const res=await fetch('index.html', {cache:'reload'});
     const m=(await res.text()).match(/APP_BUILD\s*=\s*'([^']+)'/);
     const latest=m&&m[1];
-    if(latest && latest!==APP_BUILD && sessionStorage.getItem('fokus_build')!==latest){
-      sessionStorage.setItem('fokus_build', latest);
+    if(latest && latest!==APP_BUILD && sessionStorage.getItem('fokus4_build')!==latest){
+      sessionStorage.setItem('fokus4_build', latest);
       location.reload();
     }
   }catch(e){/* offline → ignorieren, Cache genügt */}

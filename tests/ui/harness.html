@@ -68,7 +68,7 @@ function bestandSchreiben(){
 <iframe id="app"></iframe>
 <pre id="result"></pre>
 <script>
-/* Same-origin-Harness: schreibt die Fixture in localStorage, lädt /neu.html im
+/* Same-origin-Harness: schreibt die Fixture in localStorage, lädt /index.html im
    iframe, führt je ?view= die nötigen Aktionen aus, fährt die Layout-Checks
    und den Konsolen-Wächter und legt das Ergebnis als JSON in #result ab.
    run.sh liest es über chrome --dump-dom. */
@@ -522,7 +522,7 @@ function bestandSchreiben(){
     /* v2.4 §1.2: Einstellungen mit dem Import oben */
     einstImport:function(fw){ fw.setTab('einst'); einstAlleAuf(fw.document); },
     /* v2.4 §10: FARBVORSCHLAG — NUR VORSCHAU. Das CSS wird ausschliesslich
-       hier im Harness in die Seite gespielt; neu.html bleibt unberuehrt. */
+       hier im Harness in die Seite gespielt; index.html bleibt unberuehrt. */
     farbStat:function(fw){ farbVorschlag(fw); fw.setTab('statistik'); },
     farbFokus:function(fw){
       farbVorschlag(fw);
@@ -2522,7 +2522,7 @@ function bestandSchreiben(){
         catch(e){ fatal('Aktion fehlgeschlagen: '+e); abschluss(); }
       }, 900);
     });
-    neu.src='/neu.html';
+    neu.src='/index.html';
   }
 
   if(VIEW==='echt'){ echtSequenz(); return; }     // §1 (v2.0.2): gelebter Bestand

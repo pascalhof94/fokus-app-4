@@ -48,6 +48,6 @@ Date=FD;
 function uhr(s){ _jetzt=_RD.parse(s); }
 function minuten(m){ _jetzt+=m*60000; }
 
-var src=readFile('neu.html');
+var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
 (0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v353-abnahme-body.js'));

@@ -3,7 +3,7 @@
 var fails=0, n=0;
 function ok(t,c){ n++; print((c?'OK   ':'FAIL ')+t); if(!c) fails++; }
 function kopf(t){ print(''); print('── '+t+' ──'); }
-var src=readFile('neu.html');
+var src=readFile('index.html');
 function frisch(){
   _store={}; S.karten=[]; S.unteraufgaben=[]; S.historie=[]; S.intraday=[]; S.routinenGruppen=[];
   S.meta={ wohlstand:0, seeded:true, migration200:true }; S.settings=settingsMerge({});

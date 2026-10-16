@@ -1,4 +1,4 @@
-/* Dev-only Regressionstest fuer den Sync-Import (syncImport) in neu.html.
+/* Dev-only Regressionstest fuer den Sync-Import (syncImport) in index.html.
    NICHT Teil der PWA (wird von der App nicht geladen, steht nicht in sw.js).
    Ausfuehren aus dem Repo-Verzeichnis mit JavaScriptCore:
      jsc tests/import-regression.js
@@ -9,7 +9,7 @@
    „offen → erledigt/heute": der Import darf NIE Status, tagId, Ist-Zeit oder
    Punkte setzen (App-Hoheit, §8), und Unteraufgaben matchen nur per App-id. */
 
-var src = readFile('neu.html');
+var src = readFile('index.html');
 function extract(name){
   var m = new RegExp('\\nfunction ' + name + '\\s*\\(').exec(src);
   if(!m) throw 'Funktion nicht gefunden: ' + name;
