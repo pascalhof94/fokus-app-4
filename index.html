@@ -2529,7 +2529,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-16-1';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-16-2';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -2544,7 +2544,7 @@ const DB = {
     catch(e){ console.warn('DB.get', key, e); return fallback; }
   },
   set(key, wert){
-    try{ localStorage.setItem(PREFIX+key, JSON.stringify(wert)); return true; }
+    try{ localStorage.setItem(PREFIX+key, JSON.stringify(wert)); try{ FSLive.vormerken(key); }catch(eS){} return true; }   // 4.0 · Paket 3: Spiegel vormerken
     catch(e){
       // §3 (v1.13.4): Quota — EINMAL still aufräumen und erneut versuchen,
       // statt den Nutzer mit einem Popup je Schreibversuch zu bombardieren.
@@ -2552,7 +2552,7 @@ const DB = {
         if(!DB._quotaCleanup){
           DB._quotaCleanup=true;
           try{ speicherAufraeumen(true); }catch(e2){}
-          try{ localStorage.setItem(PREFIX+key, JSON.stringify(wert));
+          try{ localStorage.setItem(PREFIX+key, JSON.stringify(wert)); try{ FSLive.vormerken(key); }catch(eS){}   // 4.0 · Paket 3
             toast('💾 Speicher war voll — automatisch aufgeräumt'); return true; }catch(e3){}
         }
         const now=Date.now();
@@ -2570,8 +2570,303 @@ const DB = {
     catch(e){}
     return out;
   },
-  del(key){ try{ localStorage.removeItem(PREFIX+key); }catch(e){} }
+  del(key){ try{ localStorage.removeItem(PREFIX+key); }catch(e){} try{ FSLive.vormerken(key); }catch(eS){} }   // 4.0 · Paket 3: Spiegel vormerken
 };
+/* ══════════════════════════════════════════════════════════════════════
+   4.0 · Paket 3 · FSLive — Live-Verbindung zu FocusSystem (Punkt 6.9).
+   Die App spricht den Dienst auf dem Mac mini über HTTPS an (Adresse unten,
+   Standard https://Mac-mini-von-Pascal.local:8443). In sich geschlossen:
+   Eingriff nur in DB.set, DB.del (Spiegel vormerken), saveFokus (Uhr melden)
+   und die Übernahme eines Pakets. Liest localStorage, blockiert nie die
+   Oberfläche, wirft nie einen Fehler nach außen.
+   · Spiegel: jede Änderung eines Betriebsschlüssels geht als Spiegel an den
+     Dienst (Schlüssel mit Präfix fokus4_, damit der Klon 3.8.1 unberührt
+     bleibt). Ohne Verbindung bleibt der Schlüssel vorgemerkt und geht beim
+     nächsten Versuch (alle 30 s, beim Sichtbarwerden, bei online) nach.
+   · Lesen live: FSLive.lesen(werkzeug, args) ruft die Werkzeuge des
+     Connectors (schema_lesen, datensaetze_auflisten, datensatz_lesen, suchen,
+     auswerten) über /api/db/ auf.
+   · Schreiben live: FSLive.senden(werkzeug, args) (datensatz_anlegen,
+     datensatz_aendern) — ohne Verbindung wird gesammelt und in Reihenfolge
+     nachgeschickt (Warteschlange überlebt das Schließen der App).
+   · Paket-Eingang: ersetzt den Import von Hand. Alle 60 s und beim Sichtbar-
+     werden holt die App offene Pakete und übernimmt sie über syncImport;
+     braucht ein Paket eine Freigabe (Einstellungen), erscheint das bekannte
+     Blatt „Paket prüfen“. Übernommen oder abgelehnt geht zurück an den Dienst.
+   · Uhr: Zustand der laufenden Uhr und der aktuellen Kette je Gerät
+     (/api/app/uhr), bei jeder Änderung und jede Minute.
+   Eigene Schlüssel heißen fokus4_fslive_… und laufen nicht über DB.
+   ══════════════════════════════════════════════════════════════════════ */
+const FSLive = (()=>{
+  const K = {
+    geraet: PREFIX+'fslive_geraet', token: PREFIX+'fslive_token', adresse: PREFIX+'fslive_adresse',
+    letzt: PREFIX+'fslive_letzterErfolg', ausstehend: PREFIX+'fslive_ausstehend', warteschlange: PREFIX+'fslive_warteschlange',
+  };
+  const ADRESSE_STANDARD='https://Mac-mini-von-Pascal.local:8443';
+  const APP_KENNUNG='fokus-app-4';
+  const RUHE_MS=3000, SPAETESTENS_MS=10000, WIEDERHOLEN_MS=30000, ZEITGRENZE_MS=60000, PAKETE_MS=60000, UHR_MS=60000;
+  const FARBE={ gruen:'#4ade80', gelb:'#facc15', rot:'#f87171', grau:'#9ca3af' };
+  const TITEL='FocusSystem · Mac mini';
+  const BETRIEB=['karten','unteraufgaben','stapel','ordner','gruppen','vorlagen','settings','tag','fokus','historie','intraday',
+    'routinenGruppen','tagesketten','belohnung','meta','ui','karten_vomGeraet'];
+  const WORTE={ grau:'nicht gekoppelt', rot:'Mac mini nicht erreichbar', gelb:'ausstehend', gruen:'verbunden' };
+  const offen=new Map();          // Betriebsschlüssel → Zähler des letzten Vormerkens
+  let zaehler=0, ersterTs=0, uhr=null, laeuft=false, gescheitert=false, fehlerText='', punkt=null;
+  let warteschlange=[], sendetSchlange=false, paketeLaufen=false, paketeGesehen=new Set(), aktuellesPaket=null, letzteUhr='';
+
+  function lies(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function schreib(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function adresse(){ return (lies(K.adresse)||ADRESSE_STANDARD).replace(/\/+$/,''); }
+  function adresseSetzen(a){ a=String(a||'').trim().replace(/\/+$/,''); if(!/^https?:\/\/[^\s/]+$/.test(a)) throw new Error('Adresse wie https://Mac-mini-von-Pascal.local:8443'); schreib(K.adresse, a); }
+  function geraet(){
+    let g=lies(K.geraet);
+    if(!g){ g=(crypto.randomUUID && crypto.randomUUID()) || ('loc-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)); schreib(K.geraet,g); }
+    return g;
+  }
+  function token(){ return lies(K.token); }
+  function gekoppelt(){ return !!token(); }
+  function zustand(){
+    if(!gekoppelt()) return 'grau';
+    if(gescheitert) return 'rot';
+    return (offen.size || warteschlange.length) ? 'gelb' : 'gruen';
+  }
+  function merken(){ schreib(K.ausstehend, JSON.stringify(Array.from(offen.keys()))); }
+  function schlangeMerken(){ schreib(K.warteschlange, JSON.stringify(warteschlange)); }
+
+  function anzeigen(){
+    try{
+      if(punkt) punkt.style.background=FARBE[zustand()];
+      const t=document.getElementById('sheetTitel'), sh=document.getElementById('sheet');
+      if(t && sh && sh.classList.contains('on') && t.textContent===TITEL) blattFuellen();
+    }catch(e){}
+  }
+
+  // ── Aufrufe ───────────────────────────────────────────────────────
+  function kopf(mitInhalt){
+    const h={ 'X-FS-Geraet':geraet(), 'X-FS-Token':token()||'', 'X-FS-Zeit':new Date().toISOString(), 'X-FS-App':APP_KENNUNG };
+    if(mitInhalt) h['Content-Type']='application/json';
+    return h;
+  }
+  async function aufruf(methode, pfad, koerper, opt){
+    const abbruch=new AbortController(), stop=setTimeout(()=>abbruch.abort(), (opt&&opt.zeitgrenze)||ZEITGRENZE_MS);
+    try{
+      const r=await fetch(adresse()+pfad, { method:methode, headers:kopf(koerper!==undefined), body:koerper, cache:'no-store', signal:abbruch.signal, mode:'cors' });
+      let d=null; try{ d=await r.json(); }catch(e){ d=null; }
+      if(!r.ok){ const e=new Error((d && d.fehler) || ('Status '+r.status)); e.status=r.status; e.antwort=d; throw e; }
+      return d;
+    }catch(e){
+      if(e && e.status) throw e;
+      const f=new Error(e && e.name==='AbortError' ? 'Zeitüberschreitung' : 'Mac mini nicht erreichbar'); f.offline=true; throw f;
+    }finally{ clearTimeout(stop); }
+  }
+
+  // ── Spiegel ───────────────────────────────────────────────────────
+  function planen(){
+    try{
+      if(!offen.size) return;
+      const jetzt=Date.now();
+      if(!ersterTs) ersterTs=jetzt;
+      clearTimeout(uhr);
+      uhr=setTimeout(spiegeln, Math.max(0, Math.min(RUHE_MS, ersterTs+SPAETESTENS_MS-jetzt)));
+    }catch(e){}
+  }
+  function vormerken(schluessel){
+    try{ if(BETRIEB.indexOf(String(schluessel))<0) return;
+      offen.set(String(schluessel), ++zaehler); merken(); planen(); anzeigen(); }catch(e){}
+  }
+  async function spiegeln(){
+    clearTimeout(uhr); uhr=null;
+    if(laeuft || !gekoppelt() || !offen.size){ anzeigen(); return; }
+    laeuft=true; ersterTs=0;
+    try{
+      for(const [schluessel, stand] of Array.from(offen.entries())){
+        const wert=lies(PREFIX+schluessel);
+        if(wert===null) await aufruf('DELETE', '/api/spiegel/'+encodeURIComponent(PREFIX+schluessel));
+        else await aufruf('PUT', '/api/spiegel/'+encodeURIComponent(PREFIX+schluessel), wert);
+        if(offen.get(schluessel)===stand){ offen.delete(schluessel); merken(); }   // inzwischen neu geschrieben: bleibt ausstehend
+      }
+      gescheitert=false; fehlerText='';
+      schreib(K.letzt, new Date().toISOString());
+    }catch(e){
+      gescheitert=true; fehlerText=String((e && e.message) || 'Fehler');
+    }finally{
+      laeuft=false;
+      if(!gescheitert && offen.size) planen();
+      anzeigen();
+    }
+  }
+
+  // ── Lesen und Schreiben live ──────────────────────────────────────
+  // lesen: wirft bei fehlender Verbindung (e.offline) oder Ablehnung (e.status, e.message).
+  async function lesen(werkzeug, args){
+    if(!gekoppelt()){ const e=new Error('nicht gekoppelt'); e.offline=true; throw e; }
+    try{ const d=await aufruf('POST', '/api/db/'+encodeURIComponent(werkzeug), JSON.stringify(args||{})); gescheitert=false; fehlerText=''; anzeigen(); return d; }
+    catch(e){ if(e.offline){ gescheitert=true; fehlerText=e.message; anzeigen(); } throw e; }
+  }
+  // senden: Schreibvorgang in die Warteschlange, sofort versuchen; ohne Verbindung bleibt er stehen und geht später nach.
+  // Ergebnis: {sofort:true, antwort} wenn gesendet, {wartend:true, id} wenn gesammelt. Eine Ablehnung des Dienstes (400/409)
+  // nimmt den Eintrag aus der Schlange und ruft, falls angegeben, args._beiFehler nicht auf — der Fehler steht im Blatt.
+  async function senden(werkzeug, args){
+    const eintrag={ id:(crypto.randomUUID && crypto.randomUUID()) || String(Date.now()), werkzeug:String(werkzeug), args:args||{}, ts:new Date().toISOString() };
+    warteschlange.push(eintrag); schlangeMerken(); anzeigen();
+    const r=await schlangeSenden();
+    if(r && r.id===eintrag.id) return { sofort:true, antwort:r.antwort };
+    return { wartend:true, id:eintrag.id };
+  }
+  async function schlangeSenden(){
+    if(sendetSchlange || !gekoppelt() || !warteschlange.length) return null;
+    sendetSchlange=true; let letzte=null;
+    try{
+      while(warteschlange.length){
+        const e=warteschlange[0];
+        try{
+          const antwort=await aufruf('POST', '/api/db/'+encodeURIComponent(e.werkzeug), JSON.stringify(e.args));
+          warteschlange.shift(); schlangeMerken(); letzte={ id:e.id, antwort }; gescheitert=false; fehlerText='';
+          schreib(K.letzt, new Date().toISOString());
+        }catch(x){
+          if(x.offline){ gescheitert=true; fehlerText=x.message; break; }   // bleibt stehen, später nachschicken
+          warteschlange.shift(); schlangeMerken();                             // abgelehnt: nicht wiederholen, Fehler merken
+          fehlerText='Abgelehnt ('+e.werkzeug+'): '+x.message;
+        }
+      }
+    }finally{ sendetSchlange=false; anzeigen(); }
+    return letzte;
+  }
+
+  // ── Paket-Eingang ─────────────────────────────────────────────────
+  async function paketeHolen(){
+    if(paketeLaufen || !gekoppelt() || aktuellesPaket) return;
+    paketeLaufen=true;
+    try{
+      const d=await aufruf('GET', '/api/app/pakete');
+      gescheitert=false; fehlerText='';
+      for(const p of (d && d.pakete)||[]){
+        if(paketeGesehen.has(p.id)) continue;
+        paketeGesehen.add(p.id);
+        const text=JSON.stringify(p.paket);
+        let res; try{ res=syncImport(text); }catch(e){ res={ fehler:String((e&&e.message)||e) }; }
+        if(res && res.freigabeNoetig){ aktuellesPaket={ id:p.id, text }; try{ oeffneSyncFreigabe(text, res.vorschau, 'fslive'); }catch(e){ aktuellesPaket=null; } break; }
+        await paketMelden(p.id, res);
+        if(!(res && res.fehler)){ try{ renderAlles(); toast('Paket aus FocusSystem übernommen'); }catch(e){} }
+      }
+    }catch(e){ if(e.offline){ gescheitert=true; fehlerText=e.message; } }
+    finally{ paketeLaufen=false; anzeigen(); }
+  }
+  async function paketMelden(id, res){
+    const ok=!(res && res.fehler);
+    try{ await aufruf('POST', '/api/app/pakete/'+id, JSON.stringify(ok ? { status:'uebernommen' } : { status:'abgelehnt', grund:String(res.fehler).slice(0,300) })); }
+    catch(e){ paketeGesehen.delete(id); }   // nicht gemeldet: beim nächsten Holen wiederholen (die App hat es schon übernommen; der Import ist je Karte idempotent)
+  }
+  // Aus syncFreigabeAnwenden: das Blatt „Paket prüfen“ wurde mit Übernehmen beantwortet.
+  function paketAbgeschlossen(res, quelle){
+    if(quelle!=='fslive' || !aktuellesPaket) return;
+    const id=aktuellesPaket.id; aktuellesPaket=null;
+    paketMelden(id, res).then(()=>paketeHolen());
+  }
+  function paketAbgebrochen(){ aktuellesPaket=null; }
+
+  // ── Uhr ───────────────────────────────────────────────────────────
+  function uhrMelden(erzwingen){
+    try{
+      if(!gekoppelt()) return;
+      const f=S.fokus, k=f && f.karteId ? f.karteId : null;
+      let kette=[]; try{ kette=ketteState().ids.slice(0,200); }catch(e){}
+      const d={ karte:(f && f.laeuft) ? k : null, start:(f && f.laeuft && f.startMs) ? new Date(f.startMs).toISOString() : null,
+        letzter_tick:new Date().toISOString(), aktuelle_kette:kette };
+      const kurz=JSON.stringify([d.karte, d.start, d.aktuelle_kette]);
+      if(!erzwingen && kurz===letzteUhr) return;
+      letzteUhr=kurz;
+      aufruf('PUT', '/api/app/uhr', JSON.stringify(d), { zeitgrenze:15000 }).then(()=>{ gescheitert=false; anzeigen(); }).catch(()=>{});
+    }catch(e){}
+  }
+
+  // ── Kopplung ──────────────────────────────────────────────────────
+  async function koppeln(){
+    try{
+      const r=await fetch(adresse()+'/api/kopplung', { method:'POST', headers:{ 'Content-Type':'application/json', 'X-FS-App':APP_KENNUNG }, cache:'no-store', mode:'cors',
+        body:JSON.stringify({ geraet_id:geraet(), name:('Fokus 4.0 · '+String(navigator.userAgent||'')).slice(0,100) }) });
+      if(r.status===403) throw new Error('Kopplung am Mac mini nicht geöffnet (npm run klon-koppeln)');
+      if(!r.ok) throw new Error('Status '+r.status);
+      const d=await r.json();
+      if(!d || typeof d.token!=='string' || !d.token) throw new Error('Antwort ohne Schlüssel');
+      schreib(K.token, d.token);
+      gescheitert=false; fehlerText='';
+      try{ toast('Mit Mac mini gekoppelt'); }catch(x){}
+      alleBetriebsschluesselVormerken(); spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true);
+    }catch(e){
+      gescheitert=false; fehlerText=String((e && e.message) || 'Kopplung gescheitert');
+      if(fehlerText==='Failed to fetch' || fehlerText==='Load failed') fehlerText='Mac mini nicht erreichbar';
+      try{ toast(fehlerText); }catch(x){}
+    }
+    anzeigen();
+  }
+  function alleBetriebsschluesselVormerken(){
+    try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf(PREFIX)===0 && BETRIEB.indexOf(k.slice(PREFIX.length))>=0) offen.set(k.slice(PREFIX.length), ++zaehler); } merken(); }catch(e){}
+  }
+
+  // ── Blatt ─────────────────────────────────────────────────────────
+  function zeit(iso){
+    if(!iso) return '—';
+    try{ const d=new Date(iso); return d.toLocaleDateString('de-DE')+' '+d.toLocaleTimeString('de-DE',{ hour:'2-digit', minute:'2-digit', second:'2-digit' }); }catch(e){ return '—'; }
+  }
+  function blattFuellen(){
+    const kv=(a,b)=>'<div class="kv"><span>'+a+'</span><b>'+b+'</b></div>';
+    const z=zustand();
+    const h=kv('Zustand', '<span style="color:'+FARBE[z]+'">●</span> '+WORTE[z]+(laeuft||sendetSchlange?' · sendet …':''))+
+      kv('Adresse', esc(adresse()))+
+      kv('Zuletzt gesendet', zeit(lies(K.letzt)))+
+      kv('Spiegel ausstehend', String(offen.size))+
+      kv('Schreibvorgänge wartend', String(warteschlange.length))+
+      kv('Letzter Fehler', fehlerText ? esc(fehlerText) : '—')+
+      kv('Gerät', esc(geraet().slice(0,8))+'…')+
+      kv('Build', esc(APP_BUILD))+
+      '<div class="field" style="margin-top:10px"><label>Adresse des Mac mini</label><input type="text" id="fsliveAdresse" value="'+esc(adresse())+'" autocapitalize="off" autocorrect="off" spellcheck="false"></div>';
+    const fuss='<button class="btn" data-fslive="adresse" style="flex:1">Adresse speichern</button>'+
+      '<button class="btn prim" data-fslive="senden" style="flex:1">Jetzt senden</button>'+
+      (gekoppelt() ? '' : '<button class="btn" data-fslive="koppeln" style="flex:1">Mit Mac mini koppeln</button>');
+    document.getElementById('sheetBody').innerHTML=h;
+    document.getElementById('sheetFoot').innerHTML=fuss;
+  }
+  function blattOeffnen(){ try{ openSheet(TITEL, '', ''); blattFuellen(); }catch(e){} }
+
+  function start(){
+    try{
+      geraet();
+      const flaeche=document.createElement('div');
+      flaeche.id='fsLiveFlaeche';
+      flaeche.setAttribute('role','button');
+      flaeche.setAttribute('aria-label','FocusSystem');
+      flaeche.style.cssText='position:fixed;top:calc(env(safe-area-inset-top) - 3px);left:50%;width:32px;height:32px;margin-left:-16px;'+
+        'display:flex;align-items:center;justify-content:center;z-index:2147483000;pointer-events:auto;cursor:pointer;background:transparent;-webkit-tap-highlight-color:transparent';
+      punkt=document.createElement('div');
+      punkt.id='fsLivePunkt';
+      punkt.style.cssText='width:14px;height:14px;box-sizing:border-box;border:2px solid #0d1420;border-radius:50%;pointer-events:none;background:'+FARBE.grau;
+      flaeche.appendChild(punkt);
+      flaeche.addEventListener('click', e=>{ e.stopPropagation(); blattOeffnen(); });
+      document.body.appendChild(flaeche);
+      const sheet=document.getElementById('sheet');
+      if(sheet) sheet.addEventListener('click', e=>{
+        const b=e.target && e.target.closest && e.target.closest('[data-fslive]'); if(!b) return;
+        if(b.dataset.fslive==='senden'){ gescheitert=false; spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true); }
+        else if(b.dataset.fslive==='koppeln') koppeln();
+        else if(b.dataset.fslive==='adresse'){ try{ adresseSetzen(document.getElementById('fsliveAdresse').value); toast('Adresse gespeichert'); }catch(x){ toast(String(x.message||x)); } }
+        anzeigen();
+      });
+      try{ const alt=JSON.parse(lies(K.ausstehend)||'[]'); if(Array.isArray(alt)) alt.forEach(k=>{ if(BETRIEB.indexOf(String(k))>=0) offen.set(String(k), ++zaehler); }); }catch(e){}
+      try{ const w=JSON.parse(lies(K.warteschlange)||'[]'); if(Array.isArray(w)) warteschlange=w.filter(x=>x && x.werkzeug); }catch(e){}
+      alleBetriebsschluesselVormerken();
+      setInterval(()=>{ if(offen.size) spiegeln(); if(warteschlange.length) schlangeSenden(); }, WIEDERHOLEN_MS);
+      setInterval(()=>paketeHolen(), PAKETE_MS);
+      setInterval(()=>uhrMelden(true), UHR_MS);
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true); } else { uhrMelden(true); } });
+      addEventListener('online', ()=>{ spiegeln(); schlangeSenden(); paketeHolen(); });
+      setTimeout(()=>{ paketeHolen(); uhrMelden(true); }, 2500);
+      planen(); anzeigen();
+    }catch(e){}
+  }
+  return { vormerken, spiegeln, senden, lesen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen };
+})();
+try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
 
 /* ══ (v1.13.4) · Speicher-Diagnose & -Aufräumen ══════════════════════════
@@ -4473,7 +4768,7 @@ function fokusToggle(){
 }
 function fokusBeenden(){ fokusZeitEinbuchen(); S.fokus=null;
   saveFokus(); saveUi(); }
-function saveFokus(){ DB.set('fokus', S.fokus); }
+function saveFokus(){ DB.set('fokus', S.fokus); try{ FSLive.uhrMelden(); }catch(e){} }   // 4.0 · Paket 3: laufende Uhr an FocusSystem melden
 /* ── Energie/Akku live (v1.1, v0.38-Port) ────────────────────────────
    Der Tag trägt einen einzigen Akku-Stand (%); Fokuszeit driftet ihn über
    akkuRate(karte). akkuLive() = gebuchter Stand + laufende (noch nicht
@@ -10113,6 +10408,7 @@ function sheetSchliessenDurchNutzer(){
   closeSheet();   // §10 (v3.7.0): kein Hochscrollen
 }
 function closeSheet(){
+  try{ FSLive.paketAbgebrochen(); }catch(e){}   // 4.0 · Paket 3: ein nicht übernommenes Paket bleibt im Eingang offen
   ketteSheetOffen=false;   // §9.3 (v1.12.0)
   reoffenTmp=null;         // §2 (v2.5.0): abgebrochene Wiederoeffnen-Abfrage verwerfen
   abschlussLauf=null;      // §1.3 (v2.1.0): Dialog zu heisst Durchgang beendet
@@ -14000,6 +14296,7 @@ function syncFreigabeAnwenden(){
   const f=_freigabe; _freigabe=null;
   const res=syncImport(f.text, {freigabe:true});
   if(!res.fehler){ try{ syncPunkteBuchen('import'); }catch(e){} }   // §3a (v3.7.1): „Übernehmen"
+  try{ FSLive.paketAbgeschlossen(res, f.quelle); }catch(e){}   // 4.0 · Paket 3: Paket aus dem Eingang zurückmelden
   closeSheet(); renderAlles();
   if(!res.fehler){ toast('Übernommen · '+num(res.tuer&&res.tuer.geaendert)+' Einstellung(en)'+(res.upd||res.neu?' · '+(num(res.upd)+num(res.neu))+' Karte(n)':'')); haptik(15); }
   if(f.quelle==='einst'){ seiteZeigen('einst'); const box=el('einstImportErg'); if(box) box.innerHTML=importErgebnisHtml(res); }
