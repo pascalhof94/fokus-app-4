@@ -3071,8 +3071,8 @@ function matrixVorschlag(feld, dom){
   else { v.sollMin=(dom==='dfm')?45:30; }
   return v;
 }
-/* §4/§5 (v1.6.1): Zeitgrenzen an EINER Stelle. */
-const AUTOPAUSE_MIN        = 90;    // Timer ohne jede Interaktion → Auto-Pause + Rückfrage
+/* 4.0 · Paket 1: Auto-Pause (v1.6.1 §4) ersatzlos entfernt. Kein automatischer Stopp des Timers mehr.
+   Historische Einträge im Stunden-Log mit typ 'autopause' bleiben lesbar und zählen wie 'timer'. */
 const PAUSENTIMER_MAX_MIN  = 120;   // Dauerlauf ohne Pause → ab hier negative Rate (nur keineAutoPause-Karten)
 function neueKarte(f={}){
   const k = Object.assign({
@@ -9334,73 +9334,14 @@ function renderAlles(){
   ebeneRendern();   // C2 (v3.8.0): Statusleiste → Seite der Ebene 0 → offene Ebene-1-Ansicht
 }
 /* 1-Sekunden-Ticker nur solange der Timer läuft — aktualisiert Text in-place. */
-/* ══════════════════════════════════════════════════════════════════════
-   §4 (v1.6.1) · Auto-Pause bei unbeaufsichtigtem Timer
-   Ein Timer, der AUTOPAUSE_MIN Minuten ohne jede Interaktion läuft (kein Tap,
-   kein Tick, kein Seitenwechsel, keine Sichtbarkeitsänderung), wird pausiert.
-   Beim nächsten Öffnen fragt die App nach der echten Arbeitsdauer und korrigiert
-   istMin UND den zugehörigen Intraday-Eintrag, damit Karte und Log nicht driften.
-   Karten mit keineAutoPause (Pausentimer, §5) sind ausgenommen.
-   ══════════════════════════════════════════════════════════════════════ */
-function interaktion(){ S.meta.letzteInteraktionTs=jetztIso(); }
-/* Prüft im Sekundentakt, ob der laufende Timer unbeaufsichtigt ist. */
-function autoPausePruefen(){
-  if(!(S.fokus && S.fokus.laeuft)) return;
-  const k=fokusKarte(); if(!k || k.keineAutoPause) return;               // §5: Pausentimer ausgenommen
-  const letzte=S.meta.letzteInteraktionTs;
-  if(!letzte){ interaktion(); saveMeta(); return; }
-  if(minSeit(letzte) < AUTOPAUSE_MIN) return;
-  // Auto-Pause: gelaufene Zeit reguär einbuchen, Rückfrage vormerken.
-  const gelaufenMin=(Date.now()-S.fokus.startMs)/60000;
-  const vorschlagMin=Math.max(0, (Date.parse(letzte)-S.fokus.startMs)/60000);
-  const eintragTs=jetztIso();
-  fokusZeitEinbuchen();
-  // Der eben geschriebene Intraday-Eintrag ist der letzte dieser Karte.
-  let idx=-1;
-  for(let i=(S.intraday||[]).length-1;i>=0;i--){ if(S.intraday[i].kartenId===k.id){ idx=i; break; } }
-  S.meta.autoPause={ kartenId:k.id, titel:k.titel||'', gelaufenMin, vorschlagMin,
-                     intradayIdx:idx, ts:eintragTs };
-  saveMeta(); saveFokus(); renderAlles();
-  zeigeAutoPauseDialog();
-}
-/* Rückfrage — Vorschlag = Zeit bis zur letzten Interaktion, Direkteingabe möglich. */
-function zeigeAutoPauseDialog(){
-  const a=S.meta.autoPause; if(!a) return;
-  const k=S.karten.find(x=>x.id===a.kartenId);
-  const gel=hms(Math.round(a.gelaufenMin*60)), vor=Math.round(a.vorschlagMin);
-  const h='<div class="hinweisbox">Der Timer lief <b>'+gel+'</b> auf „'+esc(a.titel||(k&&k.titel)||'?')+
-    '", ohne dass etwas passiert ist. Wie lange hast du wirklich gearbeitet?</div>'+
-    '<div class="field"><label>Tatsächliche Dauer (Min)</label>'+
-    '<input type="number" inputmode="numeric" min="0" id="apMin" value="'+vor+'">'+
-    '<div class="hint">Vorschlag '+vor+' Min = bis zur letzten Interaktion. Der Wert ersetzt die gelaufene Zeit in der Karte und im Zeit-Log.</div></div>';
-  openSheet('Timer lief unbeaufsichtigt', h,
-    '<button class="btn ghost sm" data-apkeep="1">Volle Zeit behalten</button><button class="btn prim" data-apok="1">Übernehmen</button>');
-}
-function autoPauseUebernehmen(volleZeit){
-  const a=S.meta.autoPause; if(!a){ closeSheet(); return; }
-  const k=S.karten.find(x=>x.id===a.kartenId);
-  if(k && !volleZeit){
-    const neu=Math.max(0, num(el('apMin')?el('apMin').value:a.vorschlagMin));
-    const delta=neu-a.gelaufenMin;                       // negativ = Zeit abziehen
-    k.istSek=Math.max(0, num(k.istSek)+delta*60);
-    // Denselben Intraday-Eintrag korrigieren (statt einen zweiten anzulegen) und
-    // als 'autopause' markieren — so bleibt nachvollziehbar, was korrigiert wurde.
-    const e=(S.intraday||[])[a.intradayIdx];
-    if(e && e.kartenId===a.kartenId){ e.minuten=Math.round(neu*10)/10; e.typ='autopause'; DB.set('intraday', S.intraday); }
-    saveKarten();
-    toast('Zeit korrigiert auf '+Math.round(neu)+' Min');
-  }
-  delete S.meta.autoPause; saveMeta();
-  closeSheet(); renderAlles();
-}
+/* 4.0 · Paket 1: Auto-Pause bei unbeaufsichtigtem Timer (v1.6.1 §4) ersatzlos entfernt:
+   kein Stempel der letzten Interaktion, keine Prüfung, kein Rückfrage-Dialog. */
 let tickerId=null, _sekTakt=0;
 function starteTicker(){
   if(tickerId) return;
   tickerId=setInterval(()=>{
     if(!(S.fokus && S.fokus.laeuft)){ clearInterval(tickerId); tickerId=null; return; }
     if(S.tag){ S.tag.letzteAktivitaetTs=jetztIso(); }   // Aktivitäts-Stempel (Kanten §6)
-    if(_sekTakt%10===0) autoPausePruefen();             // §4: alle 10 s reicht völlig
-    if(!(S.fokus && S.fokus.laeuft)){ clearInterval(tickerId); tickerId=null; return; }   // Auto-Pause hat gestoppt
     renderFokusleiste();
     if(tagOffen()) renderStatusbar();                   // V1.1: Live-Punkte/-Minuten/-Pace in der Statusleiste sekündlich
     // Fokus-Tacho live nachziehen (Ring/Timer/Kennzahlen/Balken der angezeigten Karte)
@@ -19001,9 +18942,6 @@ el('sheet').addEventListener('click', e=>{
   const afp=null; if(afp){ if(abhakTmp){ abhakTmp.folgePri=afp.dataset.abfpri;
     const box=el('abFolgePri'); if(box) box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c===afp)); } return; }
   if(t.closest('[data-abgo]')){ abhakDialogConfirm(); return; }
-  // §4 (v1.6.1): Rückfrage nach der Auto-Pause
-  if(t.closest('[data-apok]')){   autoPauseUebernehmen(false); return; }
-  if(t.closest('[data-apkeep]')){ autoPauseUebernehmen(true);  return; }
 
   // ── Sync (§8)
   const sm=t.closest('[data-syncmode]'); if(sm){ syncVoll=(sm.dataset.syncmode==='voll'); renderSyncSheet(); return; }
@@ -20780,18 +20718,14 @@ function init(){
   let _ruheTakt=0;
   setInterval(()=>{ if(S.tag && !(S.fokus&&S.fokus.laeuft)){ renderStatusbar(); if(++_ruheTakt%3===0) diagrammeLive(); } }, 20000);   // §3 (v3.7.0): auch bei stehender Uhr jede Minute live (Matrixverlauf, Tagesdiagramme)
   window.addEventListener('resize', layoutTopbar);
-  // §4 (v1.6.1): jede echte Interaktion stempeln — Taps, Ticks, Seitenwechsel
-  // und Sichtbarkeitswechsel. Capture-Phase, damit nichts verlorengeht.
-  ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev, interaktion, true));
-  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ interaktion(); saveMeta(); zeigeAutoPauseDialog(); } });
-  interaktion(); saveMeta();
+  // 4.0 · Paket 1: Interaktions-Stempel und Auto-Pause-Dialog entfernt.
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ saveMeta(); } });
   zeigeV200Gate();       // §0 (v2.0.0): Export-Gate VOR allem anderen
   zeigeMigration160();   // §9.1: Protokoll einmalig anzeigen
   zeigeMigration161();   // §7 (1.6.1): Protokoll einmalig anzeigen
   zeigeMigration180();   // §9.5 (1.8.0): Protokoll einmalig anzeigen
   zeigeMigration190();   // §7 (1.9.0): Protokoll einmalig anzeigen
   zeigeMigration1110();  // §10 (1.11.0): Rang-Protokoll einmalig anzeigen
-  zeigeAutoPauseDialog();// §4: offene Rückfrage aus einer Auto-Pause nachholen
   // §2 (v2.0.2): Ab jetzt duerfen Momente wieder — was sich waehrend des
   // Starts angesammelt hat, wird jedoch VERWORFEN, nicht nachgeholt.
   // Begruendung: Diese Momente feiern einen Zustand, der beim Laden neu
@@ -20983,7 +20917,7 @@ function zeigeMigration161(){
     '<div class="kvblock">'+z.map(([t,n])=>'<div class="kv"><span>'+t+'</span><b>'+num(n)+'</b></div>').join('')+'</div>'+
     fehlt+
     '<p class="d" style="margin-top:8px">Neu: Tagesabschnitte sind mehrfach wählbar (eine Karte kann morgens <i>und</i> abends Pflicht sein), '+
-    'Routinen-Gruppen geben einen Komplett-Bonus, und ein unbeaufsichtigter Timer pausiert nach '+AUTOPAUSE_MIN+' Minuten und fragt nach.</p>';
+    'Routinen-Gruppen geben einen Komplett-Bonus.</p>';
   openSheet('Update v1.6.1 — Migration', h, '<button class="btn prim" data-close="1">Verstanden</button>');
   S.meta.migration161Gezeigt=true; saveMeta();
 }
