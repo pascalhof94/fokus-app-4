@@ -2715,6 +2715,31 @@ body.app-licht-abend .mal-scene canvas{filter:sepia(.28) brightness(.92) saturat
 body.app-bewegung .mal-av{animation:f8atmen 4s ease-in-out infinite;transform-origin:50% 100%}
 body.app-bewegung .f4-ring .av img{animation:f8atmen 4s ease-in-out infinite}
 body.app-bewegung .mal-scene:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,.07) 50%,transparent 60%);background-size:200% 100%;animation:f8glanz 9s linear infinite}
+/* ══ 4.0 · Paket 9 · iPad quer und Mac: drei Spalten ¼ · ½ · ¼, Statusleiste in Teilen darüber ═══════════════ */
+#spalteL,#spalteR{display:none}
+body.breit #spalteL,body.breit #spalteR{display:flex;flex-direction:column;position:fixed;top:var(--tbH,160px);bottom:0;width:25%;background:var(--bg);z-index:50;min-width:0}
+body.breit #spalteL{left:0;border-right:1px solid #1f2228;padding:10px 10px 0;overflow-y:auto}
+body.breit #spalteR{right:0;border-left:1px solid #1f2228}
+body.breit #srChat,body.breit #srErf{height:50%;overflow-y:auto;padding:10px;min-height:0}
+body.breit #srChat{border-bottom:1px solid #1f2228;display:flex;flex-direction:column}
+body.breit #srChat .f7-inp.unten{margin-top:auto}
+.sr-kopf{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:800;margin-bottom:4px}.sr-kopf span{font-size:11px;color:#2dd4bf;font-weight:700}
+body.breit #spalteR .f7-top,body.breit #spalteR .f7-h5:first-child{display:none}
+body.breit #spalteR .f7-src>div{padding:8px 2px 6px;font-size:11px}body.breit #spalteR .f7-src>div b{font-size:20px;margin-bottom:2px}
+body.breit #spalteR .f7-txt{min-height:56px;font-size:13px}body.breit #spalteR .f7-send{padding:9px;font-size:14px;margin-top:8px}
+body.breit #spalteR .f7-m{font-size:13px;padding:7px 10px}body.breit #spalteR .f7-chips.gr>div{font-size:11.5px;padding:5px 9px}
+body.breit #spalteL .f7-act{grid-template-columns:repeat(3,1fr)}body.breit #spalteL .f7-qt{grid-template-columns:repeat(2,1fr)}
+body.breit #spalteL .f7-g>div{font-size:13.5px;padding:8px 2px}
+body.breit .sl-such{margin-bottom:6px}body.breit .sl-such input{display:block;width:100%;height:38px;border-radius:10px;background:#1a1d22;border:1px solid #2a2d33;color:#e8e9ec;padding:0 10px;font-size:13.5px;outline:none}
+body.breit main{margin-left:25%;margin-right:25%;padding-left:16px;padding-right:16px}
+body.breit #nav{left:25%;right:25%}
+body.breit #suchFab{display:none}
+body.breit #ebene1{left:25%;right:25%}
+body.breit #topbar .inner.f4{max-width:none}
+body.breit #f4sb{display:grid;grid-template-columns:repeat(3,minmax(300px,372px));gap:8px 14px;justify-content:center;align-items:start}
+body.breit #f4sb .sb-bar{grid-column:1;grid-row:1}body.breit #f4sb .f4-er{grid-column:1;grid-row:2}body.breit #f4sb .f4-kz{grid-column:1;grid-row:3}
+body.breit #f4sb .f4-r3{grid-column:2;grid-row:1/4;margin-top:0}
+body.breit #f4sb .f4-onr{grid-column:3;margin-top:0}
 </style>
 </head>
 <body>
@@ -2835,6 +2860,9 @@ body.app-bewegung .mal-scene:after{content:'';position:absolute;inset:0;pointer-
   <section class="e1" id="e1-plan" data-e1="plan"><div class="an-body" id="planBody"></div></section>
 </div>
 
+<!-- 4.0 · Paket 9: die Spalten links (Suche, Gruppen, Schnellplätze) und rechts (Chat, Erfassen) für iPad quer und Mac -->
+<aside id="spalteL"><div class="sl-such"><input id="slSuche" type="search" placeholder="🔍 Suchen oder tippen …" autocomplete="off"></div><div id="slBody"></div></aside>
+<aside id="spalteR"><div id="srChat"></div><div id="srErf"></div></aside>
 <div id="backdrop"></div>
 <div class="sheet" id="sheet">
   <div class="sheetgriff"><i></i></div>
@@ -2884,7 +2912,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-7';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-8';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -5739,7 +5767,7 @@ function f7Klick(e){
   if(d('data-f7zurueck')){ const ds=f7Ds(); if(e1Art()==='durchsuchen' && ds.pfad.length){ ds.pfad.pop(); saveUi(); e1Rendern(); } else e1Oeffnen('suche'); return true; }
   if((z=d('data-f7akt'))){ const a=z.dataset.f7akt; haptik(6); if(a==='erfassen') e1Oeffnen('erfassen'); else if(a==='routinen') e1Oeffnen('routinen'); else if(a==='pause') oeffnePause(); else if(a==='chat') f7ChatOeffnen('Trainer'); else if(a==='neu'){ e1Schliessen(); oeffneDetail(null); } else if(a==='durchsuchen'){ const ds=f7Ds(); ds.pfad=[]; saveUi(); e1Oeffnen('durchsuchen'); } return true; }
   if((z=d('data-f7platz'))){ const id=z.dataset.f7platz; haptik(10); if(id==='pause'){ oeffnePause(); return true; } const k=id==='adhs' ? f7PauseKarte('adhs', true) : S.karten.find(x=>x.id===id); if(!k) return true; if(istTickbar(k)) kartenListeTick(k.id); else kartenListeCheck(k.id); e1Rendern(); return true; }
-  if((z=d('data-f7gruppe'))){ S.ui.suGruppe=z.dataset.f7gruppe; saveUi(); haptik(6); e1Rendern(); return true; }
+  if((z=d('data-f7gruppe'))){ S.ui.suGruppe=z.dataset.f7gruppe; saveUi(); haptik(6); if(e1Art()!=='suche') e1Oeffnen('suche'); else e1Rendern(); return true; }   // Paket 9: aus der linken Spalte öffnet die Gruppe in der Mitte
   if(d('data-f7gruppezu')){ S.ui.suGruppe=null; saveUi(); e1Rendern(); return true; }
   if((z=d('data-f7plan'))){ e.preventDefault(); f7Plan().sicht=z.dataset.f7plan||'heute'; saveUi(); e1Oeffnen('plan'); return true; }
   if((z=d('data-f7plansicht'))){ f7Plan().sicht=z.dataset.f7plansicht; saveUi(); e1Rendern(); return true; }
@@ -5924,6 +5952,31 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) r
 /* jeder Kauf im Shop wandert als Zeile nach privat.kaeufe (Punkt 5.10) */
 { const _alt=kaufen; kaufen=function(kat){ const r=_alt(kat); if(r){ try{ const st=stufenGekauft(kat); FSLive.senden('datensatz_anlegen', { tabelle:'Käufe', felder:{ Kategorie:BELOHNUNG[kat].name+' · '+stufeName(kat, st), Stufe:st, Preis:(S.belohnung.kaeufe.slice(-1)[0]||{}).preis||0, Datum:heuteApp() } }).catch(()=>{}); }catch(e){} } return r; }; }
 setTimeout(()=>{ try{ appEffekteAnwenden(); }catch(e){} }, 1500);
+/* ══════════════════════════════════════════════════════════════════════
+   4.0 · Paket 9 · GERÄTE (Punkt 7.9): iPhone und iPad hoch eine Spalte; iPad quer und Mac drei Spalten ¼ · ½ · ¼.
+   Oben die Statusleiste in Teilen nebeneinander. Links Suche, Gruppen, Schnellplätze (öffnet in der Mitte).
+   Mitte die geöffnete Ansicht mit der Leiste. Rechts oben der Chat zur Ansicht, unten Erfassen. Kein schwebender 🔍.
+   ══════════════════════════════════════════════════════════════════════ */
+const F9_MQ=window.matchMedia ? window.matchMedia('(min-width: 1000px) and (orientation: landscape)') : null;
+function f9Breit(){ return !!(F9_MQ && F9_MQ.matches); }
+function f9Anwenden(){ try{ document.body.classList.toggle('breit', f9Breit()); layoutTopbarNeu(); f9Rendern(); }catch(e){ console.warn('Paket 9', e); } }
+function layoutTopbarNeu(){ try{ _tbH=-1; layoutTopbar(); }catch(e){} }
+const F9_SEITE={ fokus:'Fokus', postfach:'Postfach', statistik:'Statistik', belohnung:'Shop', einst:'Einstellungen' };
+function f9Rendern(){
+  if(!f9Breit()) return;
+  const L=el('slBody'), C=el('srChat'), E=el('srErf'); if(!L || !C || !E) return;
+  { const inp=el('slSuche'); if(inp && document.activeElement!==inp) inp.value=S.ui.suFrage||''; }
+  try{ L.innerHTML=f7SucheStartHtml(); }catch(e){ L.innerHTML='<div class="leer">—</div>'; }
+  const a=e1Art();
+  try{ C.innerHTML='<div class="sr-kopf">💬 '+esc(f7ChatEmpfaenger())+'<span>zur Ansicht: '+(F9_SEITE[seiteAktuell()]||'')+'</span></div>'+(a==='chat' ? '<div class="leer">Der Chat ist in der Mitte offen.</div>' : f7ChatHtml()); }catch(e){ C.innerHTML='<div class="leer">—</div>'; }
+  try{ E.innerHTML='<div class="sr-kopf">＋ Erfassen<span>'+(f7Erf().bezug==='karte' ? 'Bezug: Karte' : f7Erf().bezug==='agent' ? 'Agent entscheidet' : esc(f7Erf().bezugName||''))+'</span></div>'+(a==='erfassen' ? '<div class="leer">Erfassen ist in der Mitte offen.</div>' : f7ErfassenHtml()); }catch(e){ E.innerHTML='<div class="leer">—</div>'; }
+}
+{ const _alt=ebeneRendern; ebeneRendern=function(){ _alt(); try{ f9Rendern(); }catch(e){} }; }
+{ const _alt=f7Neu; f7Neu=function(){ _alt(); try{ f9Rendern(); }catch(e){} }; }
+document.addEventListener('input', e=>{ const t=e.target; if(t && t.id==='slSuche'){ S.ui.suFrage=t.value; saveUi(); if(e1Art()!=='suche'){ if(t.value.trim()) e1Oeffnen('suche'); } else e1Rendern(); } });
+document.addEventListener('keydown', e=>{ const t=e.target; if(t && t.id==='slSuche' && e.key==='Enter'){ e.preventDefault(); if(e1Art()!=='suche') e1Oeffnen('suche'); } });
+if(F9_MQ){ try{ F9_MQ.addEventListener('change', f9Anwenden); }catch(e){ try{ F9_MQ.addListener(f9Anwenden); }catch(x){} } }
+setTimeout(f9Anwenden, 300);
 function ladeAlles(){
   S.karten   = DB.get('karten', []);
   // v2.5.0 · NEBENBEFUND: Die Unteraufgaben wurden erst NACH ladeAlles() in
