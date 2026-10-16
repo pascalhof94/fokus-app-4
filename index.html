@@ -2483,6 +2483,83 @@ img.objimg.laedt{opacity:0}
 .f4-fb .rg{margin-top:10px;background:#1a1d22;border-radius:10px;padding:9px 10px}
 .f4-fb .rg .l{display:flex;justify-content:space-between;font-size:13.5px;gap:6px}.f4-fb .rg .b{position:relative;height:10px;border-radius:5px;background:#262a32;margin-top:7px}.f4-fb .rg .b i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,#c7c9ce,#e8e9ec)}.f4-fb .rg .b s{position:absolute;top:-3px;bottom:-3px;border-left:1.5px dotted #fff;margin-left:-1px}
 .f4-fb .rg small{display:block;font-size:11.5px;color:#9a9ca2;margin-top:5px}
+/* ══ 4.0 · Paket 6 · Statistik nach Punkt 4 (Module 11–19, 21) und Anordnung 4.6 ══════════════════════════ */
+#statistikBody .f6-filter{position:sticky;top:0;z-index:6;background:#000;border-bottom:1px solid #2a2d33;margin:0 -12px 8px;padding:8px 12px}
+#statistikBody .f6-gh{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:750;margin:16px 4px 8px;cursor:pointer;min-height:44px}
+#statistikBody .f6-gh small{font-size:11.5px;font-weight:500;color:#9a9ca2}
+#statistikBody .f6-gh .chev{margin-left:auto;width:20px;height:20px;transition:transform .15s}
+#statistikBody .f6-gh.zu .chev{transform:rotate(-90deg)}
+#statistikBody .stm .t{font-size:15px}
+.f6-st{font-size:12.5px;color:#9a9ca2;margin:-4px 0 6px}
+.f6-k{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.f6-k.c3{grid-template-columns:repeat(3,1fr)}
+.f6-k>div{background:#1a1d22;border-radius:9px;padding:8px 10px;min-width:0}
+.f6-k b{font-size:19px;display:inline-flex;align-items:center;gap:4px;line-height:1.15}
+.f6-k.c3 b{font-size:17px}
+.f6-k small{display:block;font-size:11.5px;color:#9a9ca2;margin-top:2px}
+.f6-k .sp{grid-column:1/3}
+.f6-lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:#9a9ca2;margin-top:4px}
+.f6-lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.f6-ex{margin-top:10px;padding:8px 10px;border-radius:9px;border:1px solid #2a2d33;font-size:12.5px;color:#9a9ca2;display:flex;justify-content:space-between;gap:8px;cursor:pointer}
+.f6-ex b{font-weight:600;color:#e8e9ec}
+.f6-ext{font-size:12.5px;color:#c9cbd0;line-height:1.4;margin-top:8px;padding:0 2px}
+.f6-ext p{margin:0 0 6px}
+.f6-ext b{color:#e8e9ec}
+/* 12 Ziel-Raster */
+.f6-gr{display:grid;grid-template-columns:58px repeat(var(--n,7),1fr);gap:4px 0;align-items:center;margin-top:4px;font-size:12px}
+.f6-gr span{text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.f6-gr .l{text-align:left;font-weight:700}
+.f6-gr .d{width:18px;height:18px;border-radius:50%;margin:auto}
+/* 13 Stundenleiter */
+.f6-sl{display:grid;grid-template-columns:104px minmax(0,1fr) 92px;gap:8px;align-items:center;margin-top:9px;font-size:13px}
+.f6-sl .n b{display:block;font-size:13px;line-height:1.15}.f6-sl .n small{color:#9a9ca2;font-size:11px}
+.f6-sl .bz,.f6-sl .bp{height:8px;border-radius:4px;background:#262a32;position:relative}
+.f6-sl .bp{margin-top:3px}
+.f6-sl .bz i,.f6-sl .bp i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.f6-sl .v{text-align:right;font-size:12px;white-space:nowrap}.f6-sl .v b{display:block;font-size:14px}
+/* 14 Readiness */
+.f6-ch{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.f6-ch span{padding:6px 11px;border-radius:15px;background:#1f2228;font-size:13px;font-weight:600;cursor:pointer;min-height:32px;display:inline-flex;align-items:center}
+.f6-ch .on{background:#e8e9ec;color:#000}
+/* 16 Routinen-Raster */
+.f6-hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.f6-tg{display:flex;gap:4px}
+.f6-tg span{padding:5px 10px;border-radius:13px;background:#1f2228;font-size:12.5px;font-weight:700;cursor:pointer}
+.f6-tg .on.d{background:#3b82f6;color:#fff}.f6-tg .on.p{background:#a855f7;color:#fff}
+.f6-rr{display:grid;grid-template-columns:108px repeat(7,1fr);gap:3px;margin-top:10px;font-size:12px;align-items:center}
+.f6-rr .h{color:#9a9ca2;text-align:center}
+.f6-rr .s{grid-column:1/9;color:#9a9ca2;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
+.f6-rr .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f6-rr .c{height:18px;border-radius:4px;background:#262a32}
+.f6-rr .c.g,.f6-lg .g{background:#3ecf8e}.f6-rr .c.y,.f6-lg .y{background:#f2b84b}.f6-rr .c.r,.f6-lg .r{background:#f66d6d}.f6-rr .c.x,.f6-lg .x{background:#262a32}
+.f6-rr .c.o,.f6-lg .o{background:transparent;border:1.5px dashed #9a9ca2}
+.f6-rr .c.a,.f6-lg .a{background:repeating-linear-gradient(45deg,#3ecf8e 0 3px,#1c1f25 3px 6px)}
+/* 17 Belastung */
+.f6-sec{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;font-size:14px;font-weight:700;cursor:pointer;gap:8px}
+.f6-sec span{font-size:15px;white-space:nowrap}
+.f6-sec small{font-size:11px;color:#9a9ca2;font-weight:500;margin-left:4px}
+/* 19 Spiel */
+.f6-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.f6-g>div{background:#1a1d22;border-radius:10px;padding:9px 10px;min-width:0}
+.f6-g h5{font-size:12px;color:#9a9ca2;font-weight:600;margin:0}
+.f6-g b{display:block;font-size:20px;margin-top:2px;line-height:1.15}
+.f6-g small{display:block;font-size:11.5px;color:#9a9ca2;margin-top:2px}
+.f6-g .sp{grid-column:1/3}
+.f6-bar{height:6px;border-radius:3px;background:#262a32;margin-top:7px;position:relative;overflow:hidden}
+.f6-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.f6-bar.farbe{display:flex;gap:2px;background:none}.f6-bar.farbe i{position:static;height:6px}
+.f6-tl{position:relative;margin-top:10px;display:flex;justify-content:space-between;gap:2px}
+.f6-tl:before{content:'';position:absolute;left:14px;right:14px;top:29px;height:2px;background:#3a3d44}
+.f6-tl .ev{position:relative;flex:1;min-width:0;text-align:center;font-size:11.5px;color:#9a9ca2;cursor:pointer}
+.f6-tl .ev b{display:block;color:#e8e9ec;font-size:12.5px;line-height:1.15}
+.f6-tl .ev i{display:block;width:16px;height:16px;border-radius:50%;margin:5px auto}
+/* 21 Claude */
+.f6-ag{margin-top:12px}
+.f6-ag div{display:grid;grid-template-columns:118px minmax(0,1fr) 80px;gap:8px;align-items:center;font-size:12.5px;padding:3px 0}
+.f6-ag div>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f6-ag .bar{height:10px;border-radius:5px;background:#1f2228;overflow:hidden;display:flex}
+.f6-ag .bar i{display:block;height:100%}
+.f6-ag span:last-child{text-align:right;color:#9a9ca2;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -2639,7 +2716,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-16-4';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-16-5';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -4364,6 +4441,521 @@ function renderFokus(){
     host.innerHTML=banner+f4KartenKernHtml(k)+'<div id="f4KarteTempo">'+f4KartenTempoHtml(k)+'</div>'+fokusSubsHtml(k)+f4NaechstesHtml(k)+(S.tag ? f4DerTagHtml()+f4MatrixHeuteHtml()+f4FlowBelastungHtml() : '');
   } finally { _fokusExakt=false; }
   fokusTacho(k);
+}
+/* ══════════════════════════════════════════════════════════════════════
+   4.0 · Paket 6 · STATISTIK nach Punkt 4 (Module 11–19 und 21) und Anordnung 4.6
+   Gruppen: 1 Heute · 2 Spiel · 3 Leistung und Geld · 4 Belastung und Erholung · 5 Aufgaben und Routinen · 6 System.
+   Die Filterleiste (Zeitraum · Familie · Kartenart) steht fest oben und gilt für alle Gruppen.
+   Die Module 01–10 der Gruppe Heute kommen aus Paket 5 (F4). Formatregel, 4-Tage-Regel und Farbrollen aus 4.1.
+   ══════════════════════════════════════════════════════════════════════ */
+const F6_GRUPPEN=[
+  { nr:1, name:'Heute', ids:['tag','matrixHeute'], offen:true },
+  { nr:2, name:'Spiel', ids:['spiel'] },
+  { nr:3, name:'Leistung und Geld', ids:['leistung','stundenleiter','konsistenz'] },
+  { nr:4, name:'Belastung und Erholung', ids:['belastung','erholung','readiness'] },
+  { nr:5, name:'Aufgaben und Routinen', ids:['flow','routinen'] },
+  { nr:6, name:'System', ids:['claude'] } ];
+const F6_TITEL={ tag:'Der Tag', matrixHeute:'Matrix heute', spiel:'Spiel', leistung:'Leistung · P/h je Tag', stundenleiter:'Stundenleiter', konsistenz:'Konsistenz und Ziele',
+  belastung:'Belastung · drei Modelle', erholung:'Erholung', readiness:'Readiness live', flow:'Aufgaben-Flow', routinen:'Routinen-Raster', claude:'Claude-Nutzung' };
+function f6GruppeZu(nr){ const z=(S.ui && S.ui.statGruppeZu)||{}; if(z[nr]!=null) return !!z[nr]; const g=F6_GRUPPEN.find(x=>x.nr===nr); return !(g && g.offen); }
+function f6Auf(key){ return !!(S.ui && S.ui.f6Auf && S.ui.f6Auf[key]); }
+function f6Kpis(list, cols){ return '<div class="f6-k'+(cols===3?' c3':'')+'">'+list.map(x=>'<div'+(x.sp?' class="sp"':'')+'><b'+(x.c?' style="color:'+x.c+'"':'')+'>'+x.w+'</b><small>'+x.s+'</small></div>').join('')+'</div>'; }
+function f6Modul(id, titel, haupt){ return statModul(id, titel, haupt, null, null, {tipp:false}); }
+function f6Leer(txt){ return '<div class="an-leer">'+esc(txt)+'</div>'; }
+function f6Ex(key, titel, text){ return '<div class="f6-ex" data-f6auf="'+key+'"><span><b>'+titel+'</b></span><span>'+(f6Auf(key)?'einklappen ▴':'aufklappen ▾')+'</span></div>'+(f6Auf(key) ? '<div class="f6-ext">'+text+'</div>' : ''); }
+function f6Dom(){ return (S.ui && S.ui.analyseDomain)||'alle'; }
+function f6Tag(d){ return (S.historie||[]).find(h=>h && h.datum===d && !h.luecke) || null; }
+function f6Heute(){ return heuteApp(); }
+/* Zeichenfläche W×H mit Rändern; X über Index, Y über Wert */
+function f6Achse(n, W, H, pL, pR, pT, pB, lo, hi){
+  return { X:i=>pL+(n<=1 ? (W-pL-pR)/2 : i/(n-1)*(W-pL-pR)), Xm:i=>pL+(i+0.5)/Math.max(1,n)*(W-pL-pR), Y:v=>pT+(1-(Math.max(lo,Math.min(hi,v))-lo)/Math.max(1e-9,hi-lo))*(H-pT-pB) };
+}
+function f6XLabels(labels, X, y, heute, groesse){
+  return labels.map((l,i)=>{ const ist=l===heute; return '<text x="'+X(i).toFixed(1)+'" y="'+y+'" text-anchor="middle" font-size="'+(groesse||11)+'" fill="'+(ist?'#e8e9ec':FARBE.GRAU)+'"'+(ist?' font-weight="700"':'')+'>'+(ist?'heute':esc(l.length===10 ? AN_WT[anWochentag(l)] : l))+'</text>'; }).join('');
+}
+function f6Wt(d){ return AN_WT[anWochentag(d)]; }
+function f6Min2(min){ return fmtDauer(min); }
+/* ── Rohdaten je Tag im Fenster: Stunden-Log nach Leiter-Art ── */
+function f6IntradayTage(von, bis, dom){
+  const kVon=new Map(S.karten.map(k=>[k.id,k])), je={};
+  (S.intraday||[]).forEach(e=>{ if(!e || !e.ts) return; const d=belFensterDatum(e.ts); if(d<von || d>bis) return;
+    if(['timer','autopause','nachtrag','korrektur','tick','unterzaehler','schlaf'].indexOf(e.typ)<0) return;
+    const k=kVon.get(e.kartenId); if(!k && e.typ!=='schlaf') return;
+    const dm=k ? k.domain : (e.domaene||'privat'); if(dom && dom!=='alle' && dm!==dom) return;
+    const a=k ? leiterArt(k) : 'erholung'; const q=je[d]||(je[d]={}); const z=q[a]||(q[a]={min:0, punkte:0, n:0});
+    z.min+=Math.max(num(e.minuten), num(e.tickMin)); z.punkte+=Math.max(0, num(e.punkte)); z.n++; });
+  return je;
+}
+/* ══ 11 · Leistung · P/h je Tag ══ */
+function f6Leistung(F, dom){
+  const heute=f6Heute(), labels=F.cur.map(e=>e.datum), g=diaGroessen();
+  const ph=labels.map(d=>{ const r=tagesRateDetail(d, dom); return r.rate!=null ? r.rate : null; });
+  const noetig=Math.max(0, num(g.tempoZiel)), echt=ph.filter(x=>x!=null);
+  const med=medianVon(echt), prevMed=medianVon(F.prev.map(e=>tagesRateDetail(e.datum, dom).rate).filter(x=>x!=null));
+  // heute: ● bisher, gestrichelt die Prognose (Tempo der letzten 60 Minuten auf den Rest des Tages)
+  let prog=null; try{ if(tagOffen()){ const K=diaTagKurve(belFensterDatum(jetztIso()),'alle'), now=belX(jetztIso()), t60=Math.max(0, K.wert(now)-K.wert(now-1));
+    prog=(g.punkteHeute+t60*g.stundenRest)/Math.max(0.25, g.stundenBisher+g.stundenRest); } }catch(e){ prog=null; }
+  let haupt;
+  if(labels.length<3) haupt=anSammelt(labels.length,3);
+  else{
+    const W=360, H=210, pL=30, pR=10, pT=16, pB=26, hi=Math.max(1, Math.max.apply(null, echt.concat([noetig, prog||0, med||0])))*1.1;
+    const A=f6Achse(labels.length, W, H, pL, pR, pT, pB, 0, hi), pts=[]; ph.forEach((v,i)=>{ if(v!=null) pts.push({x:A.X(i), y:A.Y(v), v, i}); });
+    let s='';
+    [0, hi/3, 2*hi/3, hi].forEach(v=>{ s+='<line x1="'+pL+'" y1="'+A.Y(v).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(v).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/><text x="'+(pL-4)+'" y="'+(A.Y(v)+3).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">'+fmtP(Math.round(v))+'</text>'; });
+    if(pts.length>1){ const gid=svgId('f6l');
+      s+=diaAmpelVerlaufDef(gid, pts, q=>diaAmpel(q.v, noetig))+'<defs><linearGradient id="'+gid+'f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.10)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient></defs>';
+      s+='<path d="'+glattPfad(pts)+' L'+pts[pts.length-1].x.toFixed(1)+' '+A.Y(0).toFixed(1)+' L'+pts[0].x.toFixed(1)+' '+A.Y(0).toFixed(1)+' Z" fill="url(#'+gid+'f)"/>';
+      s+='<path d="'+glattPfad(pts)+'" stroke="url(#'+gid+')" stroke-width="2.5" fill="none" stroke-linejoin="round"/>'; }
+    pts.forEach(q=>{ s+='<circle cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="2" fill="'+FARBE.GRAU+'"/>'; });
+    if(med!=null) s+='<line x1="'+pL+'" y1="'+A.Y(med).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(med).toFixed(1)+'" stroke="'+FARBE.GRAU+'" stroke-dasharray="5 4"/><text x="'+(W-pR-70)+'" y="'+(A.Y(med)-4).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">Median '+fmtP(Math.round(med))+'</text>';
+    if(noetig>0) s+='<line x1="'+pL+'" y1="'+A.Y(noetig).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(noetig).toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3"/><text x="'+(W-pR-2)+'" y="'+(A.Y(noetig)-4).toFixed(1)+'" font-size="10" fill="#e8e9ec" text-anchor="end">nötig ≈ '+fmtP(Math.round(noetig))+'</text>';
+    const iH=labels.indexOf(heute); if(iH>=0 && ph[iH]!=null){ const x=A.X(iH), y=A.Y(ph[iH]);
+      if(prog!=null && Math.abs(prog-ph[iH])>1) s+='<path d="M'+x.toFixed(1)+','+y.toFixed(1)+' L'+x.toFixed(1)+','+A.Y(prog).toFixed(1)+'" stroke="'+diaAmpel(prog, noetig)+'" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/><circle cx="'+x.toFixed(1)+'" cy="'+A.Y(prog).toFixed(1)+'" r="3" fill="none" stroke="#e8e9ec" stroke-dasharray="2 2"/>';
+      s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="6" fill="rgba(255,255,255,.2)"/><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3" fill="#fff"/>'; }
+    s+=f6XLabels(labels, A.X, H-6, heute);
+    haupt='<svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>';
+  }
+  haupt+='<div class="f6-st" style="margin-top:4px">Linienfarbe = P/h des Tages ÷ nötige P/h · heute: ● bisher, gestrichelt = Prognose</div>';
+  // Kennzahlen: Median · Vorwoche mit Pfeil · Bestwert mit Tag · Anteil geldnaher DFM-Zeit
+  let best=null; ph.forEach((v,i)=>{ if(v!=null && (best==null || v>best.v)) best={v, d:labels[i]}; });
+  const r=(prevMed>0 && med!=null) ? med/prevMed : null, dp=anDeltaPct(med, prevMed), st=r!=null ? tempopfeilStufe(r) : null;
+  const je=f6IntradayTage(F.von, F.bis, 'dfm'); let gm=0, dm=0; Object.keys(je).forEach(d=>{ ['geldnah','kommunikation','ohneGeld'].forEach(a=>{ const z=je[d][a]; if(!z) return; dm+=z.min; if(a==='geldnah') gm+=z.min; }); });
+  const geld=dm>0 ? Math.round(gm/dm*100) : null;
+  haupt+=f6Kpis([
+    { w:(med!=null ? fmtP(Math.round(med)) : '—')+' P/h', s:'Median '+labels.length+' Tage' },
+    { w:(r!=null ? tempopfeilSvg(r, 16)+' ' : '')+(dp!=null ? (dp>=0?'+':'')+Math.round(dp)+' %' : '—'), s:'zur Vorperiode', c:st ? st.c : null },
+    { w:(best ? fmtP(Math.round(best.v)) : '—')+' P/h', s:'Bestwert'+(best ? ' · '+AN_WT_LANG[new Date(best.d+'T12:00:00').getDay()] : '') },
+    { w:geld!=null ? geld+' %' : '—', s:'der DFM-Zeit geldnah', c:geld!=null ? (geld>=60 ? FARBE.GRUEN : geld>=40 ? FARBE.GELB : FARBE.ORANGE) : null } ]);
+  return f6Modul('leistung', 'Leistung · P/h je Tag', haupt);
+}
+/* ══ 12 · Konsistenz und Ziele ══ */
+function f6KonsistenzTage(F, dom){
+  // Werktage einzeln, Sa + So als ein Punkt
+  const out=[]; let we=null;
+  F.cur.forEach(e=>{ const d=e.datum, p=Math.max(0, num(anPunkte(e,dom))), z=Math.max(0, num(anZiel(dom, d)));
+    const dfm=Math.max(0, num(e.punkteDfm)), priv=Math.max(0, num(e.punktePrivat)), zd=Math.max(0, num(anZiel('dfm', d))), zp=Math.max(0, num(anZiel('privat', d)));
+    if(istWochenendTag(d)){ if(we && anTageDiff(we.von, d)===1 && anWochentag(d)===6){ we.p+=p; we.dfm+=dfm; we.priv+=priv; we.bis=d; we.tage.push(d); return; }
+      we={ label:'Sa+So', von:d, bis:d, p, dfm, priv, z, zd, zp, tage:[d], we:true }; out.push(we); return; }
+    we=null; out.push({ label:d, von:d, bis:d, p, dfm, priv, z, zd, zp, tage:[d] }); });
+  return out;
+}
+function f6Konsistenz(F, dom){
+  const heute=f6Heute(), T=f6KonsistenzTage(F, dom), labels=T.map(t=>t.label), pk=T.map(t=>t.p);
+  const med=medianVon(pk.filter((v,i)=>!T[i].tage.includes(heute))), ziel=medianVon(T.filter(t=>!t.we).map(t=>t.z))||medianVon(T.map(t=>t.z))||1;
+  let haupt;
+  if(T.length<3) haupt=anSammelt(T.length,3);
+  else{
+    const W=360, H=170, pL=30, pR=10, pT=14, pB=26, hi=Math.max(1, Math.max.apply(null, pk.concat([ziel, med||0])))*1.12, A=f6Achse(T.length, W, H, pL, pR, pT, pB, 0, hi);
+    let s='';
+    // Bänder: über Ziel grün · zwischen Median und Ziel gelblich · unter Median rot
+    const yZ=A.Y(ziel), yM=A.Y(med!=null ? Math.min(med, ziel) : ziel*0.75);
+    s+='<rect x="'+pL+'" y="'+pT+'" width="'+(W-pL-pR)+'" height="'+Math.max(0, yZ-pT).toFixed(1)+'" fill="rgba(62,207,142,.16)"/>';
+    s+='<rect x="'+pL+'" y="'+yZ.toFixed(1)+'" width="'+(W-pL-pR)+'" height="'+Math.max(0, yM-yZ).toFixed(1)+'" fill="rgba(242,184,75,.10)"/>';
+    s+='<rect x="'+pL+'" y="'+yM.toFixed(1)+'" width="'+(W-pL-pR)+'" height="'+Math.max(0, A.Y(0)-yM).toFixed(1)+'" fill="rgba(246,109,109,.12)"/>';
+    [0, hi/2, hi].forEach(v=>{ s+='<line x1="'+pL+'" y1="'+A.Y(v).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(v).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/><text x="'+(pL-4)+'" y="'+(A.Y(v)+3).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">'+anFmt(v)+'</text>'; });
+    s+='<line x1="'+pL+'" y1="'+yZ.toFixed(1)+'" x2="'+(W-pR)+'" y2="'+yZ.toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3"/><text x="'+(W-pR-2)+'" y="'+(yZ-4).toFixed(1)+'" font-size="10" fill="#e8e9ec" text-anchor="end">Ziel gesamt '+fmtP(Math.round(ziel))+'</text>';
+    if(med!=null) s+='<line x1="'+pL+'" y1="'+A.Y(med).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(med).toFixed(1)+'" stroke="'+FARBE.GRAU+'" stroke-dasharray="5 4"/><text x="'+(W-pR-70)+'" y="'+(A.Y(med)-4).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">Median '+fmtP(Math.round(med))+'</text>';
+    const pts=pk.map((v,i)=>({x:A.X(i), y:A.Y(v)}));
+    if(pts.length>1) s+='<path d="'+glattPfad(pts)+'" stroke="#e8e9ec" stroke-width="2.5" fill="none" stroke-linejoin="round"/>';
+    T.forEach((t,i)=>{ const x=A.X(i).toFixed(1), y=A.Y(t.p).toFixed(1);
+      if(t.tage.includes(heute)) s+='<circle cx="'+x+'" cy="'+y+'" r="6" fill="rgba(255,255,255,.2)"/><circle cx="'+x+'" cy="'+y+'" r="3" fill="#fff"/>';
+      else s+='<circle cx="'+x+'" cy="'+y+'" r="5" fill="'+bewertungDiskret(t.z>0 ? t.p/t.z : null)+'"/>'; });
+    s+=f6XLabels(labels, A.X, H-6, heute);
+    haupt='<svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>';
+  }
+  // Ziel-Raster je Familie und Tag
+  const E=erholungTage(Math.max(14, F.span+1)), erhZiel=f6ErholungZielMin();
+  const kreis=(q, ist)=>'<span><i class="d" style="'+(ist ? 'border:2px dashed #9a9ca2' : 'background:'+bewertungDiskret(q))+'"></i></span>';
+  if(T.length){
+    let gr='<div class="f6-st" style="margin:8px 0 4px">Ziel erreicht je Familie</div><div class="f6-gr" style="--n:'+T.length+'"><span></span>'+T.map(t=>'<span'+(t.tage.includes(heute)?' style="color:#e8e9ec;font-weight:700"':'')+'>'+(t.tage.includes(heute)?'heute':t.we?'Sa+So':f6Wt(t.label))+'</span>').join('');
+    gr+='<span class="l" style="color:'+FARBE.BLAU_HELL+'">DFM</span>'+T.map(t=>kreis(t.zd>0 ? t.dfm/t.zd : null, t.tage.includes(heute) && t.dfm<t.zd)).join('');
+    gr+='<span class="l" style="color:'+FARBE.LILA_HELL+'">Privat</span>'+T.map(t=>kreis(t.zp>0 ? t.priv/t.zp : null, t.tage.includes(heute) && t.priv<t.zp)).join('');
+    gr+='<span class="l" style="color:#99f6e4">🌿 Erh.</span>'+T.map(t=>{ let m=0; t.tage.forEach(d=>{ const x=E.je[d]; if(x) m+=Object.keys(x.min).reduce((a,k)=>a+x.min[k],0); }); const zz=erhZiel*t.tage.length;
+      return kreis(zz>0 ? m/zz : null, t.tage.includes(heute) && m<zz); }).join('');
+    haupt+=gr+'</div>';
+  }
+  // Kennzahlen: Werktage DFM-Ziel · Streuung · Zielsteuerung
+  const wk=T.filter(t=>!t.we && !t.tage.includes(heute)).slice(-5), wkIm=wk.filter(t=>t.zd>0 && t.dfm>=t.zd).length;
+  const mad=(med!=null && med>0) ? medianVon(pk.map(v=>Math.abs(v-med))) : null, streu=mad!=null ? Math.round(mad/med*100) : null;
+  let zs=null; try{ zs=e4Zielsteuerung(); }catch(e){ zs=null; }
+  const schritt=Math.max(0, num(S.settings.zielsteuerungSchritt,250));
+  haupt+=f6Kpis([
+    { w:wkIm+' von '+wk.length, s:'Werktage DFM-Ziel erreicht', c:wk.length ? bewertungDiskret(wkIm/wk.length) : null },
+    { w:streu!=null ? '± '+streu+' %' : '—', s:'Streuung um den Median' },
+    { w:(zs && zs.vorschlag>0) ? '+'+fmtP(zs.vorschlag) : 'Ziele halten', s:'Zielsteuerung Sonntag: +'+fmtP(schritt)+' erst ab 4 von 5 Werktagen im Ziel und Belastung grün'+(zs ? ' · diese Woche '+zs.dfmImZiel+' von '+zs.tage : ''), c:(zs && zs.vorschlag>0) ? FARBE.GRUEN : FARBE.GELB, sp:true } ]);
+  return f6Modul('konsistenz', 'Konsistenz · Tagespunkte um den Median', haupt);
+}
+function f6ErholungZielMin(){ return Math.max(1, num(S.settings.erholungZeitzielMin,120)); }
+/* ══ 13 · Stundenleiter · Zeit und Punkte je Art ══ */
+function f6Stundenleiter(F, dom){
+  const je=f6IntradayTage(F.von, F.bis, dom), L=e4Leiter(), sum={}; E4_ARTEN.forEach(a=>sum[a]={min:0, punkte:0});
+  Object.keys(je).forEach(d=>{ Object.keys(je[d]).forEach(a=>{ if(!sum[a]) return; sum[a].min+=je[d][a].min; sum[a].punkte+=je[d][a].punkte; }); });
+  const maxMin=Math.max(1, Math.max.apply(null, E4_ARTEN.map(a=>sum[a].min))), maxP=Math.max(1, Math.max.apply(null, E4_ARTEN.map(a=>sum[a].punkte)));
+  const FARB={ geldnah:[FARBE.BLAU_HELL, FARBE.BLAU], kommunikation:[FARBE.BLAU_HELL, FARBE.BLAU], ohneGeld:[FARBE.BLAU_HELL, FARBE.BLAU], privatWerkzeug:[FARBE.LILA_HELL, FARBE.LILA], erholung:['#99f6e4', F4.KUEHL], ablenkung:[FARBE.ROT, 'transparent'] };
+  const NAME={ geldnah:'DFM geldnah', kommunikation:'DFM Kommunikation', ohneGeld:'DFM ohne Geld', privatWerkzeug:'Privat-Werkzeug', erholung:'🌿 Erholung', ablenkung:'Ablenkung' };
+  let haupt='<div class="f6-st">'+esc(anZeitraumLabel())+' · '+(dom==='alle'?'Alle':dom==='dfm'?'DFM':'Privat')+'</div>';
+  E4_ARTEN.forEach(a=>{ const q=sum[a];
+    haupt+='<div class="f6-sl"><div class="n"><b style="color:'+FARB[a][0]+'">'+NAME[a]+'</b><small>'+fmtP(Math.max(0, num(L[a])))+' P/h</small></div>'+
+      '<div><div class="bz"><i style="width:'+(q.min/maxMin*100).toFixed(1)+'%;background:#e8e9ec"></i></div><div class="bp"><i style="width:'+(q.punkte/maxP*100).toFixed(1)+'%;background:'+FARB[a][1]+'"></i></div></div>'+
+      '<div class="v"><b>'+fmtP(Math.round(q.punkte))+' P</b>'+fmtDauer(q.min)+'</div></div>'; });
+  haupt+='<div class="f6-lg" style="margin-top:8px">obere Linie = Zeit (weiß) · untere Linie = Punkte (Familienfarbe) · Boni sind hier nicht enthalten</div>';
+  const dfmMin=sum.geldnah.min+sum.kommunikation.min+sum.ohneGeld.min, geld=dfmMin>0 ? Math.round(sum.geldnah.min/dfmMin*100) : null;
+  const minGes=E4_ARTEN.reduce((a,x)=>a+sum[x].min,0), pGes=E4_ARTEN.reduce((a,x)=>a+sum[x].punkte,0), ph=minGes>=1 ? pGes/(minGes/60) : null;
+  haupt+=f6Kpis([
+    { w:geld!=null ? geld+' %' : '—', s:'der DFM-Zeit geldnah', c:geld!=null ? (geld>=60 ? FARBE.GRUEN : geld>=40 ? FARBE.GELB : FARBE.ORANGE) : null },
+    { w:ph!=null ? fmtP(Math.round(ph))+' P/h' : '—', s:'Ø aller Zeitpunkte' },
+    { w:fmtDauer(sum.ablenkung.min), s:'Ablenkung', c:sum.ablenkung.min>0 ? FARBE.ORANGE : FARBE.GRUEN } ], 3);
+  return f6Modul('stundenleiter', 'Stundenleiter · Zeit und Punkte je Art', haupt);
+}
+/* ══ 14 · Readiness live ══ */
+const F6_READ_X=[['akku','Akku am Start'],['schlaf','Schlafdauer'],['erholung','Erholung am Vortag'],['aufstehen','Aufstehzeit']];
+function f6ReadinessPunkteBis(d, nowX, dom){
+  let p=0; (S.intraday||[]).forEach(e=>{ if(!e || !e.ts || e.nurZeit || num(e.punkte)<=0) return; if(belFensterDatum(e.ts)!==d) return;
+    if(dom && dom!=='alle' && e.domaene!==dom) return; if(belX(e.ts)<=nowX) p+=num(e.punkte); });
+  return p;
+}
+function f6Readiness(F, dom){
+  const heute=f6Heute(), nowX=belX(jetztIso()), wahl=(S.ui && S.ui.f6ReadX)||'akku', E=erholungTage(Math.max(15, F.span+2));
+  const xWert=d=>{ const h=d===heute && tagOffen() ? S.tag : f6Tag(d); if(!h) return null;
+    if(wahl==='akku') return h.akku!=null ? num(h.akku) : null;
+    if(wahl==='schlaf') return (h.morgen && h.morgen.schlafMin!=null) ? num(h.morgen.schlafMin)/60 : null;
+    if(wahl==='erholung'){ const v=E.je[anVorTage(d,1)]; return v ? Object.keys(v.min).reduce((a,k)=>a+v.min[k],0)/60 : null; }
+    if(wahl==='aufstehen'){ const ts=(h.morgen && h.morgen.aufstehTs) || h.startTs; return ts ? belX(ts) : null; }
+    return null; };
+  const pts=F.cur.map(e=>({ d:e.datum, x:xWert(e.datum), y:f6ReadinessPunkteBis(e.datum, nowX, dom) })).filter(q=>q.x!=null);
+  const uhr=anFmtUhr(nowX)+' Uhr';
+  let haupt='<div class="f6-st">jeder Punkt = ein Tag, so wie er um '+uhr+' stand · die Wolke wandert mit der Uhr</div>';
+  haupt+='<div class="f6-ch">'+F6_READ_X.map(x=>'<span class="'+(wahl===x[0]?'on':'')+'" data-f6readx="'+x[0]+'">'+x[1]+'</span>').join('')+'</div>';
+  let kpis;
+  if(pts.length<4){ haupt+=anSammelt(pts.length,4); kpis=null; }
+  else{
+    const xs=pts.map(q=>q.x), ys=pts.map(q=>q.y), xMin=wahl==='akku' ? 0 : Math.min.apply(null, xs), xMax=wahl==='akku' ? 100 : Math.max.apply(null, xs), yMax=Math.max(1, Math.max.apply(null, ys))*1.08;
+    const nx=v=>xMax>xMin ? (v-xMin)/(xMax-xMin) : 0.5, ny=v=>v/yMax;
+    const W=400, H=300, pL=40, pR=6, pT=8, pB=40, X=v=>pL+nx(v)*(W-pL-pR), Y=v=>pT+(1-ny(v))*(H-pT-pB), pt=(a,b)=>(pL+a*(W-pL-pR)).toFixed(1)+','+(pT+(1-b)*(H-pT-pB)).toFixed(1);
+    let s='<rect x="'+pL+'" y="'+pT+'" width="'+(W-pL-pR)+'" height="'+(H-pT-pB)+'" fill="rgba(246,109,109,.10)"/>';
+    s+='<polygon points="'+pt(.15,.15)+' '+pt(.86,1)+' '+pt(1,1)+' '+pt(1,.86)+'" fill="rgba(62,207,142,.22)"/>';
+    s+='<polygon points="'+pt(.15,.15)+' '+pt(1,.86)+' '+pt(1,0)+' '+pt(.32,0)+'" fill="rgba(242,184,75,.10)"/>';
+    s+='<line x1="'+X(xMin+(xMax-xMin)*.15).toFixed(1)+'" y1="'+Y(yMax*.15).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+pT+'" stroke="#3ecf8e" stroke-dasharray="3 3"/>';
+    s+='<text x="'+(pL+10)+'" y="'+(pT+22)+'" font-size="15" font-weight="700" fill="'+FARBE.ORANGE+'">Überlastung</text><text x="'+(pL+10)+'" y="'+(pT+38)+'" font-size="11" fill="'+FARBE.GRAU+'">wenig Akku, viel Leistung</text>';
+    s+='<text x="'+(W-pR-8)+'" y="'+(H-pB-26)+'" font-size="15" font-weight="700" fill="'+FARBE.GELB+'" text-anchor="end">Unterlastung</text><text x="'+(W-pR-8)+'" y="'+(H-pB-10)+'" font-size="11" fill="'+FARBE.GRAU+'" text-anchor="end">viel Akku, wenig Leistung</text>';
+    { const cx=pL+.6*(W-pL-pR), cy=pT+(1-.66)*(H-pT-pB); s+='<text x="'+cx.toFixed(1)+'" y="'+cy.toFixed(1)+'" font-size="12" font-weight="700" fill="'+FARBE.GRUEN+'" transform="rotate(-36 '+cx.toFixed(1)+' '+cy.toFixed(1)+')" text-anchor="middle">optimal</text>'; }
+    pts.forEach(q=>{ if(q.d===heute) return; s+='<circle cx="'+X(q.x).toFixed(1)+'" cy="'+Y(q.y).toFixed(1)+'" r="4.5" fill="'+FARBE.GRAU+'" fill-opacity=".85"/>'; });
+    const h0=pts.find(q=>q.d===heute); if(h0){ const cx=X(h0.x), cy=Y(h0.y); s+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="9" fill="rgba(255,255,255,.2)"/><circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="5" fill="#fff"/><text x="'+(cx+12).toFixed(1)+'" y="'+(cy+4).toFixed(1)+'" font-size="11" fill="#e8e9ec" font-weight="700">heute</text>'; }
+    const fx=v=>wahl==='akku' ? Math.round(v)+' %' : wahl==='aufstehen' ? anFmtUhr(v) : (Math.round(v*10)/10).toString().replace('.',',')+' Std.';
+    s+='<text x="'+pL+'" y="'+(H-pB+16)+'" font-size="10" fill="'+FARBE.GRAU+'">'+fx(xMin)+'</text><text x="'+(W-pR)+'" y="'+(H-pB+16)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">'+fx(xMax)+'</text>';
+    s+='<text x="'+((W+pL)/2)+'" y="'+(H-pB+32)+'" font-size="11" fill="'+FARBE.GRAU+'" text-anchor="middle">'+F6_READ_X.find(x=>x[0]===wahl)[1]+' →</text>';
+    s+='<text x="14" y="'+((H-pB)/2)+'" font-size="11" fill="'+FARBE.GRAU+'" transform="rotate(-90 14 '+((H-pB)/2)+')" text-anchor="middle">Punkte bis '+uhr+' →</text>';
+    haupt+='<svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true" style="margin-top:6px">'+s+'</svg>';
+    const mx=anMean(xs), my=anMean(ys); let sxy=0,sxx=0,syy=0; pts.forEach(q=>{ sxy+=(q.x-mx)*(q.y-my); sxx+=(q.x-mx)*(q.x-mx); syy+=(q.y-my)*(q.y-my); });
+    const r=(sxx>0&&syy>0)?sxy/Math.sqrt(sxx*syy):0, ar=Math.abs(r), opt=pts.filter(q=>readinessOptimal(nx(q.x), ny(q.y))).length;
+    const schuld=Math.max(0, num(S.meta && S.meta.schlaf && S.meta.schlaf.schuldStd));
+    kpis=[ { w:'r = '+(Math.round(r*100)/100).toFixed(2).replace('.',','), s:ar>=0.6 ? 'starker Zusammenhang' : ar>=0.3 ? 'schwacher Zusammenhang' : 'kein Zusammenhang', c:ar>=0.6?FARBE.GRUEN:ar>=0.3?FARBE.GELB:null },
+      { w:opt+' von '+pts.length, s:'Tage um diese Uhrzeit optimal', c:FARBE.GRUEN },
+      { w:schuld>0 ? fmtDauer(schuld*60) : '0 Min.', s:'Schlafschuld', c:schuld>0 ? FARBE.ORANGE : FARBE.GRUEN } ];
+  }
+  if(kpis) haupt+=f6Kpis(kpis, 3);
+  return f6Modul('readiness', 'Readiness · Stand '+uhr, haupt);
+}
+/* ══ 15 · Aufgaben-Flow (DFM) ══ */
+function f6Flow(F, dom){
+  const heute=f6Heute(), fl=anFlowReihe('dfm', {routinen:true}), labels=F.cur.map(e=>e.datum), rr=labels.map(d=>reinRausTag(fl, d));
+  const kVon=new Map(S.karten.map(k=>[k.id,k])), ohneGrund={}; let schubGes=0;
+  (S.intraday||[]).forEach(e=>{ if(!e || !e.ts || e.typ!=='schub' || !schubZaehlt(e)) return; const k=kVon.get(e.kartenId); if(!k || k.domain!=='dfm' || kartenArt(k)!=='Aufgabe') return;
+    const d=belFensterDatum(e.ts); if(d<F.von || d>F.bis) return; schubGes++; if(num(e.punkte)<0) ohneGrund[d]=(ohneGrund[d]||0)+1; });
+  const rausAvg=anMean(rr.map(x=>x.raus))||0;
+  let haupt;
+  if(!labels.length) haupt=f6Leer('keine Daten');
+  else{
+    const W=360, H=220, pL=26, pR=6, pT=20, pB=26, n=labels.length, mx=Math.max(2, Math.max.apply(null, rr.map(x=>Math.max(x.rein, x.raus))))*1.15;
+    const A=f6Achse(n, W, H, pL, pR, pT, pB, -mx, mx), bw=Math.max(8, (W-pL-pR)/n*0.62), y0=A.Y(0);
+    let s='';
+    [-mx, -mx/2, 0, mx/2, mx].forEach(v=>{ s+='<line x1="'+pL+'" y1="'+A.Y(v).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(v).toFixed(1)+'" stroke="'+(v===0?'rgba(255,255,255,.4)':'rgba(255,255,255,.08)')+'"/><text x="'+(pL-4)+'" y="'+(A.Y(v)+3).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">'+(v<0?'−':'')+Math.round(Math.abs(v))+'</text>'; });
+    rr.forEach((x,i)=>{ const cx=A.Xm(i), netto=x.rein-x.raus;
+      if(x.rein>0) s+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+A.Y(x.rein).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(y0-A.Y(x.rein)).toFixed(1)+'" rx="3" fill="'+FARBE.GRAU+'" fill-opacity=".75"/>';
+      if(x.raus>0) s+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+y0.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(A.Y(-x.raus)-y0).toFixed(1)+'" rx="3" fill="'+bewertungDiskret(rausAvg>0 ? x.raus/rausAvg : 1)+'"/>';
+      if(ohneGrund[labels[i]]) s+='<circle cx="'+cx.toFixed(1)+'" cy="'+(y0+Math.max(14, (A.Y(-x.raus)-y0)/2)).toFixed(1)+'" r="4" fill="'+FARBE.ROT+'"/>';
+      s+='<text x="'+cx.toFixed(1)+'" y="'+(A.Y(Math.max(0,x.rein))-6).toFixed(1)+'" font-size="11.5" font-weight="700" text-anchor="middle" fill="'+(netto<0?FARBE.GRUEN:netto>0?FARBE.ROT:FARBE.GRAU)+'">'+(netto>0?'+':'')+netto+'</text>'; });
+    s+=f6XLabels(labels, A.Xm, H-6, heute);
+    haupt='<svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>';
+  }
+  haupt+='<div class="f6-lg"><span><i style="background:'+FARBE.GRAU+'"></i>rein (grau)</span><span><i style="background:'+FARBE.GRUEN+'"></i>raus (Ampel gegen Ø)</span><span>Zahl = Netto des Tages</span><span style="color:'+FARBE.ROT+'">● geschoben ohne Grund</span></div>';
+  const netto=anSum(rr.map(x=>x.rein-x.raus)), backlog=S.karten.filter(k=>k.status==='offen' && k.domain==='dfm' && istAufgabeKarte(k)).length;
+  let start=null; try{ start=anFlowStartBestand('dfm', F.von); }catch(e){ start=null; }
+  const trend=start!=null ? (backlog<start ? '↘' : backlog>start ? '↗' : '→') : '', trendC=backlog<start ? FARBE.GRUEN : backlog>start ? FARBE.ROT : FARBE.GRAU;
+  const ueber=S.karten.filter(k=>k.status==='offen' && k.domain==='dfm' && istAufgabeKarte(k) && k.faelligkeit && k.faelligkeit<heute).length;
+  const og=Object.keys(ohneGrund).reduce((a,d)=>a+ohneGrund[d],0), rausGes=anSum(rr.map(x=>x.raus)), quote=(rausGes+schubGes)>0 ? Math.round(og/(rausGes+schubGes)*100) : null;
+  haupt+=f6Kpis([
+    { w:(netto>0?'+':'')+netto, s:'Netto '+anZeitraumLabel()+' · Backlog '+(netto<0?'schrumpft':netto>0?'wächst':'bleibt'), c:netto<0?FARBE.GRUEN:netto>0?FARBE.ROT:null },
+    { w:backlog+(trend ? ' <span style="font-size:15px;color:'+trendC+'">'+trend+'</span>' : ''), s:'Backlog offen' },
+    { w:String(ueber), s:'überfällig jetzt', c:ueber>0 ? FARBE.ROT : FARBE.GRUEN },
+    { w:quote!=null ? quote+' %' : '—', s:'geschoben ohne Grund', c:quote!=null ? (quote<=5 ? FARBE.GELBGRUEN : quote<=15 ? FARBE.GELB : FARBE.ROT) : null } ]);
+  return f6Modul('flow', 'Aufgaben-Flow (DFM) · rein oben, raus unten', haupt);
+}
+/* ══ 16 · Routinen-Raster ══ */
+function f6RoutineStatus(k, d, heute){
+  // erledigt g · teilweise y · verpasst ohne Grund r · nicht fällig oder mit Grund x · heute offen o
+  if(d===heute && tagOffen()){ const f=routineFaellig(k, d); if(!f) return 'x'; if(zielErreicht(k)) return 'g'; return tickAnzahlHeute(k)>0 ? 'y' : 'o'; }
+  const h=f6Tag(d); if(!h) return 'x';
+  const a=(h.routinenAuswertung||[]).find(x=>x && x.id===k.id);
+  if(a){ if(a.erfuellt) return 'g'; if(!a.faellig || a.entscheidung==='ueberspringen') return 'x'; return num(a.ticks)>0 ? 'y' : 'r'; }
+  const b=(h.routinenBilanz||[]).find(x=>x && x.id===k.id);
+  if(b) return b.verpasst ? 'r' : 'x';
+  const log=(h.log||[]).some(l=>l && l.art==='Routine' && l.itemId===k.id && num(l.punkte)>0); if(log) return 'g';
+  return routineFaellig(k, d) ? 'r' : 'x';
+}
+function f6Routinen(F, dom){
+  const heute=f6Heute(), rd=(S.ui && S.ui.f6RoutDom)||'privat', tage=[]; for(let i=6;i>=0;i--) tage.push(anVorTage(heute, i));
+  const routinen=S.karten.filter(k=>k && k.rhythmus && k.status!=='archiviert' && k.domain===rd && !istSonderRolle(k));
+  const bl=tagesBloecke()||[], gruppen={}, reihenfolge=[];
+  routinen.forEach(k=>{ const id=karteBlockId(k, bl), b=id ? bl.find(x=>x.id===id) : null, name=b ? b.name : (k.gruppePflicht ? String(k.gruppePflicht) : 'Weitere');
+    if(!gruppen[name]){ gruppen[name]=[]; reihenfolge.push(name); } gruppen[name].push(k); });
+  const stat={}; routinen.forEach(k=>{ stat[k.id]=tage.map(d=>f6RoutineStatus(k, d, heute)); });
+  let haupt='<div class="f6-hd"><span></span><div class="f6-tg"><span class="d'+(rd==='dfm'?' on':'')+'" data-f6routdom="dfm">DFM</span><span class="p'+(rd==='privat'?' on':'')+'" data-f6routdom="privat">Privat</span></div></div>';
+  if(!routinen.length) haupt+=f6Leer('keine Routinen in dieser Familie');
+  else{
+    haupt+='<div class="f6-rr"><span></span>'+tage.map(d=>'<span class="h"'+(d===heute?' style="color:#e8e9ec;font-weight:700"':'')+'>'+(d===heute?'heute':f6Wt(d))+'</span>').join('');
+    reihenfolge.forEach(name=>{ haupt+='<span class="s">'+esc(name)+'</span>'; gruppen[name].forEach(k=>{ haupt+='<span class="n">'+esc(k.titel||'?')+'</span>'+stat[k.id].map(s=>'<i class="c '+s+'"></i>').join(''); }); });
+    haupt+='</div>';
+    if(rd==='dfm'){ let ws=null; try{ ws=e4WochenserieTag(heute); }catch(e){ ws=null; }
+      const tageWs=[]; for(let i=4;i>=0;i--){ const d=anVorTage(heute, i); if(anWochentag(d)<5) tageWs.push(d); }
+      const st=tageWs.map(d=>{ try{ return e4WochenserieTag(d); }catch(e){ return null; } });
+      haupt+='<div class="f6-st" style="margin-top:8px">Wochenserie DFM: '+tageWs.map((d,i)=>f6Wt(d)+' '+(st[i]===true?'✓':st[i]===false?'✗':'·')).join(' · ')+' · komplett = +'+fmtP(Math.max(0, num(S.settings.wochenserieBonus,300)))+'</div>'; }
+  }
+  haupt+='<div class="f6-lg" style="margin-top:8px"><span><i class="g"></i>erledigt</span><span><i class="y"></i>teilweise</span><span><i class="r"></i>verpasst ohne Grund</span><span><i class="x"></i>nicht fällig / mit Grund geschoben</span><span><i class="o"></i>heute offen</span></div>';
+  // Kennzahlen: Muss erfüllt · schwächste · längste Serie · verpasst ohne Grund mit Münzen
+  let mussF=0, mussE=0, schw=null, verp=0, muenzen=0;
+  routinen.forEach(k=>{ const s=stat[k.id]; let f=0, e=0; s.forEach((x,i)=>{ if(x==='g'||x==='y'||x==='r'||x==='o'){ f++; if(x==='g') e++; } if(x==='r'){ verp++; } });
+    if(k.pflicht===true){ mussF+=f; mussE+=e; }
+    if(f>=3){ const q=e/f; if(!schw || q<schw.q) schw={k, q, e, f}; } });
+  tage.forEach(d=>{ const h=f6Tag(d); if(!h) return; (h.routinenAuswertung||[]).forEach(a=>{ if(a && a.abzug>0 && routinen.some(k=>k.id===a.id)) muenzen+=num(a.abzug); }); });
+  if(!muenzen) muenzen=verp*Math.max(0, num(S.settings.abzugOhneGrund,50));
+  let serie=null; routinen.forEach(k=>{ if(num(k.streak)>0 && (!serie || num(k.streak)>serie.n)) serie={ n:num(k.streak), k }; });
+  haupt+=f6Kpis([
+    { w:mussF ? Math.round(mussE/mussF*100)+' %' : '—', s:'Muss-Routinen erfüllt', c:mussF ? bewertungDiskret(mussE/mussF) : null },
+    { w:schw ? esc(String(schw.k.titel||'?').slice(0,16)) : '—', s:'schwächste Routine'+(schw ? ' · '+schw.e+' von '+schw.f : '') },
+    { w:serie ? serie.n+' Tage' : '—', s:'längste Serie'+(serie ? ' · '+esc(String(serie.k.titel||'').slice(0,22)) : '') },
+    { w:String(verp), s:'verpasst ohne Grund'+(verp ? ' · −'+fmtP(muenzen)+' Münzen' : ''), c:verp>0 ? FARBE.ROT : FARBE.GRUEN } ]);
+  return f6Modul('routinen', 'Routinen · 7 Tage', haupt);
+}
+/* ══ 17 · Belastung · drei Modelle ══ */
+function f6TageslastVon(d){ const heute=f6Heute(); if(d===heute && tagOffen()) return urlaubHeute() ? null : Math.max(0, tagesPunkteLive()-0.5*e4ErholungPunkteTag(aktuelleTagId())); const h=f6Tag(d); if(!h) return 0; return h.urlaub ? null : e4Tageslast(h); }
+function f6Belastung(F, dom){
+  const heute=f6Heute(), B=f4Belastung(), z=acwrZonen();
+  let haupt='<div class="f6-st">drei Modelle nebeneinander beobachten · welches passt zu dir?</div>';
+  // 1 · Spitzen- ÷ Dauerlast (ACWR)
+  const zone=acwrZone(B.acwr);
+  haupt+='<div class="f6-sec" data-f6auf="bel1">1 · Spitzen- ÷ Dauerlast (ACWR)<small>'+(f6Auf('bel1')?'▴':'▾')+'</small><span style="color:'+zone.c+';margin-left:auto">'+(B.acwr!=null ? B.acwr.toFixed(2).replace('.',',')+' '+zone.name : '—')+'</span></div>';
+  if(F.alle.length<8) haupt+=anSammelt(F.alle.length,8);
+  else{ const P=anAcwrReihe(F.alle, heute, 28, dom, 'punkte'), n=P.labels.length, W=360, H=120, pL=26, pR=6, pT=4, pB=14, A=f6Achse(n, W, H, pL, pR, pT, pB, 0, 2);
+    let s='<rect x="'+pL+'" y="'+pT+'" width="'+(W-pL-pR)+'" height="'+(A.Y(z.e)-pT).toFixed(1)+'" fill="rgba(246,109,109,.16)"/><rect x="'+pL+'" y="'+A.Y(z.e).toFixed(1)+'" width="'+(W-pL-pR)+'" height="'+(A.Y(z.o)-A.Y(z.e)).toFixed(1)+'" fill="rgba(255,159,10,.14)"/>'+
+      '<rect x="'+pL+'" y="'+A.Y(z.o).toFixed(1)+'" width="'+(W-pL-pR)+'" height="'+(A.Y(z.u)-A.Y(z.o)).toFixed(1)+'" fill="rgba(62,207,142,.16)"/><rect x="'+pL+'" y="'+A.Y(z.u).toFixed(1)+'" width="'+(W-pL-pR)+'" height="'+(A.Y(0)-A.Y(z.u)).toFixed(1)+'" fill="rgba(242,184,75,.10)"/>';
+    [z.e, z.o, z.u].forEach(v=>{ s+='<text x="2" y="'+(A.Y(v)+3).toFixed(1)+'" font-size="9.5" fill="'+FARBE.GRAU+'">'+v.toFixed(1).replace('.',',')+'</text>'; });
+    const pts=[]; P.vals.forEach((v,i)=>{ if(v!=null) pts.push({x:A.X(i), y:A.Y(Math.min(2,v))}); });
+    if(pts.length>1) s+='<path d="'+glattPfad(pts)+'" stroke="#e8e9ec" stroke-width="2.5" fill="none" stroke-linejoin="round"/>';
+    if(pts.length) s+='<circle cx="'+pts[pts.length-1].x.toFixed(1)+'" cy="'+pts[pts.length-1].y.toFixed(1)+'" r="3.5" fill="#fff"/>';
+    s+='<text x="'+pL+'" y="'+(H-3)+'" font-size="9" fill="'+FARBE.GRAU+'">'+anKurzDatum(P.labels[0])+'</text><text x="'+(W-pR)+'" y="'+(H-3)+'" font-size="9" fill="#e8e9ec" text-anchor="end">heute</text>';
+    haupt+='<svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>'; }
+  if(f6Auf('bel1')) haupt+='<div class="f6-ext"><p><b>Was das Modell misst:</b> das Verhältnis der Last der letzten 7 Tage (akut) zur Last der letzten 28 Tage (chronisch).</p><p><b>Wie gerechnet wird:</b> Tageslast = Tagespunkte minus die Hälfte der Erholungspunkte, nie unter null. Ø der letzten 7 Tage geteilt durch Ø der letzten 28 Tage.</p><p><b>Zonen:</b> unter 0,8 zu wenig · 0,8 bis 1,3 optimal · bis 1,5 hoch · darüber Risiko.</p><p><b>Quelle:</b> Gabbett, British Journal of Sports Medicine (Acute:Chronic Workload Ratio).</p><p><b>Was du tun kannst:</b> bei „hoch" einen leichteren Tag oder mehr Erholung einplanen, bei „zu wenig" die Last schrittweise anheben.</p></div>';
+  // 2 · Monotonie je Woche (Foster)
+  const wochen=[]; for(let w=3; w>=0; w--){ const mo=anVorTage(heute, anWochentag(heute)+7*w), werte=[]; for(let i=0;i<7;i++){ const d=anVorTage(mo, -i); if(d>heute) break; const v=f6TageslastVon(d); if(v!=null) werte.push(v); }
+    let m=null; if(werte.length>=3){ const mw=werte.reduce((a,b)=>a+b,0)/werte.length, sd=Math.sqrt(werte.reduce((a,b)=>a+(b-mw)*(b-mw),0)/werte.length); m=sd>0 ? mw/sd : (mw>0 ? 9 : 0); }
+    wochen.push({ kw:isoKW(mo), wert:m, laeuft:w===0 }); }
+  const mono=B.mono;
+  haupt+='<div class="f6-sec" data-f6auf="bel2">2 · Monotonie je Woche (Foster)<small>'+(f6Auf('bel2')?'▴':'▾')+'</small><span style="color:'+(mono.farbe||FARBE.GRAU)+';margin-left:auto">'+(mono.wert!=null ? (Math.round(mono.wert*10)/10).toFixed(1).replace('.',',')+' '+mono.text : '—')+'</span></div>';
+  { const W=360, H=90, pL=26, pR=6, mx=Math.max(2.5, Math.max.apply(null, wochen.map(x=>x.wert||0))*1.1), Y=v=>12+(1-Math.min(mx,v)/mx)*(80-12), bw=(W-pL-pR)/4*0.62;
+    let s='<line x1="'+pL+'" y1="'+Y(2).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(2).toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3" opacity=".7"/><text x="'+(W-pR)+'" y="'+(Y(2)-4).toFixed(1)+'" font-size="9.5" fill="#e8e9ec" text-anchor="end">Grenze 2,0</text>';
+    wochen.forEach((w,i)=>{ const cx=pL+(i+0.5)*(W-pL-pR)/4; if(w.wert!=null){ const c=w.wert<1.5 ? FARBE.GELBGRUEN : w.wert<2 ? FARBE.GELB : FARBE.ROT;
+        s+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+Y(w.wert).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(80-Y(w.wert)).toFixed(1)+'" rx="4" fill="'+c+'"'+(w.laeuft?' opacity=".6"':'')+'/>'; }
+      s+='<text x="'+cx.toFixed(1)+'" y="'+(H)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="middle">KW '+w.kw+(w.laeuft?' (läuft)':'')+'</text>'; });
+    haupt+='<svg class="an-svg" viewBox="0 0 '+W+' '+(H+4)+'" aria-hidden="true">'+s+'</svg>'; }
+  haupt+='<div class="f6-st">hoch = jeder Tag gleich schwer, zu wenig Wechsel aus Last und Erholung</div>';
+  if(f6Auf('bel2')) haupt+='<div class="f6-ext"><p><b>Was das Modell misst:</b> wie gleichförmig die Tageslast innerhalb einer Woche ist.</p><p><b>Wie gerechnet wird:</b> Ø Tageslast der Woche geteilt durch die Standardabweichung der Tageslasten.</p><p><b>Zonen:</b> unter 1,5 gut · 1,5 bis 2,0 erhöht · über 2,0 hoch.</p><p><b>Quelle:</b> Foster, Monitoring training in athletes with reference to overtraining syndrome (1998).</p><p><b>Was du tun kannst:</b> schwere und leichte Tage bewusst abwechseln; ein freier Samstag senkt die Monotonie.</p></div>';
+  // 3 · Dauerlast und Rang
+  const r=B.rang, rang=num(r.rang,1);
+  haupt+='<div class="f6-sec" data-f6auf="bel3">3 · Dauerlast und Rang<small>'+(f6Auf('bel3')?'▴':'▾')+'</small><span style="margin-left:auto">Rang '+rang+'</span></div>';
+  { const tage=[]; for(let i=27;i>=0;i--) tage.push(anVorTage(heute, i)); const dl=tage.map(d=>e4Dauerlast(d)), n=tage.length;
+    const sUnten=e4RangSchwelle(rang), sOben=rang<10 ? e4RangSchwelle(rang+1) : null, sTief=rang>1 ? e4RangSchwelle(rang-1) : 0;
+    const lo=Math.max(0, Math.min(sTief, Math.min.apply(null, dl))*0.9), hi=Math.max(sOben!=null ? sOben*1.12 : 1, Math.max.apply(null, dl)*1.12, sUnten*1.12, 1);
+    const W=360, H=110, pL=26, pR=6, pT=20, pB=8, A=f6Achse(n, W, H, pL, pR, pT, pB, lo, hi); let s='';
+    [[sOben, 'R'+(rang+1)], [sUnten, 'R'+rang], [sTief, 'R'+(rang-1)]].forEach(q=>{ if(q[0]==null || (q[1]==='R0')) return; s+='<line x1="'+pL+'" y1="'+A.Y(q[0]).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(q[0]).toFixed(1)+'" stroke="'+FARBE.GRAU+'" stroke-dasharray="3 3" opacity=".6"/><text x="2" y="'+(A.Y(q[0])+4).toFixed(1)+'" font-size="9.5" fill="'+FARBE.GRAU+'">'+q[1]+'</text>'; });
+    const pts=dl.map((v,i)=>({x:A.X(i), y:A.Y(v)})); if(pts.length>1) s+='<path d="'+glattPfad(pts)+'" stroke="#e8e9ec" stroke-width="2.5" fill="none" stroke-linejoin="round"/>';
+    s+='<circle cx="'+pts[n-1].x.toFixed(1)+'" cy="'+pts[n-1].y.toFixed(1)+'" r="3.5" fill="#fff"/>';
+    if(sOben!=null) s+='<rect x="'+(W-pR-150)+'" y="3" width="150" height="14" rx="3" fill="none" stroke="'+FARBE.GRUEN+'" stroke-dasharray="3 2"/><text x="'+(W-pR-75)+'" y="13" font-size="9" fill="'+FARBE.GRUEN+'" text-anchor="middle">'+Math.max(1, num(S.settings.rangAufstiegTage,7))+' Tage über R'+(rang+1)+' = Aufstieg</text>';
+    haupt+='<svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>'; }
+  if(f6Auf('bel3')) haupt+='<div class="f6-ext"><p><b>Was das Modell misst:</b> die Dauerlast als Ø Tageslast über 28 Tage; aus ihr folgt der Rang.</p><p><b>Wie gerechnet wird:</b> jeden Morgen Ø der letzten 28 Tage (Urlaub ausgenommen, Tage ohne Eintrag zählen 0). Aufstieg nach '+Math.max(1, num(S.settings.rangAufstiegTage,7))+' Tagen am Stück über der nächsten Schwelle, Abstieg erst nach '+Math.max(1, num(S.settings.rangAbstiegTage,14))+' Tagen unter der eigenen.</p><p><b>Zonen:</b> die Rang-Schwellen R1 bis R10 aus den Einstellungen.</p><p><b>Quelle:</b> Banister, Impulse-Response-Modell der Trainingsbelastung (chronische Last).</p><p><b>Was du tun kannst:</b> die Dauerlast steigt nur über viele gleichmäßige Tage, nicht über einzelne Spitzen.</p></div>';
+  haupt+=f6Kpis([ { w:fmtP(Math.round(B.dauerlast))+' / Tag', s:'Dauerlast (28 Tage)' }, { w:fmtP(Math.round(B.spitzenlast))+' / Tag', s:'Spitzenlast (7 Tage)' } ]);
+  haupt+='<div class="f6-st" style="margin-top:8px">Mikro- und Makro-Erholung (Sonnentag) stehen im Modul 🌿 Erholung direkt darunter.</div>';
+  return f6Modul('belastung', 'Belastung · 28 Tage', haupt);
+}
+/* ══ 18 · Erholung (Sonnentag) · 14 Tage ══ */
+function f6ErholungTage(n){
+  // je Tag: Mikro = Erholung an einem Werktag zwischen erster und letzter DFM-Sitzung · Makro = Abend, Wochenende, freier Samstag
+  const heute=f6Heute(), tage=[]; for(let i=n-1;i>=0;i--) tage.push(anVorTage(heute, i));
+  const kVon=new Map(S.karten.map(k=>[k.id,k])), je={}; tage.forEach(d=>{ je[d]={ mikro:0, makro:0, mikroN:0, dfmVon:null, dfmBis:null, dfmMin:0, abendDfm:false, erh:[] }; });
+  (S.intraday||[]).forEach(e=>{ if(!e || !e.ts) return; const d=belFensterDatum(e.ts), q=je[d]; if(!q) return; const k=kVon.get(e.kartenId);
+    const min=Math.max(num(e.minuten), num(e.tickMin)); if(min<=0) return;
+    if(e.erholung && !(k && k.rolle==='schlafen')){ q.erh.push({ x:belX(e.ts), min }); return; }
+    if(k && k.domain==='dfm' && SITZUNG_TYPEN.indexOf(e.typ)>=0){ const bis=belX(e.ts), von=bis-min/60; q.dfmMin+=min; if(q.dfmVon==null || von<q.dfmVon) q.dfmVon=von; if(q.dfmBis==null || bis>q.dfmBis) q.dfmBis=bis; if(bis>18) q.abendDfm=true; } });
+  if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs)){ const k=S.karten.find(x=>x.id===S.fokus.karteId), q=je[heute]; if(k && q){ const min=(Date.now()-S.fokus.startMs)/60000; if(leiterArt(k)==='erholung') q.erh.push({ x:belX(jetztIso()), min }); else if(k.domain==='dfm'){ q.dfmMin+=min; const bis=belX(jetztIso()); if(q.dfmVon==null) q.dfmVon=bis-min/60; q.dfmBis=bis; if(bis>18) q.abendDfm=true; } } }
+  tage.forEach(d=>{ const q=je[d], we=istWochenendTag(d); q.erh.forEach(x=>{ const mikro=!we && q.dfmVon!=null && q.dfmBis!=null && x.x>=q.dfmVon && x.x<=q.dfmBis; if(mikro){ q.mikro+=x.min; q.mikroN++; } else q.makro+=x.min; });
+    q.gesamt=q.mikro+q.makro; q.frei=anWochentag(d)===5 && q.dfmMin<1 && d<heute; });
+  return { tage, je };
+}
+function f6Erholung(F, dom){
+  const heute=f6Heute(), ziel=f6ErholungZielMin(), E=f6ErholungTage(14), h0=E.je[heute];
+  let haupt='<div class="f6-st">Mikro = Pausen im Arbeitstag · Makro = Abend, Wochenende, freier Samstag</div>';
+  { const W=360, H=222, pL=34, pR=6, pT=14, pB=22, mx=Math.max(ziel*1.5, Math.max.apply(null, E.tage.map(d=>E.je[d].gesamt)))*1.05, Y=v=>pT+(1-Math.min(mx,v)/mx)*(H-pT-pB), n=E.tage.length, bw=(W-pL-pR)/n*0.75;
+    let s=''; for(let h=60; h<mx; h+=60){ s+='<line x1="'+pL+'" y1="'+Y(h).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(h).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/><text x="0" y="'+(Y(h)+4).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'">'+(h/60)+' Std.</text>'; }
+    s+='<line x1="'+pL+'" y1="'+Y(ziel).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(ziel).toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3"/><text x="'+(W-pR)+'" y="'+(Y(ziel)-4).toFixed(1)+'" font-size="10" fill="#e8e9ec" text-anchor="end">Ziel '+fmtDauer(ziel)+'</text>';
+    E.tage.forEach((d,i)=>{ const q=E.je[d], x=pL+(i+0.5)*(W-pL-pR)/n-bw/2, y0=Y(0);
+      if(q.mikro>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(q.mikro).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(y0-Y(q.mikro)).toFixed(1)+'" fill="#99f6e4"/>';
+      if(q.makro>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(q.gesamt).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(Y(q.mikro)-Y(q.gesamt)).toFixed(1)+'" rx="2" fill="'+F4.KUEHL+'"/>';
+      if(q.frei) s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(Y(q.gesamt)-5).toFixed(1)+'" font-size="9" fill="'+FARBE.GRUEN+'" text-anchor="middle">frei ✓</text>';
+      s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-6)+'" font-size="9" fill="'+(d===heute?'#e8e9ec':FARBE.GRAU)+'" text-anchor="middle"'+(d===heute?' font-weight="700"':'')+'>'+(d===heute?'heute':f6Wt(d))+'</text>'; });
+    haupt+='<svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>'; }
+  haupt+='<div class="f6-lg"><span><i style="background:#99f6e4"></i>Mikro (Pausen im Arbeitstag)</span><span><i style="background:'+F4.KUEHL+'"></i>Makro (Abend, Wochenende)</span><span style="color:'+FARBE.GRUEN+'">frei ✓ = freier Samstag gehalten</span></div>';
+  const letzte7=E.tage.slice(-7), werk=E.tage.filter(d=>!istWochenendTag(d) && d!==heute), mikroAvg=werk.length ? anMean(werk.map(d=>E.je[d].mikroN)) : null;
+  const tage2=letzte7.filter(d=>E.je[d].gesamt>=ziel).length, abende=letzte7.filter(d=>!E.je[d].abendDfm).length;
+  haupt+=f6Kpis([
+    { w:fmtDauer(h0.gesamt), s:'Erholung heute · Ziel '+fmtDauer(ziel), c:h0.gesamt>=ziel ? FARBE.GRUEN : h0.gesamt>=ziel/2 ? FARBE.GELB : FARBE.ORANGE },
+    { w:String(h0.mikroN), s:'Mikro-Pausen heute'+(mikroAvg!=null ? ' · Ø '+Math.round(mikroAvg) : ''), c:mikroAvg!=null ? (h0.mikroN>=mikroAvg ? FARBE.GELBGRUEN : FARBE.GELB) : null },
+    { w:tage2+' von 7', s:'Tage mit ≥ '+fmtDauer(ziel)+' Erholung', c:bewertungDiskret(tage2/7) },
+    { w:abende+' von 7', s:'Abende ohne DFM (abschalten)', c:bewertungDiskret(abende/7) } ]);
+  haupt+=f6Ex('erh', 'Was misst das Modell?', '<p><b>Mikro-Erholung</b> sind Erholungskarten und Pausen an einem Werktag zwischen der ersten und der letzten DFM-Sitzung. <b>Makro-Erholung</b> ist alles andere: der Abend nach der letzten DFM-Sitzung, das Wochenende und der freie Samstag.</p><p><b>Erholungspunkte</b> (200 P/h) zählen in der Belastung nur zur Hälfte, so entlasten sie die Spitzen- und Dauerlast (ACWR-Entlastung = Erholungspunkte × 0,5). Heute: '+fmtP(Math.round(e4ErholungPunkteTag(aktuelleTagId())))+' Erholungspunkte, Entlastung '+fmtP(Math.round(e4ErholungPunkteTag(aktuelleTagId())*0.5))+'.</p><p><b>Abend ohne DFM</b> heißt: nach 18:00 Uhr keine DFM-Sitzung mehr.</p>');
+  return f6Modul('erholung', '🌿 Erholung · 14 Tage', haupt);
+}
+/* ══ 19 · Spiel · Was heute noch geht · Meilensteine ══ */
+function f6SpielDaten(){
+  const g=diaGroessen(), d=heuteGehtDaten(), r=e4Rang(), o=S.tag ? e4Outfit() : null, st=ausmalStand(), A=ausmalState(), ks=kaufStand(), F=farbeHerkunftHeute();
+  const fehltDfm=Math.max(0, g.zielDfm-g.dfm), nochDrin=d.nochDrin!=null ? Math.max(0, d.nochDrin) : null;
+  const zielLage=nochDrin==null ? 'sammelt noch Daten' : g.dfm>=g.zielDfm ? 'DFM-Ziel erreicht' : nochDrin>=fehltDfm*1.2 ? 'DFM-Ziel erreichbar' : nochDrin>=fehltDfm ? 'DFM-Ziel knapp erreichbar' : 'DFM-Ziel heute nicht mehr erreichbar';
+  // Tage je Meilenstein aus dem Tempo der letzten 7 Tage
+  const aktiv=aktiveRateTage(7).filter(x=>x!==belFensterDatum(jetztIso()));
+  const oePkt=anMean(aktiv.map(x=>{ const sn=tagSnapshot(x); return sn ? Math.max(0, num(sn.punkteBilanz)) : null; }))||0;
+  const oeMz=anMean(aktiv.map(x=>{ const sn=tagSnapshot(x); return sn ? Math.max(0, num(sn.spielZufluss)) : null; }))||oePkt;
+  const restHeute=Math.max(0, g.prognoseHeute-g.punkteHeute);
+  const tage=(fehlt, proTag)=> fehlt<=0 ? 0 : (fehlt<=restHeute ? 0 : (proTag>0 ? Math.ceil((fehlt-restHeute)/proTag) : null));
+  const ms=[];
+  // Outfit: die nächste Stufe heute
+  const nx=o ? e4OutfitNaechste() : null;
+  if(o && nx) ms.push({ t:0, art:'outfit', titel:'Outfit '+(o.stufe+1), farbe:FARBE.GRUEN });
+  // Kauf
+  let kauf=null; if(ks && ks.ziel){ kauf={ fehlt:ks.fehlt, ziel:ks.ziel, t:tage(ks.fehlt, oeMz) }; if(kauf.t!=null) ms.push({ t:kauf.t, art:'kauf', titel:'Kauf: '+ks.ziel.name, farbe:FARBE.GOLD }); }
+  // Kulisse fertig: offene Felder × Fassung eines Topfes als Farbe-Bedarf
+  let kul=null; try{ const offen=Math.max(0, st.felder-st.gefaerbt), T=topfFassung(); if(st.felder>0 && offen>0 && T>0){ const bedarf=offen*T, t=tage(bedarf, oePkt); kul={ offen, bedarf, t }; if(t!=null) ms.push({ t, art:'kulisse', titel:'Kulisse '+st.kulisse+' fertig', farbe:F4.KUEHL }); } }catch(e){ kul=null; }
+  // Rang: Tage, bis die Dauerlast die nächste Schwelle erreicht, plus die Aufstiegstage
+  let rangT=null, rangNoch=null, rangPlus=null; if(r.rang<10){ const sw=e4RangSchwelle(r.rang+1), dl=num(r.dauerlast), L=oePkt, N=Math.max(7, num(S.settings.rangTage,28)), auf=Math.max(1, num(S.settings.rangAufstiegTage,7));
+    rangNoch=Math.max(0, sw-dl); const alt=f6TageslastVon(anVorTage(f6Heute(), N))||0; rangPlus=(g.zielHeute-alt)/N;
+    if(dl>=sw) rangT=Math.max(0, auf-num(r.tageUeber)); else if(L>dl) rangT=Math.ceil((sw-dl)*N/(L-dl))+auf; else rangT=null;
+    ms.push({ t:rangT, art:'rang', titel:'Rang '+(r.rang+1), farbe:null, offen:rangT==null }); }
+  return { g, d, r, o, st, A, ks, F, nochDrin, zielLage, ms, kauf, kul, rangNoch, rangPlus, nx, konto:konto() };
+}
+function f6Spiel(F, dom){
+  let D; try{ D=f6SpielDaten(); }catch(e){ console.warn('Spiel', e); return f6Modul('spiel', 'Was heute noch geht', f6Leer('nicht verfügbar')); }
+  const g=D.g, o=D.o, r=D.r, st=D.st;
+  let haupt='<div class="f6-st">je Ebene: was bis Tagesende bei deinem Tempo drin ist</div><div class="f6-g">';
+  haupt+='<div><h5>Punkte</h5><b style="color:'+FARBE.GELBGRUEN+'">'+(D.nochDrin!=null ? '≈ +'+fmtP(Math.round(D.nochDrin)) : '—')+'</b><small>bis Tagesende · '+D.zielLage+'</small><div class="f6-bar"><i style="width:'+Math.max(0, Math.min(100, g.dfm/Math.max(1, g.zielDfm)*100)).toFixed(1)+'%;background:'+verlauf(FARBE.BLAU)+'"></i></div></div>';
+  if(o){ const rest=Math.max(0, o.decke-o.stufe), nxTxt=D.nx==='erholung' ? '🌿 Erholung (15 Min)' : D.nx==='leistung' ? '⚙ DFM-Fokusblock (90 Min)' : null;
+    haupt+='<div><h5>Outfit</h5><b>'+(rest>0 ? '+'+rest+' Stufe'+(rest>1?'n':'') : 'Decke erreicht')+'</b><small>'+(nxTxt ? 'nächste: '+nxTxt+' · Outfit '+(o.stufe+1) : 'Stufe '+o.stufe+' · '+esc(e4OutfitName(o.stufe)))+'</small><div class="f6-bar"><i style="width:'+Math.max(0, Math.min(100, (o.stufe-(o.start-2))/Math.max(1, o.decke-(o.start-2))*100)).toFixed(1)+'%;background:'+FARBE.GRUEN+'"></i></div></div>'; }
+  else haupt+='<div><h5>Outfit</h5><b>—</b><small>kein Tag offen</small></div>';
+  { const f=D.F, ges=f.warm+f.gelb+f.kuehl, min=['warm','gelb','kuehl'].sort((a,b)=>f[a]-f[b])[0], NAME={warm:'warm', gelb:'gelb', kuehl:'kühl'}, QUELLE={warm:'DFM geldnah macht sie fertig', gelb:'Privat macht sie fertig', kuehl:'Erholung macht sie fertig'}, C={warm:F4.WARM, gelb:F4.SONNE, kuehl:F4.KUEHL};
+    haupt+='<div><h5>Farbe · Kulisse '+st.kulisse+'</h5><b>'+Math.round(st.anteil*100)+' %</b><small>'+(ges>0 ? 'heute fehlt vor allem <span style="color:'+C[min]+'">'+NAME[min]+'</span> → '+QUELLE[min] : 'heute noch keine Farbe')+'</small><div class="f6-bar farbe">'+['warm','gelb','kuehl'].map(c=>'<i style="width:'+(ges>0 ? f[c]/ges*100 : 0).toFixed(1)+'%;background:'+C[c]+'"></i>').join('')+'<i style="flex:1;background:#262a32"></i></div></div>'; }
+  if(D.ks && D.ks.ziel){ const geldStd=D.ks.fehlt/Math.max(1, num(e4Leiter().geldnah,600)); haupt+='<div><h5>Münzen</h5><b style="color:'+FARBE.GOLD+'">'+(D.ks.fehlt>0 ? 'fehlen '+fmtP(Math.round(D.ks.fehlt)) : 'Kauf möglich')+'</b><small>'+esc(D.ks.ziel.name)+' Stufe '+D.ks.ziel.stufe+(D.ks.fehlt>0 ? ' · ≈ '+fmtDauer(geldStd*60)+' geldnah' : '')+'</small><div class="f6-bar"><i style="width:'+(D.ks.anteil*100).toFixed(1)+'%;background:'+FARBE.GOLD+'"></i></div></div>'; }
+  else haupt+='<div><h5>Münzen</h5><b style="color:'+FARBE.GOLD+'">'+fmtP(D.konto)+'</b><small>alles gekauft oder gesperrt</small></div>';
+  if(r.rang<10) haupt+='<div class="sp"><h5>Rang</h5><b>Rang '+r.rang+' · noch '+fmtP(Math.round(D.rangNoch))+' / Tag bis Rang '+(r.rang+1)+'</b><small>Dauerlast steigt heute um ≈ '+(D.rangPlus>=0?'+':'−')+fmtP(Math.round(Math.abs(D.rangPlus)))+' / Tag, wenn du dein Ziel erreichst</small><div class="f6-bar"><i style="width:'+Math.max(0, Math.min(100, num(r.dauerlast)/Math.max(1, e4RangSchwelle(r.rang+1))*100)).toFixed(1)+'%;background:'+verlauf(FARBE.WEISS)+'"></i></div></div>';
+  else haupt+='<div class="sp"><h5>Rang</h5><b>Rang 10 · Spitze</b><small>oberste Stufe der Leiter</small></div>';
+  haupt+='</div>';
+  const m1=f6Modul('spiel', 'Was heute noch geht', haupt);
+  // Meilensteine · ab jetzt — Tagesstufen, je Tag genau ein Eintrag (Vorrang Rang > Kulisse fertig > Kauf > Outfit), Tipp zeigt alle
+  const PRIO={ rang:4, kulisse:3, kauf:2, outfit:1 }, jeTag={}; D.ms.forEach(m=>{ const key=m.t==null ? 'offen' : String(m.t); (jeTag[key]=jeTag[key]||[]).push(m); });
+  const keys=Object.keys(jeTag).filter(k=>k!=='offen').map(Number).sort((a,b)=>a-b).map(String).concat(jeTag.offen ? ['offen'] : []);
+  let tl='<div class="f6-tl"><div class="ev">jetzt<i style="background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.2)"></i></div>';
+  keys.forEach(k=>{ const l=jeTag[k].slice().sort((a,b)=>PRIO[b.art]-PRIO[a.art]), top=l[0], lbl=k==='offen' ? 'offen' : k==='0' ? 'heute' : '+'+k+' Tag'+(k==='1'?'':'e');
+    tl+='<div class="ev" data-f6ms="'+esc(l.map(x=>x.titel).join(' · '))+'">'+lbl+'<i style="'+(top.farbe ? 'background:'+top.farbe : 'background:transparent;border:2px dashed #e8e9ec')+'"></i><b>'+esc(top.titel)+(l.length>1 ? ' <small>+'+(l.length-1)+'</small>' : '')+'</b></div>'; });
+  tl+='</div>';
+  if(!keys.length) tl=f6Leer('keine Meilensteine berechenbar');
+  const galerie=(D.A.fertig||[]).length;
+  const h2='<div class="f6-st">Prognose bei deinem Tempo der letzten 7 Tage · Tipp auf einen Tag zeigt alle</div>'+tl+
+    '<div class="f6-g"><div><h5>Konto</h5><b style="color:'+FARBE.GOLD+'">'+fmtP(D.konto)+'</b><small>Münzen</small></div><div><h5>Galerie</h5><b>'+galerie+' Kulisse'+(galerie===1?'':'n')+'</b><small>fertig ausgemalt</small></div></div>';
+  return m1+f6Modul('meilensteine', 'Meilensteine · ab jetzt', h2);
+}
+/* ══ 21 · Claude-Nutzung (dfm.agenten_protokoll aus FocusSystem, live gelesen) ══ */
+let _f6Claude={ ts:0, laeuft:false, rows:null, fehler:'' };
+function f6ClaudeLaden(){
+  if(_f6Claude.laeuft) return; if(!FSLive.gekoppelt()){ _f6Claude.fehler='nicht gekoppelt'; return; }
+  _f6Claude.laeuft=true;
+  const ab=anVorTage(f6Heute(), 13)+'T00:00:00', rows=[], felder=['Lauf','Zeit','Agent','Auslöser','Start','Dauer (s)','Tokens ein','Tokens aus'];
+  const seite=(versatz)=>FSLive.lesen('datensaetze_auflisten', { tabelle:'Agenten-Protokoll', felder, filter:[{ feld:'Zeit', operator:'groesser_gleich', wert:ab }], sortierung:[{ feld:'Zeit', richtung:'auf' }], limit:100, versatz })
+    .then(d=>{ const l=(d && d.datensaetze)||[]; l.forEach(x=>rows.push(x)); if(l.length===100 && versatz<1900) return seite(versatz+100); });
+  seite(0).then(()=>{ _f6Claude={ ts:Date.now(), laeuft:false, rows, fehler:'' }; if(seiteAktuell()==='statistik') renderStatistik(); })
+    .catch(e=>{ _f6Claude.laeuft=false; _f6Claude.ts=Date.now(); _f6Claude.fehler=(e && e.message)||'Fehler'; if(seiteAktuell()==='statistik') renderStatistik(); });
+}
+function f6ClaudeFeld(x, name){ const f=x && (x.felder||x); if(!f) return null; if(f[name]!==undefined) return f[name]; const k=Object.keys(f).find(q=>q.toLowerCase()===name.toLowerCase()); return k ? f[k] : null; }
+function f6Claude(F, dom){
+  const heute=f6Heute();
+  if(!_f6Claude.rows || Date.now()-_f6Claude.ts>5*60000) f6ClaudeLaden();
+  let haupt='<div class="f6-st">Messung aller Agentenläufe · Betrieb über das Claude-Abo</div>';
+  if(!_f6Claude.rows){ haupt+=f6Leer(_f6Claude.laeuft ? 'lädt aus FocusSystem …' : (_f6Claude.fehler==='nicht gekoppelt' ? 'nicht mit FocusSystem gekoppelt' : 'FocusSystem nicht erreichbar · '+_f6Claude.fehler)); return f6Modul('claude', '🤖 Claude-Nutzung · heute', haupt); }
+  // je Lauf: Agent, Auslöser, Tag, Dauer (höchster Wert), Tokens (Summe)
+  const laeufe={}; _f6Claude.rows.forEach(x=>{ const id=f6ClaudeFeld(x,'Lauf')||x.id, zeit=f6ClaudeFeld(x,'Start')||f6ClaudeFeld(x,'Zeit'); if(!zeit) return;
+    const d=String(zeit).slice(0,10), L=laeufe[id]||(laeufe[id]={ agent:f6ClaudeFeld(x,'Agent')||'?', art:f6ClaudeFeld(x,'Auslöser')||'Takt', d, dauer:0, ein:0, aus:0 });
+    L.dauer=Math.max(L.dauer, num(f6ClaudeFeld(x,'Dauer (s)'))); L.ein+=num(f6ClaudeFeld(x,'Tokens ein')); L.aus+=num(f6ClaudeFeld(x,'Tokens aus')); });
+  const alle=Object.keys(laeufe).map(k=>laeufe[k]), heuteL=alle.filter(l=>l.d===heute);
+  const tage=[]; for(let i=13;i>=0;i--) tage.push(anVorTage(heute, i));
+  const jeTag={}; tage.forEach(d=>jeTag[d]={ takt:0, live:0 }); alle.forEach(l=>{ const q=jeTag[l.d]; if(q) q[l.art==='live'?'live':'takt']++; });
+  const werk=tage.filter(d=>d<heute && !istWochenendTag(d)).slice(-4), avg=werk.length ? anMean(werk.map(d=>jeTag[d].takt+jeTag[d].live)) : null;
+  const dauer=heuteL.reduce((a,l)=>a+l.dauer,0), ein=heuteL.reduce((a,l)=>a+l.ein,0), aus=heuteL.reduce((a,l)=>a+l.aus,0), mio=v=>(Math.round(v/1e5)/10).toFixed(1).replace('.',',')+' Mio.';
+  const rahmen=num(S.settings.claudeAboTokensTag), anteil=rahmen>0 ? Math.round((ein+aus)/rahmen*100) : null;
+  haupt+='<div class="f6-k"><div><b>'+heuteL.length+'</b> Läufe<small>'+(avg!=null ? 'Ø '+Math.round(avg)+' · letzte '+werk.length+' Werktage' : 'noch kein Vergleich')+'</small></div><div><b>'+fmtDauer(dauer/60)+'</b><small>Laufzeit gesamt</small></div>'+
+    '<div><b>'+mio(ein+aus)+'</b> Tokens<small>ein '+mio(ein)+' · aus '+mio(aus)+'</small></div><div><b style="color:'+(anteil==null ? FARBE.GRAU : anteil<60 ? FARBE.GRUEN : anteil<85 ? FARBE.GELB : FARBE.ROT)+'">'+(anteil!=null ? anteil+' %' : '—')+'</b><small>vom Abo-Rahmen, soweit messbar</small></div></div>';
+  // je Agent bzw. Team
+  const jeAgent={}; heuteL.forEach(l=>{ const q=jeAgent[l.agent]||(jeAgent[l.agent]={ takt:0, live:0, dauer:0 }); q[l.art==='live'?'live':'takt']++; q.dauer+=l.dauer; });
+  const agenten=Object.keys(jeAgent).sort((a,b)=>(jeAgent[b].takt+jeAgent[b].live)-(jeAgent[a].takt+jeAgent[a].live)), mxA=Math.max(1, Math.max.apply(null, agenten.map(a=>jeAgent[a].takt+jeAgent[a].live).concat([1])));
+  if(agenten.length){ haupt+='<div class="f6-ag">'+agenten.map(a=>{ const q=jeAgent[a]; return '<div><span>'+esc(a)+'</span><span class="bar"><i style="width:'+(q.takt/mxA*100).toFixed(1)+'%;background:'+FARBE.BLAU+'"></i><i style="width:'+(q.live/mxA*100).toFixed(1)+'%;background:'+FARBE.LILA+'"></i></span><span>'+(q.takt+q.live)+' · '+fmtDauer(q.dauer/60)+'</span></div>'; }).join('')+'</div>';
+    haupt+='<div class="f6-lg"><span><i style="background:'+FARBE.BLAU+'"></i>Takt</span><span><i style="background:'+FARBE.LILA+'"></i>live, während du aktiv bist</span></div>'; }
+  else haupt+=f6Leer('heute noch kein Lauf');
+  // Verlauf 14 Tage
+  { const W=360, H=192, pL=30, pR=6, pT=14, pB=22, mx=Math.max(5, Math.max.apply(null, tage.map(d=>jeTag[d].takt+jeTag[d].live).concat([avg||0])))*1.1, Y=v=>pT+(1-Math.min(mx,v)/mx)*(H-pT-pB), n=tage.length, bw=(W-pL-pR)/n*0.8;
+    let s=''; [mx/3, 2*mx/3, mx].forEach(v=>{ s+='<line x1="'+pL+'" y1="'+Y(v).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(v).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/><text x="0" y="'+(Y(v)+3).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'">'+Math.round(v)+'</text>'; });
+    tage.forEach((d,i)=>{ const q=jeTag[d], x=pL+(i+0.5)*(W-pL-pR)/n-bw/2, y0=Y(0);
+      if(q.takt) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(q.takt).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(y0-Y(q.takt)).toFixed(1)+'" rx="3" fill="'+FARBE.BLAU+'"/>';
+      if(q.live) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(q.takt+q.live).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(Y(q.takt)-Y(q.takt+q.live)).toFixed(1)+'" rx="3" fill="'+FARBE.LILA+'"/>';
+      s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-6)+'" font-size="9.5" fill="'+(d===heute?'#ff9f40':FARBE.GRAU)+'" text-anchor="middle">'+d.slice(8,10)+'.</text>'; });
+    if(avg!=null) s+='<line x1="'+pL+'" y1="'+Y(avg).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(avg).toFixed(1)+'" stroke="#ff9f40" stroke-dasharray="4 3"/><text x="'+(W-pR)+'" y="'+(Y(avg)-4).toFixed(1)+'" font-size="9.5" fill="#ff9f40" text-anchor="end">Ø '+werk.length+' Werktage</text>';
+    haupt+='<div class="blk-h" style="margin:14px 0 4px">Läufe · 14 Tage</div><svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>'; }
+  haupt+=f6Ex('claude', '▸ Erklärung: was gemessen wird und woher', '<p><b>Quelle:</b> die Tabelle Agenten-Protokoll in FocusSystem. Jeder Lauf eines Agenten trägt dort Start, Dauer, Modell, Tokens ein und aus sowie den Auslöser (Takt oder live).</p><p><b>Gezählt wird</b> je Lauf-Kennung einmal; die Laufzeit ist die Dauer des Laufs, Tokens sind die Summe über den Lauf. Die App liest die letzten 14 Tage live über die Verbindung zu FocusSystem, höchstens alle 5 Minuten neu.</p><p><b>Abo-Rahmen:</b> der Anteil wird nur gezeigt, wenn ein Tagesrahmen in Tokens bekannt ist (Einstellung claudeAboTokensTag); sonst „—".</p>');
+  return f6Modul('claude', '🤖 Claude-Nutzung · heute', haupt);
+}
+/* ══ Gruppe Heute: die Blöcke der Fokusseite (Paket 5) ══ */
+function f6HeuteTag(){
+  let h=''; const t=fn=>{ try{ h+=fn(); }catch(e){ console.warn('Statistik Heute', e); } };
+  t(()=>'<div class="blk f4-dt"><div class="blk-h">Der Tag</div>'+f4RingeHtml()+'</div>'); t(()=>f4TempoBloeckeHtml('f6tt')); t(f4TagesverlaufHtml); t(f4PrognoseHtml); t(f4OutfitTreppeHtml);
+  return h || f6Leer('kein Tag offen');
+}
+function f6HeuteMatrix(){ try{ return f4MatrixHeuteHtml(); }catch(e){ return f6Leer('nicht verfügbar'); } }
+/* ══ Seite ══ */
+const F6_CHEVRON='<svg class="chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 7l6 6 6-6" fill="none" stroke="#e8e9ec" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function renderStatistikBody(){
+  const host=el('statistikBody'); if(!host) return;
+  const F=analyseFenster(), dom=f6Dom(), aus=statParam('ausgeblendet')||[];
+  const BAU={ tag:f6HeuteTag, matrixHeute:f6HeuteMatrix, spiel:()=>f6Spiel(F,dom), leistung:()=>f6Leistung(F,dom), stundenleiter:()=>f6Stundenleiter(F,dom), konsistenz:()=>f6Konsistenz(F,dom),
+    belastung:()=>f6Belastung(F,dom), erholung:()=>f6Erholung(F,dom), readiness:()=>f6Readiness(F,dom), flow:()=>f6Flow(F,dom), routinen:()=>f6Routinen(F,dom), claude:()=>f6Claude(F,dom) };
+  let h='<div class="an-filter st-anfilter f6-filter">'+anFilterHtml()+'</div><div id="stDetailAnker"></div>';
+  F6_GRUPPEN.forEach(g=>{ const ids=g.ids.filter(id=>aus.indexOf(id)<0); if(!ids.length) return; const zu=f6GruppeZu(g.nr);
+    h+='<div class="st-gruppe"><div class="f6-gh'+(zu?' zu':'')+'" data-f6gruppe="'+g.nr+'">'+g.nr+' · '+g.name+(g.nr>1 ? ' <small>· '+esc(anZeitraumLabel())+' · '+(dom==='alle'?'Alle':dom==='dfm'?'DFM':'Privat')+'</small>' : '')+F6_CHEVRON+'</div>';
+    if(!zu) ids.forEach(id=>{ let m=''; try{ m=BAU[id](); }catch(e){ console.warn('Statistik', id, e); m=statModul(id, F6_TITEL[id]||id, '<div class="an-leer">nicht verfügbar</div>', null, null); } h+=m; });
+    h+='</div>'; });
+  host.innerHTML=h;
+}
+/* Tipps in der Statistik: Gruppe auf/zu · Erklärungen · Readiness-Achse · Routinen-Familie · Meilenstein-Tag */
+function f6Klick(e){
+  const t=e.target; if(!t || !t.closest) return false;
+  const gr=t.closest('#statistikBody [data-f6gruppe]'); if(gr){ const nr=num(gr.dataset.f6gruppe); S.ui.statGruppeZu=Object.assign({}, S.ui.statGruppeZu); S.ui.statGruppeZu[nr]=!f6GruppeZu(nr); saveUi(); haptik(6); renderStatistik(); return true; }
+  const au=t.closest('#statistikBody [data-f6auf]'); if(au){ const k=au.dataset.f6auf; S.ui.f6Auf=Object.assign({}, S.ui.f6Auf); S.ui.f6Auf[k]=!S.ui.f6Auf[k]; saveUi(); renderStatistik(); return true; }
+  const rx=t.closest('#statistikBody [data-f6readx]'); if(rx){ S.ui.f6ReadX=rx.dataset.f6readx; saveUi(); renderStatistik(); return true; }
+  const rd=t.closest('#statistikBody [data-f6routdom]'); if(rd){ S.ui.f6RoutDom=rd.dataset.f6routdom; saveUi(); renderStatistik(); return true; }
+  const ms=t.closest('#statistikBody [data-f6ms]'); if(ms){ toast(ms.dataset.f6ms); return true; }
+  return false;
 }
 function ladeAlles(){
   S.karten   = DB.get('karten', []);
@@ -18607,7 +19199,7 @@ function renderStatistik(){ renderStatistikBody(); }
    (rechnet Claude beim Sync) · Wochentagsprofil als eigenes Modul (geht in
    der Matrix-Spur auf).
    ══════════════════════════════════════════════════════════════════════ */
-function renderStatistikBody(){
+function renderStatistikBodyAlt(){   // 4.0 · Paket 6: abgelöst durch renderStatistikBody im Modul F6 (bleibt lesbar)
   const host=el('statistikBody'); if(!host) return;
   // §5.1 (v3.5.0): fuenf Gruppen; Filter ueber Gruppe 2 (gilt fuer 2–5); Reihenfolge/Sichtbarkeit aus statistik.reihenfolge/.ausgeblendet
   const bekannt=STAT_MODULE.map(x=>x[0]), aus=statParam('ausgeblendet')||[];
@@ -20371,6 +20963,7 @@ function stapelLiesEditor(){
    gezeichnet wird die Seite, die gerade offen ist. */
 function statNeuZeichnen(){ if(seiteAktuell()==='statistik') renderStatistik(); else if(seiteAktuell()==='belohnung') renderBelohnung(); }
 function statKlick(e){
+  if(e.target.closest('#statistikBody') && f6Klick(e)) return;   // 4.0 · Paket 6
   // §6.6/§6.7 (v3.5.0): Malmodus, Station, Toepfe
   const mm=e.target.closest('#belohnungBody [data-malmodus]'); if(mm){ S.ui.malmodus=mm.dataset.malmodus==='1'; saveUi(); renderBelohnung(); return; }   // §10 (v3.7.0): kein Hochscrollen beim Malmodus
   const mf=e.target.closest('#belohnungBody [data-malfarbe]'); if(mf){ if(stationFarbeWaehlen(num(mf.dataset.malfarbe))) renderBelohnung(); return; }
