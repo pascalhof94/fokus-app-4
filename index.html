@@ -2955,7 +2955,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-23';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-24';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -3449,6 +3449,7 @@ const DEFAULT_SETTINGS = {
   rangSchwellen: [0, 5700, 6200, 6700, 7250, 7800, 8450, 9100, 9850, 10600],   // 5.9: R1 bis 5.700 · R2 ab 5.700 … R10 ab 10.600 (Ø P/Tag, 28 Tage)
   rangTage: 28, spitzenTage: 7, rangAufstiegTage: 7, rangAbstiegTage: 14,
   outfitStufen: 13, outfitPlus: 3, outfitMinus: 2,   // 5.8
+  outfitLeistungPunkte: 900, outfitErholungPunkte: 50,   // Betriebsbereit 3 (Pascal 17.10.): Leistungsstufe nach 900 DFM-Punkten seit der letzten Stufe, Erholungsstufe nach 50 Erholungspunkten aus einer Sitzung
   shopPreise: [3000, 4500, 6000, 8000, 44000, 65000, 87000, 110000, 130000, 175000, 220000, 260000],   // 5.10 je Stufe, × Kategorie-Faktor
   shopFreiAb: { 5:3, 6:4, 7:5, 8:6, 9:7, 10:8, 11:9, 12:10 },   // 5.10 Rang-Sperre: Stufen 5–8 ab Rang 3–6, 9–12 ab Rang 7–10
   rangSperre: true,            // 7.8: in den Einstellungen abschaltbar, Standard an
@@ -3618,7 +3619,7 @@ const EINST_SCHEMA={
     abhakbonusAbSollMin:Z('abhakbonusAbSollMin',{min:0}), abzugOhneGrund:Z('abzugOhneGrund',{min:0}), wochenserieBonus:Z('wochenserieBonus',{min:0}),
     positionStaffel:{p:'positionStaffel', t:'zahlen'}, rangSchwellen:{p:'rangSchwellen', t:'zahlen'}, rangTage:Z('rangTage',{min:7, max:120}), spitzenTage:Z('spitzenTage',{min:1, max:28}),
     rangAufstiegTage:Z('rangAufstiegTage',{min:1, max:60}), rangAbstiegTage:Z('rangAbstiegTage',{min:1, max:120}), outfitStufen:Z('outfitStufen',{min:3, max:20}),
-    outfitPlus:Z('outfitPlus',{min:0, max:10}), outfitMinus:Z('outfitMinus',{min:0, max:10}), shopPreise:{p:'shopPreise', t:'zahlen'}, shopFreiAb:{p:'shopFreiAb', t:'tabelle'},
+    outfitPlus:Z('outfitPlus',{min:0, max:10}), outfitMinus:Z('outfitMinus',{min:0, max:10}), outfitLeistungPunkte:Z('outfitLeistungPunkte',{min:1}), outfitErholungPunkte:Z('outfitErholungPunkte',{min:1}), shopPreise:{p:'shopPreise', t:'zahlen'}, shopFreiAb:{p:'shopFreiAb', t:'tabelle'},
     rangSperre:{p:'rangSperre', t:'bool'}, grundwoche:{p:'grundwoche', t:'tabelle'}, zielsteuerungSchritt:Z('zielsteuerungSchritt',{min:0}), postfachPunkte:{p:'postfachPunkte', t:'tabelle'} }
 };
 const STAT_SCHEMA={
@@ -4199,7 +4200,7 @@ function e4OutfitStart(){
   if(!S.tag) return null;
   const r=e4Rang(), start=Math.max(1, Math.min(num(S.settings.outfitStufen,13), num(r.rang,1))), malus=e4OutfitErschoepfung();
   S.tag.outfit={ start, stufe:Math.max(1, start-malus), max:Math.max(1, start-malus), decke:Math.min(num(S.settings.outfitStufen,13), start+num(S.settings.outfitPlus,3)),
-    naechste:null, verlauf:[{ ts:jetztIso(), stufe:Math.max(1, start-malus), art:'start' }], dfmSeitLeistungMin:0 };
+    naechste:null, verlauf:[{ ts:jetztIso(), stufe:Math.max(1, start-malus), art:'start' }], dfmSeitLeistungMin:0, dfmPunkteBeiStufe:tagesPunkteDomain('dfm') };   // Betriebsbereit 3
   if(malus) S.tag.outfit.verlauf.push({ ts:jetztIso(), stufe:S.tag.outfit.stufe, art:'erschoepfung', anzahl:malus });
   return S.tag.outfit;
 }
@@ -4209,6 +4210,7 @@ function e4OutfitSchritt(art){
   if(o.naechste && o.naechste!==art) return false;        // im Wechsel: erst die andere Art
   if(o.stufe>=o.decke) return false;
   o.stufe=Math.min(o.decke, o.stufe+1); o.max=Math.max(o.max, o.stufe); o.naechste=(art==='leistung' ? 'erholung' : 'leistung');
+  o.dfmPunkteBeiStufe=tagesPunkteDomain('dfm'); o.dfmSeitLeistungMin=0;   // Betriebsbereit 3: Zähler ab dieser Stufe
   o.verlauf.push({ ts:jetztIso(), stufe:o.stufe, art });
   saveTag(); try{ toast((art==='leistung'?'⚙':'🌿')+' Outfit-Stufe '+o.stufe+' · '+E4_OUTFIT_NAMEN[o.stufe-1]); }catch(e){}
   return true;
@@ -4217,10 +4219,22 @@ function e4OutfitNaechste(){ const o=e4Outfit(); if(!o) return null; if(o.stufe>
 function e4OutfitBild(stufe){ const n=Math.max(1, Math.min(num(S.settings.outfitStufen,13), num(stufe,1))); return Math.max(1, Math.min(20, Math.round(1+(n-1)*19/Math.max(1, num(S.settings.outfitStufen,13)-1)))); }
 function e4OutfitName(stufe){ return E4_OUTFIT_NAMEN[Math.max(0, Math.min(E4_OUTFIT_NAMEN.length-1, num(stufe,1)-1))]; }
 /* Nach jeder eingebuchten Sitzung: DFM-Minuten sammeln (Leistung), Erholungskarte ab 15 Minuten (Erholung) */
-function e4NachSitzung(k, min){
-  const o=e4Outfit(); if(!o || !k || !(min>0)) return;
-  if(leiterArt(k)==='erholung'){ if(min>=15) e4OutfitSchritt('erholung'); return; }
-  if(k.domain==='dfm'){ o.dfmSeitLeistungMin=num(o.dfmSeitLeistungMin)+min; if(o.dfmSeitLeistungMin>=90){ if(e4OutfitSchritt('leistung')) o.dfmSeitLeistungMin=0; } saveTag(); }
+function e4NachSitzung(k, min, punkte){
+  // Betriebsbereit 3 (Pascal 17.10.): in Punkten, nicht in Minuten. Erholungsstufe nach outfitErholungPunkte aus EINER Erholungs-Sitzung,
+  // Leistungsstufe nach outfitLeistungPunkte DFM-Punkten seit der letzten Stufe (e4OutfitPruefen). Der alte Aufruf ohne Punkte tut nichts mehr.
+  if(punkte===undefined) return;
+  const o=e4Outfit(); if(!o || !k) return;
+  if(leiterArt(k)==='erholung'){ if(num(punkte)>=e4OutfitErholungPunkte()) e4OutfitSchritt('erholung'); return; }
+  e4OutfitPruefen();
+}
+function e4OutfitLeistungPunkte(){ return Math.max(1, num(S.settings.outfitLeistungPunkte, 900)); }
+function e4OutfitErholungPunkte(){ return Math.max(1, num(S.settings.outfitErholungPunkte, 50)); }
+function e4OutfitDfmSeit(){ const o=e4Outfit(); if(!o) return 0; if(o.dfmPunkteBeiStufe==null){ o.dfmPunkteBeiStufe=0; } return Math.max(0, tagesPunkteDomain('dfm')-num(o.dfmPunkteBeiStufe)); }
+function e4OutfitPruefen(){
+  const o=e4Outfit(); if(!o || !tagOffen()) return false;
+  if(o.naechste==='erholung' || o.stufe>=o.decke) return false;
+  if(e4OutfitDfmSeit()>=e4OutfitLeistungPunkte()) return e4OutfitSchritt('leistung');
+  return false;
 }
 function e4Pause(){ return e4OutfitSchritt('erholung'); }   // Pause per Dialog (Punkt 7.4)
 /* Beim Aufstehen: Rang rechnen, Outfit starten */
@@ -6045,7 +6059,7 @@ function f11FesteKarten(){ let n=0;
   S.karten.forEach(k=>{ if(k.status==='archiviert') return;
     if(k.rolle==='tagesabschluss' || (!k.rolle && /^Tagesplanung$/i.test(String(k.titel||'')))){ k.status='archiviert'; k.archiviertTs=jetztIso(); k.archivGrund='4.0 · aufgegangen im Tagesübergang'; n++; } });
   if(n) saveKarten(); return n; }
-{ const _alt=syncImport; syncImport=function(text, opt){ const r=_alt(text, opt); try{ if(r && !r.fehler && !r.freigabeNoetig){ f11FesteKarten(); f11TagesstartKorrektur(text); } }catch(e){} return r; }; }   // Hotfix 4.0.0-11 · -13
+{ const _alt=syncImport; syncImport=function(text, opt){ const r=_alt(text, opt); try{ if(r && !r.fehler && !r.freigabeNoetig){ f11FesteKarten(); f11TagesstartKorrektur(text); f11EckpunkteNachtrag(text); } }catch(e){} return r; }; }   // Hotfix 4.0.0-11 · -13
 /* Hotfix 4.0.0-13: ein Paket darf den Start des laufenden Tages berichtigen — { tagesstart:{ datum, startTs, grund } } (nur heute, nur mit Grund) */
 function f11TagesstartKorrektur(text){ let p=null; try{ p=JSON.parse(text); }catch(e){ return; } const t=p && p.tagesstart; if(!t || !S.tag || !tagOffen() || String(t.datum||'')!==S.tag.datum || !t.grund) return;
   const ms=Date.parse(String(t.startTs||'')); if(!Number.isFinite(ms)) return; const neu=new Date(ms).toISOString(), alt=S.tag.startTs||null;
@@ -6135,7 +6149,7 @@ function f11VortagBuchen(){
   let m=null;
   try{ m=aufstehenBestaetigen(a.akku!=null ? a.akku : null, { einschlafUm:a.ein||null, kommentar:a.kom||'', tapTs:a.tapTs||jetztIso(), nacht:a.nacht||null, prog:a.prog }); f11Log('aufstehen', m ? 'ok · Tag '+S.tag.datum : 'kein neuer Tag'); }
   catch(e){ console.warn('Übergang: Aufstehen', e); f11Log('aufstehen', 'Fehler: '+((e&&e.message)||e)); }
-  try{ const k=tagesuebergangKarte(); if(S.tag && tagOffen()){ S.tag.uebergang={ ts:jetztIso(), karte:k ? k.id : null, vortag:vortagDatum }; tagesEckpunkteBuchen('uebergang', k); saveTag(); } }catch(e){ console.warn('Übergang: Eckpunkte', e); f11Log('eckpunkte', 'Fehler: '+((e&&e.message)||e)); }
+  try{ const k=tagesuebergangKarte(); if(S.tag && tagOffen()){ S.tag.uebergang={ ts:jetztIso(), karte:k ? k.id : null, vortag:vortagDatum }; const imLog=(S.intraday||[]).some(e=>e && e.tagId===S.tag.tagId && e.eck==='uebergang'); const p=f11EckpunkteBuchen('uebergang'); f11Log('eckpunkte', p>0 ? p+' P gebucht (Stunden-Log)' : (imLog ? 'schon im Stunden-Log' : 'nichts gebucht: Tag nicht buchbar')); saveTag(); } }catch(e){ console.warn('Übergang: Eckpunkte', e); f11Log('eckpunkte', 'Fehler: '+((e&&e.message)||e)); }
   try{ const text='Tagesübergang: Vortag '+(vortagDatum ? f11Datum(vortagDatum) : '')+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.';
     S.meta.f11Ausstehend=Object.assign({}, S.meta.f11Ausstehend, { chat:{ text, art:'Feedback', tag:vortagDatum, seit:jetztIso() } }); saveMeta();   // Nachbesserung 2
     const p=f7ChatSenden('Trainer', text, { art:'Feedback', id:'chat-uebergang-'+vortagDatum });
@@ -6197,6 +6211,16 @@ async function f11Nachsenden(){
 setInterval(()=>{ try{ f11Nachsenden(); }catch(e){} }, 60000);   // unabhängig vom Sekunden-Ticker, der nur mit laufender Uhr läuft
 setTimeout(()=>{ try{ f11Nachsenden(); }catch(e){} }, 6000);
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ _f11NachTs=0; try{ f11Nachsenden(); }catch(e){} } });
+/* Betriebsbereit 2: Eckpunkte des Übergangs genauso wie Aufstehen — Tages-Log und Stunden-Log (Art eck, Karte Tagesübergang); fehlt der Eintrag im Stunden-Log, wird er nachgeholt */
+function f11EckpunkteBuchen(anlass){
+  if(!S.tag) return 0; const k=anlass==='uebergang' ? tagesuebergangKarte() : null;
+  const imLog=(S.intraday||[]).some(e=>e && e.tagId===S.tag.tagId && e.eck===anlass);
+  if(imLog) return 0;
+  if(S.tag.eckpunkte && S.tag.eckpunkte[anlass]){ delete S.tag.eckpunkte[anlass]; }   // Marke ohne Stunden-Log: neu buchen
+  return tagesEckpunkteBuchen(anlass, k);
+}
+function f11EckpunkteNachtrag(text){ let p=null; try{ p=JSON.parse(text); }catch(e){ return; } const t=p && p.eckpunkte; if(!t || !S.tag || !tagOffen() || String(t.datum||'')!==S.tag.datum) return;
+  const anlass=String(t.anlass||'uebergang'); const punkte=f11EckpunkteBuchen(anlass); f11Log('eckpunkte', 'Nachtrag per Paket '+anlass+': '+(punkte>0 ? punkte+' P' : 'schon im Stunden-Log')); if(punkte>0){ try{ toast('Eckpunkte '+anlass+' nachgetragen'); }catch(e){} } }
 function f11Fertig(){
   if(vortagOffen()){ toast('Erst den Vortag buchen (Schritt 2)'); oeffneTagesuebergang(2); return; }   // Hotfix 4.0.0-10
   closeSheet(); F7.blattNeu=null;
@@ -6415,9 +6439,10 @@ function f4nRingFarbe(t){ t=Math.max(0, Math.min(1, t)); const mix=(a,b,u)=>{ co
 function f4nOutfitFortschritt(){
   const o=S.tag ? e4Outfit() : null; if(!o) return 0;
   if(o.stufe>=o.decke) return 1;
-  const lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null, laufMin=lk ? Math.max(0, (Date.now()-num(S.fokus.startMs))/60000) : 0;
-  if(o.naechste==='erholung'){ const m=(lk && leiterArt(lk)==='erholung') ? laufMin : 0; return Math.max(0, Math.min(1, m/15)); }
-  const m=num(o.dfmSeitLeistungMin)+((lk && lk.domain==='dfm') ? laufMin : 0); return Math.max(0, Math.min(1, m/90));
+  const lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null;
+  // Betriebsbereit 3: erreichte Punkte seit der letzten Stufe ÷ nötige Punkte der nächsten Stufe
+  if(o.naechste==='erholung'){ let p=0; if(lk && leiterArt(lk)==='erholung'){ try{ p=Math.max(0, kartePunkte(lk)-kartenLogHeute(lk.id)); }catch(e){ p=0; } } return Math.max(0, Math.min(1, p/e4OutfitErholungPunkte())); }
+  return Math.max(0, Math.min(1, e4OutfitDfmSeit()/e4OutfitLeistungPunkte()));
 }
 function f4nRingSvg(t){
   const R=27, C=32, a0=120, a1=420, pol=(a)=>{ const r=a*Math.PI/180; return [C+R*Math.cos(r), C+R*Math.sin(r)]; };
@@ -6500,6 +6525,7 @@ f4StatusleisteRender=function(){
     else { if(k){ const r=restzeitAnzeige(k.sollMin, istSekLive(k)); const z=el('sbZeit'); if(z){ z.textContent=r.text; z.style.color=r.farbe; } const p=el('sbPkt'); if(p) p.textContent='+'+fmtP(Math.round(kartePunkte(k))); }
       if(live && (_sekTakt%10)===0) punkteleisteZeichnen('sBar', g, S.belohnung?konto():0, punkteHeuteAnzeige());   // Live-Anteil der Punkteleiste alle 10 s, kein Neuaufbau
       if(live && (_sekTakt%10)===0){ const m1=el('sZKonto'); if(m1){ const t='🪙 '+fmtP(Math.round(S.belohnung?konto():0)); if(m1.textContent!==t) m1.innerHTML='<span style="color:'+FARBE.GOLD+'">🪙</span> '+fmtP(Math.round(S.belohnung?konto():0)); } }   // Münzen wachsen mit der Uhr: Ziffern in place
+      try{ if(e4OutfitPruefen()) F4N.key=''; }catch(e){}
       const amp=host.querySelector('.amp2'); if(amp){ const c={ gruen:FARBE.GRUEN, gelb:FARBE.GELB, rot:FARBE.ROT, grau:FARBE.GRAU }[FSLive.zustand()]||FARBE.GRAU; if(amp.style.background!==c) amp.style.background=c; } }   // Live-Status in place
     if(_e1 && el('e1Bar')) punkteleisteZeichnen('e1Bar', g, S.belohnung?konto():0, punkteHeuteAnzeige());
   }catch(e){ console.warn('Statusleiste', e); }
@@ -7253,6 +7279,7 @@ function ladeAlles(){
   if(!S.meta.shop360){ try{ shop360Durchfuehren(); }catch(e){ S.meta.shop360={ ts:jetztIso(), fehler:String(e&&e.message||e) }; saveMeta(); } }
   try{ migration400(); }catch(e){ console.warn('migration400', e); }
   try{ migration401(); }catch(e){ console.warn('migration401', e); }
+  try{ if(S.settings.outfitLeistungPunkte==null) S.settings.outfitLeistungPunkte=900; if(S.settings.outfitErholungPunkte==null) S.settings.outfitErholungPunkte=50; }catch(e){}   // Betriebsbereit 3: Vorgaben für vorhandene Speicher
   try{ f11FesteKarten(); }catch(e){}   // Hotfix 4.0.0-12: Tagesabschluss und Tagesplanung bleiben archiviert, auch nach einem Import vor diesem Build   // 4.0 · Paket 11: feste Karten Tagesübergang, Reflexion, Nacht vorbereiten   // 4.0 · Paket 4: Einstellungen der Punkte-Engine nach Punkt 5
   try{ feldkarten353Start(); }catch(e){}   // §5 (v3.5.3): Ausmal-Stand auf neue Feldkarten uebernehmen (ruht, solange FELDKARTEN_353 = false)
   try{ kulissenReparaturPruefen(); }catch(e){}   // §1 (v3.7.2): fertige Kulisse mit gesperrter nächster → sofort frei und Wechsel
@@ -7642,7 +7669,14 @@ function fokusZeitEinbuchen(bisMs){
   S.fokus.laeuft=false; S.fokus.startMs=0;
   // §4 (v2.9.1): die Sitzung traegt die Punkte, die sie der Tagesbilanz bringt
   // (vorher stand sie mit 0 im Log, die Zeitpunkte erschienen erst beim Abhaken)
-  if(k && _sitzung) buchungAbgleich(k, _sitzung);
+  if(k && _sitzung){
+    // Betriebsbereit 1.3: Tagesanker — lief die Uhr schon vor dem Start des heutigen Tags, gehört die Sitzung zu dem Tag, an dem sie gestartet wurde
+    try{ const st=num(S.fokus.startMs)||(Date.parse(_sitzung.ts)-sek*1000); if(S.tag && S.tag.startTs && st && st<Date.parse(S.tag.startTs)){
+      const h=(S.historie||[]).slice().reverse().find(x=>x && x.tagId && x.startTs && Date.parse(x.startTs)<=st && (!x.endeTs || Date.parse(x.endeTs)>=st));
+      if(h && h.tagId!==_sitzung.tagId){ _sitzung.tagId=h.tagId; _sitzung.anker=true; } } }catch(e){}
+    buchungAbgleich(k, _sitzung);
+    try{ e4NachSitzung(k, sek/60, num(_sitzung.punkte)); }catch(e){}   // Betriebsbereit 3: Outfit in Punkten, mit den Punkten dieser Sitzung
+  }
   akkuSampleSchreiben();                                        // v1.1: Energie-Stichprobe
   saveKarten(); saveFokus(); saveTag();
 }
