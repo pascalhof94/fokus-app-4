@@ -2741,7 +2741,7 @@ body.breit #f4sb .sb-bar{grid-column:1;grid-row:1}body.breit #f4sb .f4-er{grid-c
 body.breit #f4sb .f4-r3{grid-column:2;grid-row:1/4;margin-top:0}
 body.breit #f4sb .f4-onr{grid-column:3;margin-top:0}
 /* 4.0 · Paket 11 · Tagesübergang */
-.f11-schritte button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px;line-height:1.1}.f11-schritte button small{font-size:10px;font-weight:600;opacity:.8}.f11-schritte button.fertig{opacity:.55}
+.f11-schritte button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px;line-height:1.1}.f11-schritte button small{font-size:10px;font-weight:600;opacity:.8}.f11-schritte button.fertig{opacity:.55}.f11-schritte button.aus{opacity:.3}
 .f11-kn{display:flex;gap:4px;flex-wrap:wrap;width:100%}.f11-kn .chip{min-height:36px;font-size:12.5px}
 .abv3-z .t{flex:1 1 100%;min-width:0;font-weight:700}.abv3-z .t small{display:block;font-weight:500;color:var(--muted);font-size:12px}
 </style>
@@ -2916,7 +2916,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-9';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-10';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -6017,6 +6017,11 @@ function migration401(){
         ein:(t.frageSchlaf && el('aufEinschlaf')) ? String(el('aufEinschlaf').value||'').trim() : '', kom:el('aufKom') ? String(el('aufKom').value||'') : '' };
       aufstehenTmp=null; closeSheet(); oeffneTagesuebergang(1); return; }
     _alt(); }; }
+{ const _alt=oeffneAufstehen;
+  oeffneAufstehen=function(){
+    const m=S.tag && S.tag.morgen;
+    if(vortagOffen() && m && m.aufstehTs){ const a=m.aufstehTs; m.aufstehTs=null; try{ _alt(); } finally{ m.aufstehTs=a; } return; }   // Hotfix 4.0.0-10: der Vortag blockiert den neuen Morgen nicht
+    return _alt(); }; }
 function oeffneTagesuebergang(schritt){ if(schritt) F11.schritt=schritt; F7.blattNeu=renderTagesuebergang; renderTagesuebergang(); }
 function f11Reste(){
   const d=S.tag ? S.tag.datum : heuteApp(), ent=(S.tag && S.tag.abschlussEntscheid)||{};
@@ -6026,7 +6031,7 @@ function f11Reste(){
 }
 function renderTagesuebergang(){
   const st=F11.schritt, NAMEN=['Reste','Buchen','Feedback','Plan','Freigabe'], vortag=vortagOffen();
-  let h='<div class="abv3-schritte f11-schritte">'+NAMEN.map((n,i)=>'<button class="'+(st===i+1?'on':'')+(i+1<st?' fertig':'')+'" data-f11schritt="'+(i+1)+'">'+(i+1)+'<small>'+n+'</small></button>').join('')+'</div>';
+  let h='<div class="abv3-schritte f11-schritte">'+NAMEN.map((n,i)=>'<button class="'+(st===i+1?'on':'')+(i+1<st?' fertig':'')+(vortag && i+1>2 ? ' aus' : '')+'" data-f11schritt="'+(i+1)+'">'+(i+1)+'<small>'+n+'</small></button>').join('')+'</div>';
   if(st===1){
     const R=f11Reste(), d=S.tag ? f11Datum(S.tag.datum) : '';
     h+='<p class="d">Reste vom <b>'+esc(d)+'</b>: abhaken, schieben oder überspringen. Alles zählt auf gestern.</p>';
@@ -6100,6 +6105,7 @@ function f11TagesbilanzSenden(h, tag){
     .catch(()=>FSLive.senden('datensatz_anlegen', { tabelle:'Tagesbilanz', felder }).catch(()=>{}));
 }
 function f11Fertig(){
+  if(vortagOffen()){ toast('Erst den Vortag buchen (Schritt 2)'); oeffneTagesuebergang(2); return; }   // Hotfix 4.0.0-10
   closeSheet(); F7.blattNeu=null;
   try{ const k=tagesuebergangKarte(); if(k && k.status==='offen' && tickAnzahlHeute(k)===0) routineTick(k, {still:true}); }catch(e){}
   if(S.tag){ S.tag.uebergang=Object.assign(S.tag.uebergang||{}, { freigabe:jetztIso() }); saveTag(); }
@@ -6147,7 +6153,7 @@ function geschafftHtml(){
     return _alt(kid, quelle, opt); }; }
 { const _alt=leistePlay; leistePlay=function(kid){ const k=S.karten.find(x=>x.id===kid); if(k && (k.rolle==='tagesuebergang' || k.rolle==='reflexion')){ fokusStarten(kid); renderAlles(); return; } return _alt(kid); }; }
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; let z;
-  if((z=t.closest('[data-f11schritt]'))){ e.stopPropagation(); oeffneTagesuebergang(num(z.dataset.f11schritt)); return; }
+  if((z=t.closest('[data-f11schritt]'))){ e.stopPropagation(); const n=num(z.dataset.f11schritt); if(n>2 && vortagOffen()){ toast('Erst den Vortag buchen (Schritt 2)'); oeffneTagesuebergang(2); return; } oeffneTagesuebergang(n); return; }
   if(t.closest('[data-f11buchen]')){ e.stopPropagation(); f11VortagBuchen(); return; }
   if(t.closest('[data-f11fertig]')){ e.stopPropagation(); f11Fertig(); return; }
   if(t.closest('[data-f11chat]')){ e.stopPropagation(); closeSheet(); F7.blattNeu=null; f7ChatOeffnen('Trainer', 'uebergang', ''); return; }
