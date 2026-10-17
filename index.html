@@ -2916,7 +2916,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-14';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-15';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -3019,7 +3019,9 @@ const FSLive = (()=>{
     return (offen.size || warteschlange.length) ? 'gelb' : 'gruen';
   }
   function merken(){ schreib(K.ausstehend, JSON.stringify(Array.from(offen.keys()))); }
-  function schlangeMerken(){ schreib(K.warteschlange, JSON.stringify(warteschlange)); }
+  let schlangeUngesichert=false;
+  function schlangeMerken(){ const t=JSON.stringify(warteschlange); schreib(K.warteschlange, t);
+    const ok=lies(K.warteschlange)===t; if(!ok && !schlangeUngesichert){ schlangeUngesichert=true; try{ toast('Warteschlange nicht gesichert — Speicher voll?'); }catch(e){} } if(ok) schlangeUngesichert=false; }   // Nachbesserung 2: Sicherung prüfen
 
   function anzeigen(){
     try{
@@ -3094,8 +3096,11 @@ const FSLive = (()=>{
   // senden: Schreibvorgang in die Warteschlange, sofort versuchen; ohne Verbindung bleibt er stehen und geht später nach.
   // Ergebnis: {sofort:true, antwort} wenn gesendet, {wartend:true, id} wenn gesammelt. Eine Ablehnung des Dienstes (400/409)
   // nimmt den Eintrag aus der Schlange und ruft, falls angegeben, args._beiFehler nicht auf — der Fehler steht im Blatt.
-  async function senden(werkzeug, args){
-    const eintrag={ id:(crypto.randomUUID && crypto.randomUUID()) || String(Date.now()), werkzeug:String(werkzeug), args:args||{}, ts:new Date().toISOString() };
+  async function senden(werkzeug, args, opt){
+    opt=opt||{};
+    const id=opt.id ? String(opt.id) : ((crypto.randomUUID && crypto.randomUUID()) || String(Date.now()));
+    if(opt.id && warteschlange.some(x=>x && x.id===id)){ const r0=await schlangeSenden(); return (r0 && r0.id===id) ? { sofort:true, antwort:r0.antwort } : { wartend:true, id }; }   // Nachbesserung 2: dieselbe Sendung nie doppelt in der Schlange
+    const eintrag={ id, werkzeug:String(werkzeug), args:args||{}, ts:new Date().toISOString() };
     warteschlange.push(eintrag); schlangeMerken(); anzeigen();
     const r=await schlangeSenden();
     if(r && r.id===eintrag.id) return { sofort:true, antwort:r.antwort };
@@ -3113,9 +3118,10 @@ const FSLive = (()=>{
           warteschlange.shift(); schlangeMerken(); letzte={ id:e.id, antwort }; gescheitert=false; fehlerText='';
           schreib(K.letzt, new Date().toISOString());
         }catch(x){
-          if(x.offline){ gescheitert=true; fehlerText=x.message; break; }   // bleibt stehen, später nachschicken
-          warteschlange.shift(); schlangeMerken();                             // abgelehnt: nicht wiederholen, Fehler merken
+          if(x.offline || (x.status && x.status>=500) || x.status===408 || x.status===429){ gescheitert=true; fehlerText=x.message; break; }   // bleibt stehen, später nachschicken (Nachbesserung 2: auch bei Dienst-Fehlern 5xx)
+          warteschlange.shift(); schlangeMerken();                             // abgelehnt (4xx): nicht wiederholen, Fehler merken
           fehlerText='Abgelehnt ('+e.werkzeug+'): '+x.message;
+          try{ if(!Array.isArray(S.meta.fsliveVerworfen)) S.meta.fsliveVerworfen=[]; S.meta.fsliveVerworfen=S.meta.fsliveVerworfen.concat([{ ts:new Date().toISOString(), id:e.id, werkzeug:e.werkzeug, tabelle:e.args && e.args.tabelle, status:x.status||null, fehler:String(x.message||'').slice(0,200) }]).slice(-20); saveMeta(); toast('Nicht übernommen ('+e.werkzeug+'): '+String(x.message||'').slice(0,80)); }catch(y){}
         }
       }
     }finally{ sendetSchlange=false; anzeigen(); }
@@ -3254,7 +3260,7 @@ const FSLive = (()=>{
     }catch(e){}
   }
   return { vormerken, spiegeln, senden, lesen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
-    warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length };
+    warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length, warteschlangeHat:(id)=>warteschlange.some(x=>x && x.id===id) };
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
@@ -5529,7 +5535,7 @@ function f7ChatSenden(an, text, opt){
   const felder={ Text:text, Auftraggeber:'Pascal', 'Empfänger':an, Art:opt.art||'Chat', Status:'offen', Zeitstempel:jetztIso() };
   const eintrag={ id:'lokal-'+Date.now(), Text:text, Auftraggeber:'Pascal', 'Empfänger':an, Art:opt.art||'Chat', Zeitstempel:jetztIso(), lokal:true };
   const L=F7.lager.chat; if(L && Array.isArray(L.daten)) L.daten.push(eintrag);
-  return FSLive.senden('datensatz_anlegen', { tabelle:'Agenten-Aufträge', felder, verknuepfungen:verk }).then(r=>{ f7LagerLeeren('chat'); f7Neu(); return r; }).catch(e=>{ toast('Nachricht wartet: '+((e && e.message)||'Fehler')); });
+  return FSLive.senden('datensatz_anlegen', { tabelle:'Agenten-Aufträge', felder, verknuepfungen:verk }, opt.id ? { id:opt.id } : undefined).then(r=>{ f7LagerLeeren('chat'); f7Neu(); return r; }).catch(e=>{ toast('Nachricht wartet: '+((e && e.message)||'Fehler')); });
 }
 function f7ChatOeffnen(an, bezug, vorlage){ const c=f7Chat(); if(an) c.an=an; c.bezug=bezug||null; c.vorlage=vorlage||''; saveUi(); e1Oeffnen('chat'); }
 function f7ChatHtml(){
@@ -6091,7 +6097,9 @@ function f11VortagBuchen(){
   try{ m=aufstehenBestaetigen(a.akku!=null ? a.akku : null, { einschlafUm:a.ein||null, kommentar:a.kom||'', tapTs:a.tapTs||jetztIso(), nacht:a.nacht||null, prog:a.prog }); f11Log('aufstehen', m ? 'ok · Tag '+S.tag.datum : 'kein neuer Tag'); }
   catch(e){ console.warn('Übergang: Aufstehen', e); f11Log('aufstehen', 'Fehler: '+((e&&e.message)||e)); }
   try{ const k=tagesuebergangKarte(); if(S.tag && tagOffen()){ S.tag.uebergang={ ts:jetztIso(), karte:k ? k.id : null, vortag:vortagDatum }; tagesEckpunkteBuchen('uebergang', k); saveTag(); } }catch(e){ console.warn('Übergang: Eckpunkte', e); f11Log('eckpunkte', 'Fehler: '+((e&&e.message)||e)); }
-  try{ const p=f7ChatSenden('Trainer', 'Tagesübergang: Vortag '+(vortagDatum ? f11Datum(vortagDatum) : '')+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.', { art:'Feedback' });
+  try{ const text='Tagesübergang: Vortag '+(vortagDatum ? f11Datum(vortagDatum) : '')+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.';
+    S.meta.f11Ausstehend=Object.assign({}, S.meta.f11Ausstehend, { chat:{ text, art:'Feedback', tag:vortagDatum, seit:jetztIso() } }); saveMeta();   // Nachbesserung 2
+    const p=f7ChatSenden('Trainer', text, { art:'Feedback', id:'chat-uebergang-'+vortagDatum });
     if(p && p.then) p.then(r=>f11Log('chat', r && r.sofort ? 'gesendet' : (r && r.wartend ? 'wartend' : 'ohne Antwort'))).catch(e=>f11Log('chat', 'Fehler: '+((e&&e.message)||e))); }
   catch(e){ f11Log('chat', 'Fehler: '+((e&&e.message)||e)); }
   F11.auf=null; renderAlles();
@@ -6119,12 +6127,37 @@ function f11TagesbilanzSenden(h, tag){
     'Routinen entschuldigt':bil.filter(b=>b && b.entschuldigt).length, 'Routinen geschoben':bil.filter(b=>b && b.geschoben).length, 'Aufgaben raus':Math.round(num(h.erledigtHeute)) };
   Object.keys(felder).forEach(k=>{ if(felder[k]===null || felder[k]===undefined) delete felder[k]; });
   f11Log('bilanz', 'sende '+Object.keys(felder).length+' Felder für '+h.datum);
-  const anlegen=(warum)=>FSLive.senden('datensatz_anlegen', { tabelle:'Tagesbilanz', felder }).then(r=>f11Log('bilanz', 'anlegen'+(warum?' ('+warum+')':'')+' · '+(r && r.sofort ? 'gesendet' : 'wartend'))).catch(e=>f11Log('bilanz', 'anlegen Fehler: '+((e&&e.message)||e)));
-  FSLive.lesen('datensaetze_auflisten', { tabelle:'Tagesbilanz', filter:[{ feld:'Tag', operator:'gleich', wert:h.datum }], limit:1 })
-    .then(d=>{ const z=d && d.datensaetze && d.datensaetze[0]; if(!z) return anlegen('kein Datensatz');
-      return FSLive.senden('datensatz_aendern', { tabelle:'Tagesbilanz', id:z.id, felder }).then(r=>f11Log('bilanz', 'ändern '+z.id+' · '+(r && r.sofort ? 'gesendet' : 'wartend'))).catch(e=>f11Log('bilanz', 'ändern Fehler: '+((e&&e.message)||e))); })
-    .catch(e=>{ f11Log('bilanz', 'lesen Fehler: '+((e&&e.message)||e)); return anlegen('nach Lesefehler'); });
+  S.meta.f11Ausstehend=Object.assign({}, S.meta.f11Ausstehend, { bilanz:{ tag:h.datum, felder, seit:jetztIso() } }); saveMeta();   // Nachbesserung 2: bleibt stehen, bis der Dienst die Bilanz hat
+  f11BilanzSenden(h.datum, felder);
 }
+function f11BilanzSenden(tag, felder){
+  const id='bilanz-'+tag;
+  const anlegen=(warum)=>FSLive.senden('datensatz_anlegen', { tabelle:'Tagesbilanz', felder }, { id }).then(r=>f11Log('bilanz', 'anlegen'+(warum?' ('+warum+')':'')+' · '+(r && r.sofort ? 'gesendet' : 'wartend'))).catch(e=>f11Log('bilanz', 'anlegen Fehler: '+((e&&e.message)||e)));
+  return FSLive.lesen('datensaetze_auflisten', { tabelle:'Tagesbilanz', filter:[{ feld:'Tag', operator:'gleich', wert:tag }], limit:1 })
+    .then(d=>{ const z=d && d.datensaetze && d.datensaetze[0]; if(!z) return anlegen('kein Datensatz');
+      return FSLive.senden('datensatz_aendern', { tabelle:'Tagesbilanz', id:z.id, felder }, { id }).then(r=>f11Log('bilanz', 'ändern '+z.id+' · '+(r && r.sofort ? 'gesendet' : 'wartend'))).catch(e=>f11Log('bilanz', 'ändern Fehler: '+((e&&e.message)||e))); })
+    .catch(e=>{ f11Log('bilanz', 'lesen Fehler: '+((e&&e.message)||e)+' — Nachsenden prüft später'); });   // kein blindes Anlegen: sonst entsteht eine zweite Bilanz für den Tag
+}
+/* Nachbesserung 2: ausstehende Sendungen des Übergangs beim Dienst nachprüfen und nachsenden — beim Start und einmal je Minute */
+let _f11NachTs=0;
+async function f11Nachsenden(){
+  const A=S.meta.f11Ausstehend; if(!A || (!A.bilanz && !A.chat) || !FSLive.gekoppelt()) return;
+  if(Date.now()-_f11NachTs<55000) return; _f11NachTs=Date.now();
+  try{
+    if(A.bilanz && !FSLive.warteschlangeHat('bilanz-'+A.bilanz.tag)){
+      const d=await FSLive.lesen('datensaetze_auflisten', { tabelle:'Tagesbilanz', felder:['Tag','Tagesübergang'], filter:[{ feld:'Tag', operator:'gleich', wert:A.bilanz.tag }], limit:1 });
+      const z=d && d.datensaetze && d.datensaetze[0];
+      if(z && z['Tagesübergang']){ delete A.bilanz; saveMeta(); f11Log('bilanz', 'beim Dienst bestätigt'); }
+      else { f11Log('bilanz', 'nachsenden für '+A.bilanz.tag); await f11BilanzSenden(A.bilanz.tag, A.bilanz.felder); } }
+    if(A.chat && !FSLive.warteschlangeHat('chat-uebergang-'+A.chat.tag)){
+      const d=await FSLive.lesen('datensaetze_auflisten', { tabelle:'Agenten-Aufträge', felder:['Text'], filter:[{ feld:'Text', operator:'gleich', wert:A.chat.text }], limit:1 });
+      if(d && d.datensaetze && d.datensaetze.length){ delete A.chat; saveMeta(); f11Log('chat', 'beim Dienst bestätigt'); }
+      else { f11Log('chat', 'nachsenden'); f7ChatSenden('Trainer', A.chat.text, { art:A.chat.art||'Feedback', id:'chat-uebergang-'+A.chat.tag }); } }
+  }catch(e){ f11Log('nachsenden', 'Fehler: '+((e&&e.message)||e)); }
+}
+setInterval(()=>{ try{ f11Nachsenden(); }catch(e){} }, 60000);   // unabhängig vom Sekunden-Ticker, der nur mit laufender Uhr läuft
+setTimeout(()=>{ try{ f11Nachsenden(); }catch(e){} }, 6000);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ _f11NachTs=0; try{ f11Nachsenden(); }catch(e){} } });
 function f11Fertig(){
   if(vortagOffen()){ toast('Erst den Vortag buchen (Schritt 2)'); oeffneTagesuebergang(2); return; }   // Hotfix 4.0.0-10
   closeSheet(); F7.blattNeu=null;
