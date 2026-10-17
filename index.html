@@ -2916,7 +2916,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-10';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-11';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -5996,6 +5996,11 @@ function reflexionKarte(){ return S.karten.find(k=>k.rolle==='reflexion' && k.st
 function vortagOffen(){ return !!(S.tag && tagOffen() && S.tag.datum<heuteIso()); }
 /* Die festen Karten von 4.0 anlegen (Punkt 2.9): Tagesübergang, Reflexion, Nacht vorbereiten mit drei Schritten;
    Tagesabschluss und Tagesplanung werden archiviert, nie gelöscht */
+function f11FesteKarten(){ let n=0;
+  S.karten.forEach(k=>{ if(k.status==='archiviert') return;
+    if(k.rolle==='tagesabschluss' || (!k.rolle && /^Tagesplanung$/i.test(String(k.titel||'')))){ k.status='archiviert'; k.archiviertTs=jetztIso(); k.archivGrund='4.0 · aufgegangen im Tagesübergang'; n++; } });
+  if(n) saveKarten(); return n; }
+{ const _alt=syncImport; syncImport=function(text, opt){ const r=_alt(text, opt); try{ if(r && !r.fehler && !r.freigabeNoetig) f11FesteKarten(); }catch(e){} return r; }; }   // Hotfix 4.0.0-11
 function migration401(){
   if(S.meta.migration401 && S.meta.migration401.ts) return;
   const fest=(id, titel, extra)=>{ let k=S.karten.find(x=>x.id===id || (extra.rolle && x.rolle===extra.rolle && x.status!=='archiviert')); if(k) return k;
@@ -6148,6 +6153,7 @@ function geschafftHtml(){
 /* ── Die festen Karten starten ihre Ansicht statt einer Uhr ── */
 { const _alt=fokusStarten;
   fokusStarten=function(kid, quelle, opt){ const zk=S.karten.find(x=>x.id===kid);
+    if(zk && zk.rolle==='aufstehen' && vortagOffen()){ oeffneAufstehen(); return; }   // Hotfix 4.0.0-11: der Vortag trägt schon ein Aufstehen
     if(zk && zk.rolle==='tagesuebergang'){ if(vortagOffen() || !tagOffen()) oeffneAufstehen(); else oeffneTagesuebergang(S.tag && S.tag.uebergang && S.tag.uebergang.freigabe ? 4 : 2); return; }
     if(zk && zk.rolle==='reflexion'){ oeffneReflexion(); return; }
     return _alt(kid, quelle, opt); }; }
