@@ -2916,7 +2916,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-13';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-14';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -6074,27 +6074,34 @@ function renderTagesuebergang(){
   openSheet('☀️ Tagesübergang', h, '<button class="btn ghost sm" data-f11schritt="4">‹ Plan</button><button class="btn prim" data-f11fertig="1">Tag in der App</button>');
 }
 /* Schritt 2: Vortag buchen — Routinen werten und Tag schließen (wie der alte Abschluss, ohne Export), Bilanz nach FocusSystem, dann „Aufstehen" für heute */
+function f11Log(schritt, info){ try{ if(!Array.isArray(S.meta.f11Protokoll)) S.meta.f11Protokoll=[]; S.meta.f11Protokoll=S.meta.f11Protokoll.concat([{ ts:jetztIso(), schritt, info:String(info==null?'':info).slice(0,300) }]).slice(-40); saveMeta(); }catch(e){} }   // Hotfix 4.0.0-14: Protokoll des Übergangs (im Spiegel sichtbar)
 function f11VortagBuchen(){
   if(!vortagOffen()){ F11.schritt=3; renderTagesuebergang(); return; }
   const a=F11.auf||{};
   F11.weiter=true;
   // die 150 + 150 des Abschlusses gibt es in 4.0 nicht mehr am Vortag, sondern durch den Tagesübergang auf heute
   S.tag.eckpunkte=Object.assign({}, S.tag.eckpunkte||{}); if(!S.tag.eckpunkte.abschluss) S.tag.eckpunkte.abschluss='4.0 · Tagesübergang';
-  try{ abschlussV3Schliessen(); }catch(e){ console.warn('Übergang: buchen', e); }
-  try{ tagEndgueltigSchliessen(); }catch(e){ console.warn('Übergang: schließen', e); }
+  f11Log('start', 'Vortag '+S.tag.datum+' · gekoppelt '+FSLive.gekoppelt());
+  try{ abschlussV3Schliessen(); f11Log('abschluss', 'ok'); }catch(e){ console.warn('Übergang: buchen', e); f11Log('abschluss', 'Fehler: '+((e&&e.message)||e)); }
+  try{ tagEndgueltigSchliessen(); f11Log('schliessen', 'ok'); }catch(e){ console.warn('Übergang: schließen', e); f11Log('schliessen', 'Fehler: '+((e&&e.message)||e)); }
   const h=(S.historie||[]).find(x=>S.tag && x.tagId===S.tag.tagId) || null, vortagDatum=S.tag ? S.tag.datum : null;
-  try{ f11TagesbilanzSenden(h, S.tag); }catch(e){ console.warn('Übergang: Bilanz', e); }
+  try{ f11TagesbilanzSenden(h, S.tag); }catch(e){ console.warn('Übergang: Bilanz', e); f11Log('bilanz', 'Fehler: '+((e&&e.message)||e)); }
   closeSheet();
-  const m=aufstehenBestaetigen(a.akku!=null ? a.akku : null, { einschlafUm:a.ein||null, kommentar:a.kom||'', tapTs:a.tapTs||jetztIso(), nacht:a.nacht||null, prog:a.prog });
-  try{ const k=tagesuebergangKarte(); if(S.tag && tagOffen()){ S.tag.uebergang={ ts:jetztIso(), karte:k ? k.id : null, vortag:vortagDatum }; tagesEckpunkteBuchen('uebergang', k); saveTag(); } }catch(e){ console.warn('Übergang: Eckpunkte', e); }
-  try{ f7ChatSenden('Trainer', 'Tagesübergang: Vortag '+(vortagDatum ? f11Datum(vortagDatum) : '')+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.', { art:'Feedback' }); }catch(e){}
+  let m=null;
+  try{ m=aufstehenBestaetigen(a.akku!=null ? a.akku : null, { einschlafUm:a.ein||null, kommentar:a.kom||'', tapTs:a.tapTs||jetztIso(), nacht:a.nacht||null, prog:a.prog }); f11Log('aufstehen', m ? 'ok · Tag '+S.tag.datum : 'kein neuer Tag'); }
+  catch(e){ console.warn('Übergang: Aufstehen', e); f11Log('aufstehen', 'Fehler: '+((e&&e.message)||e)); }
+  try{ const k=tagesuebergangKarte(); if(S.tag && tagOffen()){ S.tag.uebergang={ ts:jetztIso(), karte:k ? k.id : null, vortag:vortagDatum }; tagesEckpunkteBuchen('uebergang', k); saveTag(); } }catch(e){ console.warn('Übergang: Eckpunkte', e); f11Log('eckpunkte', 'Fehler: '+((e&&e.message)||e)); }
+  try{ const p=f7ChatSenden('Trainer', 'Tagesübergang: Vortag '+(vortagDatum ? f11Datum(vortagDatum) : '')+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.', { art:'Feedback' });
+    if(p && p.then) p.then(r=>f11Log('chat', r && r.sofort ? 'gesendet' : (r && r.wartend ? 'wartend' : 'ohne Antwort'))).catch(e=>f11Log('chat', 'Fehler: '+((e&&e.message)||e))); }
+  catch(e){ f11Log('chat', 'Fehler: '+((e&&e.message)||e)); }
   F11.auf=null; renderAlles();
   if(m) toast('☀️ Vortag gebucht · Tag gestartet'+(a.akku!=null ? ' · Akku '+Math.round(num(a.akku))+' %' : ''));
   setTimeout(()=>oeffneTagesuebergang(3), 250);
 }
 /* Die Tagesbilanz des gebuchten Tages nach FocusSystem (privat.tagesbilanz): ein Datensatz je Tag, vorhandener wird fortgeschrieben */
 function f11TagesbilanzSenden(h, tag){
-  if(!h || !h.datum || !FSLive.gekoppelt()) return;
+  if(!h || !h.datum){ f11Log('bilanz', 'kein Tages-Snapshot'); return; }
+  if(!FSLive.gekoppelt()){ f11Log('bilanz', 'nicht gekoppelt'); return; }
   const L=h.leiter||{}, lp=a=>Math.round(num(L[a] && L[a].punkte)), f=h.farbe||{}, r4=h.rang4||{}, aus=h.routinenAuswertung||[], bil=h.routinenBilanz||[], mo=h.morgen||{};
   let erhMin=0; (S.intraday||[]).forEach(e=>{ if(e && e.tagId===h.tagId && e.erholung) erhMin+=Math.max(num(e.minuten), num(e.tickMin)); });
   let istMin=0; (S.intraday||[]).forEach(e=>{ if(e && e.tagId===h.tagId) istMin+=Math.max(num(e.minuten), num(e.tickMin)); });
@@ -6111,9 +6118,12 @@ function f11TagesbilanzSenden(h, tag){
     'Routinen erledigt':aus.filter(a=>a && a.erfuellt).length, 'Routinen verpasst':aus.filter(a=>a && a.faellig && !a.erfuellt && !bil.some(b=>b && b.id===a.id && (b.entschuldigt || b.geschoben))).length,
     'Routinen entschuldigt':bil.filter(b=>b && b.entschuldigt).length, 'Routinen geschoben':bil.filter(b=>b && b.geschoben).length, 'Aufgaben raus':Math.round(num(h.erledigtHeute)) };
   Object.keys(felder).forEach(k=>{ if(felder[k]===null || felder[k]===undefined) delete felder[k]; });
+  f11Log('bilanz', 'sende '+Object.keys(felder).length+' Felder für '+h.datum);
+  const anlegen=(warum)=>FSLive.senden('datensatz_anlegen', { tabelle:'Tagesbilanz', felder }).then(r=>f11Log('bilanz', 'anlegen'+(warum?' ('+warum+')':'')+' · '+(r && r.sofort ? 'gesendet' : 'wartend'))).catch(e=>f11Log('bilanz', 'anlegen Fehler: '+((e&&e.message)||e)));
   FSLive.lesen('datensaetze_auflisten', { tabelle:'Tagesbilanz', filter:[{ feld:'Tag', operator:'gleich', wert:h.datum }], limit:1 })
-    .then(d=>{ const z=d && d.datensaetze && d.datensaetze[0]; return z ? FSLive.senden('datensatz_aendern', { tabelle:'Tagesbilanz', id:z.id, felder }) : FSLive.senden('datensatz_anlegen', { tabelle:'Tagesbilanz', felder }); })
-    .catch(()=>FSLive.senden('datensatz_anlegen', { tabelle:'Tagesbilanz', felder }).catch(()=>{}));
+    .then(d=>{ const z=d && d.datensaetze && d.datensaetze[0]; if(!z) return anlegen('kein Datensatz');
+      return FSLive.senden('datensatz_aendern', { tabelle:'Tagesbilanz', id:z.id, felder }).then(r=>f11Log('bilanz', 'ändern '+z.id+' · '+(r && r.sofort ? 'gesendet' : 'wartend'))).catch(e=>f11Log('bilanz', 'ändern Fehler: '+((e&&e.message)||e))); })
+    .catch(e=>{ f11Log('bilanz', 'lesen Fehler: '+((e&&e.message)||e)); return anlegen('nach Lesefehler'); });
 }
 function f11Fertig(){
   if(vortagOffen()){ toast('Erst den Vortag buchen (Schritt 2)'); oeffneTagesuebergang(2); return; }   // Hotfix 4.0.0-10
