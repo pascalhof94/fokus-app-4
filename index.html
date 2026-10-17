@@ -6360,6 +6360,7 @@ function f3nBadge(){
 }
 setInterval(()=>{ try{ f3nTakt(); }catch(e){} }, 60000);
 setTimeout(()=>{ try{ f3nTakt(); }catch(e){} }, 8000);
+{ const _alt=f7Neu; f7Neu=function(){ _alt(); try{ const L=F7.lager.chat; if(L && Array.isArray(L.daten)) f3nHintergrund(L.daten); }catch(e){} }; }   // nach jedem Nachladen: Badge und Benachrichtigung
 /* Kopf: Wischen nach unten schließt (5.1) · Glocke · „↓ neue Nachricht“ */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
   if(t.closest('[data-f3nstumm]')){ e.stopPropagation(); S.settings.chatStumm=!S.settings.chatStumm; saveSettings(); const b=t.closest('[data-f3nstumm]'); b.textContent=S.settings.chatStumm ? '🔕' : '🔔'; toast(S.settings.chatStumm ? 'Chat-Benachrichtigungen stumm' : 'Chat-Benachrichtigungen an');
