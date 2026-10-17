@@ -1,10 +1,12 @@
-/* jsc-Suite: ABNAHME v3.7.2 „Hotfixes aus dem Betrieb" — Prüfpunkte zu §1–§8 (Auftrag spec/261004_FokusApp_Auftrag_3-7-2.md).
-   Begruendung fuer eine eigene Datei (Leitplanke „Testdateien mit Begruendung"): der Auftrag verlangt eine eigene Suite; die
-   aelteren Suiten bleiben Zeugen ihrer Stände. Angelegt OHNE Lauf (§11: nicht ausfuehren).
+/* jsc-Suite: ABNAHME v3.4.0 „Routinen wie ADHS-Erholung, Schlafmessung,
+   Hinweis beim Aufstehen". Begruendung fuer eine eigene Datei (Leitplanke
+   „Testdateien mit Begruendung"): die zehn Testfaelle des Auftrags (§4), der
+   reproduzierte Schlaf-Befund (§2) und die Regeln dahinter — mit einer
+   verstellbaren Uhr (Mitternacht, Neuladen, Aufstehen am naechsten Morgen).
 
    Ausfuehren aus der Repo-Wurzel:
-     jsc tests/v372-abnahme.js
-   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v370-abnahme), Uhr verstellbar (uhr/minuten). */
+     jsc tests/v34-abnahme.js
+   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v2-abnahme). */
 var _els={};
 function dummyEl(){ var d={ style:{}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}},
   addEventListener:function(){}, removeEventListener:function(){}, appendChild:function(){}, remove:function(){},
@@ -49,4 +51,4 @@ function minuten(m){ _jetzt+=m*60000; }
 
 var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
-(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v372-abnahme-body.js'));
+(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/archiv-3x/v34-abnahme-body.js'));

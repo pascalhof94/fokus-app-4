@@ -1,5 +1,12 @@
 # UI-Testharness — Augen für die Fokus App
 
+> **Stand 4.0 (Betriebsbereit, 17.10.2026):** Der Harness rendert die Ansichten der App 4.0 (Fokus mit und ohne Karte, Postfach, Statistik, Shop,
+> Einstellungen, Suche, Durchsuchen, Erfassen, Chat, Plan, Routinen, Pause, Abhaken, Schieben, Ausstellungsraum, Reflexion, Geschafft,
+> Tagesübergang, Statusleiste Fälle A–D mit Höhe im Ergebnis). Fixture-Präfix `fokus4_`, Initialisierung über `seiteZeigen`.
+> Die Sequenzen `storage`, `echt` und `diag` stammen aus 3.x (setTab, sucheOeffnen) und sind ausgesetzt. Die jsc-Suiten liegen in
+> `tests/v40-*.js` (Kopf `tests/_kopf40.js`), die Suiten der Versionen 3.x in `tests/archiv-3x/`.
+
+
 ## Der eine Befehl
 
 ```bash

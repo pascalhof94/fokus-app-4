@@ -1,13 +1,11 @@
-/* jsc-Suite: ABNAHME v3.0.0 „Routinen-System".
-   Begruendung fuer eine eigene Datei (Leitplanke „Testdateien mit
-   Begruendung"): v3.0 ist ein neues Punktesystem neben dem alten — Staffeln,
-   Unter-Zaehler, Tageswertung, Schlaf, Tagesabschluss. Die zwoelf
-   Abnahmepunkte des Auftrags stehen hier in seiner Reihenfolge; die
-   v2-Abnahme bleibt der Beleg, dass der Altbestand unveraendert rechnet.
+/* jsc-Suite: ABNAHME Hotfix v3.5.2 „Statusleiste, Tempo-Vergleich, Kartengruppen, Malmodus-Tipp". Begruendung fuer eine eigene
+   Datei (Leitplanke „Testdateien mit Begruendung"): die fuenf neuen Tests des Auftrags (§5) — (a) Pace-Farbe bei 0,92,
+   (b) Trendpfeil bei 1,02, (c) Wochentags-Mittel ueber alle passenden Tage ohne Urlaub, (d) Tipp im Umkreis, (e) Klappzustand
+   der Gruppen — brauchen die verstellbare Uhr (Wochentage, Messzeit, laufende Karte).
 
    Ausfuehren aus der Repo-Wurzel:
-     jsc tests/v3-abnahme.js
-   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v2-abnahme). */
+     jsc tests/v352-abnahme.js
+   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v34-abnahme). */
 var _els={};
 function dummyEl(){ var d={ style:{}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}},
   addEventListener:function(){}, removeEventListener:function(){}, appendChild:function(){}, remove:function(){},
@@ -41,6 +39,15 @@ var innerWidth=375, innerHeight=812, devicePixelRatio=2;
 function addEventListener(){} function removeEventListener(){}
 var matchMedia=window.matchMedia; var location=window.location;
 
+// verstellbare Uhr: Date.now() und new Date() lesen _jetzt (Europe/Berlin wie auf dem iPhone)
+var _RD=Date, _jetzt=_RD.parse('2026-09-28T07:00:00+02:00');
+function FD(){ var a=Array.prototype.slice.call(arguments); if(!(this instanceof FD)) return new _RD(_jetzt).toString();
+  if(!a.length) return new _RD(_jetzt); return new (Function.prototype.bind.apply(_RD,[null].concat(a)))(); }
+FD.now=function(){ return _jetzt; }; FD.parse=_RD.parse; FD.UTC=_RD.UTC; FD.prototype=_RD.prototype;
+Date=FD;
+function uhr(s){ _jetzt=_RD.parse(s); }
+function minuten(m){ _jetzt+=m*60000; }
+
 var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
-(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v3-abnahme-body.js'));
+(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/archiv-3x/v352-abnahme-body.js'));

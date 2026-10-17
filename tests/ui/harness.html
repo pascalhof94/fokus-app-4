@@ -35,7 +35,7 @@ function echteDatenLaden(){
 function echtSchreibenAusPaket(p){
   try{ localStorage.clear(); }catch(e){}
   var wh=p.wiederherstellung||{};
-  function setz(k,v){ if(v!==undefined && v!==null) localStorage.setItem('fokus2_'+k, JSON.stringify(v)); }
+  function setz(k,v){ if(v!==undefined && v!==null) localStorage.setItem('fokus4_'+k, JSON.stringify(v)); }
   setz('karten', p.karten.map(function(k){
     var o={}; Object.keys(k).forEach(function(f){
       if(f==='istMin'||f==='punkteIst'||f==='punktePrognose'||f==='unteraufgaben'||
@@ -53,8 +53,8 @@ function echtSchreibenAusPaket(p){
   setz('vorlagen', wh.vorlagen); setz('belohnung', wh.belohnung);
   setz('historie', wh.historie); setz('intraday', wh.intraday);
   setz('tag', wh.tag!==undefined ? wh.tag : null);
-  localStorage.setItem('fokus2_ui', JSON.stringify({tab:'suche'}));
-  localStorage.setItem('fokus2_fokus', JSON.stringify(null));
+  localStorage.setItem('fokus4_ui', JSON.stringify({tab:'suche'}));
+  localStorage.setItem('fokus4_fokus', JSON.stringify(null));
 }
 /* EIN Einstieg fuer alle Diagnosen: echt, wenn da — sonst Nachbau. */
 function bestandSchreiben(){
@@ -207,431 +207,37 @@ function bestandSchreiben(){
     if(key==='erledigte') fw.eval('S.ui.klGruppen=Object.assign({}, S.ui.klGruppen, {erledigt:true});');
     fw.sucheOeffnen();
   }
+  /* ══ Fokus App 4.0 (Betriebsbereit 4.2): Ansichten über die Funktionen der App 4.0 — Ebene 0 (seiteZeigen), Ebene 1 (e1Oeffnen), Blätter ══ */
+  function karteId(fw){ return fw.eval("(S.karten.find(function(k){ return k.status==='offen' && !k.rolle && k.domain==='dfm'; })||S.karten.find(function(k){ return k.status==='offen' && !k.rolle; })||{}).id"); }
+  function tagSicher(fw){ fw.eval("if(!S.tag){ tagStarten(70); S.tag.startTs=jetztIso(); saveTag(); }"); }
+  function postfach(fw, offen, dringend){ fw.eval("S.meta.postfach={ offen:"+offen+", dringend:"+dringend+", dringendText:'Rückruf bis 17:00', ts:jetztIso() }; saveMeta(); F4N.key=''; renderStatusbar();"); }
   var AKTIONEN={
-    /* ══ v2.0.0 · zwei Navigationsziele, fuenf Sichten ══ */
-    heute:    function(fw){ sicht(fw,'heute'); },
-    /* v3.0.0 §8: vier Sortierungen — Matrix, Oft und Art sind entfallen */
-    faellig:  function(fw){ sicht(fw,'faellig'); },
-    neueste:  function(fw){ sicht(fw,'neueste'); },
-    erledigte:function(fw){ sicht(fw,'erledigte'); },
-    freitext: function(fw){ fw.sucheOeffnen();
-                            var i=fw.document.getElementById('suFreitext');
-                            i.value='a'; i.dispatchEvent(new fw.Event('input',{bubbles:true})); },
-    /* Die laufende Karte liegt UEBER der Suche (§6) */
-    fokus:    function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet(); fw.fokusLayerPflegen(); },
-    leiste:   function(fw){ fw.sucheOeffnen(); fw.renderAlles(); fw.closeSheet(); },
-    sheet:    function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.renderAlles(); fw.oeffneStatusSheet(); },
-    /* §1.2 · der EINE Dialog fuer Matrix und Akku */
-    mxdialog: function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.oeffneMatrixDialog('k-lang','abhaken'); },
-    /* §9 · der Vorschlag direkt nach dem Matrix-Tap */
-    vorschlag:function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.matrixPosSetzen(-0.7,0.1,null,'test'); fw.zeigeVorschlag(); },
-    /* §6 · Kettensortierung aus der Suche heraus */
-    kpos:     function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.oeffneKettePosition('k-lang'); },
-    abschluss:function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.abhakDialog('k-lang', false); },
-    tagab:    function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.oeffneTagAbschluss(); },
-    routinen: function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.renderAlles(); fw.oeffneRoutinen(); },
-    /* §13 · Shop haengt hinter der FIGUR, kein Tab */
-    belohnung:function(fw){ var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet(); },
-    albumR:   function(fw){ fw.setTab('belohnung'); fw.renderAlles(); fw.oeffneAlbum(); },
-    albumK:   function(fw){ fw.setTab('belohnung'); fw.renderAlles(); fw.oeffneAlbum();
-                            var b=fw.document.querySelector('[data-albtab="kulissen"]'); if(b) b.click(); },
-    albumB:   function(fw){ fw.setTab('belohnung'); fw.renderAlles(); fw.oeffneAlbum();
-                            var b=fw.document.querySelector('[data-albtab="besitz"]'); if(b) b.click(); },
-    detail:   function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.oeffneDetail('k-ticks'); },
-    /* §12 · Statistik ist ein eigenes Navigationsziel */
-    statistik:function(fw){ fw.setTab('statistik'); },
-    /* §11 · Delta-Export */
-    sync:     function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.oeffneSync(); },
-    /* §0 · das Export-Gate (die Fixture gilt als migriert — hier gezielt an) */
-    gate:     function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.zeigeV200Gate2Test ? fw.zeigeV200Gate2Test() : fw.zeigeV200Gate(); },
-    einst:    function(fw){ var b=fw.document.getElementById('btnEinst'); if(b) b.click(); },
-    /* §1 (v2.0.2): dieselbe Suche, aber am GELEBTEN Bestand — mit offenem
-       Tag vom 10.09. und ausstehender Migration. Screenshot zum Ansehen. */
-    /* §1 (v2.1.0): der neue Abschluss-Dialog, am gelebten Bestand */
-    abschluss21:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.setTab('suche',{fokusLassen:true});
-      fw.oeffneTagAbschluss();
-    },
-    /* §1.3: der Durchgang im Anlege-Dialog */
-    durchgang21:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.setTab('suche',{fokusLassen:true});
-      fw.abschlussDurchgangStarten();
-    },
-    /* v2.1.2 §2: die Belohnungsbloecke der Fokusansicht, mit LAUFENDER Karte
-       (Fenster hoch, damit alle drei Bloecke plus Zeitstrahl im Bild sind) */
-    fokusBloecke:function(fw){
-      var d=fw.document;
-      fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.fokusLayerPflegen();
-      var lay=d.getElementById('fokusLayer'), fb=d.querySelector('#fokusView .blk:not(.kern)');
-      if(lay && fb) lay.scrollTop=Math.max(0, fb.offsetTop-12);
-    },
-    /* v2.1.2 §2: dieselbe Ansicht MIT Matrix-Position (vorher → jetzt),
-       damit Mini-Matrix, Schub-Achse und Bonus-Balken im Bild sind */
-    fokusBloeckeMx:function(fw){
-      var d=fw.document;
-      fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.matrixPosSetzen(-0.55, 0.45, null, 'harness');
-      fw.matrixPosSetzen(-0.15, -0.2, null, 'harness');
-      fw.fokusLayerPflegen();
-      var lay=d.getElementById('fokusLayer'), fb=d.querySelectorAll('#fokusView .blk:not(.kern)')[1];
-      if(lay && fb) lay.scrollTop=Math.max(0, fb.offsetTop-12);
-    },
-    /* ══ v3.2 · Screenshots: Zähler-Zeile im Fokus und in der Suche, Nachtrag nach dem Abschluss ══ */
-    echtZaehler32:function(fw){ var d=fw.document; v30Vorbereiten(fw);
-      ['v3-m1','v3-m2'].forEach(function(u){ fw.unterTick(u); }); fw.routineTick && 0;
-      fw.fokusKarteAnsehen('v3-mails'); var lay=d.getElementById('fokusLayer'); if(lay) lay.scrollTop=0; },
-    echtSucheZaehler32:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.fokusAnsichtSchliessen(); fw.sucheOeffnen();
-      ['v3-mails','v3-mails'].forEach(function(id){ fw.leisteTicken(id); }); fw.unterTick('v3-m2');
-      var inp=d.getElementById('suFreitext'); inp.value='Mails'; inp.dispatchEvent(new fw.Event('input',{bubbles:true})); fw.renderSuche(); },
-    echtNachtrag32:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.oeffneAbschlussV3(4); fw.abschlussV3Kopieren(); fw.abschlussV3SchliessenUI();
-      fw.leisteTicken('v3-kaffee'); fw.schlafUmschalten();
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; } },
-    /* ══ v3.1 · Screenshots: Zusammenfassung vor dem Anwenden, Protokoll ══ */
-    echtFreigabe31:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.fokusAnsichtSchliessen(); fw.setTab('einst'); einstAlleAuf(fw.document);
-      var ta=d.getElementById('einstImport'); ta.value=JSON.stringify({appVersion:'3.1.0', einstellungen:{ grund:'Harness: Sync-Tür', ziele:{ privat:{basis:'routinen', plus:750} }, schlaf:{ bedarfStd:7.5 }, punkte:{ basisDfm:200 } }, statistik:{ grund:'Harness: Statistik', zeitfenster:14, module:{ ausgeblendet:['belastung'] } }}); d.getElementById('btnEinstImport').click();
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; } },
-    einstProtokoll31:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.fokusAnsichtSchliessen(); fw.setTab('einst'); einstAlleAuf(fw.document);
-      var ta=d.getElementById('einstImport'); ta.value=JSON.stringify({appVersion:'3.1.0', einstellungen:{ grund:'Harness: Sync-Tür', ziele:{ privat:{basis:'routinen', plus:750} }, schlaf:{ bedarfStd:7.5 }, punkte:{ basisDfm:200 } }, statistik:{ grund:'Harness: Statistik', zeitfenster:14, module:{ ausgeblendet:['belastung'] } }}); d.getElementById('btnEinstImport').click();
-      var go=d.querySelector('[data-freigabego]'); if(go) go.click();
-      var m=d.querySelector('main'), z=d.querySelector('.einst-korrekturen'); if(m && z) m.scrollTop += z.getBoundingClientRect().top-150; },
-    /* ══ v3.0 · Screenshots: Routinen-Leiste, Tagesabschluss, Nacht, Aufstehen, Suche ══ */
-    echtLeiste30:function(fw){ var d=fw.document; v30Vorbereiten(fw);
-      ['v3-kaffee','v3-kaffee','v3-essen','v3-zaehne'].forEach(function(id){ var b=d.querySelector('#fokusView [data-alcheck="'+id+'"]'); if(b) b.click(); });
-      var z=d.querySelector('#fokusView [data-alzahl="v3-mails"]'); if(z) z.click();
-      var s1=d.querySelector('#fokusView [data-alsub="v3-m1"]'); if(s1) s1.click();
-      var lay=d.getElementById('fokusLayer'), al=d.querySelector('#fokusView .zs.al'); if(lay && al) lay.scrollTop=Math.max(0, al.offsetTop-40); },
-    echtAbschluss30:function(fw){ var d=fw.document; v30Vorbereiten(fw);
-      ['v3-kaffee','v3-essen','v3-essen'].forEach(function(id){ var b=d.querySelector('#fokusView [data-alcheck="'+id+'"]'); if(b) b.click(); });
-      fw.oeffneAbschlussV3(2);
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; } },
-    echtAbschlussMd30:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.oeffneAbschlussV3(1);
-      var w=d.querySelector('#sheetBody [data-abv3feld="wort"]'); if(w){ w.value='zäh, aber gut'; w.dispatchEvent(new fw.Event('input',{bubbles:true})); }
-      fw.oeffneAbschlussV3(4);
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; } },
-    echtNacht30:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.oeffneAbschlussV3(4); fw.abschlussV3SchliessenUI();
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(110%)'; }
-      var lay=d.getElementById('fokusLayer'), al=d.querySelector('#fokusView .zs.al'); if(lay && al) lay.scrollTop=Math.max(0, al.offsetTop-40); },
-    echtAufstehen30:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.oeffneAbschlussV3(4); fw.abschlussV3SchliessenUI();
-      var p=d.querySelector('#fokusView [data-alplay="v3-schlaf"]'); if(p) p.click();
-      fw.oeffneAufstehen();
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; } },
-    /* ══ v3.4 · Screenshot: „Schlafen" läuft nach dem Abschluss — ⏸ in der Fokusansicht, Zeile hervorgehoben ══ */
-    echtSchlaf34:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.oeffneAbschlussV3(4); fw.abschlussV3SchliessenUI();
-      var p=d.querySelector('#fokusView [data-fktoggle="v3-schlaf"]'); if(p) p.click();
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(110%)'; }
-      var lay=d.getElementById('fokusLayer'); if(lay) lay.scrollTop=0; },
-    echtSuche30:function(fw){ var d=fw.document; v30Vorbereiten(fw); fw.fokusAnsichtSchliessen(); fw.sucheOeffnen();
-      var a=d.querySelector('[data-suart="routinen"]'); if(a) a.click();
-      var n=d.querySelector('[data-susicht="neueste"]'); if(n) n.click(); },
-    /* ══ v2.9 · Screenshots: Punktekurve im Detail, Liste in den Einstellungen ══ */
-    echtPflicht:function(fw){ var d=fw.document; v29Vorbereiten(fw); fw.oeffneDetail('r-zaehne');
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; }
-      var b=d.getElementById('sheetBody'), z=d.getElementById('pflichtBlock'); if(b && z) b.scrollTop += z.getBoundingClientRect().top-b.getBoundingClientRect().top-8; },
-    einstPflicht:function(fw){ var d=fw.document; v29Vorbereiten(fw); fw.setTab('einst'); einstAlleAuf(fw.document);
-      var m=d.querySelector('main'), z=d.querySelector('.einst-pflicht'); if(m && z) m.scrollTop += z.getBoundingClientRect().top-150; },
-    /* ══ v2.8 · Screenshots: Fokusansicht komplett, Abhak-Leiste, Detail, Abhakbonus-Tabelle ══ */
-    echtFokus28:function(fw){ v28Vorbereiten(fw); fw.fokusStarten('a-3', null); fw.closeSheet();
-      var sh=fw.document.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(110%)'; }
-      fw.fokusKarteAnsehen('a-3'); fw.renderStatusbar(); },
-    /* ══ v3.5.4 · Statusleiste in drei Zuständen: A Restzeit offen · B 12 % überzogen, DFM-Ziel erreicht · C 35 % überzogen, Gesamtziel überschritten ══ */
-    status354A:function(fw){ status354(fw, 53, null, null); },
-    status354B:function(fw){ status354(fw, 90*1.12, 5300, 300); },
-    status354C:function(fw){ status354(fw, 90*1.35, 5500, 900); },
-    /* Statistik: Modul Matrixfaktor aufgeklappt (Knopf „Karten mit Faktor (n) ›", unten „▴ Einklappen") · die Vollbild-Ansicht */
-    stat354Mf:function(fw){ fw.eval('S.ui.statOffen={matrixfaktor:true}; S.ui.analyseZeitraum="14";'); fw.setTab('statistik');
-      var m=fw.document.querySelector('main'), z=fw.document.querySelector('[data-stmodul="matrixfaktor"]'); if(m && z) m.scrollTop+=z.getBoundingClientRect().top-340; },
-    mf354:function(fw){ fw.eval('S.ui.statOffen={matrixfaktor:true}; S.ui.analyseZeitraum="14"; (function(){ var ids={}, f=["werkzeug","zustand","ablenkung","werkzeug"], n=0; (S.intraday||[]).forEach(function(e){ if(e && e.kartenId && Number(e.minuten)>0) ids[e.kartenId]=1; });'+
-        ' Object.keys(ids).forEach(function(id){ var k=S.karten.find(function(x){ return x.id===id; }); if(k && n<4){ k.matrixFeld=f[n]; n++; } }); })();'); fw.setTab('statistik'); fw.oeffneMfAnsicht(); },
-    /* „▴ Einklappen" getippt: Modul zu, Kopf am oberen Rand unter der Statusleiste */
-    stat354Zu:function(fw){ fw.eval('S.ui.statOffen={matrixfaktor:true}; S.ui.analyseZeitraum="14";'); fw.setTab('statistik');
-      var d=fw.document, m=d.querySelector('main'), b=d.querySelector('[data-stmzu="matrixfaktor"]'); if(m && b){ m.scrollTop+=b.getBoundingClientRect().top-500; b.click(); } },
-    /* ══ v3.7.0 · „In Kette", Kettenliste hinter dem „+" ══ */
-    inkette370:function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.eval('S.tagesketten=[{id:"tk1", name:"DFM-Fokus 1", karten:[]}]; S.ui.klGruppen={ikKette:true, "ikTk:tk1":true, ikRoutinen:true};'); fw.oeffneInKette('k-lang'); },
-    plus370:function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.eval('S.ui.klGruppen={kette:true, routinen:true};'); fw.oeffnePlusListe(); },
-    /* §4c (v3.7.0): Kulissen-Belohnungsansicht — Kulisse 1 vor 3 Tagen begonnen, alle Felder gemalt */
-    kulisse370:function(fw){ fw.setTab('belohnung'); fw.eval('ausmalDaten(1); (function(){ var A=ausmalState(); A.kulissenStart[1]=new Date(Date.now()-(3*24+5)*3600000).toISOString(); A.malTage=["2026-09-29","2026-09-30","2026-10-01"]; })();');
-      var d=fw.document, st=d.createElement('style'); st.textContent='.bel-ansicht .st{animation:none !important;opacity:1 !important;transform:none !important}'; d.head.appendChild(st);
-      setTimeout(function(){ fw.eval('(function(){ var A=ausmalState(), D=ausmalDaten(1); if(D) A.gefaerbt=(D.json.felder||[]).map(function(f){ return f.feld; }); kulisseBelohnungZeigen(kulisseKennzahlen(1)); })();'); }, 500); },
-    /* 3.7.6: die Suche ist eine Vollbild-Ebene — Fixtures, die die Suche zeigen, rufen fw.sucheOeffnen(); Fixtures, die nur einen Kartenstart/Dialog
-       vorbereiten, fw.setTab('suche',{fokusLassen:true}) (= Grundansicht bleibt, keine Suche) */
-    /* ══ v3.6.0 · Shop neu: Übersicht (vor dem ersten Kauf), Einfärbung Stufe 1/6/12 je Kategorie ══ */
-    shop360:function(fw){ fw.eval('S.ui.malmodus=false;'); var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet(); namenWeg(fw); },
-    /* nach dem ersten Kauf (Soziales Stufe 1): Shop-Feld mit zuletzt gekaufter Stufe · die Kauf-Belohnung */
-    shop360Nach:function(fw){ kauf360(fw, true); fw.eval('S.ui.malmodus=false;'); var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet(); namenWeg(fw);
-      var m=fw.document.querySelector('main'), z=fw.document.querySelector('[data-belkat="soziales"]'); z=z && z.closest('.bw-kat'); if(m && z) m.scrollTop+=z.getBoundingClientRect().top-330; },
-    kauf360:function(fw){ kauf360(fw, false); namenWeg(fw); },
-    /* Statistik „Was heute noch geht": zu und offen */
-    stat360Zu:function(fw){ fw.eval('S.ui.statOffen={}; S.ui.analyseZeitraum="14";'); fw.setTab('statistik'); namenWeg(fw);
-      var m=fw.document.querySelector('main'), z=fw.document.querySelector('[data-stmodul="heuteGeht"]'); if(m && z) m.scrollTop+=z.getBoundingClientRect().top-330; },
-    stat360Auf:function(fw){ fw.eval('S.ui.statOffen={heuteGeht:true}; S.ui.analyseZeitraum="14";'); fw.setTab('statistik'); namenWeg(fw);
-      var m=fw.document.querySelector('main'), z=fw.document.querySelector('[data-stmodul="heuteGeht"]'); if(m && z) m.scrollTop+=z.getBoundingClientRect().top-330; },
-    farbe360:function(fw){ fw.setTab('statistik');
-      fw.eval('(function(){ var h="<div class=\\"blk\\"><div class=\\"blk-h\\">Einfärbung · Stufe 1 · 6 · 12</div>"; KAT_KEYS.forEach(function(k){ h+="<div class=\\"tr360\\"><b>"+BELOHNUNG[k].name+"</b>"+[1,6,12].map(function(n){ return "<span class=\\"tc360\\">"+objBildHtml(k,n)+"<i>Stufe "+n+"</i></span>"; }).join("")+"</div>"; });'+
-        ' var st="<style>.tr360{display:grid;grid-template-columns:78px repeat(3,1fr);gap:6px;align-items:center;padding:6px 0;border-top:1px solid #1d2026;font-size:12px}.tc360{background:radial-gradient(circle at 50% 40%,#2a3448,#15181e);border-radius:8px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}.tc360 img{width:82%;max-height:72%;object-fit:contain}.tc360 i{font-style:normal;font-size:9px;color:#9a9ca2;margin-top:2px}</style>";'+
-        ' el("statistikBody").innerHTML=st+h+"</div>"; objBilderLaden(); })();'); },
-    /* Kaufhinweis: das Konto reicht genau für den günstigsten Kauf — Shop (Stufen-Namen unkenntlich) und Statistik „Meilensteine" */
-    shop354:function(fw){ kauf354(fw); fw.eval('S.ui.malmodus=false;'); var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet();
-      fw.document.querySelectorAll('#belohnungBody .objakt, #belohnungBody .bw-st .tx').forEach(function(e){ e.textContent='· · ·'; }); },
-    stat354Shop:function(fw){ kauf354(fw); fw.eval('S.ui.statOffen={}; S.ui.analyseZeitraum="14";'); fw.setTab('statistik');
-      var m=fw.document.querySelector('main'), z=fw.document.querySelector('[data-stmodul="spielShop"]'); if(m && z) m.scrollTop+=z.getBoundingClientRect().top-340; },
-    /* Einstellungen: alle Abschnitte zu (Standard) · zwei Abschnitte und eine Routinen-Gruppe offen */
-    einst354:function(fw){ fw.eval('S.ui.einstOffen={};'); fw.setTab('einst'); },
-    einst354Auf:function(fw){ fw.eval('S.ui.einstOffen={"routinen-gruppen":true, "punkte-balance":true}; if(S.routinenGruppen && S.routinenGruppen[0]) S.ui.einstOffen["grp-"+S.routinenGruppen[0].id]=true;'); fw.setTab('einst'); },
-    /* Töpfe: der aktive Topf steht bei 0,8 % (gilt als leer), ein zweiter bei gut 40 % */
-    mal354:function(fw){ topf354(fw); fw.eval('S.ui.malmodus=true;'); var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet(); },
-    shop354Topf:function(fw){ topf354(fw); fw.eval('S.ui.malmodus=false;'); var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet();
-      fw.document.querySelectorAll('#belohnungBody .objakt, #belohnungBody .bw-st .tx').forEach(function(e){ e.textContent='· · ·'; }); },
-    /* Fokus oben (Navigation „◀ Verlauf · nächste ▶" statt „Zur Suche") · Der Tag ab den Ringen (DFM über Ziel) */
-    fokus354:function(fw){ status354(fw, 53, null, null); var lay=fw.document.getElementById('fokusLayer'); if(lay) lay.scrollTop=0; },
-    tag354:function(fw){ status354(fw, 53, 5600, 500);
-      var lay=fw.document.getElementById('fokusLayer'), b=fw.document.querySelector('#fokusView .dt-ringe'); if(lay && b) lay.scrollTop=Math.max(0, b.offsetTop-8); },
-    /* ══ v3.5.3 · Ansichten: Fokus ab „Tempo und Blöcke" (darunter „Der Tag"), „Aktuelle Kette" mit Tagesketten-Chips, Statistik „Der Tag" ══ */
-    fokus353:function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.eval('S.fokus.startMs-=22*60000;'); fw.fokusLayerPflegen(); fw.renderFokusleiste(); fw.renderStatusbar(); fw.renderFokus();
-      var lay=fw.document.getElementById('fokusLayer'), b=fw.document.querySelector('#fokusView .dt-zeilen'); if(lay && b && b.previousElementSibling) lay.scrollTop=Math.max(0, b.previousElementSibling.offsetTop-8); },
-    kette353:function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.eval('(function(){ var of=S.karten.filter(function(k){ return k.status==="offen" && istAufgabeKarte(k) && k.id!=="k-lang"; }).map(function(k){ return k.id; });'+
-        ' S.tagesketten=[{id:"tk1", name:"DFM-Fokus 1", karten:of.slice(0,3)}, {id:"tk2", name:"Senke", karten:of.slice(2,4)}, {id:"tk3", name:"Abend", karten:of.slice(3,6)}, {id:"tk4", name:"Wochenabschluss", karten:of.slice(0,1)}];'+
-        ' S.ui.tkWahl='+(/[?&]tk=1/.test(location.search) ? '"tk1"' : 'null')+'; S.ui.klGruppen={kette:true}; S.fokus.startMs-=22*60000; })()');
-      fw.fokusLayerPflegen(); fw.renderFokusleiste(); fw.renderStatusbar(); fw.renderFokus();
-      var lay=fw.document.getElementById('fokusLayer'), b=fw.document.querySelector('#fokusView .kl-blk'); if(lay && b) lay.scrollTop=Math.max(0, b.offsetTop-12); },
-    stat353:function(fw){ fw.eval('S.ui.statOffen={tag:true}; S.ui.analyseZeitraum="14";'); fw.setTab('statistik'); },
-    /* ══ v3.5.2 · Ansichten des Hotfix: Statusleiste mit laufender Karte (Live-Segment), Kartenlisten mit offenen Gruppen ══ */
-    status352:function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.eval('S.fokus.startMs-=22*60000;'); fw.fokusLayerPflegen(); fw.renderFokusleiste(); fw.renderStatusbar(); fw.renderFokus(); },
-    karten352:function(fw){ fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.eval('(function(){ var ids=S.karten.filter(function(k){ return k.status==="offen" && istAufgabeKarte(k) && k.id!=="k-lang"; }).slice(0,2).map(function(k){ return k.id; });'+
-        ' [ids[0], "k-lang", ids[1], "k-lang"].forEach(function(id){ if(id){ fokusKarteAnsehen(id); renderFokus(); } });'+
-        ' S.ui.klGruppen={kette:true, verlauf:true, routinen:true, meist:false, erledigt:true}; S.fokus.startMs-=22*60000; })()');
-      fw.fokusLayerPflegen(); fw.renderFokusleiste(); fw.renderStatusbar(); fw.renderFokus();
-      var lay=fw.document.getElementById('fokusLayer'), b=fw.document.querySelector('#fokusView .kl-blk'); if(lay && b) lay.scrollTop=Math.max(0, b.offsetTop-12); },
-    /* ══ v3.5.1 · Ansichten des Hotfix (Basis-Fixture): Statistik zu/auf, Shop, Malmodus ══ */
-    stat351:function(fw){ fw.eval('S.ui.statOffen={tag:true,matrixHeute:true,leistung:true,konsistenz:true,readiness:true,acwr:true,spielShop:true}; S.ui.analyseZeitraum="14";'); fw.setTab('statistik'); },
-    stat351Zu:function(fw){ fw.eval('S.ui.statOffen={}; S.ui.analyseZeitraum="14";'); fw.setTab('statistik'); },
-    shop351:function(fw){ fw.eval('S.ui.malmodus=false;'); var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet(); },
-    mal351:function(fw){ fw.eval('S.ui.malmodus=true;'); var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet();
-      /* zwei Toepfe mit Farbe, sobald die Kulissen-Daten geladen sind (Feldkarte: Rest abgedunkelt, offene Felder mit Umriss) */
-      fw.setTimeout(function(){ fw.eval('(function(){ var A=ausmalState(), T=topfFassung()||1000; A.stationFarbe=1; A.toepfe[0]={farbe:1, punkte:Math.round(T*0.64)}; A.toepfe[1]={farbe:4, punkte:T}; S.ui.malTopf=0; renderBelohnung(); })()'); }, 1500); },
-    /* Shop-Aufnahme fuer den Bericht: Stufen-Inhalte unkenntlich (Pascal soll sie erst live sehen) */
-    shop351Bericht:function(fw){ fw.eval('S.ui.malmodus=false;'); var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet();
-      fw.document.querySelectorAll('#belohnungBody .objakt, #belohnungBody .bw-st .tx').forEach(function(e){ e.textContent='· · ·'; }); },
-    echtAbhak:function(fw){ var d=fw.document; v28Vorbereiten(fw); fw.fokusKarteAnsehen('a-3');
-      var lay=d.getElementById('fokusLayer'), z=d.querySelector('#fokusView .zs'); if(lay && z) lay.scrollTop=Math.max(0, z.offsetTop-60); },
-    echtDetail28:function(fw){ var d=fw.document; v28Vorbereiten(fw); fw.oeffneDetail('r-zaehne');
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; }
-      var b=d.getElementById('sheetBody'), z=d.querySelector('#sheetBody .detail-nurabhaken'); if(b && z) b.scrollTop += z.getBoundingClientRect().top-160;
-      var v=d.querySelector('#sheetBody [data-vomgeraet]'); if(v) v.click(); },
-    einstAbhak:function(fw){ var d=fw.document; v28Vorbereiten(fw); fw.setTab('einst'); einstAlleAuf(fw.document);
-      var m=d.querySelector('main'), z=d.querySelector('.einst-abhak'); if(m && z) m.scrollTop += z.getBoundingClientRect().top-150; },
-    /* ══ v2.7 · Screenshots: Kalender in Bloecken, Aufklappen, Block-Auswahl, Korrekturen ══ */
-    echtBloecke:function(fw){ v27Vorbereiten(fw); var d=fw.document, m=d.querySelector('main'), k=d.querySelector('#suBody .kal-bloecke'); if(m && k) m.scrollTop += k.getBoundingClientRect().top-190; },
-    echtBloeckeAuf:function(fw){
-      var d=fw.document; v27Vorbereiten(fw);
-      var b=d.querySelector('#suBody [data-kalblock="fokus1"]'); if(b) b.click();
-      var c=d.querySelector('#suBody [data-kalblock="f1a"]'); if(c) c.click();
-      var m=d.querySelector('main'); c=d.querySelector('#suBody [data-kalblock="f1a"]'); if(m && c) m.scrollTop += c.getBoundingClientRect().top-190;
-    },
-    echtBlockNeu:function(fw){
-      var d=fw.document; v27Vorbereiten(fw); fw.oeffneDetail(null);
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; }
-    },
-    einstKorrekturen:function(fw){
-      var d=fw.document; v27Vorbereiten(fw);
-      var dat=fw.anVorTage(fw.heuteApp(),1);   // relativ zum App-Tag (der Bestand hat einen seit Tagen offenen Tag)
-      fw.syncImport(JSON.stringify({ appVersion:'2.7.0', karten:[], korrekturen:[
-        { datum:dat, grund:'Kranbesprechung am Vormittag nicht gestoppt', sitzungen:[{aktion:'hinzu', id:'s-h1', karteId:'a-3', von:'10:00', bis:'11:00'}],
-          positionen:[{aktion:'hinzu', ts:'10:05', x:0.5, y:0.4}], tag:{tagesStart:'08:10'} },
-        { datum:dat, grund:'Karte gibt es nicht', sitzungen:[{aktion:'hinzu', karteId:'gibtsnicht', von:'14:00', bis:'15:00'}] } ] }));
-      fw.setTab('einst'); einstAlleAuf(fw.document); var m=d.querySelector('main'), z=d.querySelector('.einst-korrekturen'); if(m && z) m.scrollTop += z.getBoundingClientRect().top-150;
-    },
-    /* ══ v2.6 · Screenshots: Statusleiste, Tempo-Leiste, Matrix-Spur, Geld-Regler ══ */
-    echtTempo:function(fw){
-      var d=fw.document; v26Vorbereiten(fw);
-      fw.fokusStarten('a-3', null); fw.closeSheet();
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(110%)'; }
-      fw.fokusKarteAnsehen('a-3'); fw.renderStatusbar();
-    },
-    echtMatrixSpur:function(fw){
-      var d=fw.document; v26Vorbereiten(fw); fw.renderStatusbar();
-      fw.zurMatrixSpur();
-      var h=d.querySelectorAll('#statistikBody .mv-hit')[3]; if(h) h.dispatchEvent(new fw.MouseEvent('click',{bubbles:true}));
-      var m=d.querySelector('main'), z=d.getElementById('stMatrixSpurAnker'); if(m && z) m.scrollTop += z.getBoundingClientRect().top - 150;
-    },
-    statistikOben:function(fw){ var d=fw.document; v26Vorbereiten(fw); fw.renderStatusbar(); fw.setTab('statistik'); d.querySelector('main').scrollTop=0; },
-    echtGeld:function(fw){
-      var d=fw.document; v26Vorbereiten(fw);
-      fw.oeffneDetail('a-1');
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; }
-      var rg=d.querySelector('#sheetBody [data-geldregler]'); if(rg){ rg.value='240'; rg.dispatchEvent(new fw.Event('input',{bubbles:true}));
-        var b=d.getElementById('sheetBody'); if(b) b.scrollTop += rg.getBoundingClientRect().top - 330; }
-    },
-    /* v2.5 §2: Abfrage beim Wiederoeffnen (gelebter Bestand, Karte e-1) */
-    echtWiederOeffnen:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.setTab('suche',{fokusLassen:true});
-      fw.wiederOeffnenMitAbfrage('e-1', function(){});
-      var b=d.querySelector('#sheetBody [data-rowahl="u-e1-2"][data-v="entfernen"]'); if(b) b.click();
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; }
-    },
-    /* v2.5 §5: Kalender mit aufgeklappter Gruppe (gelebter Bestand) */
-    echtKalender:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.sucheOeffnen();
-      var b=d.querySelector('[data-susicht="heute"]'); if(b) b.click();
-      var g=d.querySelector('#suBody .kal-b.gruppe'); if(g){ g.click(); g=d.querySelector('#suBody .kal-b.gruppe'); }
-      var m=d.querySelector('main'); if(m && g){ m.scrollTop += g.getBoundingClientRect().top - 260; }
-    },
-    /* v2.5 §3: Statistik bei der Detailanalyse */
-    statistikDetail:function(fw){
-      var d=fw.document; fw.setTab('statistik');
-      var m=d.querySelector('main'), z=d.getElementById('stDetailAnker');
-      if(m && z) m.scrollTop += z.getBoundingClientRect().top - 150;
-    },
-    /* v2.4 §3: die Volltextsuche hinter dem Suchknopf (gelebter Bestand) */
-    echtSuchknopf:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.setTab('suche',{fokusLassen:true});
-      d.getElementById('suchFab').click();
-      var i=d.getElementById('suchInput'); i.value='zaehne'; fw.renderSuchTreffer();
-    },
-    /* v2.4 §6: das Tagebuch (Einstieg ueber die Statistik-Matrix, Feld Zustaende) */
-    tagebuchDialog:function(fw){
-      fw.setTab('statistik'); fw.oeffneTagebuch(-0.5,-0.5);
-      var sh=fw.document.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; }
-    },
-    /* v2.5 §4: Kalibrierung als Diagramm in den Einstellungen */
-    einstKalib:function(fw){
-      var d=fw.document; fw.setTab('einst'); einstAlleAuf(fw.document);
-      var m=d.querySelector('main'), z=d.querySelector('.einst-kalib');
-      if(m && z) m.scrollTop += z.getBoundingClientRect().top - 150;
-    },
-    /* v2.4 §1.2: Einstellungen mit dem Import oben */
-    einstImport:function(fw){ fw.setTab('einst'); einstAlleAuf(fw.document); },
-    /* v2.4 §10: FARBVORSCHLAG — NUR VORSCHAU. Das CSS wird ausschliesslich
-       hier im Harness in die Seite gespielt; index.html bleibt unberuehrt. */
-    farbStat:function(fw){ farbVorschlag(fw); fw.setTab('statistik'); },
-    farbFokus:function(fw){
-      farbVorschlag(fw);
-      fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.matrixPosSetzen(-0.55, 0.45, null, 'harness');
-      fw.matrixPosSetzen(0.35, -0.3, null, 'harness');
-      fw.closeSheet(); fw.fokusLayerPflegen();
-      var lay=fw.document.getElementById('fokusLayer'), fb=fw.document.querySelectorAll('#fokusView .blk:not(.kern)')[1];
-      if(lay && fb) lay.scrollTop=Math.max(0, fb.offsetTop-12);
-    },
-    /* v2.4 §9: Statistik lang (alle Module im Bild) */
-    statistikLang:function(fw){ fw.setTab('statistik'); },
-    /* v2.4 §9: Fokusansicht komplett (hoch) */
-    fokusLang:function(fw){
-      var d=fw.document;
-      fw.setTab('suche',{fokusLassen:true}); fw.fokusStarten('k-lang', null); fw.closeSheet();
-      fw.matrixPosSetzen(-0.55, 0.45, null, 'harness');
-      fw.matrixPosSetzen(-0.15, -0.2, null, 'harness');
-      fw.closeSheet(); fw.fokusLayerPflegen();
-    },
-    /* v2.4 §9: Belohnungsseite komplett (hoch) */
-    belohnungLang:function(fw){ var b=fw.document.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet(); },
-    /* v2.3 §1: Freitext mit kompakten Karten (gelebter Bestand) */
-    echtFreitext:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.sucheOeffnen();
-      var i=d.getElementById('suFreitext');
-      i.value='a'; i.dispatchEvent(new fw.Event('input',{bubbles:true})); fw.renderSuche();
-    },
-    /* v2.3 §4: Werkzeug-Liste nach dem Vorschlag */
-    echtVorschlag:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.setTab('suche',{fokusLassen:true});
-      fw.zeigeVorschlag(null);
-      fw.closeSheet();
-    },
-    /* v2.3 §5: Anlege-Dialog mit dem Matrix-Pad */
-    neuDialogMx:function(fw){
-      var d=fw.document;
-      fw.setTab('suche',{fokusLassen:true}); fw.closeSheet();
-      d.getElementById('neuFab').click();
-      var sh=d.getElementById('sheet'); if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; }
-      var pad=d.getElementById('dmxPad'), sb=d.getElementById('sheetBody');
-      if(pad && sb){ var off=0; for(var e=pad; e && e!==sb; e=e.offsetParent) off+=e.offsetTop;
-        sb.scrollTop=Math.max(0, off-130); }
-    },
-    /* v2.2 §2: Suche mit Filtern am gelebten Bestand (Privat + Routinen) */
-    echtFilter:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.sucheOeffnen();
-      var b=d.querySelector('[data-sudom="privat"]'); if(b) b.click();
-      b=d.querySelector('[data-suart="routinen"]'); if(b) b.click();
-    },
-    /* v2.2 §3: Matrix mit geoeffnetem Feld (Werkzeuge), gelebter Bestand */
-    echtMatrixFeld:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet(); fw.sucheOeffnen();
-      /* v3.0.0 §8: kein „Alle"-Knopf mehr — ein zweiter Tipp auf die aktive Wahl hebt sie auf */
-      (function(){ for(var i=0;i<4;i++){ var o=d.querySelector('#suFilter button.on'); if(!o) break; o.click(); } })();
-      var b;
-      b=d.querySelector('[data-susicht="matrix"]'); if(b) b.click();
-      b=d.querySelector('[data-sumx="werkzeug"]'); if(b) b.click();
-    },
-    /* v2.2 §4: die Belohnungsseite komplett (hohes Fenster), gelebter Bestand */
-    echtBelohnung:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet();
-      var b=d.getElementById('btnFigur'); if(b) b.click();
-      b=d.querySelector('[data-belkat="fahrzeuge"]'); if(b) b.click();
-    },
-    /* Nachtrag v2.2.0: eine aufgeklappte Kategorie im Bild (gelebter Bestand) */
-    echtShopAuf:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.closeSheet();
-      var b=d.getElementById('btnFigur'); if(b) b.click();
-      b=d.querySelector('[data-belkat="fahrzeuge"]'); if(b) b.click();
-      b=d.querySelector('[data-zumshop]'); if(b) b.click();
-    },
-    /* v2.2 §4: Bereich 1 und 2 der Belohnungsseite im Bild (gescrollt) */
-    belohnungMitte:function(fw){
-      var d=fw.document, b=d.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet();
-      var m=d.querySelector('main'), z=d.querySelector('#belohnungBody .bw');
-      if(m && z) m.scrollTop += z.getBoundingClientRect().top - d.getElementById('topbar').getBoundingClientRect().bottom - 8;
-    },
-    belohnungShop:function(fw){
-      var d=fw.document, b=d.getElementById('btnFigur'); if(b) b.click(); fw.closeSheet();
-      b=d.querySelector('[data-zumshop]'); if(b) b.click();
-    },
-    /* §2: das Plus in der Statistik */
-    plusStat: function(fw){ fw.setTab('statistik'); },
-    echtSuche:function(fw){
-      var d=fw.document;
-      d.querySelectorAll('.mom-voll').forEach(function(m){ m.click(); });
-      var sp=d.querySelector('[data-v200spaeter]'); if(sp) sp.click();
-      fw.sucheOeffnen();
-    }
+    fokus:      function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet(); },
+    fokusOhne:  function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); },
+    postfach:   function(fw){ tagSicher(fw); fw.seiteZeigen('postfach'); },
+    statistik:  function(fw){ tagSicher(fw); fw.seiteZeigen('statistik'); },
+    shop:       function(fw){ tagSicher(fw); fw.seiteZeigen('belohnung'); },
+    einst:      function(fw){ tagSicher(fw); fw.seiteZeigen('einst'); },
+    suche:      function(fw){ tagSicher(fw); fw.e1Oeffnen('suche'); },
+    durchsuchen:function(fw){ tagSicher(fw); fw.e1Oeffnen('durchsuchen'); },
+    erfassen:   function(fw){ tagSicher(fw); fw.e1Oeffnen('erfassen'); },
+    chat:       function(fw){ tagSicher(fw); fw.f7ChatOeffnen('Trainer'); },
+    plan:       function(fw){ tagSicher(fw); fw.e1Oeffnen('plan'); },
+    routinen:   function(fw){ tagSicher(fw); fw.e1Oeffnen('routinen'); },
+    pause:      function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.oeffnePause(); },
+    abhaken:    function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.abhakDialog(karteId(fw), false); },
+    schieben:   function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.oeffneSchieben(karteId(fw)); },
+    ausstellung:function(fw){ tagSicher(fw); fw.seiteZeigen('belohnung'); fw.oeffneAusstellung(); },
+    reflexion:  function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.oeffneReflexion(); },
+    geschafft:  function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.openSheet('🌙 Geschafft', fw.geschafftHtml(), '<button class="btn prim" data-close="1">Gute Nacht</button>'); },
+    uebergang:  function(fw){ tagSicher(fw); fw.eval("S.tag.datum=anVorTage(heuteIso(),1); S.tag.tagId=S.tag.datum+'-1'; S.tag.morgen={ aufstehTs:S.tag.startTs }; saveTag();"); fw.seiteZeigen('fokus'); fw.oeffneAufstehen(); fw.aufstehenBestaetigenUI(); },
+    /* Statusleiste v3 (Betriebsbereit 4.1): die vier Fälle, Höhe der Leiste als Prüfpunkt im Ergebnis */
+    sbA:        function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet(); fw.eval("const k=S.karten.find(x=>x.id===S.fokus.karteId); k.titel='Angebotskalkulation Fertigstellen für Hagedorn inklusive Landingpage-Abstimmung'; saveKarten();"); postfach(fw,3,1); leisteHoehe(fw,'A'); },
+    sbB:        function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet(); fw.eval("const k=S.karten.find(x=>x.id===S.fokus.karteId); k.titel='Fokus App 4.0 testen'; saveKarten(); const on=S.karten.find(x=>x.status==='offen' && !x.rolle && x.id!==k.id); e4BrueckeSetzen(on.id, k.id, 'kopffrei');"); postfach(fw,0,0); leisteHoehe(fw,'B'); },
+    sbC:        function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet(); fw.eval("S.tag.bruecke=null; saveTag();"); postfach(fw,2,0); leisteHoehe(fw,'C'); },
+    sbD:        function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet(); fw.eval("const k=S.karten.find(x=>x.id===S.fokus.karteId); k.titel='Angebotskalkulation fertigstellen für Hagedorn inklusive Landingpage-Abstimmung und Nachbereitung der Rückfragen aus dem Workshop mit allen Beteiligten'; saveKarten(); S.tag.bruecke=null; saveTag();"); postfach(fw,3,1); leisteHoehe(fw,'D'); }
   };
+  function leisteHoehe(fw, fall){ try{ var h=fw.document.getElementById('f4sb').offsetHeight; ergebnis.warnungen.push('Statusleiste Fall '+fall+': '+h+' px'); ergebnis.leiste=h; if(fall!=='D' && h>240) finding('Statusleiste Fall '+fall+' höher als 240 px: '+h); }catch(e){ fatal('Leistenhöhe: '+e); } }
 
   function farbVorschlag(fw){
     var st=fw.document.createElement('style');
@@ -661,46 +267,46 @@ function bestandSchreiben(){
   function storageSequenz(){
     /* Fixture OHNE Migrations-Flags → die App migriert beim 1. Laden. */
     fixtureSchreiben();
-    var metaRoh=JSON.parse(localStorage.getItem('fokus2_meta'));
+    var metaRoh=JSON.parse(localStorage.getItem('fokus4_meta'));
     ['migration180','zeit191','gamify190','akku1100','flowfix181'].forEach(function(f){ delete metaRoh[f]; });
     delete metaRoh.migration180Gezeigt; delete metaRoh.gamify190Gezeigt;
-    localStorage.setItem('fokus2_meta', JSON.stringify(metaRoh));
-    localStorage.setItem('fokus2_uiharness_probe', JSON.stringify({wert:'überlebt-reload'}));
+    localStorage.setItem('fokus4_meta', JSON.stringify(metaRoh));
+    localStorage.setItem('fokus4_uiharness_probe', JSON.stringify({wert:'überlebt-reload'}));
 
     ladeIframe(function(fw){
       konsoleWaechter(fw);
       ergebnis.checks++;
-      var meta1=JSON.parse(localStorage.getItem('fokus2_meta'));
+      var meta1=JSON.parse(localStorage.getItem('fokus4_meta'));
       if(meta1.zeit191!==true || meta1.gamify190!==true) fatal('Migrationen liefen beim 1. Laden nicht (zeit191/gamify190 fehlen)');
-      var bak1=localStorage.getItem('fokus2_karten_bak191');
+      var bak1=localStorage.getItem('fokus4_karten_bak191');
       if(!bak1) fatal('Migrations-Sicherung karten_bak191 fehlt nach dem 1. Laden');
       var log1=JSON.stringify(meta1.zeit191Log||null);
       /* Timer starten, dann Reload */
       fw.fokusStarten('k-lang', null);
-      var fokus1=JSON.parse(localStorage.getItem('fokus2_fokus'));
+      var fokus1=JSON.parse(localStorage.getItem('fokus4_fokus'));
       ergebnis.checks++;
       if(!fokus1 || fokus1.karteId!=='k-lang' || fokus1.laeuft!==true) fatal('Laufender Timer wurde nicht persistiert');
 
       ladeIframe(function(fw2){
         konsoleWaechter(fw2);
         ergebnis.checks++;
-        var probe=JSON.parse(localStorage.getItem('fokus2_uiharness_probe')||'null');
+        var probe=JSON.parse(localStorage.getItem('fokus4_uiharness_probe')||'null');
         if(!probe || probe.wert!=='überlebt-reload') fatal('localStorage-Wert hat den Reload NICHT überlebt');
-        var meta2=JSON.parse(localStorage.getItem('fokus2_meta'));
+        var meta2=JSON.parse(localStorage.getItem('fokus4_meta'));
         ergebnis.checks++;
         if(JSON.stringify(meta2.zeit191Log||null)!==log1) fatal('Migration lief beim 2. Laden ERNEUT (zeit191Log verändert)');
-        if(localStorage.getItem('fokus2_karten_bak191')!==bak1) fatal('Migrations-Sicherung wurde beim 2. Laden überschrieben');
+        if(localStorage.getItem('fokus4_karten_bak191')!==bak1) fatal('Migrations-Sicherung wurde beim 2. Laden überschrieben');
         ergebnis.checks++;
         /* const S liegt nicht auf window — Zustand über localStorage plus
            laufendeSek() (Top-Level-Funktion, läuft im App-Scope) prüfen. */
-        var fokus2=JSON.parse(localStorage.getItem('fokus2_fokus')||'null');
+        var fokus2=JSON.parse(localStorage.getItem('fokus4_fokus')||'null');
         if(!(fokus2 && fokus2.karteId==='k-lang' && fokus2.laeuft===true))
           fatal('Laufender Timer hat den Reload nicht überlebt (fokus='+JSON.stringify(fokus2)+')');
         var sek=fw2.laufendeSek?fw2.laufendeSek():null;
         ergebnis.checks++;
         if(sek==null || !(sek>0)) fatal('Timer im neuen Frame nicht aktiv (laufendeSek='+sek+')');
         ergebnis.timerSekNachReload=sek;
-        localStorage.removeItem('fokus2_uiharness_probe');
+        localStorage.removeItem('fokus4_uiharness_probe');
         abschluss();
       });
     });
@@ -984,7 +590,7 @@ function bestandSchreiben(){
       }catch(err){ fatal('diag-Sequenz abgebrochen: '+err); }
       abschluss();
     });
-    function lsGetMeta(){ try{ return JSON.parse(localStorage.getItem('fokus2_meta')||'null'); }catch(e){ return null; } }
+    function lsGetMeta(){ try{ return JSON.parse(localStorage.getItem('fokus4_meta')||'null'); }catch(e){ return null; } }
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -1394,7 +1000,7 @@ function bestandSchreiben(){
               var z=d.querySelector(sel), r=z.getBoundingClientRect();
               var hit=d.elementFromPoint(Math.round(r.left+r.width/2), Math.round(r.top+r.height/2));
               pruef(hit===z, 'v2.2 §2: '+sel+' verdeckt von '+beschreib(hit)); if(hit) hit.click(); });
-            var ui=JSON.parse(localStorage.getItem('fokus2_ui')||'{}');
+            var ui=JSON.parse(localStorage.getItem('fokus4_ui')||'{}');
             var zeilen=[].slice.call(d.querySelectorAll('#suBody .krow[data-kid]'));
             var kopf=(d.querySelector('#suBody .su-kopfzeile')||{}).textContent||'';
             finding('echt · v2.2 §2 '+c[0]+' + '+c[1]+': '+zeilen.length+' Zeilen in „Heute" · Kopf „'+kopf+'" · gespeichert suDom='+ui.suDom+' suArt='+ui.suArt);
@@ -1413,9 +1019,9 @@ function bestandSchreiben(){
           if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; } }
         function sheetRuheAus(){ var sh=d.getElementById('sheet');
           if(sh){ sh.style.transition='none'; sh.style.transform='translateY(110%)'; } }
-        function lsFokus(){ try{ return JSON.parse(localStorage.getItem('fokus2_fokus')||'null'); }catch(e){ return null; } }
+        function lsFokus(){ try{ return JSON.parse(localStorage.getItem('fokus4_fokus')||'null'); }catch(e){ return null; } }
         function lsLaeuft(){ var f=lsFokus(); return !!(f && f.laeuft); }
-        function lsIstSek(id){ try{ var a=JSON.parse(localStorage.getItem('fokus2_karten')||'[]');
+        function lsIstSek(id){ try{ var a=JSON.parse(localStorage.getItem('fokus4_karten')||'[]');
           var k=a.filter(function(x){ return x.id===id; })[0]; return k?Number(k.istSek||0):0; }catch(e){ return 0; } }
         /* ══ v2.3 §1–§3 · SUCHE: kompakt, nur Faelliges, Ungeplantes ans Ende ══ */
         (function(){
@@ -1719,7 +1325,7 @@ function bestandSchreiben(){
             if(hit) hit.click();
             return hit;
           }
-          function lsSubs(pid){ try{ return JSON.parse(localStorage.getItem('fokus2_unteraufgaben')||'[]').filter(function(u){ return u.parentId===pid; }); }catch(e){ return []; } }
+          function lsSubs(pid){ try{ return JSON.parse(localStorage.getItem('fokus4_unteraufgaben')||'[]').filter(function(u){ return u.parentId===pid; }); }catch(e){ return []; } }
           /* §2 · erledigte Karte wieder oeffnen → Abfrage */
           freiMachen(); fw.sucheOeffnen();
           fw.oeffneWiederholen('e-1'); sheetRuhe();
@@ -1883,13 +1489,13 @@ function bestandSchreiben(){
             zf.value='123'; zf.dispatchEvent(new fw.Event('input',{bubbles:true}));
             pruef(rg.value==='123', 'v2.6 §5: Textfeld zieht den Regler nicht nach');
             var sv=d.querySelector('#sheetFoot [data-detailaktion="speichern"]'); pruef(!!sv,'v2.6 §5: Speichern-Knopf fehlt'); if(sv) sv.click();
-            var gespeichert=null; try{ gespeichert=JSON.parse(localStorage.getItem('fokus2_karten')).filter(function(k){ return k.id==='a-1'; })[0]; }catch(e){}
+            var gespeichert=null; try{ gespeichert=JSON.parse(localStorage.getItem('fokus4_karten')).filter(function(k){ return k.id==='a-1'; })[0]; }catch(e){}
             finding('echt · v2.6 §5 nach Speichern: geldImpact='+(gespeichert?gespeichert.geldImpact:'—')+' · geldScore '+(gespeichert&&gespeichert.geldScore!==undefined?'noch da':'weg'));
             pruef(gespeichert && gespeichert.geldImpact===123 && gespeichert.geldScore===undefined, 'v2.6 §5: gespeicherter Geld-Impact stimmt nicht');
           } else pruef(false,'v2.6 §5: Geld-Regler fehlt im Detail');
           freiMachen();
           /* §5/§7 · Migrationsprotokolle am gelebten Bestand */
-          var ls=JSON.parse(localStorage.getItem('fokus2_meta')||'{}'), gl=ls.geld260Log||{}, ul=ls.urlaub260Log||{};
+          var ls=JSON.parse(localStorage.getItem('fokus4_meta')||'{}'), gl=ls.geld260Log||{}, ul=ls.urlaub260Log||{};
           finding('echt · v2.6 §5 Migration: '+gl.umgestellt+' DFM-Karten umgestellt · Stufen '+JSON.stringify(gl.stufen)+' · begrenzt '+gl.gekappt+' · Score >200 '+gl.ueberDeckel+' · Deckel '+gl.deckel);
           finding('echt · v2.6 §7 Urlaub: '+(ul.tage||[]).length+' Tage nachgetragen · geprüft '+ul.geprueft);
           pruef(ls.geld260===true && ls.urlaub260===true, 'v2.6: Migrationen nicht gelaufen');
@@ -1940,7 +1546,7 @@ function bestandSchreiben(){
           pruef(!!d.querySelector('#sheetBody [data-chip="block"][data-val="f1a"].on'), 'v2.7 §1.5: Block-Wahl wirkt nicht');
           var ti=d.querySelector('#sheetBody [data-bind="titel"]'); if(ti){ ti.value='Harness-Block v2.7'; ti.dispatchEvent(new fw.Event('input',{bubbles:true})); }
           var sv=d.querySelector('#sheetFoot [data-detailaktion="speichern"]'); if(sv) sv.click();
-          var neu=null; try{ neu=JSON.parse(localStorage.getItem('fokus2_karten')).filter(function(k){ return k.titel==='Harness-Block v2.7'; })[0]; }catch(e){}
+          var neu=null; try{ neu=JSON.parse(localStorage.getItem('fokus4_karten')).filter(function(k){ return k.titel==='Harness-Block v2.7'; })[0]; }catch(e){}
           finding('echt · v2.7 §1.5 gespeichert: block='+(neu?neu.block:'—'));
           pruef(neu && neu.block==='f1a', 'v2.7 §1.5: neue Karte liegt nicht im gewählten Block');
           zu=fokusZuKnopf(d); if(zu) zu.click();
@@ -1961,7 +1567,7 @@ function bestandSchreiben(){
             if(hit){ if(typeof hit.click==='function') hit.click(); else hit.dispatchEvent(new fw.MouseEvent('click',{bubbles:true})); }
             return hit;
           }
-          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus2_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
           freiMachen(); fw.sucheOeffnen();
           fw.syncImport(JSON.stringify(v27Paket(fw))); fw.syncImport(JSON.stringify(v28Paket()));
           fw.fokusKarteAnsehen('a-3');
@@ -2005,7 +1611,7 @@ function bestandSchreiben(){
           var ja=d.querySelector('#sheetBody [data-vomgeraetja]');
           finding('echt · v2.8 §4 nach Tipp: Bestätigung '+(ja?'„'+((d.querySelector('#sheetBody .vg-frage')||{}).textContent||'').slice(0,60)+'…"':'fehlt'));
           tippe(ja,'„Ja, vom Gerät nehmen"');
-          var weg=!lsK('a-9'), ls=JSON.parse(localStorage.getItem('fokus2_meta')||'{}');
+          var weg=!lsK('a-9'), ls=JSON.parse(localStorage.getItem('fokus4_meta')||'{}');
           finding('echt · v2.8 §4 a-9 vom Gerät: '+(weg?'weg':'NOCH DA')+' · gemeldet '+JSON.stringify((ls.vomGeraetGenommen||[]).map(function(x){ return x.id; })));
           pruef(weg && (ls.vomGeraetGenommen||[]).some(function(x){ return x.id==='a-9'; }), 'v2.8 §4: vom Gerät nehmen wirkt nicht');
           freiMachen(); fw.sucheOeffnen();
@@ -2021,8 +1627,8 @@ function bestandSchreiben(){
             if(hit) hit.click(); sheetRuhe();
             return hit;
           }
-          function lsKarten(){ try{ return JSON.parse(localStorage.getItem('fokus2_karten')||'[]'); }catch(e){ return []; } }
-          function lsSubs(pid){ try{ return JSON.parse(localStorage.getItem('fokus2_unteraufgaben')||'[]').filter(function(u){ return u.parentId===pid; }); }catch(e){ return []; } }
+          function lsKarten(){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]'); }catch(e){ return []; } }
+          function lsSubs(pid){ try{ return JSON.parse(localStorage.getItem('fokus4_unteraufgaben')||'[]').filter(function(u){ return u.parentId===pid; }); }catch(e){ return []; } }
           freiMachen(); fw.sucheOeffnen();
           var altSubs=lsSubs('e-1'), altVor=JSON.stringify(lsKarten().filter(function(k){ return k.id==='e-1'; })[0]);
           fw.oeffneDetail(null); sheetRuhe();
@@ -2112,7 +1718,7 @@ function bestandSchreiben(){
           var live=(d.getElementById('pfLive')||{}).textContent||'';
           finding('echt · v2.9 §3 Live-Zeile: „'+live+'"');
           tippe(d.querySelector('#sheetFoot [data-detailaktion="speichern"]'),'Speichern');
-          var k13=null; try{ k13=JSON.parse(localStorage.getItem('fokus2_karten')).filter(function(k){ return k.id==='r-13'; })[0]; }catch(e){}
+          var k13=null; try{ k13=JSON.parse(localStorage.getItem('fokus4_karten')).filter(function(k){ return k.id==='r-13'; })[0]; }catch(e){}
           pruef(k13 && k13.pflicht===true && k13.pflichtWert===nach1.wert, 'v2.9 §1: gespeicherte Pflicht-Werte stimmen nicht');
           var zu=fokusZuKnopf(d); if(zu) zu.click();
           /* §4 Vorschlag übernehmen */
@@ -2148,8 +1754,8 @@ function bestandSchreiben(){
             if(hit){ if(typeof hit.click==='function') hit.click(); else hit.dispatchEvent(new fw.MouseEvent('click',{bubbles:true})); }
             return hit;
           }
-          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus2_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
-          function lsLog(){ try{ return JSON.parse(localStorage.getItem('fokus2_intraday')||'[]'); }catch(e){ return []; } }
+          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsLog(){ try{ return JSON.parse(localStorage.getItem('fokus4_intraday')||'[]'); }catch(e){ return []; } }
           freiMachen(); fw.sucheOeffnen();
           var fo=lsFokus(); if(fo && fo.laeuft) fw.fokusZeitEinbuchen();
           fw.fokusKarteAnsehen('a-3');
@@ -2193,8 +1799,8 @@ function bestandSchreiben(){
             if(hit){ if(typeof hit.click==='function') hit.click(); else hit.dispatchEvent(new fw.MouseEvent('click',{bubbles:true})); }
             ruhe(); return hit;
           }
-          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus2_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
-          function lsU(id){ try{ return JSON.parse(localStorage.getItem('fokus2_unteraufgaben')||'[]').filter(function(u){ return u.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsU(id){ try{ return JSON.parse(localStorage.getItem('fokus4_unteraufgaben')||'[]').filter(function(u){ return u.id===id; })[0]||null; }catch(e){ return null; } }
           // v3.2.0 §1.2: die Ticks einer Staffel-/Pflicht-Karte liegen in ihrem Ticker (Unteraufgabe tk-<id>)
           function tLog(x){ var tk=x && x.parentId===undefined ? lsU('tk-'+x.id) : null; return (tk && tk.tickLog) || (x && x.tickLog) || null; }
           function nTicks(x){ var l=tLog(x); return l && Array.isArray(l.ticks) ? l.ticks.length : 0; }
@@ -2265,7 +1871,7 @@ function bestandSchreiben(){
           tippe(q('#sheetBody [data-abv3schritt="4"]'),'Schritt 4');
           /* v3.2.0 §2.3: „Schließen" ist gesperrt, bis kopiert oder heruntergeladen ist */
           tippe(q('#sheetFoot [data-abv3zu]'),'„✓ Schließen" vor dem Export (gesperrt)');
-          var tg0=JSON.parse(localStorage.getItem('fokus2_tag')||'null');
+          var tg0=JSON.parse(localStorage.getItem('fokus4_tag')||'null');
           finding('echt · v3.2 §2.3 „Schließen" vor dem Export: Ansicht „'+d.getElementById('sheetTitel').textContent+'" · Tag abgeschlossen '+!!(tg0&&tg0.endeTs)+' · gesperrt '+!!q('#sheetFoot [data-abv3zu].gesperrt'));
           pruef(/Tagesabschluss/.test(d.getElementById('sheetTitel').textContent) && !(tg0&&tg0.endeTs) && !!q('#sheetFoot [data-abv3zu].gesperrt'), 'v3.2 §2.3: „Schließen" schließt ohne Export');
           var md=(q('#sheetBody #abv3Md')||{}).value||'';
@@ -2274,7 +1880,7 @@ function bestandSchreiben(){
           finding('echt · v3.0 §6 Schritte '+schritte+' · .md Zeile 1 „'+md.split('\n')[0]+'" · '+md.length+' Zeichen · endet mit JSON-Block '+/```json[\s\S]*```\n?$/.test(md));
           pruef(schritte===4 && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(md.split('\n')[0]) && /```json[\s\S]*```\n?$/.test(md), 'v3.0 §6: vier Schritte / .md-Form stimmt nicht');
           tippe(q('#sheetFoot [data-abv3zu]'),'„✓ Schließen"');
-          var tg=JSON.parse(localStorage.getItem('fokus2_tag')||'null');
+          var tg=JSON.parse(localStorage.getItem('fokus4_tag')||'null');
           var aus=[].slice.call(d.querySelectorAll('#fokusView .al-z:not(.al-sub)')).filter(function(z){ return z.className.indexOf(' aus')<0 || Number(fw.getComputedStyle(z).opacity)>0.5; }).map(function(z){ return z.dataset.alkarte; });   // Klasse UND sichtbare Deckkraft
           finding('echt · v3.0 §6 geschlossen: Tag abgeschlossen '+!!(tg&&tg.endeTs)+' · aktiv nur noch '+aus.join(', ')+' · Fokus zeigt '+(q('#fokusView')?'Schlafen':'—'));
           // v3.2.0 §2.4: nach dem Abschluss bleiben Routinen und Counter bis „Schlafen" buchbar — grau ist der Tagesabschluss
@@ -2286,7 +1892,7 @@ function bestandSchreiben(){
           pruef(kNach===kVor+1, 'v3.2 §2.4: +1 nach dem Abschluss wirkt nicht');
           /* Schlafen ▶ — schliesst den Tag endgueltig, Nachtrag-Export */
           tippe(q('#fokusView [data-alplay="v3-schlaf"]'),'▶ „Schlafen"');
-          var sl=JSON.parse(localStorage.getItem('fokus2_meta')||'{}').schlaf, tgS=JSON.parse(localStorage.getItem('fokus2_tag')||'null');
+          var sl=JSON.parse(localStorage.getItem('fokus4_meta')||'{}').schlaf, tgS=JSON.parse(localStorage.getItem('fokus4_tag')||'null');
           pruef(sl && sl.laeuft, 'v3.0 §7: Schlafen startet nicht');
           finding('echt · v3.2 §2.4 „Schlafen": Ansicht „'+d.getElementById('sheetTitel').textContent+'" · Tag geschlossen '+!!(tgS&&tgS.geschlossenTs)+' · Nachtrag '+(tgS&&tgS.nachtrag?tgS.nachtrag.anzahl+' Buchung(en), '+(tgS.nachtrag.punkte>=0?'+':'')+tgS.nachtrag.punkte+' P':'—'));
           pruef(/Nachtrag/.test(d.getElementById('sheetTitel').textContent) && !!q('#sheetBody [data-ntcopy]') && !!q('#sheetBody [data-ntdl]') && tgS && tgS.geschlossenTs && tgS.nachtrag && tgS.nachtrag.anzahl>=1,
@@ -2302,7 +1908,7 @@ function bestandSchreiben(){
           finding('echt · v3.0 §5 Aufstehen: Frage '+(aufR?'„Wie voll fühlt sich der Akku an?" vorbelegt '+aufR.value+' %':'fehlt')+' · Priorisierung '+(q('#sheetBody [data-tsprio]')?'DA':'keine'));
           pruef(!!aufR && !q('#sheetBody [data-tsprio]'), 'v3.0 §5: Aufstehen fragt nicht / Priorisierung noch da');
           tippe(q('#sheetFoot [data-aufgo]'),'„Aufstehen"');
-          var tg2=JSON.parse(localStorage.getItem('fokus2_tag')||'null'), sl2=JSON.parse(localStorage.getItem('fokus2_meta')||'{}').schlaf;
+          var tg2=JSON.parse(localStorage.getItem('fokus4_tag')||'null'), sl2=JSON.parse(localStorage.getItem('fokus4_meta')||'{}').schlaf;
           finding('echt · v3.0 §5 nach „Aufstehen": neuer Tag '+(tg2&&tg2.tagId)+' offen '+!!(tg2&&!tg2.endeTs)+' · Aufstehzeit '+(tg2&&tg2.morgen&&tg2.morgen.aufstehTs?'gesetzt':'—')+' · Schlafen gestoppt '+!(sl2&&sl2.laeuft));
           pruef(tg2 && !tg2.endeTs && tg2.morgen && tg2.morgen.aufstehTs && !(sl2&&sl2.laeuft), 'v3.0 §5: Aufstehen startet den Tag nicht / stoppt Schlafen nicht');
           /* ══ Suche: zwei Filter, vier Sortierungen, jede Ansicht oben ══ */
@@ -2316,7 +1922,7 @@ function bestandSchreiben(){
             tippe(q('#suSichten [data-susicht="'+sv+'"]'),'Sortierung „'+sv+'"');
             pruef(main.scrollTop===0, 'v3.0 §9: Sortierung „'+sv+'" beginnt nicht oben ('+main.scrollTop+')');
           });
-          var ui=JSON.parse(localStorage.getItem('fokus2_ui')||'{}');
+          var ui=JSON.parse(localStorage.getItem('fokus4_ui')||'{}');
           finding('echt · v3.0 §8 Suche: Filter '+ui.suArt+' + '+ui.suDom+' · Sortierungen '+d.querySelectorAll('#suSichten [data-susicht]').length+' · nach jedem Wechsel scrollTop 0');
           pruef(ui.suArt==='aufgaben' && ui.suDom==='dfm' && d.querySelectorAll('#suSichten [data-susicht]').length===4, 'v3.0 §8: Filter/Sortierungen stimmen nicht');
           tippe(q('#suFilter [data-suart="aufgaben"]'),'Filter „Aufgaben" aufheben'); tippe(q('#suFilter [data-sudom="dfm"]'),'Filter „DFM" aufheben');
@@ -2336,10 +1942,10 @@ function bestandSchreiben(){
             pruef(hit && (hit===e || e.contains(hit)), 'v3.2: '+wie+' verdeckt von '+beschreib(hit));
             if(hit) hit.click(); ruhe(); return hit;
           }
-          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus2_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
-          function lsU(id){ try{ return JSON.parse(localStorage.getItem('fokus2_unteraufgaben')||'[]').filter(function(u){ return u.id===id; })[0]||null; }catch(e){ return null; } }
-          function lsUi(){ try{ return JSON.parse(localStorage.getItem('fokus2_ui')||'{}'); }catch(e){ return {}; } }
-          function nT(id, sub){ var x=sub ? lsU(id) : lsU('tk-'+id), l=x && x.tickLog, tg=JSON.parse(localStorage.getItem('fokus2_tag')||'null');
+          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsU(id){ try{ return JSON.parse(localStorage.getItem('fokus4_unteraufgaben')||'[]').filter(function(u){ return u.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsUi(){ try{ return JSON.parse(localStorage.getItem('fokus4_ui')||'{}'); }catch(e){ return {}; } }
+          function nT(id, sub){ var x=sub ? lsU(id) : lsU('tk-'+id), l=x && x.tickLog, tg=JSON.parse(localStorage.getItem('fokus4_tag')||'null');
             return (l && tg && l.tag===tg.tagId && Array.isArray(l.ticks)) ? l.ticks.length : 0; }   // nur die Ticks des laufenden Tages
           freiMachen(); var fo=lsFokus(); if(fo && fo.laeuft) fw.fokusZeitEinbuchen();
           if(!lsK('v3-kaffee')){ fw.syncImport(JSON.stringify(v30Paket())); }
@@ -2381,7 +1987,7 @@ function bestandSchreiben(){
             pruef(hit && (hit===e || e.contains(hit)), 'v3.1: '+wie+' verdeckt von '+beschreib(hit));
             if(hit) hit.click(); ruhe(); return hit;
           }
-          function lsSet(){ try{ return JSON.parse(localStorage.getItem('fokus2_settings')||'{}'); }catch(e){ return {}; } }
+          function lsSet(){ try{ return JSON.parse(localStorage.getItem('fokus4_settings')||'{}'); }catch(e){ return {}; } }
           freiMachen(); fw.setTab('einst'); einstAlleAuf(fw.document);
           var vor=lsSet();
           var ta=d.getElementById('einstImport'); ta.value=JSON.stringify({appVersion:'3.1.0', einstellungen:{ grund:'Harness: Sync-Tür', ziele:{ privat:{basis:'routinen', plus:750} }, schlaf:{ bedarfStd:7.5 }, punkte:{ basisDfm:200 } }, statistik:{ grund:'Harness: Statistik', zeitfenster:14, module:{ ausgeblendet:['belastung'] } }});
@@ -2536,11 +2142,11 @@ function bestandSchreiben(){
     konsoleWaechter(fw);
     /* const S liegt nicht auf window — Initialisierung über die
        Top-Level-Funktionen und den gerenderten DOM feststellen. */
-    if(typeof fw.setTab!=='function' || typeof fw.laufendeSek!=='function')
+    if(typeof fw.seiteZeigen!=='function' || typeof fw.laufendeSek!=='function')   // 4.0: seiteZeigen statt setTab
       fatal('App nicht initialisiert (Top-Level-Funktionen fehlen)');
     if(!fw.document.body || fw.document.body.children.length===0)
       fatal('App nicht initialisiert (leerer body)');
-    try{ (AKTIONEN[VIEW]||AKTIONEN.stapel)(fw); }
+    try{ (AKTIONEN[VIEW]||AKTIONEN.fokusOhne)(fw); }
     catch(e){ fatal('View-Aktion „'+VIEW+'“ fehlgeschlagen: '+e); }
     setTimeout(function(){
       try{ layoutChecks(fw); }catch(e){ fatal('Layout-Checks fehlgeschlagen: '+e); }

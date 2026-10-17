@@ -1,10 +1,10 @@
-/* jsc-Suite: ABNAHME Hotfix v3.6.1 „Preis-Faktor entfernt, Farbe-Anzeige, Spielstand zurücksetzen". Begruendung fuer eine eigene
-   Datei (Leitplanke „Testdateien mit Begruendung"): die beiden neuen Tests des Auftrags (§4) — Import mit preisFaktor wird
-   angenommen und aendert keinen Preis; „Farbe (live)" = wohlstandSeitReset — samt der Reset-Beschriftung, mit verstellbarer Uhr.
+/* jsc-Suite: ABNAHME v3.7.0 „Ketten überall, Tick-Logik neu, Kalender raus" — alle Abschnitte 1–12 inkl. 4a, 4b, 4c, 9a.
+   Begruendung fuer eine eigene Datei (Leitplanke „Testdateien mit Begruendung"): der Auftrag verlangt eine eigene Suite fuer
+   alle Abschnitte; die aelteren Suiten pruefen weiter ihre Stände (angepasst, wo 3.7.0 die Regel geaendert hat).
 
    Ausfuehren aus der Repo-Wurzel:
-     jsc tests/v361-abnahme.js
-   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v360-abnahme). */
+     jsc tests/v370-abnahme.js
+   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v361-abnahme), Uhr verstellbar (uhr/minuten). */
 var _els={};
 function dummyEl(){ var d={ style:{}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}},
   addEventListener:function(){}, removeEventListener:function(){}, appendChild:function(){}, remove:function(){},
@@ -49,4 +49,4 @@ function minuten(m){ _jetzt+=m*60000; }
 
 var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
-(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v361-abnahme-body.js'));
+(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/archiv-3x/v370-abnahme-body.js'));

@@ -1,6 +1,6 @@
 /* UI-Testharness-Fixture — ERFUNDENE Daten, keine echten Bestände.
    Wird von harness.html VOR dem Laden der App in localStorage geschrieben
-   (Präfix fokus2_). Erweiterbar: einfach Karten/Felder ergänzen. */
+   (Präfix fokus4_). Erweiterbar: einfach Karten/Felder ergänzen. */
 (function(global){
   function heute(off){
     // v1.13.1: Die Fixture simuliert einen LAUFENDEN Tag — nach Mitternacht
@@ -171,7 +171,7 @@
   global.fixtureSchreiben=function(){
     try{ localStorage.clear(); }catch(e){}
     Object.keys(FIXTURE).forEach(function(k){
-      localStorage.setItem('fokus2_'+k, JSON.stringify(FIXTURE[k]));
+      localStorage.setItem('fokus4_'+k, JSON.stringify(FIXTURE[k]));
     });
   };
 })(window);

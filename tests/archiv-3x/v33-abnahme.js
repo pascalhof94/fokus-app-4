@@ -1,14 +1,11 @@
-/* jsc-Suite: ABNAHME v2.0.0 „Die Matrix".
+/* jsc-Suite: ABNAHME v3.3.0 „Diagramme: Statusleiste, Fokusansicht, Belohnung & Shop".
    Begruendung fuer eine eigene Datei (Leitplanke „Testdateien mit
-   Begruendung"): Die vier bestehenden Suiten pruefen je EIN Gewerk
-   (Seeding, Kartenzeile, Kennzahlen, Import). Die 31 Abnahmepunkte des
-   v2.0-Auftrags laufen quer dazu — Matrix, Punkte, Waehrungen, Kette,
-   Navigation, Sync. Sie in eine der vier zu draengen haette deren Fokus
-   zerstoert; hier stehen sie in der Reihenfolge des Auftrags.
+   Begruendung"): die sieben Testfaelle des Auftrags (§5) und je Kachel ein
+   Beleg — reine Darstellung, getrennt von den Suiten der Engine.
 
    Ausfuehren aus der Repo-Wurzel:
-     jsc tests/v2-abnahme.js
-   Die Suite laedt die VOLLE App mit DOM-Stubs (wie karten-regression). */
+     jsc tests/v33-abnahme.js
+   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v2-abnahme). */
 var _els={};
 function dummyEl(){ var d={ style:{}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}},
   addEventListener:function(){}, removeEventListener:function(){}, appendChild:function(){}, remove:function(){},
@@ -42,15 +39,6 @@ var innerWidth=375, innerHeight=812, devicePixelRatio=2;
 function addEventListener(){} function removeEventListener(){}
 var matchMedia=window.matchMedia; var location=window.location;
 
-// v3.5.1 §6: feste Uhr — die Suite rechnet an vielen Stellen mit „jetzt ± Minuten" am selben App-Tag und fiel deshalb
-// zwischen 23:40 und 05:00 durch (auch am unveraenderten 3.5.0-Stand: §2 Erledigtes, §3.3 Prognose, §3.4 nur DFM).
-// Date.now() und new Date() lesen den heutigen Kalendertag um 14:00 Ortszeit; die Uhr steht.
-var _RD=Date, _jetzt=(function(){ var d=new _RD(); d.setHours(14,0,0,0); return d.getTime(); })();
-function FD(){ var a=Array.prototype.slice.call(arguments); if(!(this instanceof FD)) return new _RD(_jetzt).toString();
-  if(!a.length) return new _RD(_jetzt); return new (Function.prototype.bind.apply(_RD,[null].concat(a)))(); }
-FD.now=function(){ return _jetzt; }; FD.parse=_RD.parse; FD.UTC=_RD.UTC; FD.prototype=_RD.prototype;
-Date=FD;
-
 var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
-(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v2-abnahme-body.js'));
+(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/archiv-3x/v33-abnahme-body.js'));

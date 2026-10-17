@@ -2484,7 +2484,7 @@ img.objimg.laedt{opacity:0}
 .f4-fb .rg .l{display:flex;justify-content:space-between;font-size:13.5px;gap:6px}.f4-fb .rg .b{position:relative;height:10px;border-radius:5px;background:#262a32;margin-top:7px}.f4-fb .rg .b i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,#c7c9ce,#e8e9ec)}.f4-fb .rg .b s{position:absolute;top:-3px;bottom:-3px;border-left:1.5px dotted #fff;margin-left:-1px}
 .f4-fb .rg small{display:block;font-size:11.5px;color:#9a9ca2;margin-top:5px}
 /* ══ 4.0 · Paket 6 · Statistik nach Punkt 4 (Module 11–19, 21) und Anordnung 4.6 ══════════════════════════ */
-#statistikBody .f6-filter{position:sticky;top:0;z-index:6;background:#000;border-bottom:1px solid #2a2d33;margin:0 -12px 8px;padding:8px 12px}
+#statistikBody .f6-filter{position:sticky;top:0;z-index:6;background:#000;border-bottom:1px solid #2a2d33;margin:0 0 8px;padding:8px 10px;max-width:100%;overflow-x:hidden}
 #statistikBody .f6-gh{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:750;margin:16px 4px 8px;cursor:pointer;min-height:44px}
 #statistikBody .f6-gh small{font-size:11.5px;font-weight:500;color:#9a9ca2}
 #statistikBody .f6-gh .chev{margin-left:auto;width:20px;height:20px;transition:transform .15s}
@@ -2577,12 +2577,12 @@ img.objimg.laedt{opacity:0}
 .f7-inp.klein{margin-top:6px;padding:6px 10px}.f7-inp.unten{position:sticky;bottom:4px;background:#17181b}
 .f7-inp input[type=date]{color-scheme:dark}
 /* Aktionsreihe · Schnellplätze · Gruppen */
-.f7-act{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:4px}
-.f7-act>div{position:relative;background:#121418;border:1px solid #2a2d33;border-radius:12px;padding:8px 2px;text-align:center;font-size:10.5px;font-weight:700;color:#e8e9ec;cursor:pointer;min-height:64px;hyphens:manual}
+.f7-act{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:4px}
+.f7-act>div{position:relative;background:#121418;border:1px solid #2a2d33;border-radius:12px;padding:8px 2px;text-align:center;font-size:10.5px;font-weight:700;color:#e8e9ec;cursor:pointer;min-height:64px;hyphens:manual;min-width:0;overflow-wrap:anywhere}
 .f7-act>div b{display:block;font-size:20px;margin-bottom:3px;font-weight:400}.f7-act>div.blau{border-color:#3b82f6}
 .f7-act .badge,.f7-qt .badge{position:absolute;top:-5px;right:-5px;background:#f66d6d;color:#fff;font:700 10px/18px system-ui;min-width:18px;border-radius:9px;text-align:center}
-.f7-qt{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.f7-qt>div{position:relative;border-radius:12px;padding:8px 32px 7px 8px;min-height:66px;font-size:12.5px;font-weight:700;line-height:1.15;cursor:pointer;border:1px solid #2a2d33;background:#121418}
+.f7-qt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.f7-qt>div{position:relative;border-radius:12px;padding:8px 30px 7px 7px;min-height:66px;font-size:12px;font-weight:700;line-height:1.15;cursor:pointer;border:1px solid #2a2d33;background:#121418;min-width:0;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
 .f7-qt>div.d{background:linear-gradient(160deg,#101a2e,#0d1424);border-color:#2b4a7c}.f7-qt>div.p{background:linear-gradient(160deg,#1c1230,#140d24);border-color:#4a2d7c}.f7-qt>div.e{background:linear-gradient(160deg,#0f2a26,#0b1c1a);border-color:#1f6b60}
 .f7-qt .tick{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:1.5px solid #cfd2d8;font-size:11px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25)}
 .f7-qt i{display:block;font-style:normal;font-size:10.5px;color:#9a9ca2;font-weight:600;margin-top:5px}.f7-qt i .tr{color:#2dd4bf}
@@ -2694,8 +2694,8 @@ input.f7-inp{display:block;width:100%;color:#e8e9ec;font-size:15px;outline:none}
 /* Ausstellungsraum */
 .f8-box{background:#15171b;border-radius:16px;padding:10px 12px;margin-top:10px}
 .f8-box h5{font-size:12px;color:#9a9ca2;letter-spacing:.05em;text-transform:uppercase;margin:0 0 8px;display:flex;justify-content:space-between;gap:8px}
-.f8-box .rk{display:flex;gap:4px}.f8-box .rk div{flex:1;height:30px;border-radius:7px;background:#23262c;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;color:#6b6e75}.f8-box .rk .on{background:#34d399;color:#062a1c}.f8-box .rk .now{outline:2px solid #ffd23f}
-.f8-box .av{display:flex;gap:4px;align-items:flex-end;overflow-x:auto;padding-bottom:4px}.f8-box .av div{width:34px;flex:none;text-align:center;font-size:9.5px;color:#9a9ca2;font-weight:700}
+.f8-box .rk{display:flex;gap:4px;min-width:0}.f8-box .rk div{flex:1 1 0;min-width:0;overflow:hidden;height:30px;border-radius:7px;background:#23262c;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;color:#6b6e75}.f8-box .rk img{max-width:100%;height:100%;object-fit:cover}.f8-box .rk .on{background:#34d399;color:#062a1c}.f8-box .rk .now{outline:2px solid #ffd23f}
+.f8-box .av{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-end;padding-bottom:4px}   /* Betriebsbereit 4.2: alle Outfits sichtbar, kein seitliches Scrollen */.f8-box .av div{width:34px;flex:none;text-align:center;font-size:9.5px;color:#9a9ca2;font-weight:700}
 .f8-box .av img{width:34px;height:108px;object-fit:cover;object-position:top;border-radius:6px;background:#1d2733;display:block}.f8-box .av .off img{filter:grayscale(1) brightness(.35)}
 .f8-box .ku{display:grid;grid-template-columns:1fr 1fr;gap:6px}.f8-box .ku div{position:relative;border-radius:10px;overflow:hidden;height:92px}.f8-box .ku img{width:100%;height:100%;object-fit:cover;display:block}
 .f8-box .ku span{position:absolute;left:6px;bottom:5px;font-size:11px;font-weight:800;text-shadow:0 1px 3px #000}.f8-box .ku .off img{filter:grayscale(1) brightness(.5)}
@@ -2746,10 +2746,10 @@ body.breit #f4sb .f4-onr{grid-column:3;margin-top:0}
 .abv3-z .t{flex:1 1 100%;min-width:0;font-weight:700}.abv3-z .t small{display:block;font-weight:500;color:var(--muted);font-size:12px}
 /* Nachbesserung · Chat */
 .f3n-kopf{position:sticky;top:0;z-index:7;display:flex;align-items:center;gap:8px;padding:8px 0 6px;margin:0 0 4px;background:var(--bg);border-bottom:1px solid var(--line)}.f3n-kopf h3{font-size:18px;font-weight:800;margin:0}.f3n-kopf .sp{flex:1}
-.f3n-kopf .f3n-bell,.f3n-kopf .f3n-x{min-width:40px;min-height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:17px}
+.f3n-kopf .f3n-bell,.f3n-kopf .f3n-x{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:17px}
 .f3n-st{display:block;margin-top:3px;font-size:11.5px;font-style:normal;color:rgba(255,255,255,.75)}.f3n-st.arbeitet{color:#ffd23f}.f3n-st.beantwortet{color:#3ecf8e}.f3n-st.abgelehnt{color:#f66d6d}.f3n-st.gesendet{opacity:.7}
 .f3n-schreibt{margin:8px 0 2px;font-size:13px;color:#9a9ca2;font-weight:600}.f3n-schreibt span{color:#ffd23f}
-.f3n-neu{position:sticky;bottom:64px;margin:6px auto 0;display:block;border-radius:14px;border:1px solid #2dd4bf;background:#0f2a27;color:#2dd4bf;font-weight:800;font-size:13px;padding:7px 12px;z-index:5}
+.f3n-neu{position:sticky;bottom:64px;margin:6px auto 0;display:block;border-radius:22px;border:1px solid #2dd4bf;background:#0f2a27;color:#2dd4bf;font-weight:800;font-size:13px;padding:0 14px;min-height:44px;z-index:5}
 #suchFab .badge.chat{right:auto;left:-6px;top:auto;bottom:-4px;background:#3b82f6}
 [data-f7akt="chat"]{position:relative}[data-f7akt="chat"] .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#3b82f6;color:#fff;font:700 11px/20px system-ui;text-align:center;padding:0 5px}
 /* Nachbesserung 5.3: Namen und Titel brechen um, nie abgeschnitten */
@@ -2763,7 +2763,7 @@ body.breit #f4sb .f4-onr{grid-column:3;margin-top:0}
 #f4sb .f4n-pl .sb-bar{height:22px;border-radius:0;background:var(--bahn)}
 .f4n-pl .erh{height:11px;background:#15181d;border-top:1px solid #000}.f4n-pl .erh .f{height:100%;background:linear-gradient(90deg,#99f6e4,#2dd4bf);position:relative;min-width:34px}
 .f4n-pl .erh em{position:absolute;right:4px;top:-1px;font-style:normal;font-size:9.5px;font-weight:800;color:#063b33;line-height:12px}
-.f4n-kz{display:flex;align-items:center;gap:9px;margin-top:6px;min-width:0}
+.f4n-kz{display:flex;align-items:center;gap:9px;margin-top:5px;min-width:0}
 .f4n-kz .av{width:64px;height:64px;position:relative;flex:none}.f4n-kz .av svg{position:absolute;left:0;top:0}
 .f4n-kz .pic{position:absolute;left:11px;top:11px;width:42px;height:42px;border-radius:50%;overflow:hidden;background:#1a1d22}.f4n-kz .pic img{position:absolute;left:50%;top:3px;height:70px;transform:translateX(-50%);pointer-events:none}
 .f4n-kz .ti{flex:1;min-width:0;font-size:15.5px;font-weight:600;line-height:19px;overflow-wrap:anywhere;word-break:break-word;white-space:normal}.f4n-kz .ti.idle{color:#5d6d88}
@@ -2955,7 +2955,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-24';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-26';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)

@@ -1,10 +1,10 @@
-/* jsc-Suite: ABNAHME Hotfix v3.5.2 „Statusleiste, Tempo-Vergleich, Kartengruppen, Malmodus-Tipp". Begruendung fuer eine eigene
-   Datei (Leitplanke „Testdateien mit Begruendung"): die fuenf neuen Tests des Auftrags (§5) — (a) Pace-Farbe bei 0,92,
-   (b) Trendpfeil bei 1,02, (c) Wochentags-Mittel ueber alle passenden Tage ohne Urlaub, (d) Tipp im Umkreis, (e) Klappzustand
-   der Gruppen — brauchen die verstellbare Uhr (Wochentage, Messzeit, laufende Karte).
+/* jsc-Suite: ABNAHME Hotfix v3.5.1 „Ausgestaltung zurück + Einzelfeedback". Begruendung fuer eine eigene Datei
+   (Leitplanke „Testdateien mit Begruendung"): die vier neuen Tests des Auftrags (§6) — (a) Schieben ohne Abzug erhoeht
+   „geschoben" nicht, (b) ein Tipp auf „nächste ▶" bewegt genau eine Karte, (c) DFM-Zeit heute rechnet nur DFM,
+   (d) „Tage ≥ 80 % Ziel" zaehlt korrekt — brauchen die verstellbare Uhr (Doppelausloesung, Tagesgrenzen).
 
    Ausfuehren aus der Repo-Wurzel:
-     jsc tests/v352-abnahme.js
+     jsc tests/v351-abnahme.js
    Die Suite laedt die VOLLE App mit DOM-Stubs (wie v34-abnahme). */
 var _els={};
 function dummyEl(){ var d={ style:{}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}},
@@ -50,4 +50,4 @@ function minuten(m){ _jetzt+=m*60000; }
 
 var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
-(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v352-abnahme-body.js'));
+(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/archiv-3x/v351-abnahme-body.js'));

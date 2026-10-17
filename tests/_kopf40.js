@@ -1,12 +1,10 @@
-/* jsc-Suite: ABNAHME v3.4.0 „Routinen wie ADHS-Erholung, Schlafmessung,
-   Hinweis beim Aufstehen". Begruendung fuer eine eigene Datei (Leitplanke
-   „Testdateien mit Begruendung"): die zehn Testfaelle des Auftrags (§4), der
-   reproduzierte Schlaf-Befund (§2) und die Regeln dahinter — mit einer
-   verstellbaren Uhr (Mitternacht, Neuladen, Aufstehen am naechsten Morgen).
+/* jsc-Suite: ABNAHME Hotfix v3.6.1 „Preis-Faktor entfernt, Farbe-Anzeige, Spielstand zurücksetzen". Begruendung fuer eine eigene
+   Datei (Leitplanke „Testdateien mit Begruendung"): die beiden neuen Tests des Auftrags (§4) — Import mit preisFaktor wird
+   angenommen und aendert keinen Preis; „Farbe (live)" = wohlstandSeitReset — samt der Reset-Beschriftung, mit verstellbarer Uhr.
 
    Ausfuehren aus der Repo-Wurzel:
-     jsc tests/v34-abnahme.js
-   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v2-abnahme). */
+     jsc tests/v361-abnahme.js
+   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v360-abnahme). */
 var _els={};
 function dummyEl(){ var d={ style:{}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}},
   addEventListener:function(){}, removeEventListener:function(){}, appendChild:function(){}, remove:function(){},
@@ -41,14 +39,11 @@ function addEventListener(){} function removeEventListener(){}
 var matchMedia=window.matchMedia; var location=window.location;
 
 // verstellbare Uhr: Date.now() und new Date() lesen _jetzt (Europe/Berlin wie auf dem iPhone)
-var _RD=Date, _jetzt=_RD.parse('2026-09-28T07:00:00+02:00');
-function FD(){ var a=Array.prototype.slice.call(arguments); if(!(this instanceof FD)) return new _RD(_jetzt).toString();
-  if(!a.length) return new _RD(_jetzt); return new (Function.prototype.bind.apply(_RD,[null].concat(a)))(); }
-FD.now=function(){ return _jetzt; }; FD.parse=_RD.parse; FD.UTC=_RD.UTC; FD.prototype=_RD.prototype;
-Date=FD;
-function uhr(s){ _jetzt=_RD.parse(s); }
-function minuten(m){ _jetzt+=m*60000; }
-
-var src=readFile('index.html');
-var m=src.match(/<script>([\s\S]*?)<\/script>/);
-(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v34-abnahme-body.js'));
+/* ── Gemeinsamer Kopf der 4.0-Suiten (Betriebsbereit, Abschnitt 4.1): DOM-Stubs wie in den 3.x-Suiten, echte Uhr (verstellbar mit uhr()). ──
+   Aufruf einer Suite aus der Repo-Wurzel: jsc tests/v40-<name>.js · Ergebnis: OK/FAIL je Prüfpunkt, Exit 3 bei Rot. */
+var _ok=0, _rot=0;
+function pruef(name, bedingung, info){ if(bedingung){ _ok++; print('OK   '+name); } else { _rot++; print('FAIL '+name+(info!==undefined ? ' — '+info : '')); } }
+function nah(a, b, eps){ return Math.abs(Number(a)-Number(b))<=(eps===undefined ? 0.5 : eps); }
+/* Die App und der Prüfkörper laufen in EINEM eval: const-Bindungen der App (FSLive, F11, F4N …) sind nur dort sichtbar */
+function suite(koerper){ var src=readFile('index.html'); var m=src.match(/<script>([\s\S]*?)<\/script>/); (0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/_helfer40.js') + "\n;\n" + readFile(koerper)); }
+function suiteEnde(titel){ print((_rot ? _rot+' FEHLGESCHLAGEN' : 'ALLES GRÜN')+' · '+titel+' · '+_ok+' OK'); if(_rot){ throw new Error('rot'); } }

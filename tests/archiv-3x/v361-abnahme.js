@@ -1,11 +1,10 @@
-/* jsc-Suite: ABNAHME Hotfix v3.5.1 „Ausgestaltung zurück + Einzelfeedback". Begruendung fuer eine eigene Datei
-   (Leitplanke „Testdateien mit Begruendung"): die vier neuen Tests des Auftrags (§6) — (a) Schieben ohne Abzug erhoeht
-   „geschoben" nicht, (b) ein Tipp auf „nächste ▶" bewegt genau eine Karte, (c) DFM-Zeit heute rechnet nur DFM,
-   (d) „Tage ≥ 80 % Ziel" zaehlt korrekt — brauchen die verstellbare Uhr (Doppelausloesung, Tagesgrenzen).
+/* jsc-Suite: ABNAHME Hotfix v3.6.1 „Preis-Faktor entfernt, Farbe-Anzeige, Spielstand zurücksetzen". Begruendung fuer eine eigene
+   Datei (Leitplanke „Testdateien mit Begruendung"): die beiden neuen Tests des Auftrags (§4) — Import mit preisFaktor wird
+   angenommen und aendert keinen Preis; „Farbe (live)" = wohlstandSeitReset — samt der Reset-Beschriftung, mit verstellbarer Uhr.
 
    Ausfuehren aus der Repo-Wurzel:
-     jsc tests/v351-abnahme.js
-   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v34-abnahme). */
+     jsc tests/v361-abnahme.js
+   Die Suite laedt die VOLLE App mit DOM-Stubs (wie v360-abnahme). */
 var _els={};
 function dummyEl(){ var d={ style:{}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}},
   addEventListener:function(){}, removeEventListener:function(){}, appendChild:function(){}, remove:function(){},
@@ -50,4 +49,4 @@ function minuten(m){ _jetzt+=m*60000; }
 
 var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
-(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/v351-abnahme-body.js'));
+(0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/archiv-3x/v361-abnahme-body.js'));

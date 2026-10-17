@@ -91,7 +91,7 @@
   global.fixtureRealSchreiben=function(){
     try{ localStorage.clear(); }catch(e){}
     Object.keys(FIXTURE).forEach(function(k){
-      localStorage.setItem('fokus2_'+k, JSON.stringify(FIXTURE[k]));
+      localStorage.setItem('fokus4_'+k, JSON.stringify(FIXTURE[k]));
     });
   };
 })(window);

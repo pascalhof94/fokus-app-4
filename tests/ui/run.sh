@@ -40,10 +40,10 @@ echo "Server: http://127.0.0.1:$PORT (PID $SERVER_PID)"
 rm -rf "$SCREENS"; mkdir -p "$SCREENS"
 
 # view name | fensterhoehe (375er-Basis; leiste klein, damit sie GROSS wirkt)
-VIEWS_ALLE="shop360:1600 shop360Nach:1200 kauf360:900 farbe360:1100 stat360Zu:900 stat360Auf:1200 status354A:900 status354B:900 status354C:900 fokus354:900 tag354:1300 stat354Mf:1000 mf354:844 stat354Zu:844 stat354Shop:1000 shop354:1700 shop354Topf:900 mal354:1300 einst354:1500 einst354Auf:1500 fokus353:1150 kette353:900 stat353:1200 status352:900 karten352:1500 stat351:9000 stat351Zu:4200 shop351:3400 mal351:1300 echtSchlaf34:1400 echtZaehler32:1400 echtSucheZaehler32:1200 echtNachtrag32:1100 echtFreigabe31:1000 einstProtokoll31:1200 echtLeiste30:1400 echtAbschluss30:1100 echtAbschlussMd30:1100 echtNacht30:1100 echtAufstehen30:812 echtSuche30:1000 echtPflicht:1100 einstPflicht:1000 echtFokus28:5200 echtAbhak:1400 echtDetail28:812 einstAbhak:1300 echtBloecke:1300 echtBloeckeAuf:1300 echtBlockNeu:812 einstKorrekturen:1100 echtTempo:1400 echtMatrixSpur:1100 statistikOben:1400 echtGeld:812 einstKalib:812 echtWiederOeffnen:812 echtKalender:1200 statistikDetail:2400 echtSuchknopf:812 tagebuchDialog:812 einstImport:812 farbStat:3600 farbFokus:2400 statistikLang:5200 fokusLang:5200 belohnungLang:5200 echtFreitext:812 echtVorschlag:812 neuDialogMx:812 echtFilter:812 echtMatrixFeld:812 echtBelohnung:6400 echtShopAuf:1300 belohnungMitte:1400 belohnungShop:812 fokusBloecke:1300 fokusBloeckeMx:1300 echtSuche:812 abschluss21:812 durchgang21:812 plusStat:812 heute:812 faellig:812 neueste:812 erledigte:812 freitext:812 fokus:812 leiste:250 sheet:812 mxdialog:812 vorschlag:812 kpos:812 abschluss:812 tagab:812 routinen:812 belohnung:812 albumR:812 albumK:812 albumB:812 detail:812 statistik:812 sync:812 gate:812 einst:812"
-STORAGE_LAUF=1
-ECHT_LAUF=1  # §1 (v2.0.2): Lauf gegen den gelebten Bestand
-DIAG_LAUF=1   # §8 (v1.13.0): Klick-Diagnose (kein Screenshot) — Teil des Vollaufs
+VIEWS_ALLE="fokus:932 fokusOhne:932 postfach:932 statistik:1600 shop:1400 einst:1400 suche:932 durchsuchen:932 erfassen:932 chat:932 plan:932 routinen:932 pause:932 abhaken:932 schieben:932 ausstellung:1200 reflexion:932 geschafft:932 uebergang:932 sbA:932 sbB:932 sbC:932 sbD:932"
+STORAGE_LAUF=0   # Betriebsbereit 4.2: die Sequenzen storage, echt und diag gehören zu 3.x (setTab, sucheOeffnen) und sind ausgesetzt
+ECHT_LAUF=0
+DIAG_LAUF=0
 if [ -n "$NUR_VIEWS" ]; then
   VIEWS=""
   STORAGE_LAUF=0
@@ -113,7 +113,8 @@ if os.environ.get('UI_VERBOSE')=='1' and (fat or fnd):
   status="$(printf '%s' "$auswertung" | head -1 | cut -d'|' -f1)"
   n="$(printf '%s' "$auswertung" | head -1 | cut -d'|' -f2)"
   CHECKS=$((CHECKS+n))
-  printf '%-10s %s (%s Pruefpunkte)\n' "$view" "$status" "$n"
+  hoehe="$(printf '%s' "$json" | sed -n 's/.*"leiste":\([0-9][0-9]*\).*/\1/p')"
+  printf '%-11s %s (%s Pruefpunkte)%s\n' "$view" "$status" "$n" "${hoehe:+ · Leiste $hoehe px}"
   printf '%s\n' "$auswertung" | tail -n +2 | tee -a "$LOG"
   [ "$status" = "FATAL" ] && FEHLER=$((FEHLER+1))
 done

@@ -41,5 +41,5 @@ var location=window.location;
 
 var src=readFile('index.html');
 var m=src.match(/<script>([\s\S]*?)<\/script>/);
-var testCode = readFile('tests/karten-regression-body.js');
+var testCode = readFile('tests/archiv-3x/karten-regression-body.js');
 (0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + testCode);
