@@ -2744,6 +2744,14 @@ body.breit #f4sb .f4-onr{grid-column:3;margin-top:0}
 .f11-schritte button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px;line-height:1.1}.f11-schritte button small{font-size:10px;font-weight:600;opacity:.8}.f11-schritte button.fertig{opacity:.55}.f11-schritte button.aus{opacity:.3}
 .f11-kn{display:flex;gap:4px;flex-wrap:wrap;width:100%}.f11-kn .chip{min-height:36px;font-size:12.5px}
 .abv3-z .t{flex:1 1 100%;min-width:0;font-weight:700}.abv3-z .t small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+/* Nachbesserung · Chat */
+.f3n-kopf{position:sticky;top:0;z-index:7;display:flex;align-items:center;gap:8px;padding:8px 0 6px;margin:0 0 4px;background:var(--bg);border-bottom:1px solid var(--line)}.f3n-kopf h3{font-size:18px;font-weight:800;margin:0}.f3n-kopf .sp{flex:1}
+.f3n-kopf .f3n-bell,.f3n-kopf .f3n-x{min-width:40px;min-height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:17px}
+.f3n-st{display:block;margin-top:3px;font-size:11.5px;font-style:normal;color:rgba(255,255,255,.75)}.f3n-st.arbeitet{color:#ffd23f}.f3n-st.beantwortet{color:#3ecf8e}.f3n-st.abgelehnt{color:#f66d6d}.f3n-st.gesendet{opacity:.7}
+.f3n-schreibt{margin:8px 0 2px;font-size:13px;color:#9a9ca2;font-weight:600}.f3n-schreibt span{color:#ffd23f}
+.f3n-neu{position:sticky;bottom:64px;margin:6px auto 0;display:block;border-radius:14px;border:1px solid #2dd4bf;background:#0f2a27;color:#2dd4bf;font-weight:800;font-size:13px;padding:7px 12px;z-index:5}
+#suchFab .badge.chat{right:auto;left:-6px;top:auto;bottom:-4px;background:#3b82f6}
+[data-f7akt="chat"]{position:relative}[data-f7akt="chat"] .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#3b82f6;color:#fff;font:700 11px/20px system-ui;text-align:center;padding:0 5px}
 </style>
 </head>
 <body>
@@ -2916,7 +2924,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-15';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-17-16';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -6224,6 +6232,142 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) r
   F11.weiter=false; }; }
 /* ── Ablage (Punkt 3.9): die Erfassung aus einem Projekt zeigt dessen Ablageordner — kein Agent rät einen Ablageort ── */
 function f11Ablageordner(projektId){ const p=(f7Projekte()||[]).find(x=>x.id===projektId); return p ? String(p.Ablageordner||'') : ''; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   4.0 · Nachbesserung · Abschnitt 3 (Chat: Stand, volle Antworten, Badge, Benachrichtigung) und 5.1/5.2 (fester Kopf, Anhängen statt Neuaufbau)
+   Der Stand jeder eigenen Nachricht kommt aus dem Status ihres Agenten-Auftrags: gesendet (Warteschlange) · angekommen (offen) ·
+   Trainer arbeitet · seit … (vorgemerkt) · beantwortet · … (erledigt) · nicht bearbeitet (abgelehnt). Antworten des Trainers werden
+   vollständig über datensatz_lesen geholt und setzen ihren Auftrag auf erledigt, sobald sie in der App angezeigt wurden.
+   ══════════════════════════════════════════════════════════════════════ */
+const F3N={ seit:{}, voll:{}, lade:{}, takt:null, an:null, gesehenGemeldet:{}, benachrichtigt:{} };
+function f3nGekuerzt(t){ return /… \(\d+ Zeichen\)$/.test(String(t||'')); }
+function f3nText(r){ if(!r) return ''; if(F3N.voll[r.id]!=null) return F3N.voll[r.id]; const t=String(r.Text||'');
+  if(f3nGekuerzt(t) && !F3N.lade[r.id] && FSLive.gekoppelt()){ F3N.lade[r.id]=true;
+    FSLive.lesen('datensatz_lesen', { tabelle:'Agenten-Aufträge', id:r.id }).then(d=>{ const v=d && (d.datensatz||d); const txt=v && (v.Text!=null ? v.Text : (v.felder && v.felder.Text)); if(txt!=null) F3N.voll[r.id]=String(txt); })
+      .catch(()=>{}).then(()=>{ F3N.lade[r.id]=false; try{ f3nChatAktualisieren(); }catch(e){} }); }
+  return t; }
+function f3nIstAntwort(r){ return !!r && String(r.Auftraggeber||'')!=='Pascal' && /antwort|feedback/i.test(String(r.Art||'')); }
+function f3nAntwortZu(rows, r, i){ for(let j=i+1;j<rows.length;j++){ if(f3nIstAntwort(rows[j])) return rows[j]; } return null; }
+function f3nStand(rows, r, i){
+  if(r.lokal) return { k:'gesendet', t:'gesendet' };
+  const st=String(r.Status||'').toLowerCase();
+  if(st==='vorgemerkt'){ if(!F3N.seit[r.id]) F3N.seit[r.id]=jetztIso(); return { k:'arbeitet', t:'Trainer arbeitet · seit '+fmtUhr(F3N.seit[r.id]) }; }
+  if(st==='erledigt'){ const a=f3nAntwortZu(rows, r, i); return { k:'beantwortet', t:'beantwortet · '+fmtUhr((a && a.Zeitstempel) || F3N.seit[r.id] || r.Zeitstempel) }; }
+  if(st==='abgelehnt') return { k:'abgelehnt', t:'nicht bearbeitet' };
+  return { k:'angekommen', t:'angekommen' };
+}
+function f3nNachrichtHtml(rows, r, i, an){
+  const vonPascal=String(r.Auftraggeber||'')==='Pascal', art=String(r.Art||'');
+  if(/plan|auftrag/i.test(art) && !vonPascal) return '<div class="f7-info" data-mid="'+esc(r.id)+'">'+(/plan/i.test(art) ? '📥 Planänderung im Postfach: ' : '➡️ ')+esc(f3nText(r))+'</div>';
+  const text=f3nText(r), lines=text.split('\n'), opts=vonPascal ? [] : lines.filter(l=>/^\s*[-•]\s+/.test(l)).map(l=>l.replace(/^\s*[-•]\s+/,'').trim()), body=vonPascal ? text : lines.filter(l=>!/^\s*[-•]\s+/.test(l)).join('\n');
+  let h='<div class="f3n-n" data-mid="'+esc(r.id)+'"><div class="f7-m '+(vonPascal?'p':'t')+'">'+esc(body).replace(/\n/g,'<br>')+'<small>'+(vonPascal ? '' : esc(r.Auftraggeber||an)+' · ')+fmtUhr(r.Zeitstempel)+(f3nGekuerzt(text) ? ' · lädt …' : '')+'</small>'+
+    (vonPascal ? (function(){ const s=f3nStand(rows, r, i); return '<em class="f3n-st '+s.k+'">'+esc(s.t)+'</em>'; })() : '')+'</div>';
+  if(!vonPascal && opts.length) h+='<div class="f7-act2">'+opts.map((o,j)=>'<div class="'+(j?'':'g')+'" data-f7chatantwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'</div>';
+  if(!vonPascal && r.Ergebnis) h+='<div class="f7-m t">'+esc(String(r.Ergebnis)).replace(/\n/g,'<br>')+'<small>Ergebnis</small></div>';
+  if(vonPascal && /auftrag|plan/i.test(art)) h+='<div class="f7-info">➡️ Auftrag an '+esc(r['Empfänger']||'')+' · Antwort erscheint hier</div>';
+  return h+'</div>';
+}
+function f3nMeine(rows, an){ return (rows||[]).filter(r=>{ const A=String(r.Auftraggeber||''), E=String(r['Empfänger']||''); if(an==='Trainer') return (A==='Pascal' && /trainer/i.test(E)) || /trainer/i.test(A); return (A==='Pascal' && E===an) || A===an; }); }
+function f3nListeHtml(rows, an){
+  const mine=f3nMeine(rows, an); let h='', tag='';
+  mine.forEach((r,i)=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; } h+=f3nNachrichtHtml(mine, r, i, an); });
+  if(!mine.length) h+='<div class="leer" data-leer="1">noch keine Nachricht · schreib dem '+(an==='Trainer'?'Trainer':esc(an))+'</div>';
+  const arbeitet=mine.find(r=>String(r.Auftraggeber||'')==='Pascal' && String(r.Status||'').toLowerCase()==='vorgemerkt');
+  h+='<div class="f3n-schreibt" id="chatSchreibt"'+(arbeitet ? '' : ' hidden')+'>✍️ Trainer schreibt … <span>'+(arbeitet ? 'seit '+f3nSeitText(F3N.seit[arbeitet.id]||arbeitet.Zeitstempel) : '')+'</span></div>';
+  return h;
+}
+function f3nSeitText(ts){ const m=Math.max(0, Math.round((Date.now()-Date.parse(ts))/60000)); return m<1 ? 'gerade eben' : m+' Min.'; }
+/* Chat-Ansicht: fester Kopf mit Schließen, Chips, Liste, Eingabe */
+f7ChatHtml=function(){
+  const c=f7Chat(), rows=f7ChatLaden(), an=f7ChatEmpfaenger(), lk=getrackteKarte();
+  let h='<div class="f3n-kopf" id="chatKopf"><button class="an-back" data-e1zu="1" aria-label="Schließen">‹ zurück</button><h3>💬 '+(an==='Trainer' ? 'Trainer' : esc(an))+'</h3><span class="sp"></span><button class="f3n-bell" data-f3nstumm="1" title="Benachrichtigungen">'+(S.settings.chatStumm ? '🔕' : '🔔')+'</button><button class="f3n-x" data-e1zu="1" aria-label="Schließen">✕</button></div>';
+  h+='<div class="f7-chips gr"><div class="'+(an==='Trainer'?'on tk':'')+'" data-f7chatan="Trainer">🏋️ Trainer</div>'+
+    '<div class="'+(c.anArt==='abteilung'?'on':'')+'" data-f7chatwahl="abteilung">🏢 '+(c.anArt==='abteilung' ? esc(an) : 'Abteilung')+' ▾</div>'+
+    '<div class="'+(c.anArt==='projekt'?'on':'')+'" data-f7chatwahl="projekt">📁 '+(c.anArt==='projekt' ? esc(an) : 'Projekt')+' ▾</div>'+
+    (lk ? '<div class="'+(c.bezug==='karte'?'on':'')+'" data-f7chatbezug="karte">▶ zur laufenden Karte</div>' : '')+'</div>';
+  if(c.bezugText) h+='<div class="f7-info">'+esc(c.bezugText)+'</div>';
+  h+='<div id="chatList" data-an="'+esc(an)+'">'+(rows ? f3nListeHtml(rows, an) : '<div class="leer" data-leer="1">'+(f7LagerFehler('chat') ? 'FocusSystem: '+esc(f7LagerFehler('chat')) : 'lädt …')+'</div>')+'</div>';
+  h+='<button class="f3n-neu" id="chatNeu" hidden data-f3nunten="1">↓ neue Nachricht</button>';
+  h+='<div class="f7-inp unten"><input type="text" id="f7chatText" placeholder="Nachricht an '+(an==='Trainer'?'den Trainer':esc(an))+' …" value="'+esc(c.vorlage||'')+'" enterkeyhint="send"><span data-f7mic="f7chatText">🎙️</span><b data-f7chatsenden="1">➤</b></div>';
+  return h;
+};
+function f3nScroller(){ return el('e1-chat'); }
+function f3nUnten(sc){ return sc ? (sc.scrollTop+sc.clientHeight>=sc.scrollHeight-60) : true; }
+function f3nNachUnten(){ const sc=f3nScroller(); if(sc) sc.scrollTop=sc.scrollHeight; const b=el('chatNeu'); if(b) b.hidden=true; }
+/* Anhängen statt Neuaufbau (5.2): neue Nachrichten unten dran, Stand der eigenen in place, Scroll-Stelle bleibt */
+function f3nChatAktualisieren(){
+  const list=el('chatList'); if(!list || e1Art()!=='chat') return;
+  const rows=f7ChatLaden(); if(!rows) return;
+  const an=f7ChatEmpfaenger(); if(list.dataset.an!==an){ f3nChatRendern(true); return; }
+  const sc=f3nScroller(), warUnten=f3nUnten(sc), mine=f3nMeine(rows, an);
+  let neu=0, tag='';
+  const leer=list.querySelector('[data-leer]'); if(leer && mine.length) leer.remove();
+  const tage=[...list.querySelectorAll('.f7-day')].map(d=>d.dataset.tag); tag=tage.length ? tage[tage.length-1] : '';
+  const schreibt=el('chatSchreibt');
+  mine.forEach((r,i)=>{
+    const vorhanden=list.querySelector('[data-mid="'+CSS.escape(String(r.id))+'"]');
+    if(vorhanden){ const st=vorhanden.querySelector('.f3n-st'); if(st){ const s=f3nStand(mine, r, i); if(st.textContent!==s.t){ st.textContent=s.t; st.className='f3n-st '+s.k; } }
+      const vollNeu=F3N.voll[r.id]; if(vollNeu!=null && vorhanden.dataset.voll!=='1'){ vorhanden.dataset.voll='1'; vorhanden.outerHTML=f3nNachrichtHtml(mine, r, i, an).replace('data-mid="', 'data-voll="1" data-mid="'); }
+      return; }
+    // lokale Vorab-Nachricht durch die echte ersetzen (gleicher Text, gleicher Auftraggeber)
+    const lokal=[...list.querySelectorAll('[data-mid^="lokal-"]')].find(x=>x.querySelector('.f7-m') && x.querySelector('.f7-m').firstChild && String(r.Auftraggeber||'')==='Pascal' && x.textContent.indexOf(String(r.Text||'').slice(0,40))>=0);
+    const d=String(r.Zeitstempel||'').slice(0,10); let h='';
+    if(d!==tag && !lokal){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; }
+    h+=f3nNachrichtHtml(mine, r, i, an);
+    if(lokal){ lokal.outerHTML=h; } else { if(schreibt) schreibt.insertAdjacentHTML('beforebegin', h); else list.insertAdjacentHTML('beforeend', h); }
+    if(String(r.Auftraggeber||'')!=='Pascal') neu++;
+  });
+  if(schreibt){ const arbeitet=mine.find(r=>String(r.Auftraggeber||'')==='Pascal' && String(r.Status||'').toLowerCase()==='vorgemerkt'); schreibt.hidden=!arbeitet; if(arbeitet) schreibt.querySelector('span').textContent='seit '+f3nSeitText(F3N.seit[arbeitet.id]||arbeitet.Zeitstempel); }
+  if(neu){ if(warUnten) f3nNachUnten(); else { const b=el('chatNeu'); if(b) b.hidden=false; } }
+  f3nAntwortenGesehen(mine);
+}
+function f3nChatRendern(neuAufbau){
+  const b=el('chatBody'); if(!b) return;
+  const vorhanden=el('chatList');
+  if(vorhanden && !neuAufbau && vorhanden.dataset.an===f7ChatEmpfaenger()){ f3nChatAktualisieren(); return; }
+  b.innerHTML=f7ChatHtml(); F3N.an=f7ChatEmpfaenger();
+  requestAnimationFrame(()=>f3nNachUnten()); setTimeout(f3nNachUnten, 60); setTimeout(f3nNachUnten, 400);   // beim Öffnen auf der letzten Nachricht, auch wenn die Ansicht erst danach sichtbar wird
+  try{ const rows=f7ChatLaden(); if(rows) f3nAntwortenGesehen(f3nMeine(rows, F3N.an)); }catch(e){}
+}
+{ const _alt=e1Rendern; e1Rendern=function(){ if(e1Art()==='chat'){ f3nChatRendern(false); return; } return _alt(); }; }
+/* Antworten, die angezeigt wurden, setzen ihren Auftrag auf erledigt (3.5) */
+function f3nAntwortenGesehen(mine){
+  if(document.visibilityState!=='visible' || e1Art()!=='chat') return;
+  if(!S.meta.chatGesehen || typeof S.meta.chatGesehen!=='object') S.meta.chatGesehen={};
+  let n=0; (mine||[]).forEach(r=>{ if(!f3nIstAntwort(r) || r.lokal) return; if(S.meta.chatGesehen[r.id]) return; S.meta.chatGesehen[r.id]=jetztIso(); n++;
+    if(String(r.Status||'').toLowerCase()==='offen') FSLive.senden('datensatz_aendern', { tabelle:'Agenten-Aufträge', id:r.id, felder:{ Status:'erledigt' } }, { id:'chat-gesehen-'+r.id }).catch(()=>{}); });
+  if(n){ saveMeta(); f3nBadge(); }
+}
+/* Minutentakt: Stand neu lesen, solange der Chat offen ist; im Hintergrund neue Antworten zählen (Badge, Benachrichtigung) */
+function f3nTakt(){
+  try{
+    const L=F7.lager.chat; if(L) L.ts=0;   // Lager verfallen lassen → f7ChatLaden holt neu und ruft f7Neu → e1Rendern → Anhängen
+    const rows=f7ChatLaden(); if(rows) f3nHintergrund(rows);
+  }catch(e){}
+}
+function f3nHintergrund(rows){
+  const g=(S.meta.chatGesehen && typeof S.meta.chatGesehen==='object') ? S.meta.chatGesehen : {};
+  const neu=(rows||[]).filter(r=>f3nIstAntwort(r) && !g[r.id] && String(r.Status||'').toLowerCase()==='offen');
+  F7.chatNeu=neu.length; f3nBadge();
+  neu.forEach(r=>{ if(F3N.benachrichtigt[r.id]) return; F3N.benachrichtigt[r.id]=true;
+    if(S.settings.chatStumm || e1Art()==='chat') return;
+    try{ if('Notification' in window && Notification.permission==='granted') new Notification('Trainer', { body:String(f3nText(r)).replace(/… \(\d+ Zeichen\)$/,'').slice(0,140), tag:'fokus-chat-'+r.id }); }catch(e){} });
+}
+function f3nBadge(){
+  const n=num(F7.chatNeu);
+  document.querySelectorAll('[data-f7akt="chat"]').forEach(t=>{ let q=t.querySelector('.badge'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge'; t.appendChild(q); } q.textContent=n; } else if(q) q.remove(); });
+  const f=el('suchFab'); if(f){ let q=f.querySelector('.badge.chat'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge chat'; f.appendChild(q); } q.textContent='💬'+n; } else if(q) q.remove(); }
+}
+setInterval(()=>{ try{ f3nTakt(); }catch(e){} }, 60000);
+setTimeout(()=>{ try{ f3nTakt(); }catch(e){} }, 8000);
+/* Kopf: Wischen nach unten schließt (5.1) · Glocke · „↓ neue Nachricht“ */
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
+  if(t.closest('[data-f3nstumm]')){ e.stopPropagation(); S.settings.chatStumm=!S.settings.chatStumm; saveSettings(); const b=t.closest('[data-f3nstumm]'); b.textContent=S.settings.chatStumm ? '🔕' : '🔔'; toast(S.settings.chatStumm ? 'Chat-Benachrichtigungen stumm' : 'Chat-Benachrichtigungen an');
+    if(!S.settings.chatStumm){ try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(x){} } return; }
+  if(t.closest('[data-f3nunten]')){ e.stopPropagation(); f3nNachUnten(); return; } }, true);
+{ let y0=null; document.addEventListener('touchstart', e=>{ const k=e.target && e.target.closest ? e.target.closest('#chatKopf') : null; y0=k ? e.touches[0].clientY : null; }, { passive:true });
+  document.addEventListener('touchend', e=>{ if(y0==null) return; const dy=(e.changedTouches[0].clientY-y0); y0=null; if(dy>70 && e1Art()==='chat'){ haptik(6); e1Schliessen(); } }, { passive:true }); }
+{ const _alt=f7ChatAbschicken; f7ChatAbschicken=function(){ try{ if(!S.settings.chatStumm && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(e){} return _alt.apply(this, arguments); }; }
 
 function ladeAlles(){
   S.karten   = DB.get('karten', []);
