@@ -2652,6 +2652,7 @@ input.f7-inp{display:block;width:100%;color:#e8e9ec;font-size:15px;outline:none}
 .f7-c .dr{margin-top:8px;padding:10px 12px;background:#1a1d22;border-left:3px solid #3b82f6;border-radius:10px;font-size:14.5px;color:#c9cbd0;line-height:1.35}.f7-c .why{font-size:13px;color:#9a9ca2;margin-top:8px}
 .f3n-kopf h3 small{display:block;font-size:11px;font-weight:600;color:#9a9ca2;margin-top:1px}   /* Hotfix 9 · 3.2: Unterzeile Trainer + Fachagent */
 .f7-pfmehr{margin:-2px 0 10px 50px;font-size:12px;font-weight:700;color:#9a9ca2;cursor:pointer;min-height:24px}   /* Hotfix 9 · Abschnitt 2 */
+.mz{display:inline-block;width:1em;height:1em;vertical-align:-0.14em;flex:none}   /* Hotfix 10: Münzsymbol */
 .f7-neukarte{display:block;width:100%;margin:14px 0 24px;min-height:48px;border-radius:12px;border:1px dashed #2dd4bf;background:#0f2a27;color:#2dd4bf;font:700 15px system-ui}   /* Hotfix 9 · Abschnitt 1 */
 .f7-c .bt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .bt>div{padding:9px 11px;border-radius:12px;background:#1f2228;font-size:13.5px;font-weight:800;cursor:pointer}.f7-c .bt .ok{background:#3ecf8e;color:#000}
 .f7-c .opt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .opt>div{flex:1;text-align:center;padding:10px;border-radius:12px;background:#1f2228;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent}.f7-c .opt .ok{border-color:#3ecf8e;color:#3ecf8e;background:rgba(62,207,142,.1)}
@@ -2964,7 +2965,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-18-30';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-18-31';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -6103,7 +6104,7 @@ belShopHtml=function(){
       kat.stufen.forEach((st,i)=>{ const n=i+1, gekauft=n<=gek, istNaechste=n===gek+1, rs=e4ShopSperre(n);
         liste+='<div class="bw-st '+(gekauft?'gekauft':(istNaechste?'naechste':'gesperrt'))+'"><span class="sym">'+(gekauft||istNaechste?objBildHtml(kk, n):'🔒')+'</span>'+
           '<span class="tx"><b>'+n+'</b> · '+(gekauft||istNaechste?esc(st.name):'???')+(rs ? ' <small>🔒 '+esc(rs)+'</small>' : '')+'</span>'+
-          '<span class="zu">'+(gekauft?'✓':(istNaechste?(sperre&&sperre!=='komplett'?'gesperrt':fmtP(preis)+' 🪙'):fmtP(e4Preis(kk, n))))+'</span></div>'; });
+          '<span class="zu">'+(gekauft?'✓':(istNaechste?(sperre&&sperre!=='komplett'?'gesperrt':fmtP(preis)+' '+MZ+''):fmtP(e4Preis(kk, n))))+'</span></div>'; });
       liste+='</div>'; }
     const bild='<div class="f8-img'+(gek>=1?'':' blass')+'">'+objBildHtml(kk, Math.max(1, gek))+'<span>'+(gek>=1 ? 'Gekauft: '+esc(stufeName(kk, gek)) : 'Noch nichts gekauft')+'</span></div>';
     let info='<h4>'+kat.icon+' '+esc(kat.name)+'</h4>';
@@ -6112,7 +6113,7 @@ belShopHtml=function(){
       info+='<p>Als Nächstes: '+esc(stufeName(kk, s))+' · '+fmtP(preis)+' Münzen</p>'+
         '<div class="bar"><i style="width:'+Math.max(0, Math.min(100, k/Math.max(1,preis)*100)).toFixed(1)+'%"></i></div>'+
         '<div class="f"><span>'+(fehlt>0 ? 'fehlen '+fmtP(fehlt) : 'kaufbar')+'</span><span>'+(sperre ? '<em class="sp">'+esc(sperre)+'</em>' : esc(f8TageText(t)))+'</span></div>'+
-        (!sperre && k>=preis ? '<button class="kaufbtn bw-kauf" data-kauf="'+kk+'">Kaufen · '+fmtP(preis)+' 🪙</button>' : ''); }
+        (!sperre && k>=preis ? '<button class="kaufbtn bw-kauf" data-kauf="'+kk+'">Kaufen · '+fmtP(preis)+' '+MZ+'</button>' : ''); }
     let dots='<div class="dots">'; for(let n=1;n<=max;n++){ const rs=e4ShopSperre(n); dots+=rs ? '<i class="lk" title="'+esc(rs)+'">🔒</i>' : '<i class="'+(n<=gek?'gk':(n===gek+1?'nx':''))+'"></i>'; } dots+='</div>';
     if(ersteGesperrt) dots+='<div class="lkt">🔒 ab Stufe '+ersteGesperrt+' '+esc(e4ShopSperre(ersteGesperrt))+'</div>';
     return '<div class="f8-k objkat"><div class="f8-row">'+bild+'<div class="t">'+info+dots+'</div></div>'+
@@ -6136,7 +6137,7 @@ function belAppAvatarHtml(){
   let h='<div class="f8-k"><h4>🎨 App & Avatar</h4><h5 class="f7-h5">Aus Code · baut Claude Code selbst</h5>';
   APP_AVATAR.forEach((a,i)=>{ const preis=appPreis(i), sp=appSperre(i), gek=appGekauft(a.key);
     h+='<div class="f8-s'+(sp && !gek ? ' lk' : '')+'"><div class="pv" style="'+a.pv+'"></div><div class="t">'+a.name+'<small>'+(sp && !gek ? '🔒 '+esc(sp)+' · ' : '')+a.sub+'</small></div>'+
-      (gek ? '<span class="buy an'+(appAn(a.key)?'':' aus')+'" data-f8appan="'+a.key+'">'+(appAn(a.key)?'✓ an':'aus')+'</span>' : (!sp && k>=preis ? '<span class="buy" data-f8appkauf="'+a.key+'">🪙 '+fmtP(preis)+'</span>' : '<span class="p">'+fmtP(preis)+'</span>'))+'</div>'; });
+      (gek ? '<span class="buy an'+(appAn(a.key)?'':' aus')+'" data-f8appan="'+a.key+'">'+(appAn(a.key)?'✓ an':'aus')+'</span>' : (!sp && k>=preis ? '<span class="buy" data-f8appkauf="'+a.key+'">'+MZ+' '+fmtP(preis)+'</span>' : '<span class="p">'+fmtP(preis)+'</span>'))+'</div>'; });
   h+='<h5 class="f7-h5">Mit neuen Bildern · du lieferst die Bilder</h5>';
   APP_AVATAR_BILDER.forEach(a=>{ h+='<div class="f8-s lk"><div class="pv" style="background:#1d2733"></div><div class="t">'+a.name+'<small>'+a.sub+'</small></div><span class="p">–</span></div>'; });
   return h+'<div class="f8-note">Accessoires vorerst weggelassen.</div></div>';
@@ -6709,7 +6710,7 @@ function f4nFeld1Html(konto_, pst, akku, zustand){
   const amp={ gruen:FARBE.GRUEN, gelb:FARBE.GELB, rot:FARBE.ROT, grau:FARBE.GRAU }[zustand]||FARBE.GRAU;
   const pf=pst.offen>0 ? '<div class="pfx voll'+(pst.dringend>0 ? ' dr' : '')+'"><span class="em">📥</span><b>'+pst.offen+'</b></div>'
     : '<div class="pfx akku"><span class="bat"><span style="width:'+Math.round(Math.max(0, Math.min(100, num(akku))))+'%"></span></span><b>'+(akku!=null ? Math.round(akku)+' %' : '— %')+'</b></div>';
-  return '<div class="b1" data-f4postfach="1"><span class="amp2" title="Verbindung" style="background:'+amp+'"></span><div class="m1" id="sZKonto"><span style="color:'+FARBE.GOLD+'">🪙</span> '+fmtP(Math.round(konto_))+'</div><div class="m2"><i style="background:'+hex+'"></i>'+esc(aus)+'</div>'+pf+'</div>';
+  return '<div class="b1" data-f4postfach="1"><span class="amp2" title="Verbindung" style="background:'+amp+'"></span><div class="m1" id="sZKonto" data-w="'+Math.round(konto_)+'"><span style="color:'+FARBE.GOLD+'">'+MZ+'</span> '+fmtP(Math.round(konto_))+'</div><div class="m2"><i style="background:'+hex+'"></i>'+esc(aus)+'</div>'+pf+'</div>';
 }
 function f4nBandHtml(br, W, pst){
   if(br && br.onrampId && !br.zielGestartetTs){ const ok=S.karten.find(x=>x.id===br.onrampId); const name=ok ? String(ok.titel||'Onramp') : 'Onramp';
@@ -6741,7 +6742,7 @@ f4StatusleisteRender=function(){
     if(key!==F4N.key){ F4N.key=key; try{ F4N.zustand=readinessZustandHeute(); }catch(e){ F4N.zustand=null; } host.innerHTML=f4StatusleisteHtml(); punkteleisteZeichnen('sBar', g, S.belohnung?konto():0, punkteHeuteAnzeige()); }   // Hotfix 9 · Abschnitt 7: Zustand beim Neuaufbau frisch, sonst alle 10 s
     else { if(k){ const r=restzeitAnzeige(k.sollMin, istSekLive(k)); const z=el('sbZeit'); if(z){ z.textContent=r.text; z.style.color=r.farbe; } const p=el('sbPkt'); if(p) p.textContent='+'+fmtP(Math.round(kartePunkte(k))); }
       if(live && (_sekTakt%10)===0) punkteleisteZeichnen('sBar', g, S.belohnung?konto():0, punkteHeuteAnzeige());   // Live-Anteil der Punkteleiste alle 10 s, kein Neuaufbau
-      if(live && (_sekTakt%10)===0){ const m1=el('sZKonto'); if(m1){ const t='🪙 '+fmtP(Math.round(S.belohnung?konto():0)); if(m1.textContent!==t) m1.innerHTML='<span style="color:'+FARBE.GOLD+'">🪙</span> '+fmtP(Math.round(S.belohnung?konto():0)); } }   // Münzen wachsen mit der Uhr: Ziffern in place
+      if(live && (_sekTakt%10)===0){ const m1=el('sZKonto'); if(m1){ const w=String(Math.round(S.belohnung?konto():0)); if(m1.dataset.w!==w){ m1.dataset.w=w; m1.innerHTML='<span style="color:'+FARBE.GOLD+'">'+MZ+'</span> '+fmtP(Number(w)); } } }   // Hotfix 10: Vergleich über die Zahl, Symbol als SVG   // Münzen wachsen mit der Uhr: Ziffern in place
       try{ if(e4OutfitPruefen()) F4N.key=''; }catch(e){}
       if((_sekTakt%10)===0){ try{ const z=readinessZustandHeute(); if(z!==F4N.zustand){ F4N.zustand=z; F4N.key=''; } }catch(e){} }   // Hotfix 9 · Abschnitt 7: Achsenfarbe im 10-Sekunden-Takt
       const amp=host.querySelector('.amp2'); if(amp){ const c={ gruen:FARBE.GRUEN, gelb:FARBE.GELB, rot:FARBE.ROT, grau:FARBE.GRAU }[FSLive.zustand()]||FARBE.GRAU; if(amp.style.background!==c) amp.style.background=c; } }   // Live-Status in place
@@ -9326,6 +9327,7 @@ const FARBE = {
   WEISS:'#e8e9ec', GRAU:'#9a9ca2', UEBER:'#FF2D95', GOLD:'#d4af37', GOLD_DUNKEL:'#8a6d1f',
   BAHN:'#1c1f25', KARTE:'#121418', KACHEL:'#1a1d22', LEER:'#262a32', RASTER:'rgba(255,255,255,.08)'
 };
+const MZ='<svg class="mz" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="#d4af37"/><circle cx="8" cy="8" r="5.1" fill="none" stroke="#a8841f" stroke-width="1.2"/><circle cx="6" cy="5.6" r="1.3" fill="#f3dc8a"/></svg>';   // Hotfix 10: eigenes Münzsymbol statt des Münz-Emojis (sieht auf jedem Gerät gleich aus)
 const BEWERTUNG = [FARBE.ROT, FARBE.ORANGE, FARBE.GELB, FARBE.GELBGRUEN, FARBE.GRUEN]; // schlecht → gut
 /* §1.4: diskrete Bewertungsskala (Heatmap, Baender-Kacheln, Pfeile). r = Ist ÷ Soll */
 function bewertungDiskret(r){
@@ -11151,11 +11153,11 @@ function renderStatusSheet(){
             '<span class="av-bar"><i style="width:'+pct+'%;background:var(--warn)"></i></span></div>'; })()+
         (function(){ // §7 (v1.11.1): Konto mit Balken zur nächsten Kulisse
           const st=bgStufeAus(ausgabenAnzeige());
-          if(st>=10) return '<div class="stsh-k"><span>🪙 Konto</span><b>'+Math.round(konto())+'</b><span>Reise komplett</span>'+
+          if(st>=10) return '<div class="stsh-k"><span>'+MZ+' Konto</span><b>'+Math.round(konto())+'</b><span>Reise komplett</span>'+
             '<span class="av-bar"><i style="width:100%;background:var(--cyan)"></i></span></div>';
           const von=st>1?bgSchwelle(st):0, bis=bgSchwelle(st+1);
           const pct=Math.round(Math.max(0,Math.min(1,(ausgabenAnzeige()-von)/Math.max(1,bis-von)))*100);
-          return '<div class="stsh-k"><span>🪙 Konto</span><b>'+Math.round(konto())+'</b>'+
+          return '<div class="stsh-k"><span>'+MZ+' Konto</span><b>'+Math.round(konto())+'</b>'+
             '<span>Kulisse '+(st+1)+' ab '+fmtKurzP(bis)+' ausgegeben</span>'+
             '<span class="av-bar"><i style="width:'+pct+'%;background:var(--cyan)"></i></span></div>'; })()+
       '</div></div></div>';
@@ -13534,7 +13536,7 @@ function oeffneTagAbschlussPaket(paket){
   const seq='<div class="abfolge">'+
     '<div class="ab-schritt" style="animation-delay:.05s"><span>Punkte heute</span><b>'+Math.round(num(S.tag&&S.tag.punkteBilanz))+'</b></div>'+
     '<div class="ab-schritt" style="animation-delay:.35s"><span>🔥 Routinen-Serie</span><b>'+routinenSerieBeste().tage+' Tg</b></div>'+
-    '<div class="ab-schritt" style="animation-delay:.65s"><span>🪙 Münzen</span><b>+'+Math.round(num(S.tag&&S.tag.spielZufluss))+'</b></div>'+
+    '<div class="ab-schritt" style="animation-delay:.65s"><span>'+MZ+' Münzen</span><b>+'+Math.round(num(S.tag&&S.tag.spielZufluss))+'</b></div>'+
     '<div class="ab-schritt" style="animation-delay:.95s"><span>👔 Outfit '+outfitHeute()+' / 20</span><b>'+
       (rm.rang!=null?('Rang '+rangAnzeigeText(rm)):('Rang: '+rm.n+'/3 Tg'))+'</b></div>'+
   '</div>';
@@ -18879,7 +18881,7 @@ function belohnungAnsichtZeigen(d, danach){
     g3+='<div class="k st" style="animation-delay:'+t5+'s;text-align:center;position:relative" data-tropfen="'+(t5+0.2)+'" data-hex="'+d.farbe.hex+'"><div class="h">FARBE · '+esc(String(d.farbe.name).toUpperCase())+'</div>'+
       (d.farbe.tank ? '<div class="pot tank"><div class="fl" style="height:70%;background:'+FARBE.GRAU+'"></div><div class="rim"></div></div><div class="m" style="font-size:13px">+'+fmtP(d.farbe.w)+' Farbe</div><div class="h">Tank '+fmtP(Math.round(d.farbe.tankVor))+' → '+fmtP(Math.round(d.farbe.tankNach))+'</div>'
                    : '<div class="pot"><div class="fl" style="--a:'+d.farbe.vor+'%;--b:'+d.farbe.nach+'%;background:'+d.farbe.hex+';animation-delay:'+(t5+0.4)+'s"></div><div class="rim"></div></div><div class="m" style="font-size:13px">+'+fmtP(d.farbe.w)+' Farbe</div><div class="h">Topf '+d.farbe.vor+' → '+d.farbe.nach+' %</div>')+'</div>'; }
-  { const t6=slot(); g3+='<div class="k st" style="animation-delay:'+t6+'s;text-align:center;position:relative" data-muenzen="'+(t6+0.2)+'"><div class="h">MÜNZEN</div><div class="m" style="font-size:22px;color:'+FARBE.GOLD+';margin:14px 0 6px" data-zaehl="'+Math.round(d.kontoNach)+'" data-von="'+Math.round(d.kontoVor)+'" data-start="'+(t6+0.3)+'">'+Math.round(d.kontoVor)+'</div><div class="h">+'+d.muenzen+' 🪙</div>'+(d.kaufbar?'<div class="h" style="color:'+FARBE.GOLD+';margin-top:4px">'+esc(BELOHNUNG[d.kaufbar.kat].name)+' jetzt kaufbar</div>':'')+'</div>'; }
+  { const t6=slot(); g3+='<div class="k st" style="animation-delay:'+t6+'s;text-align:center;position:relative" data-muenzen="'+(t6+0.2)+'"><div class="h">MÜNZEN</div><div class="m" style="font-size:22px;color:'+FARBE.GOLD+';margin:14px 0 6px" data-zaehl="'+Math.round(d.kontoNach)+'" data-von="'+Math.round(d.kontoVor)+'" data-start="'+(t6+0.3)+'">'+Math.round(d.kontoVor)+'</div><div class="h">+'+d.muenzen+' '+MZ+'</div>'+(d.kaufbar?'<div class="h" style="color:'+FARBE.GOLD+';margin-top:4px">'+esc(BELOHNUNG[d.kaufbar.kat].name)+' jetzt kaufbar</div>':'')+'</div>'; }
   h+='<div class="g2">'+g3+'</div>';
   // 7 Outfit
   if(d.outfitNach>d.outfitVor){ const t7=slot();
@@ -18892,7 +18894,7 @@ function belohnungAnsichtZeigen(d, danach){
       '<div class="t"><div class="m">×'+String(Math.round(d.faktor*100)/100).replace('.',',')+'</div><div class="h">Matrixfaktor '+esc(d.feld)+'</div></div>'+
       (istSoll ? '<div class="t"><div class="m">'+istSoll+'</div><div class="h">Ist ÷ Soll Schätzung</div></div>' : '')+
       '<div class="t"><div class="m">'+Math.round(d.punkte/Math.max(1,d.ziel)*100)+' %</div><div class="h">Anteil am Tagesziel</div></div>'+
-      '<div class="t"><div class="m" style="color:'+FARBE.GOLD+'">'+(d.nk ? (d.kontoNach>=d.nk.preis ? 'jetzt' : 'noch '+fmtP(Math.round(d.nk.preis-d.kontoNach))+' 🪙') : '—')+'</div><div class="h">'+(d.nk ? esc(BELOHNUNG[d.nk.kat].name)+' kaufbar' : 'nächster Kauf')+'</div></div></div></div>'; }
+      '<div class="t"><div class="m" style="color:'+FARBE.GOLD+'">'+(d.nk ? (d.kontoNach>=d.nk.preis ? 'jetzt' : 'noch '+fmtP(Math.round(d.nk.preis-d.kontoNach))+' '+MZ+'') : '—')+'</div><div class="h">'+(d.nk ? esc(BELOHNUNG[d.nk.kat].name)+' kaufbar' : 'nächster Kauf')+'</div></div></div></div>'; }
   h+='<div class="hint">Doppeltipp überspringt</div><button class="skip" data-belweiter="1">Weiter</button></div>';
   const ov=document.createElement('div'); ov.id='belAnsicht'; ov.className='bel-ansicht'; ov.innerHTML=h; document.body.appendChild(ov);
   const zu=()=>{ if(!ov.parentNode) return; ov.remove(); clearTimeout(ov._t1); clearTimeout(ov._t2); if(danach){ try{ danach(); }catch(e){} } };
@@ -18901,7 +18903,7 @@ function belohnungAnsichtZeigen(d, danach){
   ov.querySelectorAll('[data-zaehl]').forEach(z=>{ const bis=num(z.dataset.zaehl), von=num(z.dataset.von), pre=z.dataset.pre||'', start=num(z.dataset.start, slots[0]+0.2);
     setTimeout(()=>{ const t0=performance.now(); (function f(t){ const p=Math.min(1,(t-t0)/900), v=Math.round(von+(bis-von)*(1-Math.pow(1-p,3))); z.textContent=pre+v.toLocaleString('de-DE'); if(p<1 && ov.parentNode) requestAnimationFrame(f); })(t0); }, start*1000); });
   const tr=ov.querySelector('[data-tropfen]'); if(tr) ov._t1=setTimeout(()=>{ for(let i=0;i<7;i++){ const dd=document.createElement('i'); dd.className='drop'; dd.style.background=tr.dataset.hex; dd.style.setProperty('--x',(Math.random()*60-30)+'px'); dd.style.animationDelay=(i*.12)+'s'; tr.appendChild(dd); } }, num(tr.dataset.tropfen)*1000);
-  const mz=ov.querySelector('[data-muenzen]'); if(mz) ov._t2=setTimeout(()=>{ for(let i=0;i<8;i++){ const c=document.createElement('span'); c.className='coin'; c.textContent='🪙'; c.style.setProperty('--x',(Math.random()*-80)+'px'); c.style.animationDelay=(i*.1)+'s'; mz.appendChild(c); } }, num(mz.dataset.muenzen)*1000);
+  const mz=ov.querySelector('[data-muenzen]'); if(mz) ov._t2=setTimeout(()=>{ for(let i=0;i<8;i++){ const c=document.createElement('span'); c.className='coin'; c.innerHTML=MZ; /* Hotfix 10 */ c.style.setProperty('--x',(Math.random()*-80)+'px'); c.style.animationDelay=(i*.1)+'s'; mz.appendChild(c); } }, num(mz.dataset.muenzen)*1000);
   try{ ausmalCanvasZeichnen(); }catch(e){}
 }
 /* §7.4 · Kurzform bei jedem Tick: „+n P" steigt am Knopf auf, ein Tropfen fliegt zum Avatar, eine Muenze zum Konto */
@@ -18910,10 +18912,10 @@ function tickKurzform(btn, punkte){
   const r=btn.getBoundingClientRect(), A=ausmalState(), D=ausmalDaten(A.kulisse), t=A.toepfe[A.aktiverTopf];
   const hex=(t && t.farbe!=null && D) ? D.hex[t.farbe] : FARBE.GRAU;
   const sp=document.createElement('span'); sp.className='tk-plus'; sp.textContent='+'+Math.round(punkte)+' P'; sp.style.left=(r.left+r.width/2)+'px'; sp.style.top=(r.top)+'px'; e3Host().appendChild(sp); setTimeout(()=>sp.remove(), 1000);
-  const flieg=(cls, zielId, inhalt, bg)=>{ const z=el(zielId); if(!z) return; const zr=z.getBoundingClientRect(), e=document.createElement('span'); e.className=cls; if(inhalt) e.textContent=inhalt; if(bg) e.style.background=bg;
+  const flieg=(cls, zielId, inhalt, bg, html)=>{ const z=el(zielId); if(!z) return; const zr=z.getBoundingClientRect(), e=document.createElement('span'); e.className=cls; if(html) e.innerHTML=html; else if(inhalt) e.textContent=inhalt; if(bg) e.style.background=bg;   // Hotfix 10: html = Münzsymbol als SVG
     e.style.left=(r.left+r.width/2)+'px'; e.style.top=(r.top+r.height/2)+'px'; e3Host().appendChild(e); e.getBoundingClientRect();
     e.style.left=(zr.left+zr.width/2)+'px'; e.style.top=(zr.top+zr.height/2)+'px'; e.style.opacity='0'; setTimeout(()=>e.remove(), 1000); };
-  flieg('tk-tropfen', 'tbRing', '', hex); flieg('tk-muenze', 'sZKonto', '🪙');
+  flieg('tk-tropfen', 'tbRing', '', hex); flieg('tk-muenze', 'sZKonto', '', null, MZ);
 }
 function momentBuchung(punkte){
   if(!momenteAn() || !motionErlaubt() || !(punkte>0)) return;
@@ -19857,7 +19859,7 @@ function belHeuteNoch(){
     const kat=BELOHNUNG[nk.kat], kann=k>=nk.preis;
     h+='<div class="fbk voll"><div class="fbk-h">Als Nächstes im Shop</div><div class="fbk-r">'+
        '<div class="fbk-g" aria-hidden="true">'+fbRing(k/nk.preis, kann?AMPEL_FARBE.gruen.slice().reverse():SPIEL_FARBE.muenzen)+'</div>'+
-       fbWert(kann?'jetzt':('noch '+Math.round(nk.preis-k)), kat.icon+' '+esc(kat.name)+' · Stufe '+nk.stufe+' · '+Math.round(nk.preis)+' 🪙')+'</div>'+
+       fbWert(kann?'jetzt':('noch '+Math.round(nk.preis-k)), kat.icon+' '+esc(kat.name)+' · Stufe '+nk.stufe+' · '+Math.round(nk.preis)+' '+MZ+'')+'</div>'+
        '<div class="dia-zeile">'+esc(shopAnkunftText(nk))+'</div></div>';   // §3.4 (v3.3.0): Ankunftszeit
   }
   return h+'</div></div>';
@@ -19883,7 +19885,7 @@ function belErklommen(){
      fbWert(fmtKurzP(wohlstandLive()).replace(/ P$/,''), 'Punkte gesamt'), {breit:true});
   const ausg=ausgabenAnzeige(), k=konto(), ges=Math.max(1, k+ausg);
   h+=fbKachel('Konto', '<div style="width:100%">'+belDoppelBalken(k/ges, 1, null, null)+'</div>',
-     fbWert(fmtKurzP(k).replace(/ P$/,''), Math.round(ausg)+' 🪙 ausgegeben'), {breit:true});
+     fbWert(fmtKurzP(k).replace(/ P$/,''), Math.round(ausg)+' '+MZ+' ausgegeben'), {breit:true});
   h+=kulisseKachelHtml();   // §3.6 (v3.3.0)
   return h+'</div></div>';
 }
@@ -19908,7 +19910,7 @@ function belShopHtml(){
         liste+='<div class="bw-st '+(gekauft?'gekauft':(istNaechste?'naechste':'gesperrt'))+'">'+
           '<span class="sym">'+(gekauft||istNaechste?objBildHtml(kk, n):'🔒')+'</span>'+
           '<span class="tx"><b>'+n+'</b> · '+(gekauft||istNaechste?esc(st.name):'???')+'</span>'+
-          '<span class="zu">'+(gekauft?'✓':(istNaechste?(sperre&&sperre!=='komplett'?'gesperrt':fmtP(preis)+' 🪙'):''))+'</span></div>';
+          '<span class="zu">'+(gekauft?'✓':(istNaechste?(sperre&&sperre!=='komplett'?'gesperrt':fmtP(preis)+' '+MZ+''):''))+'</span></div>';
       });
       liste+='</div>';
     }
@@ -19926,7 +19928,7 @@ function belShopHtml(){
       info+='<div class="nx">Als Nächstes: <span class="stufen-name">'+esc(stufeName(kk, s))+'</span> · '+fmtP(preis)+' Münzen</div>'+
         '<div class="lbar" style="height:10px;border-radius:5px"><i style="left:0;width:'+Math.max(0, Math.min(100, k/Math.max(1,preis)*100)).toFixed(1)+'%;background:'+verlauf(FARBE.GOLD)+'"></i></div>'+
         '<div class="skala"><span>'+(k>=preis ? 'kaufbar' : 'fehlen '+fmtP(preis-k))+'</span><span'+(sperre?' class="bw-sperre"':'')+'>'+esc(sperre ? sperre : an)+'</span></div>'+
-        (!sperre && k>=preis ? '<button class="kaufbtn bw-kauf" data-kauf="'+kk+'">Kaufen · '+fmtP(preis)+' 🪙</button>' : '');
+        (!sperre && k>=preis ? '<button class="kaufbtn bw-kauf" data-kauf="'+kk+'">Kaufen · '+fmtP(preis)+' '+MZ+'</button>' : '');
     }
     let punkte='<div class="stufen" aria-label="'+gek+' von '+max+' Stufen">'; for(let i=1;i<=max;i++) punkte+='<i class="'+(i<=gek?'gk':(i===gek+1?'n':''))+'"></i>'; punkte+='</div>';
     return '<div class="bw-kat objkat"><div class="obj">'+objbild+'<div class="objinfo">'+info+punkte+'</div></div>'+
@@ -19992,8 +19994,8 @@ function heuteGehtMehrHtml(){
   // Kauf-Satz
   let kaufS=''; try{ const ks=kaufStand();
     if(ks && ks.hinweis){ const m=ks.moeglich[0];
-      kaufS='🪙 <b style="color:'+FARBE.GOLD+'">'+esc(ks.hinweis)+(ks.moeglich.length===1 ? ' · <span class="stufen-name">'+esc(stufeName(m.kat, m.stufe))+'</span>' : '')+'</b>.'+(ks.ziel ? ' Der Balken zählt bis '+esc(ks.ziel.name)+' Stufe '+ks.ziel.stufe+'.' : ''); }
-    else if(ks && ks.ziel) kaufS='🪙 Nächster Kauf: '+esc(ks.ziel.name)+' Stufe '+ks.ziel.stufe+' · fehlen '+fmtP(Math.round(ks.fehlt))+'.'; }catch(e){ kaufS=''; }
+      kaufS=''+MZ+' <b style="color:'+FARBE.GOLD+'">'+esc(ks.hinweis)+(ks.moeglich.length===1 ? ' · <span class="stufen-name">'+esc(stufeName(m.kat, m.stufe))+'</span>' : '')+'</b>.'+(ks.ziel ? ' Der Balken zählt bis '+esc(ks.ziel.name)+' Stufe '+ks.ziel.stufe+'.' : ''); }
+    else if(ks && ks.ziel) kaufS=''+MZ+' Nächster Kauf: '+esc(ks.ziel.name)+' Stufe '+ks.ziel.stufe+' · fehlen '+fmtP(Math.round(ks.fehlt))+'.'; }catch(e){ kaufS=''; }
   return '<div class="kach">'+
     heuteGehtKachel('Farbe', fmtP(Math.round(st.W)), '', farbeSub, hatTopf ? t.punkte/T*100 : 0, hatTopf ? D.hex[t.farbe] : FARBE.GRAU)+
     heuteGehtKachel('Kulisse '+A.kulisse, Math.round(st.anteil*100)+' %', '', kulSub, st.anteil*100, verlauf(FARBE.GOLD))+rang+o20+'</div>'+
@@ -20593,7 +20595,7 @@ function belUebersichtHtml(){
     '<button class="btn mal-oeffnen" data-malmodus="1">🖌 Malmodus öffnen</button>';
   h+='<div class="blk"><div class="blk-h">Was heute noch geht</div>'+heuteGehtKacheln()+'</div>';   // §6 (v3.6.0): dieselbe Funktion wie das Statistik-Modul
   // 4.0 · Paket 8 (7.8): Shop mit Münzen im Kopf, Kategorien untereinander, 🔒 an gesperrten Stufen, darunter 🎨 App & Avatar
-  h+='<div class="f8-kopf" id="belShop"><span>Shop</span><span class="coin">🪙 '+fmtP(k)+' Münzen</span></div>'+kaufHinweisHtml(ks)+'<div class="f8-k">'+belShopHtml()+'</div>'+belAppAvatarHtml()+
+  h+='<div class="f8-kopf" id="belShop"><span>Shop</span><span class="coin">'+MZ+' '+fmtP(k)+' Münzen</span></div>'+kaufHinweisHtml(ks)+'<div class="f8-k">'+belShopHtml()+'</div>'+belAppAvatarHtml()+
     '<div class="fb-rechnung">Gekauftes und die nächste Stufe sind sichtbar, alles danach bleibt „???". 🔒 Rang-Sperre an, in den Einstellungen ausschaltbar. Den Shop zurücksetzen: ⚙︎ Einstellungen.</div>';
   h+='<div class="blk"><div class="blk-h">Kulisse</div>'+kulisseKachelHtml()+'</div>';
   // §5 Nr. 4 (v3.5.1): „Was ich schon erklommen habe" — je Zeile Name links, Wert rechts, darunter eine Segmentleiste mit allen
@@ -20630,7 +20632,7 @@ function belMalmodusHtml(){
     '<div class="mal-toepfe">'+A.toepfe.map((t,i)=>{ const istAkt=i===A.aktiverTopf, Tt=topfFassungVon(t)||T, stand=topfVoll(t) ? 'voll' : ((t.farbe!=null && !topfLeer(t)) ? Math.round(t.punkte/Tt*100)+' %' : 'leer');   // §5 (v3.5.4): unter 2 % „leer" · §1 (v3.7.3): Fassung je Topf
       return '<div class="mal-topf'+(istAkt?' akt':'')+'" data-maltopf="'+i+'">'+topfSvg(t, istAkt?56:38, {weiss:istAkt})+'<span>'+(istAkt?'aktiv ':'')+stand+'</span></div>'; }).join('')+'</div>'+
     '<div class="mal-tankzeile"><span class="t">Tank</span><div class="mal-tankbar"><i style="width:'+(T ? Math.max(0, Math.min(100, num(A.tank)/(5*T)*100)).toFixed(1) : 0)+'%"></i></div><span class="w">'+fmtP(tankW)+'</span>'+
-      '<button class="btn sm" data-tankverkauf="1"'+(tankW>0?'':' disabled')+'>Verkaufen · '+fmtP(tankM)+' 🪙</button></div>'+
+      '<button class="btn sm" data-tankverkauf="1"'+(tankW>0?'':' disabled')+'>Verkaufen · '+fmtP(tankM)+' '+MZ+'</button></div>'+
     '<div class="row" style="gap:8px;margin-top:12px"><button class="btn" style="flex:2" data-maltopfwechsel="1">Topf wechseln</button><button class="btn" style="flex:1" data-malauskippen="'+A.aktiverTopf+'">Auskippen</button></div></div>';
   // §5 Nr. 6 (v3.5.1): Feldkarte — bei gewaehlter Farbe alle anderen Flaechen 45 % abgedunkelt, die OFFENEN Felder dieser Farbe
   // mit weissem Umriss und Puls (eigene Ebene ueber der Kulisse)
@@ -21546,7 +21548,7 @@ function stmSpielShop(F,dom){
     let h='<div class="stm-dh">Rang · Tages-P/h auf Rang-Bändern + Prognose</div>'+rangDiagrammHtml(rm)+rangHistorieHtml(rm);
     try{ h+='<div class="stm-dh">Rang · 8 Wochen</div>'+rang8WochenSvg(belVerlaufDaten().wochen); }catch(e){}
     try{ const g=diaGroessen(), m=Math.max(0, spielLiveZufluss()), ziel=Math.max(1, zielUndIstHeute().ziel*streakFaktor()), prog=m+(m/g.stundenBisher)*g.stundenRest, pz=v=>Math.max(0,Math.min(100,v/ziel*100));
-      h+='<div class="stm-dh">Münzen heute</div><div class="fbk-bar mitmarke"><i style="width:'+pz(m).toFixed(1)+'%;background:'+verlauf(FARBE.GOLD)+'"></i><i style="left:'+pz(m).toFixed(1)+'%;width:'+Math.max(0,pz(prog)-pz(m)).toFixed(1)+'%;background:'+FARBE.GOLD+';opacity:.3"></i><u style="left:100%"></u></div><div class="dt-s" style="color:'+FARBE.GOLD+'">'+Math.round(m)+' 🪙 · Prognose '+Math.round(prog)+' · Ziel '+Math.round(ziel)+'</div>'; }catch(e){}
+      h+='<div class="stm-dh">Münzen heute</div><div class="fbk-bar mitmarke"><i style="width:'+pz(m).toFixed(1)+'%;background:'+verlauf(FARBE.GOLD)+'"></i><i style="left:'+pz(m).toFixed(1)+'%;width:'+Math.max(0,pz(prog)-pz(m)).toFixed(1)+'%;background:'+FARBE.GOLD+';opacity:.3"></i><u style="left:100%"></u></div><div class="dt-s" style="color:'+FARBE.GOLD+'">'+Math.round(m)+' '+MZ+' · Prognose '+Math.round(prog)+' · Ziel '+Math.round(ziel)+'</div>'; }catch(e){}
     try{ h+='<div class="stm-dh">Kulisse</div>'+kulisseKachelHtml(); }catch(e){}
     try{ h+='<div class="stm-dh">Outfit-Sammlung · erstes oben</div>'+outfitSammlungHtml(); }catch(e){}
     try{ h+='<div class="stm-dh">Shop-Stand je Kategorie</div><div class="an-bars breit">'+KAT_KEYS.map(kk=>{ const n=Math.max(0, num(S.belohnung.stufen[kk])), max=BELOHNUNG[kk].stufen.length;
@@ -23557,7 +23559,7 @@ function anModLeistung(F,dom){
     inner+='<div class="anmod-kpis">'+anKpi(anFmt(phCur||0),'Ø P/Std',anDeltaPct(phCur,phPrev))+
       anKpi(anFmt(scCur||0),'Ø Score',anDeltaPct(scCur,scPrev))+
       anKpi(anFmt(best),'Bestleistung')+
-      anKpi(fmtKurzP(rangPunkteAnzeige()),'Lebenswerk 🪙')+'</div>';   // §7 (v1.11.0): rangPunkte lebt hier weiter
+      anKpi(fmtKurzP(rangPunkteAnzeige()),'Lebenswerk').replace('Lebenswerk</div>', 'Lebenswerk '+MZ+'</div>') /* Hotfix 10: anKpi escapt das Label, das Symbol kommt als HTML dahinter */ +'</div>';   // §7 (v1.11.0): rangPunkte lebt hier weiter
   }
   return anModul('🏆','Leistung','Punkte pro Stunde als Effizienz-Trend mit 7-Tage-Schnitt, plus Zielerreichung je Domäne (DFM 5000 / Privat 3000).',inner);
 }

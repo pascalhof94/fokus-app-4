@@ -56,4 +56,14 @@ pruef('readinessZustandHeute liefert null oder einen der drei Zustände', [null,
 var rs=readinessSvg([{x:20,y:100,d:'2026-10-01'},{x:50,y:300,d:'2026-10-02'},{x:80,y:200,d:'2026-10-03'},{x:60,y:150,d:heuteApp()}], 330);
 pruef('Readiness-SVG: „Erholung" unten, kein „Unterlastung"', rs.indexOf('>Erholung</text>')>=0 && rs.indexOf('Unterlastung')<0);
 pruef('Quelltext: kein Diagramm sagt mehr „Unterlastung"', !/>Unterlastung</.test(readFile('index.html')));
+// ══ Hotfix 10: Münzsymbol als SVG statt Emoji ══
+var b1=f4nFeld1Html(1234, { offen:0, dringend:0 }, 50, 'gruen');
+pruef('Block 1: #sZKonto mit data-w und genau einem svg.mz, kein Emoji', /id="sZKonto" data-w="1234"/.test(b1) && (b1.match(/<svg class="mz"/g)||[]).length===1 && b1.indexOf('🪙')<0 && b1.indexOf(fmtP(1234))>=0);
+(function(){ S.fokus={ laeuft:true, karteId:'t-dfm', startMs:Date.now(), sessionSek:0 }; _sekTakt=10; F4N.key=''; f4StatusleisteRender();
+  var m=el('sZKonto'); m.dataset.w='0'; m.innerHTML=''; f4StatusleisteRender();
+  var k=Math.round(S.belohnung?konto():0);
+  pruef('Takt mit neuem Kontostand: neue Zahl in #sZKonto, svg.mz genau einmal, data-w nachgezogen', m.innerHTML.indexOf(fmtP(k))>=0 && (m.innerHTML.match(/<svg class="mz"/g)||[]).length===1 && m.dataset.w===String(k), JSON.stringify([m.innerHTML.slice(0,80), m.dataset.w, k]));
+  var vorher=m.innerHTML; f4StatusleisteRender(); pruef('Takt ohne Änderung: nichts neu gesetzt', m.innerHTML===vorher);
+  S.fokus={ laeuft:false, karteId:null }; _sekTakt=0; })();
+pruef('index.html enthält kein Münz-Emoji mehr', readFile('index.html').indexOf('🪙')<0);
 suiteEnde('Statusleiste 4.0');
