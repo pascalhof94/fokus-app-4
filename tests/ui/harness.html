@@ -211,6 +211,14 @@ function bestandSchreiben(){
   function karteId(fw){ return fw.eval("(S.karten.find(function(k){ return k.status==='offen' && !k.rolle && k.domain==='dfm'; })||S.karten.find(function(k){ return k.status==='offen' && !k.rolle; })||{}).id"); }
   function tagSicher(fw){ fw.eval("if(!S.tag){ tagStarten(70); S.tag.startTs=jetztIso(); saveTag(); }"); }
   function postfach(fw, offen, dringend){ fw.eval("S.meta.postfach={ offen:"+offen+", dringend:"+dringend+", dringendText:'Rückruf bis 17:00', ts:jetztIso() }; saveMeta(); F4N.key=''; renderStatusbar();"); }
+  /* Hotfix 9: Nachprüfungen je Ansicht (laufen nach der Wartezeit, vor den Layout-Checks) und längere Wartezeit, wo die App selbst noch nachzieht */
+  var WARTEN={ chat:1300 };
+  var NACHPRUEF={
+    chat: function(fw){ var l=fw.document.getElementById('chatList'); if(!l) throw new Error('Hotfix 9: #chatList fehlt');
+      var last=null; for(var i=l.children.length-1;i>=0;i--){ var c=l.children[i], rc=c.getBoundingClientRect(); if(rc.height>0){ last=c; break; } }
+      if(!last) throw new Error('Hotfix 9: keine sichtbare Nachricht in #chatList');
+      var r=last.getBoundingClientRect(); if(r.top<0 || r.bottom>fw.innerHeight+1) throw new Error('Hotfix 9: letzte Nachricht nicht im sichtbaren Bereich (top '+Math.round(r.top)+', bottom '+Math.round(r.bottom)+', Höhe '+fw.innerHeight+')'); }
+  };
   var AKTIONEN={
     fokus:      function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet(); },
     fokusOhne:  function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); },
@@ -231,7 +239,8 @@ function bestandSchreiben(){
     suche:      function(fw){ tagSicher(fw); fw.e1Oeffnen('suche'); },
     durchsuchen:function(fw){ tagSicher(fw); fw.e1Oeffnen('durchsuchen'); },
     erfassen:   function(fw){ tagSicher(fw); fw.e1Oeffnen('erfassen'); },
-    chat:       function(fw){ tagSicher(fw); fw.f7ChatOeffnen('Trainer'); },
+    /* Hotfix 9 · 3.1: Chat mit 40 Nachrichten; die Nachprüfung (NACHPRUEF.chat) verlangt die letzte Nachricht im sichtbaren Bereich */
+    chat:       function(fw){ tagSicher(fw); fw.eval("var R=[]; for(var i=0;i<40;i++){ R.push({ id:'h'+i, Text:'Nachricht '+i+' im Harness, etwas laenger, damit die Liste wirklich scrollt und die letzte unten steht', Auftraggeber:(i%2?'Trainer':'Pascal'), 'Empfänger':(i%2?'Pascal':'Trainer'), Art:(i%2?'Antwort':'Chat'), Status:'erledigt', Zeitstempel:new Date(Date.now()-(40-i)*60000).toISOString() }); } F7.lager.chat={ ts:Date.now(), daten:R, fehler:'' };"); fw.f7ChatOeffnen('Trainer'); },
     plan:       function(fw){ tagSicher(fw); fw.e1Oeffnen('plan'); },
     routinen:   function(fw){ tagSicher(fw); fw.e1Oeffnen('routinen'); },
     pause:      function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.oeffnePause(); },
@@ -2159,9 +2168,10 @@ function bestandSchreiben(){
     try{ (AKTIONEN[VIEW]||AKTIONEN.fokusOhne)(fw); }
     catch(e){ fatal('View-Aktion „'+VIEW+'“ fehlgeschlagen: '+e); }
     setTimeout(function(){
+      try{ if(NACHPRUEF[VIEW]) NACHPRUEF[VIEW](fw); }catch(e){ fatal('Nachprüfung „'+VIEW+'“: '+e); }   // Hotfix 9: Prüfungen je Ansicht nach dem Aufbau
       try{ layoutChecks(fw); }catch(e){ fatal('Layout-Checks fehlgeschlagen: '+e); }
       abschluss();
-    }, 700);
+    }, WARTEN[VIEW]||700);
   });
 })();
 </script>

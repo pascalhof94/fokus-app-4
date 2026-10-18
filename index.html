@@ -2650,6 +2650,7 @@ input.f7-inp{display:block;width:100%;color:#e8e9ec;font-size:15px;outline:none}
 .f7-c .hd{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:#9a9ca2;font-weight:600}.f7-c .hd .red{color:#f66d6d;font-weight:800}
 .f7-c .ti{font-size:17px;font-weight:800;margin-top:4px}.f7-c .ctx{font-size:13px;color:#9a9ca2;margin-top:2px}
 .f7-c .dr{margin-top:8px;padding:10px 12px;background:#1a1d22;border-left:3px solid #3b82f6;border-radius:10px;font-size:14.5px;color:#c9cbd0;line-height:1.35}.f7-c .why{font-size:13px;color:#9a9ca2;margin-top:8px}
+.f3n-kopf h3 small{display:block;font-size:11px;font-weight:600;color:#9a9ca2;margin-top:1px}   /* Hotfix 9 · 3.2: Unterzeile Trainer + Fachagent */
 .f7-pfmehr{margin:-2px 0 10px 50px;font-size:12px;font-weight:700;color:#9a9ca2;cursor:pointer;min-height:24px}   /* Hotfix 9 · Abschnitt 2 */
 .f7-neukarte{display:block;width:100%;margin:14px 0 24px;min-height:48px;border-radius:12px;border:1px dashed #2dd4bf;background:#0f2a27;color:#2dd4bf;font:700 15px system-ui}   /* Hotfix 9 · Abschnitt 1 */
 .f7-c .bt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .bt>div{padding:9px 11px;border-radius:12px;background:#1f2228;font-size:13.5px;font-weight:800;cursor:pointer}.f7-c .bt .ok{background:#3ecf8e;color:#000}
@@ -4689,10 +4690,10 @@ function f4KartenKernHtml(k){
   const titel='<div class="ktitel fk-haupttitel" data-detail="'+k.id+'">'+esc(k.titel||'(ohne Titel)')+'</div>'+ketteKnopf+
     '<div class="kmeta"><b style="color:'+famH+'">'+(k.domain==='dfm'?'DFM':'Privat')+'</b> · '+MX_FELD_NAME[matrixFeldVon(k)]+' · '+E4_ART_NAME[leiterArt(k)].replace(/^DFM[ -]?/,'').replace('Privat-','')+'</div>';
   const aufgabeErledigt='<div class="taufgabe"><div class="tsub">✓ erledigt'+(k.tagId?' am '+esc(String(k.tagId).slice(0,10)):'')+' · ⏱ <b>'+tZeitKurz(istSekLive(k)/60)+'</b> · <b>'+fmtP(kartePunkte(k))+' P</b> gebucht</div>'+zaehlerZeileHtml(k)+
-    '<div class="kbed"><button class="kbtn breit" data-detail="'+k.id+'">✎ Punkte anpassen</button><button class="kbtn breit" style="margin-left:auto" data-wiederholen="'+k.id+'">↻ Wiederholen</button></div></div>';
+    '<div class="kbed"><button class="kbtn breit" data-detail="'+k.id+'">✎ Punkte anpassen</button><button class="kbtn" data-fkchat="'+k.id+'" aria-label="Zur Karte schreiben" title="Zur Karte schreiben">💬</button><button class="kbtn breit" style="margin-left:auto" data-wiederholen="'+k.id+'">↻ Wiederholen</button></div></div>';
   const aufgabe='<div class="taufgabe">'+zaehlerZeileHtml(k)+'<div class="kbed">'+
     '<button class="kbtn pp tpp" data-fktoggle="'+k.id+'" aria-label="Play/Pause" style="background:linear-gradient(180deg,'+famH+','+famK+')">'+(uhrLaeuftAuf(k)?'⏸':'▶')+'</button>'+
-    '<button class="kbtn tedit" data-detail="'+k.id+'" aria-label="Bearbeiten">✎</button><button class="kbtn tedit" data-fkschieben="'+k.id+'" aria-label="Schieben">⏭</button>'+
+    '<button class="kbtn tedit" data-detail="'+k.id+'" aria-label="Bearbeiten">✎</button><button class="kbtn tedit" data-fkchat="'+k.id+'" aria-label="Zur Karte schreiben" title="Zur Karte schreiben">💬</button><button class="kbtn tedit" data-fkschieben="'+k.id+'" aria-label="Schieben">⏭</button>'+   // Hotfix 9 · 3.2
     (istAufgabeKarte(k) ? '<button class="kbtn ok tcheck" data-fkcheck="'+k.id+'" aria-label="Erledigt">✓</button>' : '')+'</div></div>';
   const nv=fokusNavHtml(k), einflug=_fokusEinflug ? ' von-'+_fokusEinflug : ''; _fokusEinflug=null;
   return '<div id="fokusAktiv" class="blk kern tkern f4kern '+(laeuft?'laeuft ':'')+(k.status==='erledigt'?'erledigt ':'')+(nv.imVerlauf?'imverlauf ':'')+einflug+'" style="--famk:'+famK+';--famh:'+famH+';border-left:4px solid '+famK+'">'+
@@ -5584,7 +5585,7 @@ function oeffneOnrampWahl(zielId){
   openSheet('🚀 Onramp wählen', (l.length ? '<p class="d">Leichte Karte vor „'+esc((S.karten.find(x=>x.id===zielId)||{}).titel||'')+'": Onramp erledigt +'+num(e4BrueckeWerte().onramp,100)+' · Zielaufgabe in '+num(e4BrueckeWerte().zielMin,10)+' Min gestartet +'+num(e4BrueckeWerte().ziel,100)+'.</p><div class="kl">'+l.map(k=>'<div class="kl-z" data-f7onramp="'+k.id+':'+zielId+'" style="--fam:'+famFarbe(k)+'"><div class="kl-t"><b class="kl-titel">'+esc(k.titel||'?')+'</b><span class="kl-meta">'+(num(k.sollMin)>0 ? Math.round(num(k.sollMin))+' Min' : 'ohne Soll')+'</span></div></div>').join('')+'</div>' : '<div class="leer">keine Onramp-Karte (leichte Karte unter 15 Min)</div>'), '<button class="btn ghost sm" data-close="1">Schließen</button>');
 }
 /* ── 7.4 · Chat: jeder Agent über dfm.agenten_auftraege (Art Chat); Antworten kommen in denselben Chat ── */
-function f7Chat(){ if(!S.ui.f7chat || typeof S.ui.f7chat!=='object') S.ui.f7chat={ an:'Trainer', bezug:null }; return S.ui.f7chat; }
+function f7Chat(){ if(!S.ui.f7chat || typeof S.ui.f7chat!=='object') S.ui.f7chat={ an:'Trainer', bezug:null, karteId:null }; if(S.ui.f7chat.karteId===undefined) S.ui.f7chat.karteId=null; return S.ui.f7chat; }   // Hotfix 9 · 3.2: karteId = eigener Chat je Karte
 const F7_CHAT_ARTEN=['Chat','Antwort','Planänderung','Auftrag','Pause','Kommentar','Schiebe-Grund','Postfach'];
 function f7ChatLaden(){ const ab=anVorTage(heuteApp(), 14)+'T00:00:00';
   return f7Lager('chat', 30000, ()=>f7Alle({ tabelle:'Agenten-Aufträge', felder:['Text','Auftraggeber','Empfänger','Art','Status','Ergebnis','Zeitstempel','Aufgabe','Projekt','Antwortet auf'], filter:[{ feld:'Zeitstempel', operator:'groesser_gleich', wert:ab }], sortierung:[{ feld:'Zeitstempel', richtung:'auf' }] })); }
@@ -5595,10 +5596,10 @@ function f7ChatSenden(an, text, opt){
   if(opt.projektId) verk.Projekt=[opt.projektId];
   const felder={ Text:text, Auftraggeber:'Pascal', 'Empfänger':an, Art:opt.art||'Chat', Status:'offen', Zeitstempel:jetztIso() };
   const eintrag={ id:'lokal-'+Date.now(), Text:text, Auftraggeber:'Pascal', 'Empfänger':an, Art:opt.art||'Chat', Zeitstempel:jetztIso(), lokal:true };
-  const L=F7.lager.chat; if(L && Array.isArray(L.daten)) L.daten.push(eintrag);
+  const L=F7.lager.chat; if(!opt.ohneLokal && L && Array.isArray(L.daten)) L.daten.push(eintrag);   // Hotfix 9 · 3.2: der zweite Datensatz (Fachagent) erscheint nicht doppelt
   return FSLive.senden('datensatz_anlegen', { tabelle:'Agenten-Aufträge', felder, verknuepfungen:verk }, opt.id ? { id:opt.id } : undefined).then(r=>{ f7LagerLeeren('chat'); f7Neu(); return r; }).catch(e=>{ toast('Nachricht wartet: '+((e && e.message)||'Fehler')); });
 }
-function f7ChatOeffnen(an, bezug, vorlage){ const c=f7Chat(); if(an) c.an=an; c.bezug=bezug||null; c.vorlage=vorlage||''; saveUi(); e1Oeffnen('chat'); }
+function f7ChatOeffnen(an, bezug, vorlage, karteId){ const c=f7Chat(); if(an) c.an=an; c.bezug=bezug||null; c.vorlage=vorlage||''; c.karteId=karteId||null; saveUi(); e1Oeffnen('chat'); }   // Hotfix 9 · 3.2: vierter Parameter karteId
 function f7ChatHtml(){
   const c=f7Chat(), rows=f7ChatLaden(), an=f7ChatEmpfaenger(), lk=getrackteKarte(), abts=f7Abteilungen()||[], proj=f7Projekte()||[];
   let h='<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> 💬 Chat</div></div>';
@@ -5625,7 +5626,11 @@ function f7ChatHtml(){
 }
 function f7ChatAbschicken(text){
   const c=f7Chat(), inp=el('f7chatText'); text=(text!=null ? text : (inp ? inp.value : '')).trim(); if(!text) return;
-  const lk=getrackteKarte(); f7ChatSenden(f7ChatEmpfaenger(), text, { karte:c.bezug==='karte' ? lk : null, projektId:c.anArt==='projekt' ? c.anId : null });
+  const lk=getrackteKarte(), kc=f3nChatKarte();
+  if(kc){ const fa=f3nFachagent(kc), txt='[Karte '+kc.id+'] '+text, pid=f3nProjektId(kc);   // Hotfix 9 · 3.2: Karten-Chat — Kennung, Trainer und Fachagent, Projekt verknüpft
+    f7ChatSenden('Trainer', txt, { karte:kc, projektId:pid });
+    if(fa) f7ChatSenden(fa, txt, { karte:kc, projektId:pid, ohneLokal:true }); }
+  else f7ChatSenden(f7ChatEmpfaenger(), text, { karte:c.bezug==='karte' ? lk : null, projektId:c.anArt==='projekt' ? c.anId : null });
   c.vorlage=''; if(inp) inp.value=''; saveUi(); haptik(8); e1Rendern();
 }
 /* Spracheingabe, wo das Gerät sie anbietet */
@@ -5994,7 +5999,10 @@ function f7Klick(e){
   if((z=d('data-f7chatwahl'))){ const art=z.dataset.f7chatwahl, l=art==='abteilung' ? (f7Abteilungen()||[]).map(a=>({ id:a.id, name:a.Name })) : (f7Projekte()||[]).filter(p=>!/erledigt|archiv/i.test(String(p.Status||''))).map(p=>({ id:p.id, name:p.Projekt }));
     openSheet(art==='abteilung' ? '🏢 Abteilung' : '📁 Projekt', '<div class="chips">'+l.map(x=>'<button class="chip" data-f7chatziel="'+esc(x.id)+'" data-f7chatart="'+art+'" data-f7chatname="'+esc(x.name)+'">'+esc(x.name)+'</button>').join('')+(l.length?'':'<div class="leer">lädt …</div>')+'</div>', '<button class="btn ghost sm" data-close="1">Schließen</button>'); return true; }
   if((z=d('data-f7chatziel'))){ const c=f7Chat(); c.an=z.dataset.f7chatname; c.anArt=z.dataset.f7chatart; c.anId=z.dataset.f7chatziel; saveUi(); closeSheet(); e1Rendern(); return true; }
-  if((z=d('data-f7chatbezug'))){ const c=f7Chat(); c.bezug=c.bezug==='karte' ? null : 'karte'; saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f7chatbezug'))){ const c=f7Chat(), lk=getrackteKarte(); if(c.karteId){ c.karteId=null; c.bezug=null; } else { c.karteId=lk ? lk.id : null; c.bezug=c.karteId ? 'karte' : null; } saveUi(); e1Rendern(); return true; }   // Hotfix 9 · 3.2: Chip öffnet den Karten-Chat der laufenden Karte
+  if(d('data-f7chatkarteaus')){ const c=f7Chat(); c.karteId=null; c.bezug=null; saveUi(); e1Rendern(); return true; }   // ‹ zurück zum allgemeinen Trainer-Chat
+  if((z=d('data-fkchat'))){ haptik(6); try{ closeSheet(); }catch(x){} f7ChatOeffnen('Trainer', 'karte', '', z.dataset.fkchat); return true; }   // 💬 Zur Karte schreiben (Fokusansicht, Karteneinstellungen)
+  if(d('data-f7pfoeffnen')){ haptik(6); e1Schliessen(); seiteZeigen('postfach'); return true; }   // 3.4: „Änderung im Postfach" öffnet das Postfach
   if(d('data-f7chatsenden')){ f7ChatAbschicken(); return true; }
   if((z=d('data-f7chatantwort'))){ f7ChatAbschicken(z.dataset.f7chatantwort); return true; }
   // Postfach
@@ -6440,8 +6448,8 @@ function f3nStand(rows, r, i){
 }
 function f3nNachrichtHtml(rows, r, i, an){
   const vonPascal=String(r.Auftraggeber||'')==='Pascal', art=String(r.Art||'');
-  if(/plan|auftrag/i.test(art) && !vonPascal) return '<div class="f7-info" data-mid="'+esc(r.id)+'">'+(/plan/i.test(art) ? '📥 Planänderung im Postfach: ' : '➡️ ')+esc(f3nText(r))+'</div>';
-  const text=f3nText(r), lines=text.split('\n'), opts=vonPascal ? [] : lines.filter(l=>/^\s*[-•]\s+/.test(l)).map(l=>l.replace(/^\s*[-•]\s+/,'').trim()), body=vonPascal ? text : lines.filter(l=>!/^\s*[-•]\s+/.test(l)).join('\n');
+  if(/plan|auftrag/i.test(art) && !vonPascal) return '<div class="f7-info" data-mid="'+esc(r.id)+'"'+(/plan/i.test(art) ? ' data-f7pfoeffnen="1"' : '')+'>'+(/plan/i.test(art) ? (f7Chat().karteId ? '📥 Änderung im Postfach: ' : '📥 Planänderung im Postfach: ') : '➡️ ')+esc(f3nOhneKennung(f3nText(r)))+'</div>';   // Hotfix 9 · 3.4: Tipp öffnet das Postfach
+  const text=f3nOhneKennung(f3nText(r)), lines=text.split('\n'), opts=vonPascal ? [] : lines.filter(l=>/^\s*[-•]\s+/.test(l)).map(l=>l.replace(/^\s*[-•]\s+/,'').trim()), body=vonPascal ? text : lines.filter(l=>!/^\s*[-•]\s+/.test(l)).join('\n');
   let h='<div class="f3n-n" data-mid="'+esc(r.id)+'"><div class="f7-m '+(vonPascal?'p':'t')+'">'+esc(body).replace(/\n/g,'<br>')+'<small>'+(vonPascal ? '' : esc(r.Auftraggeber||an)+' · ')+fmtUhr(r.Zeitstempel)+(f3nGekuerzt(text) ? ' · lädt …' : '')+'</small>'+
     (vonPascal ? (function(){ const s=f3nStand(rows, r, i); return '<em class="f3n-st '+s.k+'">'+esc(s.t)+'</em>'; })() : '')+'</div>';
   if(!vonPascal && opts.length) h+='<div class="f7-act2">'+opts.map((o,j)=>'<div class="'+(j?'':'g')+'" data-f7chatantwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'</div>';
@@ -6449,9 +6457,25 @@ function f3nNachrichtHtml(rows, r, i, an){
   if(vonPascal && /auftrag|plan/i.test(art)) h+='<div class="f7-info">➡️ Auftrag an '+esc(r['Empfänger']||'')+' · Antwort erscheint hier</div>';
   return h+'</div>';
 }
-function f3nMeine(rows, an){ return (rows||[]).filter(r=>{ const A=String(r.Auftraggeber||''), E=String(r['Empfänger']||''); if(an==='Trainer') return (A==='Pascal' && /trainer/i.test(E)) || /trainer/i.test(A); return (A==='Pascal' && E===an) || A===an; }); }
-function f3nListeHtml(rows, an){
-  const mine=f3nMeine(rows, an); let h='', tag='';
+/* ── Hotfix 9 · Abschnitt 3.2: eigener Chat je Karte — Kennung „[Karte <App-ID>]" am Textanfang; Fachagent = Projekt-Agent des Projekts ── */
+const F3N_KENNUNG=/^\s*\[Karte ([^\]]+)\]\s*/;
+function f3nKennungVon(r){ const m=String((r && r.Text)||'').match(F3N_KENNUNG); return m ? m[1] : null; }
+function f3nOhneKennung(t){ return String(t||'').replace(F3N_KENNUNG, ''); }
+function f3nChatKarte(){ const c=f7Chat(); return c.karteId ? (S.karten.find(x=>x.id===c.karteId)||null) : null; }
+function f3nFachagent(k){ return (k && k.projekt) ? 'Projekt-Agent '+String(k.projekt).trim() : null; }
+function f3nProjektId(k){ const n=String((k && k.projekt)||'').trim().toLowerCase(); if(!n) return null; const p=(f7Projekte()||[]).find(x=>String(x.Projekt||'').trim().toLowerCase()===n); return p ? p.id : null; }
+/* Nachrichten einer Karte: Text beginnt mit der Kennung, oder „Antwortet auf" zeigt auf eine solche Nachricht */
+function f3nKartenNachrichten(rows, karteId){
+  const ids=new Set(); (rows||[]).forEach(r=>{ if(f3nKennungVon(r)===karteId) ids.add(String(r.id)); });
+  return (rows||[]).filter(r=>f3nKennungVon(r)===karteId || f7Link(r['Antwortet auf']).some(x=>ids.has(String(x.id))));
+}
+function f3nMeine(rows, an, karteId){
+  if(karteId===undefined) karteId=f7Chat().karteId||null;
+  if(karteId) return f3nKartenNachrichten(rows, karteId);   // Hotfix 9 · 3.2: Karten-Chat — beide Agenten, nur Nachrichten mit Kennung
+  return (rows||[]).filter(r=>{ if(f3nKennungVon(r)) return false; const A=String(r.Auftraggeber||''), E=String(r['Empfänger']||''); if(an==='Trainer') return (A==='Pascal' && /trainer/i.test(E)) || /trainer/i.test(A); return (A==='Pascal' && E===an) || A===an; });   // ohne Karten-Nachrichten
+}
+function f3nListeHtml(rows, an, karteId){
+  const mine=f3nMeine(rows, an, karteId); let h='', tag='';
   mine.forEach((r,i)=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; } h+=f3nNachrichtHtml(mine, r, i, an); });
   if(!mine.length) h+='<div class="leer" data-leer="1">noch keine Nachricht · schreib dem '+(an==='Trainer'?'Trainer':esc(an))+'</div>';
   const arbeitet=mine.find(r=>String(r.Auftraggeber||'')==='Pascal' && String(r.Status||'').toLowerCase()==='vorgemerkt');
@@ -6461,27 +6485,41 @@ function f3nListeHtml(rows, an){
 function f3nSeitText(ts){ const m=Math.max(0, Math.round((Date.now()-Date.parse(ts))/60000)); return m<1 ? 'gerade eben' : m+' Min.'; }
 /* Chat-Ansicht: fester Kopf mit Schließen, Chips, Liste, Eingabe */
 f7ChatHtml=function(){
-  const c=f7Chat(), rows=f7ChatLaden(), an=f7ChatEmpfaenger(), lk=getrackteKarte();
-  let h='<div class="f3n-kopf" id="chatKopf"><button class="an-back" data-e1zu="1" aria-label="Schließen">‹ zurück</button><h3>💬 '+(an==='Trainer' ? 'Trainer' : esc(an))+'</h3><span class="sp"></span><button class="f3n-bell" data-f3nstumm="1" title="Benachrichtigungen">'+(S.settings.chatStumm ? '🔕' : '🔔')+'</button><button class="f3n-x" data-e1zu="1" aria-label="Schließen">✕</button></div>';
-  h+='<div class="f7-chips gr"><div class="'+(an==='Trainer'?'on tk':'')+'" data-f7chatan="Trainer">🏋️ Trainer</div>'+
-    '<div class="'+(c.anArt==='abteilung'?'on':'')+'" data-f7chatwahl="abteilung">🏢 '+(c.anArt==='abteilung' ? esc(an) : 'Abteilung')+' ▾</div>'+
-    '<div class="'+(c.anArt==='projekt'?'on':'')+'" data-f7chatwahl="projekt">📁 '+(c.anArt==='projekt' ? esc(an) : 'Projekt')+' ▾</div>'+
-    (lk ? '<div class="'+(c.bezug==='karte'?'on':'')+'" data-f7chatbezug="karte">▶ zur laufenden Karte</div>' : '')+'</div>';
-  if(c.bezugText) h+='<div class="f7-info">'+esc(c.bezugText)+'</div>';
-  h+='<div id="chatList" data-an="'+esc(an)+'">'+(rows ? f3nListeHtml(rows, an) : '<div class="leer" data-leer="1">'+(f7LagerFehler('chat') ? 'FocusSystem: '+esc(f7LagerFehler('chat')) : 'lädt …')+'</div>')+'</div>';
+  const c=f7Chat(), rows=f7ChatLaden(), an=f7ChatEmpfaenger(), lk=getrackteKarte(), kc=f3nChatKarte(), fa=kc ? f3nFachagent(kc) : null;   // Hotfix 9 · 3.2: Karten-Chat
+  const bell='<span class="sp"></span><button class="f3n-bell" data-f3nstumm="1" title="Benachrichtigungen">'+(S.settings.chatStumm ? '🔕' : '🔔')+'</button><button class="f3n-x" data-e1zu="1" aria-label="Schließen">✕</button></div>';
+  let h;
+  if(kc){ h='<div class="f3n-kopf f3n-karte" id="chatKopf"><button class="an-back" data-f7chatkarteaus="1" aria-label="Zurück zum Trainer-Chat">‹</button><h3>💬 '+esc(kc.titel||'(ohne Titel)')+'<small>Trainer'+(fa ? ' + '+esc(fa) : '')+'</small></h3>'+bell; }
+  else {
+    h='<div class="f3n-kopf" id="chatKopf"><button class="an-back" data-e1zu="1" aria-label="Schließen">‹ zurück</button><h3>💬 '+(an==='Trainer' ? 'Trainer' : esc(an))+'</h3>'+bell;
+    h+='<div class="f7-chips gr"><div class="'+(an==='Trainer'?'on tk':'')+'" data-f7chatan="Trainer">🏋️ Trainer</div>'+
+      '<div class="'+(c.anArt==='abteilung'?'on':'')+'" data-f7chatwahl="abteilung">🏢 '+(c.anArt==='abteilung' ? esc(an) : 'Abteilung')+' ▾</div>'+
+      '<div class="'+(c.anArt==='projekt'?'on':'')+'" data-f7chatwahl="projekt">📁 '+(c.anArt==='projekt' ? esc(an) : 'Projekt')+' ▾</div>'+
+      (lk ? '<div class="'+(c.bezug==='karte'?'on':'')+'" data-f7chatbezug="karte">▶ zur laufenden Karte</div>' : '')+'</div>';
+    if(c.bezugText) h+='<div class="f7-info">'+esc(c.bezugText)+'</div>'; }
+  h+='<div id="chatList" data-an="'+esc(an)+(kc ? '|'+esc(kc.id) : '')+'">'+(rows ? f3nListeHtml(rows, an, kc ? kc.id : null) : '<div class="leer" data-leer="1">'+(f7LagerFehler('chat') ? 'FocusSystem: '+esc(f7LagerFehler('chat')) : 'lädt …')+'</div>')+'</div>';
   h+='<button class="f3n-neu" id="chatNeu" hidden data-f3nunten="1">↓ neue Nachricht</button>';
-  h+='<div class="f7-inp unten"><input type="text" id="f7chatText" placeholder="Nachricht an '+(an==='Trainer'?'den Trainer':esc(an))+' …" value="'+esc(c.vorlage||'')+'" enterkeyhint="send"><span data-f7mic="f7chatText">🎙️</span><b data-f7chatsenden="1">➤</b></div>';
+  h+='<div class="f7-inp unten"><input type="text" id="f7chatText" placeholder="'+(kc ? 'Nachricht zur Karte …' : 'Nachricht an '+(an==='Trainer'?'den Trainer':esc(an))+' …')+'" value="'+esc(c.vorlage||'')+'" enterkeyhint="send"><span data-f7mic="f7chatText">🎙️</span><b data-f7chatsenden="1">➤</b></div>';
   return h;
 };
-function f3nScroller(){ return el('e1-chat'); }
+/* Hotfix 9 · 3.1: das Element, das tatsächlich scrollt — von #chatList aufwärts das erste mit Überlauf und overflow-y auto|scroll, sonst document.scrollingElement */
+function f3nScroller(){
+  let e=el('chatList');
+  while(e && e!==document.body && e!==document.documentElement){
+    try{ const st=getComputedStyle(e); if(e.scrollHeight>e.clientHeight+1 && /auto|scroll/.test(String(st.overflowY||''))) return e; }catch(x){}
+    e=e.parentElement; }
+  return document.scrollingElement || el('e1-chat');
+}
 function f3nUnten(sc){ return sc ? (sc.scrollTop+sc.clientHeight>=sc.scrollHeight-60) : true; }
-function f3nNachUnten(){ const sc=f3nScroller(); if(sc) sc.scrollTop=sc.scrollHeight; const b=el('chatNeu'); if(b) b.hidden=true; }
+function f3nNachUnten(){ const sc=f3nScroller(); if(sc) sc.scrollTop=sc.scrollHeight;
+  try{ const l=el('chatList'), last=l && l.lastElementChild; if(last && last.scrollIntoView) last.scrollIntoView({ block:'end' }); }catch(e){}   // Hotfix 9 · 3.1
+  const b=el('chatNeu'); if(b) b.hidden=true; }
 /* Anhängen statt Neuaufbau (5.2): neue Nachrichten unten dran, Stand der eigenen in place, Scroll-Stelle bleibt */
 function f3nChatAktualisieren(){
   const list=el('chatList'); if(!list || e1Art()!=='chat') return;
   const rows=f7ChatLaden(); if(!rows) return;
-  const an=f7ChatEmpfaenger(); if(list.dataset.an!==an){ f3nChatRendern(true); return; }
-  const sc=f3nScroller(), warUnten=f3nUnten(sc), mine=f3nMeine(rows, an);
+  if(F3N.ohneDaten){ F3N.ohneDaten=false; f3nChatRendern(true); return; }   // Hotfix 9 · 3.1: beim Aufbau kam das Lager noch nicht — jetzt neu bauen und nach unten
+  const an=f7ChatEmpfaenger(), kId=f7Chat().karteId||null; if(list.dataset.an!==an+(kId ? '|'+kId : '')){ f3nChatRendern(true); return; }   // Hotfix 9 · 3.2
+  const sc=f3nScroller(), warUnten=f3nUnten(sc), mine=f3nMeine(rows, an, kId);
   let neu=0, tag='';
   const leer=list.querySelector('[data-leer]'); if(leer && mine.length) leer.remove();
   const tage=[...list.querySelectorAll('.f7-day')].map(d=>d.dataset.tag); tag=tage.length ? tage[tage.length-1] : '';
@@ -6507,8 +6545,9 @@ function f3nChatRendern(neuAufbau){
   const b=el('chatBody'); if(!b) return;
   const vorhanden=el('chatList');
   if(vorhanden && !neuAufbau && vorhanden.dataset.an===f7ChatEmpfaenger()){ f3nChatAktualisieren(); return; }
-  b.innerHTML=f7ChatHtml(); F3N.an=f7ChatEmpfaenger();
-  requestAnimationFrame(()=>f3nNachUnten()); setTimeout(f3nNachUnten, 60); setTimeout(f3nNachUnten, 400);   // beim Öffnen auf der letzten Nachricht, auch wenn die Ansicht erst danach sichtbar wird
+  b.innerHTML=f7ChatHtml(); F3N.an=f7ChatEmpfaenger(); F3N.ohneDaten=!f7ChatLaden();
+  requestAnimationFrame(()=>f3nNachUnten()); setTimeout(f3nNachUnten, 60); setTimeout(f3nNachUnten, 400);
+  requestAnimationFrame(()=>requestAnimationFrame(f3nNachUnten)); setTimeout(f3nNachUnten, 900);   // Hotfix 9 · 3.1   // beim Öffnen auf der letzten Nachricht, auch wenn die Ansicht erst danach sichtbar wird
   try{ const rows=f7ChatLaden(); if(rows) f3nAntwortenGesehen(f3nMeine(rows, F3N.an)); }catch(e){}
 }
 { const _alt=e1Rendern; e1Rendern=function(){ if(e1Art()==='chat'){ f3nChatRendern(false); return; } return _alt(); }; }
@@ -13587,6 +13626,7 @@ function renderDetail(){
   const subs=entwurfSubs;
   const subSum=subs.reduce((a,u)=>a+num(u.sollMin),0);
   let h='';
+  if(!entwurfNeu) h+='<div class="field"><button type="button" class="btn ghost sm" data-fkchat="'+esc(k.id)+'">💬 Zur Karte schreiben</button></div>';   // Hotfix 9 · 3.2
   // Aus Vorlage (nur bei neuer Karte, wenn Vorlagen existieren)
   if(entwurfNeu && S.vorlagen.length){
     h+='<div class="field"><label>Aus Vorlage</label><div class="chips">'+
