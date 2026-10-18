@@ -2223,7 +2223,7 @@ table.zt .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin
 :is(#statusbar,#e1Kopf,#f4sb) .sb-bar .sollmark.okL{width:3px;margin-left:-.5px;background:linear-gradient(90deg,#3ecf8e 0 50%,transparent 50%)}
 :is(#statusbar,#e1Kopf,#f4sb) .sb-bar .sollmark.okR{width:3px;margin-left:-.5px;background:linear-gradient(90deg,transparent 50%,#3ecf8e 50%)}
 :is(#statusbar,#e1Kopf,#f4sb) .sb-bar .sollmark.okL.okR{background:#3ecf8e}
-:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .rot{position:absolute;top:0;bottom:0;display:none;z-index:2}
+:is(#statusbar,#e1Kopf,#f4sb) .sb-bar .rot{position:absolute;top:0;bottom:0;display:none;background:transparent;border:2px solid #f66d6d;box-sizing:border-box;border-radius:6px;z-index:4;pointer-events:none}   /* Hotfix 8: Überschuss rot umrandet, Familienfarben bleiben sichtbar */
 :is(#statusbar,#e1Kopf,#f4sb) .sb-bar .zahl.s b.rp{border:0;background:none;padding:0;text-shadow:0 0 3px #000,0 1px 1px #000}
 /* ══ 3.5.4 §2 · Fokus: Navigation oben · Der Tag: Ringe DFM / Privat (Draft Nr. 2) ══ */
 :is(#fokusAktiv,.fk-ohne) .knav.fk-swipe.fk-oben{margin:0 0 10px;grid-template-columns:auto 1fr auto}
@@ -11332,10 +11332,12 @@ function statusLivePunkte(g){
    die Soll-Pille entfaellt dann. UEBER gibt es in der Punkteleiste nicht mehr. (Alle Laengen in Punkten.) */
 function punkteleisteTeile(e){
   const Z=Math.max(1, num(e.ziel)), d=Math.max(0, num(e.dfm)), p=Math.max(0, num(e.privat)), zD=Math.max(0, num(e.zielDfm)), zP=Math.max(0, num(e.zielPrivat));
-  const ueber=Math.max(0, d+p-Z), rotVon=Math.max(0, Z-p), rotBis=Math.min(Z, d);
-  return { ziel:Z, dfm:Math.min(d, Z), privat:Math.min(p, Z), grenze:Math.min(Z, zD), dOk:zD>0 && d>=zD, pOk:zP>0 && p>=zP,
-    ueber, rotVon:ueber>0 ? rotVon : null, rotBis:ueber>0 ? rotBis : null,
-    mitte: ueber>0 ? (rotVon+rotBis)/2 : (Math.min(d, Z)+(Z-Math.min(p, Z)))/2 };
+  // Hotfix 8 · Abschnitt 2: über dem Ziel wächst die Skala auf DFM+Privat, die Familien bleiben ungekappt und stoßen aneinander,
+  // der Überschuss [Ziel … Skala] wird rot umrandet (keine Überlappung mehr). Unter dem Ziel alles wie bisher (Skala = Ziel).
+  const ueber=Math.max(0, d+p-Z), skala=Math.max(Z, d+p);
+  return { ziel:Z, skala, dfm:ueber>0 ? d : Math.min(d, Z), privat:ueber>0 ? p : Math.min(p, Z), grenze:Math.min(Z, zD), dOk:zD>0 && d>=zD, pOk:zP>0 && p>=zP,
+    ueber, rotVon:ueber>0 ? Z : null, rotBis:ueber>0 ? skala : null,
+    mitte: ueber>0 ? (Z+skala)/2 : (Math.min(d, Z)+(Z-Math.min(p, Z)))/2 };
 }
 /* ══ C3 (v3.8.0) · DIE PUNKTELEISTE (Zeile 1 der Statusleiste) — EINE Render-Funktion, das Ziel ist ein Parameter ══
    pfx 'sBar' = Statusleiste (Ebene 0) · 'e1Bar' = Kopf der Ebene 1. Das Gerüst kommt aus punkteleisteGeruest (kein kopiertes
@@ -11354,7 +11356,8 @@ function punkteleisteZeichnen(pfx, g, k, istHeute){
   // Ziel-Grenze WEISS gepunktet (erreichte Seite GRUEN), Viertel GRAU 40 %, Kauf-Schwellen GOLD 2 px, Ueberschuss-Strecke ROT.
   const istWe=istWochenendTag(heuteApp());
   const zielGes=g.zielHeute, pDfm=g.dfm, pPriv=g.privat;
-  const pz=v=>Math.max(0, Math.min(100, num(v)/zielGes*100)), pctZ=v=>pz(v).toFixed(1)+'%';
+  const PL=punkteleisteTeile({ ziel:zielGes, dfm:pDfm, privat:pPriv, zielDfm:g.zielDfm, zielPrivat:g.zielPrivat });   // Hotfix 8 · Abschnitt 2: Skala = max(Ziel, DFM+Privat)
+  const pz=v=>Math.max(0, Math.min(100, num(v)/PL.skala*100)), pctZ=v=>pz(v).toFixed(1)+'%';
   // §1 (v3.5.2): Fuellung zweiteilig — gebuchte Punkte im Familien-Verlauf, direkt anschliessend die Live-Punkte der laufenden
   // Karte in der hellen Familienfarbe mit feinen Streifen. Die Zahl je Familie ist die Summe (inklusive laufender Karte);
   // beim Pausieren/Abhaken wird Live zu gebucht.
@@ -11368,16 +11371,16 @@ function punkteleisteZeichnen(pfx, g, k, istHeute){
     const pd=el(pfx+'ProgD'), pp=el(pfx+'ProgP');
     if(pd){ pd.style.left=pctZ(pDfm); pd.style.width=pctZ(progD); }
     if(pp){ pp.style.left='auto'; pp.style.right=pctZ(pPriv); pp.style.width=pctZ(progP); } }
-  const PL=punkteleisteTeile({ ziel:zielGes, dfm:pDfm, privat:pPriv, zielDfm:g.zielDfm, zielPrivat:g.zielPrivat });
   { const mk=el(pfx+'SollMark'); mk.style.left=pctZ(PL.grenze); mk.style.display='block'; mk.className='sollmark'+(PL.dOk?' okL':'')+(PL.pOk?' okR':''); }
-  { const r=el(pfx+'Rot'); if(r){ r.style.display=PL.ueber>0 ? 'block' : 'none'; r.style.background=FARBE.ROT;
+  { const r=el(pfx+'Rot'); if(r){ r.style.display=PL.ueber>0 ? 'block' : 'none'; r.style.borderColor=FARBE.ROT;   // Hotfix 8: Umrandung statt Füllung
       if(PL.ueber>0){ r.style.left=pctZ(PL.rotVon); r.style.width=Math.max(0, pz(PL.rotBis)-pz(PL.rotVon)).toFixed(1)+'%'; } } }
-  let marks='<span class="qmark" style="left:25%"></span><span class="qmark" style="left:50%"></span><span class="qmark" style="left:75%"></span>';
+  const qm=f=>(f*zielGes/PL.skala*100).toFixed(1)+'%';   // Hotfix 8: Viertel des Ziels, auf der Skala
+  let marks='<span class="qmark" style="left:'+qm(.25)+'"></span><span class="qmark" style="left:'+qm(.5)+'"></span><span class="qmark" style="left:'+qm(.75)+'"></span>';
   if(S.belohnung){
     const bankOhneHeute=k-istHeute; let kum=0;
     KAT_KEYS.filter(kk=>!kaufSperre(kk)).map(preisFuer).filter(p=>p!=null).sort((a,b)=>a-b).forEach(pr=>{
       kum+=pr; const need=kum-bankOhneHeute;
-      if(need>0 && need<=zielGes) marks+='<span class="mark" style="left:'+(need/zielGes*100).toFixed(1)+'%"></span>';
+      if(need>0 && need<=zielGes) marks+='<span class="mark" style="left:'+(need/PL.skala*100).toFixed(1)+'%"></span>';   // Hotfix 8: auf der Skala
     });
   }
   el(pfx+'Marks').innerHTML=marks;
