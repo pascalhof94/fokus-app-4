@@ -5656,13 +5656,13 @@ function renderPostfach(){
     if(kat==='klaerung'){ const opts=String(r['Output/Entwurf']||'').split('\n').map(l=>l.replace(/^\s*[-•]\s*/,'').trim()).filter(Boolean).slice(0,5);
       x+='<div class="opt">'+opts.map((o,i)=>'<div class="'+(i?'':'ok')+'" data-f7pfantwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'<div data-f7pfantwort="">anders …</div></div>'; }
     else { if(r['Output/Entwurf']) x+='<div class="dr">'+esc(String(r['Output/Entwurf'])).replace(/\n/g,'<br>')+'</div>'; if(r['Begründung']) x+='<div class="why">Warum: '+esc(r['Begründung'])+'</div>';
-      x+='<div class="bt"><div class="ok" data-f7pfent="freigegeben">✓ Freigeben</div><div data-f7pfent="angepasst">✏️ Anpassen</div><div data-f7pfent="abgelehnt">✗ Ablehnen</div><div data-f7pfent="besprochen">💬 Besprechen</div></div>'; }
+      x+='<div class="bt"><div class="ok" data-f7pfent="freigegeben">✓ Freigeben</div><div data-f7pfent="angepasst">✏️ Anpassen</div><div data-f7pfent="abgelehnt">✗ Ablehnen</div><div data-f7pfent="besprochen">💬 Besprechen</div>'+(kat==='plan' ? '<div data-f7pfent="gesehen">👁 gesehen</div>' : '')+'</div>'; }   // Hotfix 7 · Abschnitt 1: fünfter Knopf für reine Plantexte
     return x+'</div>'; };
   const dr=sicht.filter(r=>f7PfKat(r)==='dringend'), kl=sicht.filter(r=>f7PfKat(r)==='klaerung'), rest=sicht.filter(r=>f7PfKat(r)!=='dringend' && f7PfKat(r)!=='klaerung');
   if(dr.length) h+='<h5 class="f7-h5 zw"><span class="red">🔴 Dringend</span><span>nach Dringlichkeit</span></h5>'+dr.map(r=>karte(r)).join('');
   if(kl.length) h+='<h5 class="f7-h5 zw"><span>❓ Klärung</span><span></span></h5>'+kl.map(r=>karte(r)).join('');
   if(rest.length){ const auf=S.ui.f7pfAuf||{}; h+='<h5 class="f7-h5 zw"><span>Weitere</span><span></span></h5>'+rest.map(r=>{ const kat=f7PfKat(r); if(auf[r.id]) return karte(r);
-    return '<div class="f7-row" data-f7pfid="'+esc(r.id)+'"><div>'+(kat==='plan'?'📅 ':'📝 ')+esc(r.Titel||'')+'<small>'+esc([r.Agent, kat==='plan' ? 'Planänderung' : 'Entwurf'].filter(Boolean).join(' · '))+'</small></div>'+(kat==='plan' ? '<b data-f7pfent="gesehen">✓ gesehen</b>' : '<b data-f7pfauf="1">öffnen</b>')+'</div>'; }).join(''); }
+    return '<div class="f7-row" data-f7pfid="'+esc(r.id)+'"><div>'+(kat==='plan'?'📅 ':'📝 ')+esc(r.Titel||'')+'<small>'+esc([r.Agent, kat==='plan' ? 'Planänderung' : 'Entwurf'].filter(Boolean).join(' · '))+'</small></div>'+'<b data-f7pfauf="1">öffnen</b></div>'; }).join(''); }   // Hotfix 7 · Abschnitt 1: Plan-Einträge klappen auf wie Entwürfe
   host.innerHTML=h;
 }
 function f7PfEntscheiden(id, ent, extra){
