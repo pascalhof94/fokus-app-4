@@ -46,4 +46,14 @@ pruef('Viertel-Striche beziehen sich auf das Ziel (bei Ziel 1 nahe 0 %)', /qmark
 punkteleisteZeichnen('sBar', { zielHeute:5000, dfm:1000, privat:1000, zielDfm:2500, zielPrivat:2500, tempoSchnitt:0, stundenRest:1 }, 0, 0);
 pruef('unter dem Ziel: IstD 20 %, kein Rot, Viertel bei 25/50/75 %', nah(parseFloat(el('sBarIstD').style.width), 20, 0.1) && el('sBarRot').style.display==='none' && /left:25\.0%/.test(el('sBarMarks').innerHTML) && /left:75\.0%/.test(el('sBarMarks').innerHTML));
 pruef('CSS: .rot ohne Hintergrund, mit Rahmen, über den Familien', /\.sb-bar \.rot\{[^}]*background:transparent;border:2px solid #f66d6d;box-sizing:border-box;border-radius:6px;z-index:4;pointer-events:none/.test(css));
+// ══ Hotfix 9 · Abschnitt 7: Readiness „Erholung", Achsen der Statusleiste nach Zustand ══
+var g7=diaGroessen();
+[['Unterlast', FARBE.GELB], ['optimal', FARBE.GRUEN], ['Überlast', FARBE.ROT]].forEach(function(f){ F4N.zustand=f[0]; var svg=f4nTagesdiagrammSvg(g7, null);
+  pruef('Achsen in '+f[0]+' → '+f[1], (svg.match(new RegExp('class="f4n-achse [xy]"[^>]*stroke="'+f[1]+'" stroke-width="2"', 'g'))||[]).length===2); });
+F4N.zustand=null; pruef('ohne Zustand: keine gefärbten Achsen', f4nTagesdiagrammSvg(g7, null).indexOf('f4n-achse')<0);
+F4N.zustand=undefined;
+pruef('readinessZustandHeute liefert null oder einen der drei Zustände', [null,'Unterlast','optimal','Überlast'].indexOf(readinessZustandHeute())>=0, readinessZustandHeute());
+var rs=readinessSvg([{x:20,y:100,d:'2026-10-01'},{x:50,y:300,d:'2026-10-02'},{x:80,y:200,d:'2026-10-03'},{x:60,y:150,d:heuteApp()}], 330);
+pruef('Readiness-SVG: „Erholung" unten, kein „Unterlastung"', rs.indexOf('>Erholung</text>')>=0 && rs.indexOf('Unterlastung')<0);
+pruef('Quelltext: kein Diagramm sagt mehr „Unterlastung"', !/>Unterlastung</.test(readFile('index.html')));
 suiteEnde('Statusleiste 4.0');
