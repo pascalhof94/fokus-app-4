@@ -37,6 +37,7 @@ pruef('Rang aus Dauerlast: 0 → R1, 5.700 → R2, 10.600 → R10', e4RangVon(0)
 pruef('Preis Stufe 1 der ersten Kategorie = 3.000 × Faktor, auf 5 gerundet', e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1)%5===0 && e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1)>0, e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1));
 pruef('Rang-Sperre: Stufe 5 frei ab R3', (e4ShopSperre(5)||'').indexOf('R3')>=0 || e4Rang().rang>=3, e4ShopSperre(5));
 // ══ Hotfix 9 · Abschnitt 5: Münzen statt Wohlstand, Kaufen im Shop wieder frei ══
+S.meta.shopFrei400=null; S.settings.rangSperre=true; DB.set('settings', S.settings); saveMeta(); ladeAlles();   // die Suite ersetzt S.settings vorher; die Migration läuft hier noch einmal wie beim Start
 pruef('Migration shopFrei400: rangSperre aus, Sicherung vorhanden', S.settings.rangSperre===false && !!(S.meta.shopFrei400 && S.meta.shopFrei400.ts) && DB.get('settings_bak_shopfrei400', null)!==null);
 pruef('e4ShopSperre greift nicht mehr (Rang 1)', e4ShopSperre(1)===null && e4ShopSperre(5)===null);
 (function(){ var kk=KAT_KEYS.find(function(x){ return stufenGekauft(x)===0 && stufeVon(x, 1) && !(stufeVon(x, 1).braucht||[]).length && !gleichgewichtSperre(x); });
