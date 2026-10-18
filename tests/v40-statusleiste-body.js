@@ -35,6 +35,7 @@ var T2=punkteleisteTeile({ ziel:5000, dfm:3000, privat:3000, zielDfm:2500, zielP
 pruef('Teile: 3000+3000 über 5000 → Skala 6000, Rot 5000–6000, keine Kappung, Mitte 5500', T2.skala===6000 && T2.rotVon===5000 && T2.rotBis===6000 && T2.dfm===3000 && T2.privat===3000 && T2.mitte===5500, JSON.stringify(T2));
 var T3=punkteleisteTeile({ ziel:5000, dfm:1000, privat:1000, zielDfm:2500, zielPrivat:2500 });
 pruef('Teile: unter dem Ziel unverändert (Skala 5000, kein Rot, Grenze 2500)', T3.skala===5000 && T3.ueber===0 && T3.rotVon===null && T3.dfm===1000 && T3.grenze===2500, JSON.stringify(T3));
+S.fokus={ laeuft:false, karteId:null };   // keine laufende Karte: gebucht = gezeigt (Fall D hat t-dfm gestartet)
 var g8={ zielHeute:1, dfm:771, privat:1500, zielDfm:0, zielPrivat:0, tempoSchnitt:0, stundenRest:1 };
 punkteleisteZeichnen('sBar', g8, 0, 0);
 var wD=parseFloat(el('sBarIstD').style.width), wP=parseFloat(el('sBarIstP').style.width), rot=el('sBarRot');
