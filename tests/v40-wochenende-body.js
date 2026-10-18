@@ -35,6 +35,11 @@ var t=tagesprognoseHeute();
 pruef('Tagesprognose DFM: 300 erreicht, Rest über dem Ziel 0 → ✓', t.dfm===300 && (t.dfm+t.restDfm)-0>=0, JSON.stringify({ dfm:t.dfm, rest:Math.round(t.restDfm) }));
 var A=f4StatusleisteHtml();
 pruef('Statusleiste baut mit Restziel 0 (keine Division durch null, kein NaN)', typeof A==='string' && A.indexOf('NaN')<0 && A.indexOf('Infinity')<0);
+// Hotfix 9 · Abschnitt 9: Wächter — alle Statistik-Werte für heute unter 10.000 (Befund 8.000 / 80.000)
+(function(){ var g9=diaGroessen(), t9=tagesprognoseHeute(); var ok=g9.prognoseHeute<10000 && g9.tempoSchnitt<10000 && (t9.dfm+t9.restDfm)<10000 && (t9.privat+t9.restPrivat)<10000;
+  var html9=''; try{ html9=f4PrognoseHtml(); }catch(e){ html9='FEHLER '+e; }
+  var leistung9=''; try{ leistung9=f6Leistung(analyseFenster(), 'alle'); }catch(e){ leistung9='FEHLER '+e; }
+  pruef('Wächter: Statistik heute (Prognose, Tempo, Tagesprognose je Familie) unter 10.000, Leistung-Modul baut', ok && html9.indexOf('FEHLER')<0 && leistung9.indexOf('FEHLER')<0 && !/[1-9]\d{2}\.\d{3}/.test(html9), JSON.stringify({ prog:Math.round(g9.prognoseHeute), tempo:Math.round(g9.tempoSchnitt), dfm:Math.round(t9.dfm+t9.restDfm), priv:Math.round(t9.privat+t9.restPrivat) })); })();
 // Tageslog beim Abhaken: Tagesanteil statt voller Kartenwert
 var k=K.d; k.istSek=879*60; S.tag.istMinutenStart=S.tag.istMinutenStart||{}; S.tag.istMinutenStart[k.id]=595;
 var erwartet=Math.round(kartePunkteHeute(k)), voll=Math.round(kartePunkte(k));
