@@ -35,7 +35,7 @@ pruef('Tagesziele Wochenende 1.000 DFM · 4.200 Privat', num(S.settings.zielWeDf
 // Rang-Schwellen (5.9) und Preise (5.10)
 pruef('Rang aus Dauerlast: 0 → R1, 5.700 → R2, 10.600 → R10', e4RangVon(0)===1 && e4RangVon(5700)===2 && e4RangVon(10600)===10, e4RangVon(0)+'/'+e4RangVon(5700)+'/'+e4RangVon(10600));
 pruef('Preis Stufe 1 der ersten Kategorie = 3.000 × Faktor, auf 5 gerundet', e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1)%5===0 && e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1)>0, e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1));
-pruef('Rang-Sperre: Stufe 5 frei ab R3', (e4ShopSperre(5)||'').indexOf('R3')>=0 || e4Rang().rang>=3, e4ShopSperre(5));
+pruef('Rang-Sperre obsolet (Hotfix 9/10): e4ShopSperre liefert für jede Stufe null, Schwelle bleibt nur als Wert', e4ShopSperre(5)===null && e4ShopFreiAb(5)===3, JSON.stringify([e4ShopSperre(5), e4ShopFreiAb(5)]));
 // ══ Hotfix 9 · Abschnitt 5: Münzen statt Wohlstand, Kaufen im Shop wieder frei ══
 S.meta.shopFrei400=null; S.settings.rangSperre=true; DB.set('settings', S.settings); saveMeta(); ladeAlles();   // die Suite ersetzt S.settings vorher; die Migration läuft hier noch einmal wie beim Start
 pruef('Migration shopFrei400: rangSperre aus, Sicherung vorhanden', S.settings.rangSperre===false && !!(S.meta.shopFrei400 && S.meta.shopFrei400.ts) && DB.get('settings_bak_shopfrei400', null)!==null);
