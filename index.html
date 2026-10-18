@@ -146,7 +146,7 @@ select{appearance:none;-webkit-appearance:none;background-image:url("data:image/
 #ebene1{position:fixed;left:0;right:0;top:var(--vvTop,0px);height:var(--vvH,100%);z-index:200;background:var(--bg);display:none;flex-direction:column}
 body[data-e1] #ebene1{display:flex}
 body[data-e1] main{overflow:hidden}
-body[data-e1] #nav,body[data-e1] #suchFab,body[data-e1] #neuFab{display:none}
+body[data-e1] #nav,body[data-e1] #suchFab,body[data-e1] #trainerFab,body[data-e1] #neuFab{display:none}
 #e1Kopf{position:sticky;top:0;z-index:6;flex:none;padding:calc(var(--sat) + 4px) 8px 6px;background:linear-gradient(180deg,var(--card2),var(--card));border-bottom:1px solid var(--line)}
 #e1Kopf .sb-bar[hidden]{display:none}
 #ebene1 .e1{display:none;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--sab) + 16px)}
@@ -259,6 +259,10 @@ body[data-e1="suche"] #e1-suche,body[data-e1="plus"] #e1-plus,body[data-e1="kett
 #neuFab[hidden]{display:none}
 /* §3 (v2.4.0): Suchknopf spiegelbildlich zum Plus, gleiche Hoehe, gleiche Ebene */
 #suchFab{position:fixed;left:16px;bottom:calc(56px + var(--sab) + 14px);z-index:70;
+  width:56px;height:56px;border-radius:50%;border:1px solid var(--line);background:var(--card2);color:#fff;
+  font-size:22px;line-height:1;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
+/* Hotfix 8 · Abschnitt 1: Trainer-Knopf unten rechts, wie die Suche */
+#trainerFab{position:fixed;right:16px;bottom:calc(56px + var(--sab) + 14px);z-index:70;
   width:56px;height:56px;border-radius:50%;border:1px solid var(--line);background:var(--card2);color:#fff;
   font-size:22px;line-height:1;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
 .such-filter{padding:10px 0 0}
@@ -2564,6 +2568,7 @@ img.objimg.laedt{opacity:0}
 #neuFab{display:none!important}
 #v-postfach .headbar{display:none}#v-postfach #postfachBody{padding:12px 12px 90px}
 #suchFab .badge,#nav .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#f66d6d;color:#fff;font:700 11px/20px system-ui;text-align:center;padding:0 5px}
+#trainerFab .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#3b82f6;color:#fff;font:700 11px/20px system-ui;text-align:center;padding:0 5px}   /* Hotfix 8: Chat-Badge am Trainer-Knopf */
 #nav button{position:relative}#nav .badge{top:2px;right:14px}#nav .badge:not(.rot){background:#3b82f6}
 .f7-h5{font:700 12.5px system-ui;color:#9a9ca2;letter-spacing:.06em;text-transform:uppercase;margin:14px 0 6px}
 .f7-h5.zw{display:flex;justify-content:space-between;gap:8px}.f7-h5 .red{color:#f66d6d}
@@ -2733,7 +2738,7 @@ body.breit #spalteL .f7-g>div{font-size:13.5px;padding:8px 2px}
 body.breit .sl-such{margin-bottom:6px}body.breit .sl-such input{display:block;width:100%;height:38px;border-radius:10px;background:#1a1d22;border:1px solid #2a2d33;color:#e8e9ec;padding:0 10px;font-size:13.5px;outline:none}
 body.breit main{margin-left:25%;margin-right:25%;padding-left:16px;padding-right:16px}
 body.breit #nav{left:25%;right:25%}
-body.breit #suchFab{display:none}
+body.breit #suchFab,body.breit #trainerFab{display:none}
 body.breit #ebene1{left:25%;right:25%}
 body.breit #topbar .inner.f4{max-width:none}
 body.breit #f4sb{display:grid;grid-template-columns:repeat(3,minmax(300px,372px));gap:8px 14px;justify-content:center;align-items:start}
@@ -2831,6 +2836,7 @@ body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4s
 <button id="neuFab" aria-label="Neue Karte">＋</button>
 <!-- §3 (v2.4.0): der Suchknopf — gegenueber dem Plus -->
 <button id="suchFab" aria-label="Volltextsuche">🔍</button>
+<button id="trainerFab" aria-label="Trainer">💬</button>
 
 <nav id="nav">
   <button data-seite="fokus"><span class="ic">🎯</span>Fokus</button>
@@ -6463,7 +6469,7 @@ function f3nHintergrund(rows){
 function f3nBadge(){
   const n=num(F7.chatNeu);
   document.querySelectorAll('[data-f7akt="chat"]').forEach(t=>{ let q=t.querySelector('.badge'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge'; t.appendChild(q); } q.textContent=n; } else if(q) q.remove(); });
-  const f=el('suchFab'); if(f){ let q=f.querySelector('.badge.chat'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge chat'; f.appendChild(q); } q.textContent='💬'+n; } else if(q) q.remove(); }
+  const f=el('trainerFab'); if(f){ let q=f.querySelector('.badge.chat'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge chat'; f.appendChild(q); } q.textContent=String(n); } else if(q) q.remove(); }   // Hotfix 8 · Abschnitt 1: Chat-Badge am Trainer-Knopf, nur die Zahl
 }
 setInterval(()=>{ try{ f3nTakt(); }catch(e){} }, 60000);
 setTimeout(()=>{ try{ f3nTakt(); }catch(e){} }, 8000);
@@ -22951,6 +22957,7 @@ ikDragBinden();   // §2 (v3.7.0)
 /* §5 (v3.7.0): die wischbaren Sichten der Suche sind entfallen — unter dem Suchfeld steht die Kettenliste */
 // §11 (v3.7.0): der 🔍-Knopf öffnet die Suche (Suchfeld + Kettenliste, §5); liegt sie schon vor, bekommt das Suchfeld den Fokus
 el('suchFab').addEventListener('click', ()=>{ haptik(8); e1Oeffnen('suche'); });
+el('trainerFab').addEventListener('click', ()=>{ haptik(8); f7ChatOeffnen('Trainer'); });   // Hotfix 8 · Abschnitt 1
 el('suZu').addEventListener('click', ()=>{ haptik(6); e1Schliessen(); });   // leert das Feld (ebeneSetzen) und schliesst Ebene 1
 el('suFreitext').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); try{ e.target.blur(); }catch(x){} } });   // §4 (v3.7.6): „Fertig" schliesst nur die Tastatur
 

@@ -29,4 +29,19 @@ pruef('gesehene Antwort zählt nicht mehr', F7.chatNeu===1, F7.chatNeu);
 // Liste: eigene Nachricht trägt den Stand, Antwort erscheint vollständig
 var html=f3nListeHtml(rows, 'Trainer');
 pruef('Liste enthält Stand und Schreibt-Zeile', html.indexOf('f3n-st')>=0 && html.indexOf('chatSchreibt')>=0 && html.indexOf('Trainer schreibt')>=0);
+// Hotfix 8 · Abschnitt 1: Trainer-Knopf unten rechts (HTML, Klick, Badge). Die Knöpfe sind im jsc-DOM Attrappen mit echter Kinderliste.
+var src8=readFile('index.html');
+pruef('#trainerFab existiert im HTML direkt hinter #suchFab, CSS rechts, in Ebene 1 und breit verborgen', /<button id="suchFab"[^>]*>🔍<\/button>\s*<button id="trainerFab" aria-label="Trainer">💬<\/button>/.test(src8) && /#trainerFab\{position:fixed;right:16px;/.test(src8) && src8.indexOf('body[data-e1] #trainerFab')>=0 && src8.indexOf('body.breit #trainerFab')>=0);
+pruef('Klick-Handler des Trainer-Knopfs ruft f7ChatOeffnen(\'Trainer\')', /el\('trainerFab'\)\.addEventListener\('click', \(\)=>\{ haptik\(8\); f7ChatOeffnen\('Trainer'\); \}\);/.test(src8));
+closeSheet(); e1Schliessen && e1Schliessen(); f7ChatOeffnen('Trainer');
+pruef('Klick öffnet Ebene 1 Chat mit Trainer', e1Art()==='chat' && f7Chat().an==='Trainer', JSON.stringify([e1Art(), f7Chat().an]));
+function fabAttrappe(){ var kinder=[]; return { kinder:kinder, style:{}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}}, addEventListener:function(){},
+  appendChild:function(c){ c.remove=function(){ var i=kinder.indexOf(c); if(i>=0) kinder.splice(i,1); }; kinder.push(c); },
+  querySelector:function(sel){ var cls=sel.replace(/^\./,'').split('.'); for(var i=0;i<kinder.length;i++){ var c=String(kinder[i].className||'').split(/\s+/); if(cls.every(function(x){ return c.indexOf(x)>=0; })) return kinder[i]; } return null; } }; }
+_els.trainerFab=fabAttrappe(); _els.suchFab=fabAttrappe();
+F7.chatNeu=2; f3nBadge();
+var tb=el('trainerFab').querySelector('.badge');
+pruef('Badge: #trainerFab .badge zeigt 2 (nur die Zahl), #suchFab ohne .badge.chat', !!tb && tb.textContent==='2' && !el('suchFab').querySelector('.badge.chat'), tb && tb.textContent);
+F7.chatNeu=0; f3nBadge();
+pruef('Badge verschwindet bei 0', !el('trainerFab').querySelector('.badge'));
 suiteEnde('Chat 4.0');
