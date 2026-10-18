@@ -2955,7 +2955,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-17-27';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-18-28';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -7150,6 +7150,15 @@ function ladeAlles(){
     } else log.we='eigener Wert '+num(S.settings.zielWePrivat)+' — unberührt';
     DB.set('settings', S.settings);
     S.meta.nachtrag200bLog=log; S.meta.nachtrag200b=true; saveMeta();
+  }
+  // ══ Hotfix 7 (4.0) · Ziele 4.0 auf dem Gerät setzen (Entscheidung Pascal 17.10.2026) ══
+  if(!S.meta.ziele400){
+    DB.set('settings_bak_ziele400', DB.get('settings', {}));
+    const neu={ tagesZielDfm:4500, tagesZielPrivat:2800, zielWeDfm:1000, zielWePrivat:4200 };
+    const log={ ts:jetztIso(), ziele:{} };
+    Object.keys(neu).forEach(f=>{ log.ziele[f]=num(S.settings[f])+' → '+neu[f]; S.settings[f]=neu[f]; });
+    DB.set('settings', S.settings);
+    S.meta.ziele400Log=log; S.meta.ziele400=true; saveMeta();
   }
   // ══════════════════════════════════════════════════════════════════════
   //  §4 (v2.0.1) · DUBLETTEN AUS DEM ROUTINEN-IMPORT ZUSAMMENFÜHREN
