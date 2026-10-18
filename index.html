@@ -11733,8 +11733,13 @@ function profilVorschlag(){
 }
 /* Zielhöhe eines Tages: Werktag je Tag; Wochenende = das GEMEINSAME Kontingent. */
 function zielTag(dom, datum){
-  if(istWochenendTag(datum||heuteApp()))
-    return dom==='dfm' ? num(S.settings.zielWeDfm,1800) : num(S.settings.zielWePrivat,1600);
+  const d=datum||heuteApp();
+  if(istWochenendTag(d)){
+    const we=dom==='dfm' ? num(S.settings.zielWeDfm,1800) : num(S.settings.zielWePrivat,1600);
+    // Hotfix 7 · Abschnitt 3: am heutigen App-Sonntag (weModus gemeinsam) gilt die offene Differenz zum Samstag (Entscheidung Pascal 18.10.)
+    if(d===heuteApp() && wochentagNr(d)===7 && S.settings.weModus!=='getrennt') return Math.max(0, we-weSamstagAnteil(dom));
+    return we;
+  }
   return tagesZielDomain(dom);
 }
 function zielTagGesamt(datum){ return zielTag('dfm',datum)+zielTag('privat',datum); }
@@ -11755,16 +11760,23 @@ function weIstDomain(dom){
   // §6 (v3.7.2, Ursache des Vortags-Fehlers): der Sonntag wurde an der Geräte-Uhr erkannt — lief der App-Tag (Samstag) über
   // Mitternacht oder war der neue Tag noch nicht per „Aufstehen" begonnen, zählte der Snapshot des App-Vortags (Freitag) dazu.
   // Jetzt entscheidet allein der App-Tag: Sonntag (App) → Samstag-Snapshot dazu.
-  if(wochentagNr(heuteApp())===7){ const sn=tagSnapshot(anVorTage(heuteApp(),1)); if(sn) s+=Math.max(0,snapPunkte(sn,dom)); }
-  return s;
+  return s+weSamstagAnteil(dom);   // Hotfix 7 · Abschnitt 3: der Samstag aus der Tagesbilanz, nicht aus der Logsumme
+}
+/* Hotfix 7 · Abschnitt 3: Samstag-Anteil am App-Sonntag (weModus gemeinsam) aus der Tagesbilanz des Snapshots (punkteDfm/punktePrivat);
+   nur wenn der Snapshot das Feld nicht trägt (alte Tage), die Logsumme als Rückfall. Sonst 0. */
+function weSamstagAnteil(dom){
+  if(S.settings.weModus==='getrennt' || wochentagNr(heuteApp())!==7) return 0;
+  const sn=tagSnapshot(anVorTage(heuteApp(),1)); if(!sn) return 0;
+  const f=dom==='dfm' ? sn.punkteDfm : sn.punktePrivat;
+  return Math.max(0, f!=null ? num(f) : snapPunkte(sn,dom));
 }
 /* Ziel und Ist des heutigen Rahmens (Werktag: Tag · WE: gemeinsames Budget). */
 function zielUndIstHeute(dom){
   const we=istWochenendTag(heuteApp());
-  if(dom) return { ziel:Math.max(1,zielTag(dom)), ist: we?weIstDomain(dom):Math.max(0,tagesPunkteDomain(dom)), we };
+  // Hotfix 7 · Abschnitt 3: „ist" ist immer nur der heutige Tag; am Sonntag steht ihm das Restziel gegenüber (zielTag)
+  if(dom) return { ziel:Math.max(1,zielTag(dom)), ist: Math.max(0,tagesPunkteDomain(dom)), we };
   return { ziel:Math.max(1,zielTagGesamt()),
-    ist: we ? (weIstDomain('dfm')+weIstDomain('privat'))
-            : (Math.max(0,tagesPunkteDomain('dfm'))+Math.max(0,tagesPunkteDomain('privat'))), we };
+    ist: Math.max(0,tagesPunkteDomain('dfm'))+Math.max(0,tagesPunkteDomain('privat')), we };
 }
 /* ══ §4.3 (v1.13.0) · Upgrade-Faktor — wirkt NUR auf Anzeige-/Spielebene
    (Tagespunkte-Anzeige, Ziele, F, Münzen). Mess-Ebene (Rang-Median,
@@ -14034,7 +14046,7 @@ function glaettungDeltas(){
 function logPunktSchreiben(k){
   if(!S.tag) return;
   (S.tag.log=S.tag.log||[]).push({ itemId:k.id, titel:k.titel||'', domain:k.domain, art:kartenArt(k),
-                                    punkte:Math.round(kartePunkte(k)), ts:jetztIso() });
+                                    punkte:Math.round(kartePunkteHeute(k)), kartenwert:Math.round(kartePunkte(k)), ts:jetztIso() });   // Hotfix 7 · Abschnitt 3: der Tagesanteil, nicht der volle Kartenwert (Befund 18.10.: 7.293 statt 2.830)
   S.tag.erledigtHeute=num(S.tag.erledigtHeute)+1;
 }
 function logPunktEntfernen(k){
@@ -18852,15 +18864,16 @@ function tagSnapshot(iso){
   const snaps=(S.historie||[]).filter(h=>h.datum===iso && !h.luecke);
   if(!snaps.length) return null;
   const log=[], av=[]; let p=0, akkuSum=0, akkuN=0, erl=0, startTs=null, endeTs=null;
-  const zeit={dfm:0,privat:0,projekte:{}};
+  const zeit={dfm:0,privat:0,projekte:{}}; let pD=null, pP=null;   // Hotfix 7 · Abschnitt 3: Tagesbilanz je Familie durchreichen (null, wenn kein Snapshot sie trägt)
   snaps.forEach(s=>{ p+=num(s.punkteBilanz); (s.log||[]).forEach(e=>log.push(e)); (s.akkuVerlauf||[]).forEach(e=>av.push(e));
+    if(s.punkteDfm!=null) pD=num(pD)+num(s.punkteDfm); if(s.punktePrivat!=null) pP=num(pP)+num(s.punktePrivat);
     if(s.akku!=null){ akkuSum+=num(s.akku); akkuN++; } erl+=num(s.erledigtHeute);
     if(!startTs || (s.startTs && s.startTs<startTs)) startTs=s.startTs;
     if(!endeTs || (s.endeTs && s.endeTs>endeTs)) endeTs=s.endeTs;
     if(s.zeit){ zeit.dfm+=num(s.zeit.dfm); zeit.privat+=num(s.zeit.privat);
       Object.entries(s.zeit.projekte||{}).forEach(([k,v])=>zeit.projekte[k]=(zeit.projekte[k]||0)+num(v)); } });
   return { datum:iso, istHeute:false, urlaub:snaps.some(x=>x.urlaub), startTs, endeTs, punkteBilanz:p, akku:akkuN?akkuSum/akkuN:null,
-    log, akkuVerlauf:av, zeit, erledigtHeute:erl };
+    log, akkuVerlauf:av, zeit, erledigtHeute:erl, punkteDfm:pD, punktePrivat:pP };
 }
 /* Punkte eines Snapshots unter Domänenfilter (aus log, sonst Bilanz für „alle"). */
 function snapPunkte(snap, dom){
@@ -19273,7 +19286,7 @@ function belGrad(v){ v=Math.max(-1,Math.min(1,isFinite(v)?v:0));
 function belIstWochenende(){ const d=new Date().getDay(); return d===0||d===6; }
 /* §2 (v1.12.0): duenne Wrapper — die Rechnung lebt in zielTag()/weIstDomain(). */
 function belZielDfm(){ return zielTag('dfm'); }
-function belIstDfm(){ return istWochenendTag(heuteApp()) ? weIstDomain('dfm') : Math.max(0, tagesPunkteDomain('dfm')); }
+function belIstDfm(){ return Math.max(0, tagesPunkteDomain('dfm')); }   // Hotfix 7 · Abschnitt 3: nur der heutige Tag, am Sonntag gegen das Restziel
 function belZielGesamt(){ return zielTagGesamt(); }
 function belIstGesamt(){ return zielUndIstHeute().ist; }
 
