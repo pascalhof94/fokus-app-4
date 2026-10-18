@@ -178,7 +178,7 @@ function bestandSchreiben(){
       var worte=eigener.split(/\s+/), breitestes=0;
       for(var w=0;w<worte.length;w++){ var b=cx.measureText(worte[w]).width; if(b>breitestes) breitestes=b; }
       var innen=t.clientWidth-(parseFloat(st.paddingLeft)||0)-(parseFloat(st.paddingRight)||0);
-      if(innen>0 && breitestes>innen+2 && st.overflowWrap!=='anywhere' && st.wordBreak!=='break-all')
+      if(innen>0 && breitestes>innen+2 && st.overflowWrap!=='anywhere' && st.wordBreak!=='break-all' && st.hyphens!=='auto' && st.webkitHyphens!=='auto')   // Hotfix 7: Silbentrennung (hyphens:auto) bricht nicht buchstabenweise
         fatal('Wort breiter als Element (bricht buchstabenweise): '+beschreibe(t)+' — Wort '+Math.round(breitestes)+'px, Platz '+Math.round(innen)+'px');
     }
     ergebnis.geprueft=geprueft;
