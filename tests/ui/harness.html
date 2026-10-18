@@ -217,6 +217,16 @@ function bestandSchreiben(){
   /* Hotfix 9: Nachprüfungen je Ansicht (laufen nach der Wartezeit, vor den Layout-Checks) und längere Wartezeit, wo die App selbst noch nachzieht */
   var WARTEN={ chat:1300 };
   var NACHPRUEF={
+    /* Hotfix 9 · 8.6: keine zwei <text> innerhalb eines .an-svg überlappen sich (Bounding-Boxen, Toleranz 1 px) */
+    statistik: function(fw){ var svgs=fw.document.querySelectorAll('.an-svg'); var n=0;
+      for(var i=0;i<svgs.length;i++){ var svg=svgs[i]; var r0=svg.getBoundingClientRect(); if(r0.width===0 || r0.height===0) continue;
+        var mod=svg.closest('.stm'); var name=(mod && mod.querySelector('.stm-k .t')) ? mod.querySelector('.stm-k .t').textContent.trim() : ('Diagramm '+(i+1));
+        var texte=[].slice.call(svg.querySelectorAll('text')).filter(function(t){ return (t.textContent||'').trim(); });
+        for(var a=0;a<texte.length;a++){ var ra=texte[a].getBoundingClientRect(); if(ra.width===0) continue;
+          for(var b=a+1;b<texte.length;b++){ var rb=texte[b].getBoundingClientRect(); if(rb.width===0) continue; n++;
+            var ueberlappt=ra.left<rb.right-1 && rb.left<ra.right-1 && ra.top<rb.bottom-1 && rb.top<ra.bottom-1;
+            if(ueberlappt) throw new Error('Texte überlappen in „'+name+'“: „'+texte[a].textContent.trim()+'“ und „'+texte[b].textContent.trim()+'“'); } } }
+      ergebnis.checks+=n; },
     chat: function(fw){ var l=fw.document.getElementById('chatList'); if(!l) throw new Error('Hotfix 9: #chatList fehlt');
       var last=null; for(var i=l.children.length-1;i>=0;i--){ var c=l.children[i], rc=c.getBoundingClientRect(); if(rc.height>0){ last=c; break; } }
       if(!last) throw new Error('Hotfix 9: keine sichtbare Nachricht in #chatList');
@@ -236,7 +246,8 @@ function bestandSchreiben(){
       fw.eval("var n=document.querySelectorAll('#postfachBody .f7-c [data-f7pfent]').length; if(n!==5) throw new Error('Hotfix 7: aufgeklappter Plan-Eintrag zeigt '+n+' statt 5 Knoepfe');"+
               "if(!document.querySelector('#postfachBody .f7-row [data-f7pfauf]')) throw new Error('Hotfix 7: Plan-Zeile ohne oeffnen');"+
               "if(!document.querySelector('#postfachBody .kl-z .kl-titel')) throw new Error('Hotfix 7: keine Kartenzeile im Block Aus dem Postfach angelegt');"); },
-    statistik:  function(fw){ tagSicher(fw); fw.seiteZeigen('statistik'); },
+    /* Hotfix 9 · 8.6: alle Gruppen der Statistik offen, damit die Nachprüfung jedes Diagramm sieht */
+    statistik:  function(fw){ tagSicher(fw); fw.eval("S.ui.statGruppeZu={1:false,2:false,3:false,4:false,5:false,6:false}; saveUi();"); fw.seiteZeigen('statistik'); },
     shop:       function(fw){ tagSicher(fw); fw.seiteZeigen('belohnung'); },
     einst:      function(fw){ tagSicher(fw); fw.seiteZeigen('einst'); },
     suche:      function(fw){ tagSicher(fw); fw.e1Oeffnen('suche'); },
