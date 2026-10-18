@@ -5307,7 +5307,11 @@ function f7Schnellplaetze(){
     out.push({ art:'karte', k, titel:k.titel, fest:false, sub:'<b class="tr">Trainer</b> · '+f7PlatzStand(k), fam:k.erholung ? 'erholung' : k.domain }); });
   if(out.length<8){ kartenMeistgenutzt().map(q=>q.k).filter(k=>k.status==='offen' && istTickbar(k) && !out.some(o=>o.k && o.k.id===k.id)).slice(0, 8-out.length)
     .forEach(k=>out.push({ art:'karte', k, titel:k.titel, fest:false, sub:'<b class="tr">Vorschlag</b> · '+f7PlatzStand(k), fam:k.erholung ? 'erholung' : k.domain })); }
-  return { plaetze:out.slice(0,8), fest:out.filter(o=>o.fest).length, trainer:out.filter(o=>!o.fest).length, block:blockName };
+  // Hotfix 9 · Abschnitt 4: die nicht festen Plätze folgen der Folge-Matrix; feste bleiben vorne
+  const festP=out.filter(o=>o.fest), rest=out.filter(o=>!o.fest), ks=folgeSortieren(rest.map(o=>o.k).filter(Boolean)), meist=folgeMeistDanach(rest.map(o=>o.k).filter(Boolean));
+  rest.sort((a,b)=>ks.indexOf(a.k)-ks.indexOf(b.k)); rest.forEach(o=>{ if(o.k && meist && o.k.id===meist) o.sub='↪ meist danach · '+o.sub; });
+  const alle=festP.concat(rest);
+  return { plaetze:alle.slice(0,8), fest:alle.filter(o=>o.fest).length, trainer:alle.filter(o=>!o.fest).length, block:blockName };
 }
 function f7PlatzStand(k){ if(istTickbar(k)){ const n=Math.max(tickAnzahlHeute(k), num(k.ticksHeute)), z=num(k.tagesziel)||num(k.tageslimit); return z>0 ? n+' / '+z : n+'×'; } return k.domain==='dfm' ? 'DFM' : 'Privat'; }
 function f7SucheStartHtml(){
@@ -12263,6 +12267,35 @@ function klGruppiert(karten, gruppe){
 }
 /* Verlauf: heute geoeffnete Karten, neueste oben; Mehrfach-Oeffnungen stehen einmal mit ihrer Anzahl */
 function klVerlauf(){ return verlaufKarten().map(k=>({ k, n:1 })); }   // C4 (v3.8.0): heute getrackte Karten (B5)
+/* ── Hotfix 9 · Abschnitt 4: Counter-Reihenfolge aus der Folge lernen. Matrix m[A][B] = wie oft B direkt nach A getickt oder abgehakt wurde
+   (Intraday der letzten 28 Tage, Typen tick und abhaken, Abstand ≤ 30 Min). Zwischengespeichert, neu nach jedem Tick (Intraday wächst) und beim Tagesstart (App-Tag). ── */
+const FOLGE={ key:null, m:null };
+function folgeMatrix(){
+  const key=(S.intraday||[]).length+'|'+aktuelleTagId();
+  if(FOLGE.key===key && FOLGE.m) return FOLGE.m;
+  const ab=anVorTage(heuteApp(), 28), m={};
+  const l=(S.intraday||[]).filter(e=>e && e.ts && e.kartenId && (e.typ==='tick' || e.typ==='abhaken') && belFensterDatum(e.ts)>=ab).slice().sort((a,b)=>String(a.ts)<String(b.ts) ? -1 : String(a.ts)>String(b.ts) ? 1 : 0);
+  for(let i=1;i<l.length;i++){ const A=l[i-1].kartenId, B=l[i].kartenId; if(A===B) continue; const dt=Date.parse(l[i].ts)-Date.parse(l[i-1].ts); if(!(dt>=0 && dt<=30*60000)) continue; (m[A]=m[A]||{})[B]=(m[A][B]||0)+1; }
+  FOLGE.key=key; FOLGE.m=m; return m;
+}
+/* die zuletzt getickte oder abgehakte Karte des App-Tags, sonst null */
+function folgeLetzte(){
+  const tid=aktuelleTagId(); let best=null;
+  (S.intraday||[]).forEach(e=>{ if(!e || !e.ts || !e.kartenId || (e.typ!=='tick' && e.typ!=='abhaken')) return; if(e.tagId ? e.tagId!==tid : belFensterDatum(e.ts)!==heuteApp()) return; if(!best || String(e.ts)>String(best.ts)) best=e; });
+  return best ? best.kartenId : null;
+}
+/* stabil nach m[letzte][k.id] absteigend; Karten ohne Wert behalten ihre Reihenfolge dahinter */
+function folgeSortieren(liste){
+  const a=folgeLetzte(); if(!a) return liste.slice();
+  const m=folgeMatrix()[a]||{};
+  return liste.map((k,i)=>({ k, i, w:num(m[k.id]) })).sort((x,y)=>(y.w-x.w) || (x.i-y.i)).map(x=>x.k);
+}
+/* Karte mit dem höchsten Folgewert (≥ 3) nach der zuletzt getickten → Vermerk „↪ meist danach" */
+function folgeMeistDanach(liste){
+  const a=folgeLetzte(); if(!a) return null; const m=folgeMatrix()[a]||{}; let best=null, bw=0;
+  (liste||[]).forEach(k=>{ const w=num(m[k && k.id]); if(w>bw){ bw=w; best=k; } });
+  return (best && bw>=3) ? best.id : null;
+}
 /* §7 (v3.7.0): die festen Ketten „Ticks DFM" und „Ticks Privat" — alle tickbaren Karten der Familie (offen oder heute erledigt) */
 function klTicks(dom){
   const tid=aktuelleTagId();
@@ -12301,8 +12334,9 @@ function kettenListeInhalt(opt){
   const vlN={}; klVerlauf().forEach(q=>{ vlN[q.k.id]=q.n; });
   const out={};
   KL_GRUPPEN.forEach(g=>{ const id=g[0], w=klSortWahl(id), l=roh[id].filter(x=>klFilterPasst(x, q));
-    out[id]={ wahl:w, n:l.length, zusatz: id==='verlauf' ? x=>(vlN[x.id]>1 ? {zusatz:vlN[x.id]+'×'} : null) : id==='erledigt' ? ()=>({erl:true}) : ()=>null,
-      teile: w==='gruppiert' ? klGruppiert(l, id) : [{ name:null, karten:klSortieren(l, w, id) }] }; });
+    const folge=(id==='ticksDfm' || id==='ticksPrivat' || id==='routinen'), meist=folge ? folgeMeistDanach(l) : null;   // Hotfix 9 · Abschnitt 4
+    out[id]={ wahl:w, n:l.length, zusatz: id==='verlauf' ? x=>(vlN[x.id]>1 ? {zusatz:vlN[x.id]+'×'} : null) : id==='erledigt' ? ()=>({erl:true}) : folge ? x=>(meist && x.id===meist ? {zusatz:'↪ meist danach'} : null) : ()=>null,
+      teile: (w==='gruppiert' ? klGruppiert(l, id) : [{ name:null, karten:klSortieren(l, w, id) }]).map(t=>folge ? Object.assign({}, t, { karten:folgeSortieren(t.karten) }) : t) }; });
   return out;
 }
 function kettenListeHtml(opt){
