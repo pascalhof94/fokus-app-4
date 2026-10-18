@@ -36,4 +36,11 @@ pruef('Tagesziele Wochenende 1.000 DFM · 4.200 Privat', num(S.settings.zielWeDf
 pruef('Rang aus Dauerlast: 0 → R1, 5.700 → R2, 10.600 → R10', e4RangVon(0)===1 && e4RangVon(5700)===2 && e4RangVon(10600)===10, e4RangVon(0)+'/'+e4RangVon(5700)+'/'+e4RangVon(10600));
 pruef('Preis Stufe 1 der ersten Kategorie = 3.000 × Faktor, auf 5 gerundet', e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1)%5===0 && e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1)>0, e4Preis(Object.keys(KAT_PREISFAKTOR)[0], 1));
 pruef('Rang-Sperre: Stufe 5 frei ab R3', (e4ShopSperre(5)||'').indexOf('R3')>=0 || e4Rang().rang>=3, e4ShopSperre(5));
+// ══ Hotfix 9 · Abschnitt 5: Münzen statt Wohlstand, Kaufen im Shop wieder frei ══
+pruef('Migration shopFrei400: rangSperre aus, Sicherung vorhanden', S.settings.rangSperre===false && !!(S.meta.shopFrei400 && S.meta.shopFrei400.ts) && DB.get('settings_bak_shopfrei400', null)!==null);
+pruef('e4ShopSperre greift nicht mehr (Rang 1)', e4ShopSperre(1)===null && e4ShopSperre(5)===null);
+(function(){ var kk=KAT_KEYS.find(function(x){ return stufenGekauft(x)===0 && stufeVon(x, 1) && !(stufeVon(x, 1).braucht||[]).length && !gleichgewichtSperre(x); });
+  pruef('kaufSperre: Kategorie mit Stufe 1 offen → null bei Rang 1 (keine Rang-Sperre)', !!kk && kaufSperre(kk)===null && e4Rang().rang===1, JSON.stringify([kk, kk && kaufSperre(kk), e4Rang().rang])); })();
+pruef('Statusleiste zeigt Münzen (🪙 + Konto), Shop-Kacheln sagen „Punkte gesamt" und „Münzen"', f4nFeld1Html(1234, { offen:0, dringend:0 }, 50, 'gruen').indexOf('🪙</span> '+fmtP(1234))>=0 && readFile('index.html').indexOf("'Punkte gesamt'")>=0);
+pruef('kein sichtbarer Text „Wohlstand" im Quelltext (Strings)', !/['"][^'"\n]*Wohlstand[^'"\n]*['"]/.test(readFile('index.html').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'')));
 suiteEnde('Punkte-Engine 4.0');

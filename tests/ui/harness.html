@@ -161,6 +161,9 @@ function bestandSchreiben(){
       if((r.width<0.5||r.height<0.5) && (elm.textContent||'').trim())
         fatal('Sichtbares Element ohne Ausdehnung: '+beschreibe(elm));
     }
+    /* 6) Hotfix 9 · Abschnitt 5: kein sichtbarer Textknoten enthält „Wohlstand" (Münzen sind die Währung) */
+    for(var w6=0;w6<alle.length;w6++){ var e6=alle[w6]; if(!sichtbar(e6)) continue;
+      for(var c6=0;c6<e6.childNodes.length;c6++){ var n6=e6.childNodes[c6]; if(n6.nodeType===3 && /Wohlstand/.test(n6.textContent)){ fatal('Sichtbarer Text enthält „Wohlstand“: '+beschreibe(e6)); break; } } }
     /* 4) kein buchstabenweiser Umbruch: Elementbreite >= breitestes Wort */
     var cv=doc.createElement('canvas'), cx=cv.getContext('2d');
     var texte=doc.querySelectorAll('body *');

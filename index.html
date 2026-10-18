@@ -7278,6 +7278,12 @@ function ladeAlles(){
     DB.set('settings', S.settings);
     S.meta.ziele400Log=log; S.meta.ziele400=true; saveMeta();
   }
+  // ══ Hotfix 9 (4.0) · Abschnitt 5: Kaufen im Shop wieder frei — Rang-Sperre aus (Entscheidung Pascal 18.10.2026) ══
+  if(!S.meta.shopFrei400){
+    DB.set('settings_bak_shopfrei400', DB.get('settings', {}));
+    S.settings.rangSperre=false; DB.set('settings', S.settings);
+    S.meta.shopFrei400={ ts:jetztIso() }; saveMeta();
+  }
   // ══════════════════════════════════════════════════════════════════════
   //  §4 (v2.0.1) · DUBLETTEN AUS DEM ROUTINEN-IMPORT ZUSAMMENFÜHREN
   //  Das 38er-Routinen-Paket trug die DFM-Routinen mit ihrer Airtable-ID als
@@ -18127,7 +18133,7 @@ function gleichgewichtSperre(kat, stufen){
 function kaufSperre(kat){
   const naechste = stufeVon(kat, stufenGekauft(kat)+1);
   if(!naechste) return 'komplett';
-  { const rs=e4ShopSperre(stufenGekauft(kat)+1); if(rs) return rs; }   // 4.0 · Paket 4 (5.10): Rang-Sperre, in den Einstellungen abschaltbar
+  // Hotfix 9 · Abschnitt 5: keine Rang-Sperre mehr — nur Voraussetzungen und Gleichgewicht (Entscheidung Pascal 18.10.2026)
   const fehlt=(naechste.braucht||[]).filter(r=>BELOHNUNG[r[0]] && stufenGekauft(r[0])<num(r[1]));
   if(fehlt.length) return 'braucht '+fehlt.map(r=>BELOHNUNG[r[0]].name+' Stufe '+r[1]).join(' und ');
   const gl=gleichgewichtSperre(kat);
