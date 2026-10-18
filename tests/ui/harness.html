@@ -214,7 +214,17 @@ function bestandSchreiben(){
   var AKTIONEN={
     fokus:      function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet(); },
     fokusOhne:  function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); },
-    postfach:   function(fw){ tagSicher(fw); fw.seiteZeigen('postfach'); },
+    /* Hotfix 7: Postfach mit zwei Plan-Einträgen (einer aufgeklappt, einer als Zeile) und einer aus dem Postfach angelegten Karte */
+    postfach:   function(fw){ tagSicher(fw);
+      fw.eval("var T='Aufgabe: Fokus App Hotfix\\n- Projekt: Fokus App\\n- Soll-Minuten: 30 (Pascal: 30 Minuten maximal)\\n\\nUnteraufgaben:\\n- Anforderungen\\n- CC\\n- Merge\\n\\nNotiz: Pruefkarte des Harness';"+
+              "F7.lager.postfach={ ts:Date.now(), daten:[{ id:'pf-plan-1', Titel:'Neu: Fokus App Hotfix (3 Unteraufgaben, 30 Min.)', Agent:'Trainer', Art:'Plan', Dringlichkeit:40, Status:'offen', 'Output/Entwurf':T, 'Begründung':'Pruefung Hotfix 7' },"+
+              "{ id:'pf-plan-2', Titel:'Plan So 18.10. bis Mentoring: HTML, Pipeline, Tam', Agent:'Trainer', Art:'Plan', Dringlichkeit:60, Status:'offen', 'Output/Entwurf':'Plan heute: erst Mentoring, dann Pipeline' }], fehler:'' };"+
+              "S.ui.f7pfAuf={ 'pf-plan-1':true }; saveUi();"+
+              "if(!(S.meta.postfachKarten||{})['pf-plan-0']) f7PfKarteAnlegen({ id:'pf-plan-0' }, f7PfKarteLesen(null, 'Aufgabe: Karte aus dem Postfach mit einem langen Titel fuer die Kartenzeile\\n- Soll-Minuten: 25\\n\\nUnteraufgaben:\\n- Eins\\n- Zwei'));");
+      fw.seiteZeigen('postfach');
+      fw.eval("var n=document.querySelectorAll('#postfachBody .f7-c [data-f7pfent]').length; if(n!==5) throw new Error('Hotfix 7: aufgeklappter Plan-Eintrag zeigt '+n+' statt 5 Knoepfe');"+
+              "if(!document.querySelector('#postfachBody .f7-row [data-f7pfauf]')) throw new Error('Hotfix 7: Plan-Zeile ohne oeffnen');"+
+              "if(!document.querySelector('#postfachBody .kl-z .kl-titel')) throw new Error('Hotfix 7: keine Kartenzeile im Block Aus dem Postfach angelegt');"); },
     statistik:  function(fw){ tagSicher(fw); fw.seiteZeigen('statistik'); },
     shop:       function(fw){ tagSicher(fw); fw.seiteZeigen('belohnung'); },
     einst:      function(fw){ tagSicher(fw); fw.seiteZeigen('einst'); },
