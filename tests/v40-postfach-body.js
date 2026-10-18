@@ -35,7 +35,7 @@ f7PfEntscheiden('pf-3', 'angepasst', { felder:{ 'Pascals Anpassung':'Aufgabe: Ka
 var k3=S.karten[S.karten.length-1];
 pruef('Anpassung: Karte aus dem geänderten Text (Titel, Privat, 12 Min)', S.karten.length===n0+2 && k3.titel==='Katzenklo sauber machen' && k3.domain==='privat' && num(k3.sollMin)===12, JSON.stringify({ t:k3.titel, d:k3.domain, s:k3.sollMin }));
 var ge3=_gesendet.filter(function(g){ return g.werkzeug==='datensatz_aendern'; });
-pruef('Anpassung: Pascals Anpassung trägt Text und Karten-ID', ge3.length===1 && String(ge3[0].args.felder['Pascals Anpassung']).indexOf('Katzenklo sauber machen')===0 && String(ge3[0].args.felder['Pascals Anpassung']).indexOf('Karte in der App angelegt: '+k3.id)>0);
+pruef('Anpassung: Pascals Anpassung trägt Text und Karten-ID', ge3.length===1 && String(ge3[0].args.felder['Pascals Anpassung']).indexOf('Aufgabe: Katzenklo sauber machen')===0 && String(ge3[0].args.felder['Pascals Anpassung']).indexOf('Karte in der App angelegt: '+k3.id)>0);
 // Klärung mit Antwort legt keine Karte an
 var r4={ id:'pf-4', Titel:'Welche Option?', Agent:'Pipeline-Agent', Art:'Klärung', Dringlichkeit:55, Status:'offen', 'Output/Entwurf':'- Option A\n- Option B' };
 F7.lager.postfach={ ts:Date.now(), daten:[r4], fehler:'' }; _gesendet.length=0;
@@ -49,6 +49,6 @@ pruef('Kartenzeile der angelegten Karte im Block „Aus dem Postfach angelegt"',
 S.ui.f7pfAuf={ 'pf-2':true }; renderPostfach(); H=host.innerHTML;
 pruef('aufgeklappt: fünf Knöpfe inkl. „gesehen", Entwurf, Begründung-Platz und Kartenhinweis', (H.match(/data-f7pfent="/g)||[]).length===5 && H.indexOf('data-f7pfent="gesehen"')>=0 && H.indexOf('class="dr"')>=0 && H.indexOf('📇 Karte: Fokus App Hotfix · 30 Min · 3 Unteraufgaben')>=0, (H.match(/data-f7pfent="/g)||[]).length);
 // Klick auf die Kartenzeile im Postfach läuft über f7Klick → kettenListeKlick (Hotfix 6)
-var klick=f7Klick({ target:{ closest:function(sel){ if(sel==='[data-klkarte]' || sel==='[data-klplay]') return { dataset:{ klplay:k.id } }; return null; } } });
+var klick=f7Klick({ stopPropagation:function(){}, preventDefault:function(){}, target:{ closest:function(sel){ if(sel==='[data-klkarte]' || sel==='[data-klplay]') return { dataset:{ klplay:k.id } }; return null; } } });
 pruef('▶ in der Postfach-Kartenzeile startet die Karte', klick===true && !!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id), JSON.stringify(S.fokus));
 suiteEnde('Postfach (Hotfix 7)');
