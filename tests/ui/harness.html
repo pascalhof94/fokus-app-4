@@ -254,7 +254,8 @@ function bestandSchreiben(){
               "if(!document.querySelector('#postfachBody .kl-z .kl-titel')) throw new Error('Hotfix 7: keine Kartenzeile im Block Aus dem Postfach angelegt');"); },
     /* Hotfix 9 · 8.6: alle Gruppen der Statistik offen, damit die Nachprüfung jedes Diagramm sieht */
     statistik:  function(fw){ tagSicher(fw); fw.eval("S.ui.statGruppeZu={1:false,2:false,3:false,4:false,5:false,6:false}; saveUi();"); fw.seiteZeigen('statistik'); },
-    shop:       function(fw){ tagSicher(fw); fw.seiteZeigen('belohnung'); },
+    /* Hotfix 10: mit Münzen auf dem Konto, damit der Kaufen-Knopf da ist */
+    shop:       function(fw){ tagSicher(fw); fw.eval("S.meta.muenzenGesamt=num(S.meta.muenzenGesamt)+20000; saveMeta();"); fw.seiteZeigen('belohnung'); },
     einst:      function(fw){ tagSicher(fw); fw.seiteZeigen('einst'); },
     suche:      function(fw){ tagSicher(fw); fw.e1Oeffnen('suche'); },
     durchsuchen:function(fw){ tagSicher(fw); fw.e1Oeffnen('durchsuchen'); },

@@ -42,7 +42,7 @@ pruef('Migration shopFrei400: rangSperre aus, Sicherung vorhanden', S.settings.r
 pruef('e4ShopSperre greift nicht mehr (Rang 1)', e4ShopSperre(1)===null && e4ShopSperre(5)===null);
 (function(){ var kk=KAT_KEYS.find(function(x){ return stufenGekauft(x)===0 && stufeVon(x, 1) && !(stufeVon(x, 1).braucht||[]).length && !gleichgewichtSperre(x); });
   pruef('kaufSperre: Kategorie mit Stufe 1 offen → null bei Rang 1 (keine Rang-Sperre)', !!kk && kaufSperre(kk)===null && e4Rang().rang===1, JSON.stringify([kk, kk && kaufSperre(kk), e4Rang().rang])); })();
-pruef('Statusleiste zeigt Münzen (🪙 + Konto), Shop-Kacheln sagen „Punkte gesamt" und „Münzen"', f4nFeld1Html(1234, { offen:0, dringend:0 }, 50, 'gruen').indexOf('🪙</span> '+fmtP(1234))>=0 && readFile('index.html').indexOf("'Punkte gesamt'")>=0);
+pruef('Statusleiste zeigt Münzen (Münzsymbol + Konto), Shop-Kacheln sagen „Punkte gesamt" und „Münzen"', f4nFeld1Html(1234, { offen:0, dringend:0 }, 50, 'gruen').indexOf('<svg class="mz"')>=0 && f4nFeld1Html(1234, { offen:0, dringend:0 }, 50, 'gruen').indexOf('</span> '+fmtP(1234))>=0 && readFile('index.html').indexOf("'Punkte gesamt'")>=0);
 pruef('kein sichtbarer Text „Wohlstand" im Quelltext (Strings)', !/['"][^'"\n]*Wohlstand[^'"\n]*['"]/.test(readFile('index.html').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'')));
 // ══ Hotfix 9 · Abschnitt 6: Rang aus allen Punkten, Zustand Unterlast/optimal/Überlast ══
 var h6={ datum:'2026-10-10', tagId:'2026-10-10-1', punkteBilanz:5000, erholungPunkte:600 };
