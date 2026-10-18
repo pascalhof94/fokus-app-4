@@ -4158,6 +4158,40 @@ function e4FarbeTag(tagId, heute){
 }
 function farbeHerkunftHeute(){ return S.tag ? e4FarbeTag(S.tag.tagId, true) : { warm:0, gelb:0, kuehl:0 }; }
 function e4ErholungPunkteTag(tagId){ let p=0; (S.intraday||[]).forEach(e=>{ if(e && e.tagId===tagId && (e.erholung || e.typ==='schlaf')) p+=Math.max(0, num(e.punkte)); }); return p; }
+/* ── Hotfix 9 · Abschnitt 6: Rang aus allen Punkten — DFM steigert immer, Erholung nur, wenn sie nötig ist (nicht in Unterlast).
+   Zustand je Tag aus der ACWR-Reihe des Belastungsmodells 1 (zu wenig → Unterlast · optimal → optimal · hoch/Risiko → Überlast). ── */
+function e4ZustandVonAcwr(v){ if(v==null || !Number.isFinite(v)) return 'optimal'; const z=acwrZone(v).name; return z==='zu wenig' ? 'Unterlast' : z==='optimal' ? 'optimal' : 'Überlast'; }
+function e4ZustandFarbe(z){ return z==='Unterlast' ? FARBE.GELB : z==='Überlast' ? FARBE.ROT : FARBE.GRUEN; }
+const E4Z={ key:null, je:{} };
+function e4LastZustandKarte(){   // ACWR je Tag der letzten 60 Tage, einmal gerechnet je Stand (Historie, App-Tag)
+  const key=(S.historie||[]).length+'|'+heuteApp();
+  if(E4Z.key===key) return E4Z.je;
+  const je={}; try{ const F=analyseFenster(); if(F.alle.length>=8){ const P=anAcwrReihe(F.alle, heuteApp(), 60, 'alle', 'punkte'); P.labels.forEach((d,i)=>{ je[d]=P.vals[i]; }); } }catch(e){}
+  E4Z.key=key; E4Z.je=je; return je;
+}
+function e4LastZustand(datum){
+  const d=datum||heuteApp();
+  if(d===heuteApp()){ let v=null; try{ v=acwrHeuteWert(); }catch(e){ v=null; } return e4ZustandVonAcwr(v); }
+  return e4ZustandVonAcwr(e4LastZustandKarte()[d]);
+}
+/* Rang-Last eines Tages: Arbeit (DFM und Privat ohne Erholung) immer voll, Erholung (Erholungskarten und Pausen per Dialog: Einträge mit erholung:true, Schlaf) nur außerhalb der Unterlast */
+function e4RangLast(h, zustand){
+  if(!h) return 0;
+  const erh=Math.max(0, h.erholungPunkte!=null ? num(h.erholungPunkte) : e4ErholungPunkteTag(h.tagId));
+  const arbeit=Math.max(0, num(h.punkteBilanz)-erh), z=zustand||e4LastZustand(h.datum);
+  return arbeit+(z==='Unterlast' ? 0 : erh);
+}
+function e4RangLastHeute(){ const erh=S.tag ? Math.max(0, e4ErholungPunkteTag(S.tag.tagId)) : 0; const z=e4LastZustand(heuteApp()); return Math.max(0, tagesPunkteLive()-erh)+(z==='Unterlast' ? 0 : erh); }
+function e4RangLastMittel(datum, tage){
+  const bis=datum||heuteApp(), von=anVorTage(bis, tage); let sum=0, n=0;
+  const proTag={}; (S.historie||[]).forEach(h=>{ if(!h || h.luecke || !h.datum || h.datum<von || h.datum>=bis) return; proTag[h.datum]=(proTag[h.datum]||0)+(h.urlaub ? 0 : e4RangLast(h)); if(h.urlaub) proTag[h.datum]=null; });
+  for(let i=1;i<=tage;i++){ const d=anVorTage(bis, i); const v=proTag[d]; if(v===null) continue; sum+=num(v); n++; }
+  return n ? sum/n : 0;
+}
+function e4RangDauerlast(datum){ return e4RangLastMittel(datum, Math.max(7, num(S.settings.rangTage,28))); }
+function e4RangSpitzenlast(datum){ return e4RangLastMittel(datum, Math.max(1, num(S.settings.spitzenTage,7))); }
+function e4RangZustand(){ const z=e4LastZustand(heuteApp()); return { zustand:z, farbe:e4ZustandFarbe(z), titel:'Rang '+num(e4Rang().rang,1)+' · '+z }; }
+function e4RangHtml(rang){ const z=e4RangZustand(); return '<b class="rang-z" style="color:'+z.farbe+'" title="'+esc('Rang '+rang+' · '+z.zustand)+'">Rang '+rang+'</b>'; }
 /* ── Rang aus der Dauerlast (Punkt 5.9) ────────────────────────────────
    Tageslast = Punkte des Tages, Erholungspunkte zählen −0,5, nie unter 0. Dauerlast = Ø über 28 Tage, Spitzenlast = Ø über 7 Tage
    (Kalendertage, Urlaub ausgenommen, Tage ohne Eintrag zählen 0). Aufstieg nach 7 Tagen über der nächsten Schwelle, Abstieg
@@ -4179,14 +4213,15 @@ function e4RangSchwellen(){ const s=S.settings && S.settings.rangSchwellen; retu
 function e4RangVon(dl){ const s=e4RangSchwellen(); let r=1; for(let i=1;i<s.length;i++){ if(dl>=s[i]) r=i+1; } return Math.min(10, r); }
 function e4RangSchwelle(r){ const s=e4RangSchwellen(); return r<=1 ? 0 : num(s[r-1], Infinity); }
 function e4Rang(){
-  if(!S.meta.rang4 || typeof S.meta.rang4!=='object'){ const dl=e4Dauerlast(); S.meta.rang4={ rang:e4RangVon(dl), seit:heuteApp(), tageUeber:0, tageUnter:0, dauerlast:dl, spitzenlast:e4Spitzenlast(), gerechnet:null }; }
+  if(!S.meta.rang4 || typeof S.meta.rang4!=='object'){ const dl=e4RangDauerlast(); S.meta.rang4={ rang:e4RangVon(dl), seit:heuteApp(), tageUeber:0, tageUnter:0, dauerlast:dl, spitzenlast:e4RangSpitzenlast(), gerechnet:null }; }   // Hotfix 9 · Abschnitt 6: Rang-Last
   return S.meta.rang4;
 }
 function e4RangMorgens(datum){
   const r=e4Rang(); if(r.gerechnet===datum) return r;
-  const dl=e4Dauerlast(datum), sl=e4Spitzenlast(datum), auf=Math.max(1, num(S.settings.rangAufstiegTage,7)), ab=Math.max(1, num(S.settings.rangAbstiegTage,14));
+  const dl=e4RangDauerlast(datum), sl=e4RangSpitzenlast(datum), auf=Math.max(1, num(S.settings.rangAufstiegTage,7)), ab=Math.max(1, num(S.settings.rangAbstiegTage,14));   // Hotfix 9 · Abschnitt 6: Rang-Last
   r.dauerlast=dl; r.spitzenlast=sl; r.gerechnet=datum;
-  if(r.rang<10 && dl>=e4RangSchwelle(r.rang+1)) r.tageUeber=num(r.tageUeber)+1; else r.tageUeber=0;
+  if(r.rang<10 && dl>=e4RangSchwelle(r.rang+1)){ if(e4LastZustand(datum)!=='Überlast') r.tageUeber=num(r.tageUeber)+1; }   // Hotfix 9: Aufstieg nur bei gesunder Last — in Überlast bleibt der Zähler stehen
+  else r.tageUeber=0;
   if(r.rang>1 && dl<e4RangSchwelle(r.rang)) r.tageUnter=num(r.tageUnter)+1; else r.tageUnter=0;
   if(r.tageUeber>=auf){ r.rang=Math.min(10, r.rang+1); r.seit=datum; r.tageUeber=0; r.aufstieg=datum;
     (S.meta.ausstellung=S.meta.ausstellung||[]).push({ anlass:'Rang '+r.rang, datum, muenzen:0 }); try{ toast('🏆 Rang '+r.rang+' erreicht'); }catch(e){} }
@@ -4429,7 +4464,7 @@ function f4StatusleisteHtml(){
       '<div class="kp"><div><span style="color:'+(eb.akku!=null ? akkuFarbe(eb.akku) : FARBE.GRAU)+'">⚡</span>'+(eb.akku!=null ? Math.round(eb.akku)+' %' : '– %')+'</div>'+
         '<div id="sZKonto"><span style="color:'+FARBE.GOLD+'">●</span><span style="color:'+FARBE.GOLD+'">'+fmtP(Math.round(konto_))+'</span></div>'+
         '<div><span class="fb"><i style="height:'+Math.max(2, Math.round(farbe.warm/fmax*14))+'px;background:'+F4.WARM+'"></i><i style="height:'+Math.max(2, Math.round(farbe.gelb/fmax*14))+'px;background:'+F4.SONNE+'"></i><i style="height:'+Math.max(2, Math.round(farbe.kuehl/fmax*14))+'px;background:'+F4.KUEHL+'"></i></span><span class="lbl">Farbe</span></div>'+
-        '<div><span class="rang">R'+B.rang.rang+'</span><span class="amp" style="background:'+B.ampel+'"></span><span class="pf'+(pst.offen>0?' an':'')+'" data-f4postfach="1">📥 '+pst.offen+'</span></div></div>'+
+        '<div><span class="rang" style="color:'+e4RangZustand().farbe+'" title="'+esc(e4RangZustand().titel)+'">R'+B.rang.rang+'</span><span class="amp" style="background:'+B.ampel+'"></span><span class="pf'+(pst.offen>0?' an':'')+'" data-f4postfach="1">📥 '+pst.offen+'</span></div></div>'+
       '<div class="mitte" data-f4kurve="1"><div class="kurve">'+f4MiniKurveSvg(g)+'<b>'+fmtP(Math.round(g.punkteHeute))+'</b><span class="ph" style="color:'+pf.c+'">'+pf.sym+'</span></div>'+(urlaubHeute() ? '<div class="f4-pl2"><span>🏖 Urlaub</span></div>' : pace)+'</div>'+
       '<div class="mx" data-f4matrix="1">'+mv+'</div></div>';
 }
@@ -4615,7 +4650,7 @@ function f4OutfitTreppeHtml(){
     if(jetzt){ st+=';outline:2px solid #fff;outline-offset:2px'; lbl+=' jetzt'; lblSt='color:'+FARBE.GRUEN+';font-weight:700'; }
     cols.push('<div class="c"><div class="col" style="height:'+h+'px;'+st+'">'+inner+'</div><span class="lbl" style="'+lblSt+'">'+lbl+'</span></div>'); }
   const hinweis=nx ? 'Nächste Stufe: <b>'+(nx==='leistung' ? '⚙ DFM-Fokusblock abschließen' : '🌿 Erholung — Pause oder Erholungskarte')+'</b> · die oberste Stufe nur mit Leistung und Erholung' : 'Oberste Stufe des Tages erreicht';
-  return '<div class="blk f4-ot"><div class="hd"><b>Outfit heute · Stufe '+o.stufe+'</b><span>Rang '+r.rang+' · Start '+o.start+' · nächstes Outfit '+naechste+'</span></div>'+
+  return '<div class="blk f4-ot"><div class="hd"><b>Outfit heute · Stufe '+o.stufe+'</b><span>'+e4RangHtml(r.rang)+' · Start '+o.start+' · nächstes Outfit '+naechste+'</span></div>'+
     '<div class="st">'+cols.join('')+'</div><div class="nx">'+hinweis+'</div>'+
     '<div class="lg">⚙ Stufe aus Leistung · 🌿 Stufe aus Erholung · rot gestrichelt = Erschöpfung senkt bis −2 · Mittellinie der Diagramme = Start</div></div>';
 }
@@ -4657,7 +4692,7 @@ function f4FlowBelastungHtml(opt){
   const kach='<div class="am2"><div style="border-color:'+(B.mono.farbe||FARBE.GRAU)+'"><em style="color:'+(B.mono.farbe||FARBE.GRAU)+'">'+B.mono.text+'</em><b>'+(B.mono.wert!=null ? B.mono.wert.toFixed(1).replace('.',',') : '—')+'</b><small>Monotonie (Woche)</small></div>'+
     '<div style="border-color:'+ec+'"><em style="color:'+ec+'">'+(erh>=erhZ ? 'erreicht' : erh>=erhZ*0.5 ? 'knapp' : 'zu wenig')+'</em><b>'+fmtDauer(erh)+'</b><small>Erholung heute / '+fmtDauer(erhZ)+'</small></div></div>';
   const r=B.rang, sw=B.schwelle, anteil=sw ? Math.max(0, Math.min(1, B.dauerlast/sw)) : 1;
-  const rg='<div class="rg"><div class="l"><span><b>Rang '+r.rang+'</b> · Dauerlast '+fmtP(B.dauerlast)+' / Tag</span><span style="color:'+FARBE.GRAU+'">'+(sw ? 'Rang '+(r.rang+1)+' ab '+fmtP(sw) : 'höchster Rang')+'</span></div>'+
+  const rg='<div class="rg"><div class="l"><span>'+e4RangHtml(r.rang)+' · Dauerlast '+fmtP(B.dauerlast)+' / Tag</span><span style="color:'+FARBE.GRAU+'">'+(sw ? 'Rang '+(r.rang+1)+' ab '+fmtP(sw) : 'höchster Rang')+'</span></div>'+
     '<div class="b"><i style="width:'+(anteil*100).toFixed(1)+'%"></i>'+(sw ? '<s style="left:'+Math.min(100, 100).toFixed(1)+'%"></s>' : '')+'</div>'+
     '<small>'+(sw ? num(S.settings.rangAufstiegTage,7)+' Tage am Stück über '+fmtP(sw)+' = Aufstieg · ' : '')+'Abstieg erst nach '+num(S.settings.rangAbstiegTage,14)+' Tagen unter '+fmtP(B.eigene)+'</small></div>';
   const inhalt=fl+ac+kach+rg;
@@ -5133,7 +5168,7 @@ function f6Spiel(F, dom){
     haupt+='<div><h5>Farbe · Kulisse '+st.kulisse+'</h5><b>'+Math.round(st.anteil*100)+' %</b><small>'+(ges>0 ? 'heute fehlt vor allem <span style="color:'+C[min]+'">'+NAME[min]+'</span> → '+QUELLE[min] : 'heute noch keine Farbe')+'</small><div class="f6-bar farbe">'+['warm','gelb','kuehl'].map(c=>'<i style="width:'+(ges>0 ? f[c]/ges*100 : 0).toFixed(1)+'%;background:'+C[c]+'"></i>').join('')+'<i style="flex:1;background:#262a32"></i></div></div>'; }
   if(D.ks && D.ks.ziel){ const geldStd=D.ks.fehlt/Math.max(1, num(e4Leiter().geldnah,600)); haupt+='<div><h5>Münzen</h5><b style="color:'+FARBE.GOLD+'">'+(D.ks.fehlt>0 ? 'fehlen '+fmtP(Math.round(D.ks.fehlt)) : 'Kauf möglich')+'</b><small>'+esc(D.ks.ziel.name)+' Stufe '+D.ks.ziel.stufe+(D.ks.fehlt>0 ? ' · ≈ '+fmtDauer(geldStd*60)+' geldnah' : '')+'</small><div class="f6-bar"><i style="width:'+(D.ks.anteil*100).toFixed(1)+'%;background:'+FARBE.GOLD+'"></i></div></div>'; }
   else haupt+='<div><h5>Münzen</h5><b style="color:'+FARBE.GOLD+'">'+fmtP(D.konto)+'</b><small>alles gekauft oder gesperrt</small></div>';
-  if(r.rang<10) haupt+='<div class="sp"><h5>Rang</h5><b>Rang '+r.rang+' · noch '+fmtP(Math.round(D.rangNoch))+' / Tag bis Rang '+(r.rang+1)+'</b><small>Dauerlast steigt heute um ≈ '+(D.rangPlus>=0?'+':'−')+fmtP(Math.round(Math.abs(D.rangPlus)))+' / Tag, wenn du dein Ziel erreichst</small><div class="f6-bar"><i style="width:'+Math.max(0, Math.min(100, num(r.dauerlast)/Math.max(1, e4RangSchwelle(r.rang+1))*100)).toFixed(1)+'%;background:'+verlauf(FARBE.WEISS)+'"></i></div></div>';
+  if(r.rang<10) haupt+='<div class="sp"><h5>Rang</h5><b>'+e4RangHtml(r.rang)+' · noch '+fmtP(Math.round(D.rangNoch))+' / Tag bis Rang '+(r.rang+1)+'</b><small>Dauerlast steigt heute um ≈ '+(D.rangPlus>=0?'+':'−')+fmtP(Math.round(Math.abs(D.rangPlus)))+' / Tag, wenn du dein Ziel erreichst</small><div class="f6-bar"><i style="width:'+Math.max(0, Math.min(100, num(r.dauerlast)/Math.max(1, e4RangSchwelle(r.rang+1))*100)).toFixed(1)+'%;background:'+verlauf(FARBE.WEISS)+'"></i></div></div>';
   else haupt+='<div class="sp"><h5>Rang</h5><b>Rang 10 · Spitze</b><small>oberste Stufe der Leiter</small></div>';
   haupt+='</div>';
   const m1=f6Modul('spiel', 'Was heute noch geht', haupt);
@@ -6134,7 +6169,7 @@ function ausstellungHtml(){
   const r=e4Rang(), rang=num(r.rang,1), A=ausmalState(), st=ausmalStand(), er=f8OutfitsErreicht(), erN=Object.keys(er).length, B=f8Bestwerte();
   let rangT=null; try{ rangT=f6SpielDaten().ms.find(m=>m.art==='rang'); }catch(e){ rangT=null; }
   let h='<div class="f8-box"><h5><span>Ränge</span><span>'+(rang<10 ? (rangT && rangT.t!=null ? 'R'+(rang+1)+' in etwa '+rangT.t+' Tag'+(rangT.t===1?'':'en') : 'R'+(rang+1)+' ab '+fmtP(e4RangSchwelle(rang+1))+' / Tag') : 'Spitze')+'</span></h5><div class="rk">';
-  for(let n=1;n<=10;n++) h+='<div class="'+(n<=rang?'on':'')+(n===rang?' now':'')+'">R'+n+'</div>'; h+='</div></div>';
+  { const z=e4RangZustand(); for(let n=1;n<=10;n++) h+='<div class="'+(n<=rang?'on':'')+(n===rang?' now':'')+'"'+(n===rang ? ' style="color:'+z.farbe+'" title="'+esc(z.titel)+'"' : '')+'>R'+n+'</div>'; } h+='</div></div>';   // Hotfix 9 · Abschnitt 6: Zustand am aktuellen Rang
   h+='<div class="f8-box"><h5><span>Outfits erreicht</span><span>'+erN+' / '+AVATAR_BILDER.length+'</span></h5><div class="av">'+AVATAR_BILDER.map((b,i)=>'<div class="'+(er[i+1]?'':'off')+'"><img src="'+b+'" alt="" loading="lazy">'+(i+1)+'</div>').join('')+'</div></div>';
   const fertig=(A.fertig||[]).slice().sort((a,b)=>a-b), ku=[]; fertig.forEach(n=>ku.push({ n, fertig:true })); if(fertig.indexOf(A.kulisse)<0) ku.push({ n:A.kulisse, fertig:false });
   h+='<div class="f8-box"><h5><span>Kulissen</span><span>'+fertig.length+' fertig · '+(fertig.indexOf(A.kulisse)<0 ? '1 im Ausmalen' : 'nächste frei')+'</span></h5><div class="ku">'+ku.map(x=>{ const nn=String(x.n).padStart(2,'0'), kf=(A.kulissenFertig||[]).find(q=>q.kulisse===x.n);
@@ -7283,6 +7318,15 @@ function ladeAlles(){
     DB.set('settings_bak_shopfrei400', DB.get('settings', {}));
     S.settings.rangSperre=false; DB.set('settings', S.settings);
     S.meta.shopFrei400={ ts:jetztIso() }; saveMeta();
+  }
+  // ══ Hotfix 9 (4.0) · Abschnitt 6: Rang-Schwellen auf die Rang-Last umrechnen — kein Rangsprung beim Umstellen ══
+  if(!S.meta.rangLast400){
+    DB.set('settings_bak_ranglast400', DB.get('settings', {}));
+    const alt=e4RangSchwellen(); let f=1;
+    try{ const a=e4RangDauerlast(heuteApp()), b=e4Dauerlast(heuteApp()); if(a>0 && b>0) f=a/b; }catch(e){ f=1; }
+    const neu=alt.map(x=>Math.round(x*f/50)*50);
+    S.settings.rangSchwellen=neu; DB.set('settings', S.settings);
+    S.meta.rangLast400={ ts:jetztIso(), faktor:Math.round(f*1000)/1000, alt, neu }; saveMeta();
   }
   // ══════════════════════════════════════════════════════════════════════
   //  §4 (v2.0.1) · DUBLETTEN AUS DEM ROUTINEN-IMPORT ZUSAMMENFÜHREN
