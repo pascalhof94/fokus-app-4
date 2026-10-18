@@ -2650,6 +2650,7 @@ input.f7-inp{display:block;width:100%;color:#e8e9ec;font-size:15px;outline:none}
 .f7-c .hd{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:#9a9ca2;font-weight:600}.f7-c .hd .red{color:#f66d6d;font-weight:800}
 .f7-c .ti{font-size:17px;font-weight:800;margin-top:4px}.f7-c .ctx{font-size:13px;color:#9a9ca2;margin-top:2px}
 .f7-c .dr{margin-top:8px;padding:10px 12px;background:#1a1d22;border-left:3px solid #3b82f6;border-radius:10px;font-size:14.5px;color:#c9cbd0;line-height:1.35}.f7-c .why{font-size:13px;color:#9a9ca2;margin-top:8px}
+.f7-pfmehr{margin:-2px 0 10px 50px;font-size:12px;font-weight:700;color:#9a9ca2;cursor:pointer;min-height:24px}   /* Hotfix 9 · Abschnitt 2 */
 .f7-neukarte{display:block;width:100%;margin:14px 0 24px;min-height:48px;border-radius:12px;border:1px dashed #2dd4bf;background:#0f2a27;color:#2dd4bf;font:700 15px system-ui}   /* Hotfix 9 · Abschnitt 1 */
 .f7-c .bt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .bt>div{padding:9px 11px;border-radius:12px;background:#1f2228;font-size:13.5px;font-weight:800;cursor:pointer}.f7-c .bt .ok{background:#3ecf8e;color:#000}
 .f7-c .opt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .opt>div{flex:1;text-align:center;padding:10px;border-radius:12px;background:#1f2228;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent}.f7-c .opt .ok{border-color:#3ecf8e;color:#3ecf8e;background:rgba(62,207,142,.1)}
@@ -5644,7 +5645,7 @@ function f7PfKarteLesen(r, text){
   const zeilen=src.split('\n'); let titel=null, i0=-1;
   for(let i=0;i<zeilen.length;i++){ const m=zeilen[i].match(/^\s*(Aufgabe|Karte)\s*:\s*(.+?)\s*$/i); if(m){ titel=m[2]; i0=i; break; } if(zeilen[i].trim()) break; }
   if(!titel) return null;
-  const k={ titel, domain:'dfm', projekt:null, matrixFeld:null, deadline:null, sollMin:30, unteraufgaben:[], notiz:'' };
+  const k={ titel, domain:'dfm', projekt:null, matrixFeld:null, deadline:null, sollMin:30, unteraufgaben:[], notiz:'', karteId:null, gesetzt:{} };   // Hotfix 9: karteId (Änderung), gesetzt = welche Felder der Entwurf trägt
   let modus='felder';
   for(let i=i0+1;i<zeilen.length;i++){ const z=zeilen[i];
     if(modus==='notiz'){ k.notiz+=(k.notiz?'\n':'')+z; continue; }
@@ -5653,11 +5654,12 @@ function f7PfKarteLesen(r, text){
     const li=z.match(/^\s*[-•*]\s*(.*?)\s*$/);
     if(modus==='unter'){ if(li && li[1]){ k.unteraufgaben.push(li[1]); continue; } if(!z.trim()) continue; modus='felder'; }
     if(modus==='felder' && li){ const kv=li[1].match(/^([^:]+):\s*(.*)$/); if(!kv) continue; const key=kv[1].trim().toLowerCase(), wert=kv[2].trim();
-      if(key==='projekt') k.projekt=wert||null;
-      else if(key==='familie' || key==='domäne' || key==='domain') k.domain=/^priv/i.test(wert) ? 'privat' : 'dfm';
-      else if(key==='matrixfeld'){ const f=Object.keys(MX_FELD_NAME).find(x=>MX_FELD_NAME[x].toLowerCase()===wert.toLowerCase() || x===wert.toLowerCase()); if(f) k.matrixFeld=f; }
-      else if(key==='deadline' || key==='fällig' || key==='faellig' || key==='termin'){ const d=wert.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(d) k.deadline=d[3]+'-'+d[2].padStart(2,'0')+'-'+d[1].padStart(2,'0'); else if(/^\d{4}-\d{2}-\d{2}$/.test(wert)) k.deadline=wert; }
-      else if(key==='soll-minuten' || key==='sollminuten' || key==='soll' || key==='minuten'){ const n=parseInt(wert,10); if(Number.isFinite(n) && n>0) k.sollMin=n; }
+      if(key==='projekt'){ k.projekt=wert||null; k.gesetzt.projekt=true; }
+      else if(key==='familie' || key==='domäne' || key==='domain'){ k.domain=/^priv/i.test(wert) ? 'privat' : 'dfm'; k.gesetzt.domain=true; }
+      else if(key==='matrixfeld'){ const f=Object.keys(MX_FELD_NAME).find(x=>MX_FELD_NAME[x].toLowerCase()===wert.toLowerCase() || x===wert.toLowerCase()); if(f){ k.matrixFeld=f; k.gesetzt.matrixFeld=true; } }
+      else if(key==='deadline' || key==='fällig' || key==='faellig' || key==='termin'){ const d=wert.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(d) k.deadline=d[3]+'-'+d[2].padStart(2,'0')+'-'+d[1].padStart(2,'0'); else if(/^\d{4}-\d{2}-\d{2}$/.test(wert)) k.deadline=wert; if(k.deadline) k.gesetzt.deadline=true; }
+      else if(key==='soll-minuten' || key==='sollminuten' || key==='soll' || key==='minuten'){ const n=parseInt(wert,10); if(Number.isFinite(n) && n>0){ k.sollMin=n; k.gesetzt.sollMin=true; } }
+      else if(key==='karte-id' || key==='karteid' || key==='app-id' || key==='karten-id'){ k.karteId=wert||null; }   // Hotfix 9 · Abschnitt 2 Punkt 6: Änderung an einer bestehenden Karte
       // Owner, Status, Geld-Impact und andere Schlüssel: ignoriert (der Owner kommt im Dienst)
     } }
   k.notiz=k.notiz.trim();
@@ -5665,13 +5667,20 @@ function f7PfKarteLesen(r, text){
 }
 /* Karte aus einem Postfach-Eintrag anlegen: wie der Erfassen-Dialog (neueKarte, neueUnteraufgabe, saveKarten); Verweis in S.meta.postfachKarten */
 function f7PfKarteAnlegen(r, kk){
+  const best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null;   // Hotfix 9 · Abschnitt 2 Punkt 6: Änderung an einer bestehenden Karte, keine neue
+  if(best){ f7PfEntwurfAnwenden(best, null, kk); saveKarten();
+    S.meta.postfachKarten=Object.assign({}, S.meta.postfachKarten, { [r.id]:{ karteId:best.id, ts:jetztIso(), titel:best.titel, aenderung:true } }); saveMeta();
+    try{ toast('Karte angepasst: '+best.titel); }catch(e){} try{ kettenListenNeu(); renderAlles(); }catch(e){}
+    return best; }
   const k=Object.assign(neueKarte({ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp() }), { status:'offen', sollMin:kk.sollMin, erstelltTs:jetztIso(), postfachId:r.id });
   if(kk.projekt) k.projekt=kk.projekt; if(kk.matrixFeld) k.matrixFeld=kk.matrixFeld; if(kk.notiz) k.notiz=kk.notiz;
   S.karten.push(k);
+  if(!ketteHat(k.id)) ketteToggle(k.id);   // Hotfix 9 · Abschnitt 2 Punkt 5: sofort ans Ende der Aktuellen Kette
   kk.unteraufgaben.forEach(t=>S.unteraufgaben.push(neueUnteraufgabe(k.id, { titel:t })));
   saveKarten();   // speichert Karten und Unteraufgaben
   S.meta.postfachKarten=Object.assign({}, S.meta.postfachKarten, { [r.id]:{ karteId:k.id, ts:jetztIso(), titel:kk.titel } }); saveMeta();
   try{ toast('Karte angelegt: '+kk.titel); }catch(e){}
+  try{ kettenListenNeu(); renderAlles(); }catch(e){}   // Hotfix 9 · Abschnitt 2 Punkt 5
   return k;
 }
 /* Karten aus dem Postfach für den Block „Aus dem Postfach angelegt": am App-Tag angelegt oder noch offen, in Reihenfolge der Anlage */
@@ -5679,6 +5688,57 @@ function f7PfAngelegteKarten(){
   const m=S.meta.postfachKarten||{}, start=(S.tag && S.tag.startTs) ? String(S.tag.startTs) : '';
   return Object.keys(m).map(id=>m[id]).filter(v=>v && v.karteId).sort((a,b)=>String(a.ts)<String(b.ts) ? -1 : 1)
     .map(v=>({ v, k:S.karten.find(x=>x.id===v.karteId) })).filter(o=>o.k && (o.k.status==='offen' || (start && String(o.v.ts)>=start))).map(o=>o.k);
+}
+/* ── Hotfix 9 · Abschnitt 2: Trainer-Karten als Kartenzeile im Postfach (anklicken, starten, freigeben, anpassen) ── */
+/* Schon „gesehen" markierte Plan-Einträge nachholen (Lager postfachNachholen, 60 s) */
+function f7PostfachOhneKarte(){ return f7Lager('postfachNachholen', 60000, ()=>f7Alle({ tabelle:'Postfach', felder:['Titel','Agent','Art','Output/Entwurf','Quelle','Projekt','Person','Organisation','Begründung','Sicherheit %','Dringlichkeit','Push','Folge nach Freigabe','Status','Entscheidung'], filter:[{ feld:'Status', operator:'gleich', wert:'erledigt' }, { feld:'Entscheidung', operator:'gleich', wert:'gesehen' }, { feld:'Art', operator:'gleich', wert:'Plan' }], sortierung:[{ feld:'Dringlichkeit', richtung:'ab' }] })); }
+/* Vorschläge: offene Einträge mit Kartenformat ohne angelegte Karte, dazu Nachhol-Einträge (Titel noch in keinem Eintrag von postfachKarten, je Titel nur der erste) */
+function f7PfVorschlaege(rows){
+  const m=S.meta.postfachKarten||{}, out=[];
+  (rows||[]).forEach(r=>{ const kk=f7PfKarteLesen(r); if(kk && !m[r.id]) out.push({ r, kk, nachholen:false }); });
+  const titel=new Set(Object.keys(m).map(id=>String((m[id]||{}).titel||'').trim().toLowerCase()).filter(Boolean)), gesehen=new Set();
+  (f7PostfachOhneKarte()||[]).forEach(r=>{ const kk=f7PfKarteLesen(r); if(!kk || m[r.id]) return; const t=String(kk.titel).trim().toLowerCase(); if(titel.has(t) || gesehen.has(t)) return; gesehen.add(t); out.push({ r, kk, nachholen:true }); });
+  return out;
+}
+function f7PfVorschlag(id){ return f7PfVorschlaege(f7Postfach()||[]).find(o=>o.r.id===id)||null; }
+function f7PfVorschlagZeileHtml(o){
+  const r=o.r, kk=o.kk, fam=famFarbe({ domain:kk.domain }), best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null;
+  const meta=(kk.domain==='privat' ? 'Privat' : 'DFM')+' · '+kk.sollMin+' Min · '+kk.unteraufgaben.length+' Unteraufgaben · vom '+esc(r.Agent||'Agent');
+  return '<div class="kl-z" data-f7pfkarte="'+esc(r.id)+'" style="--fam:'+fam+';--famb:'+farbeAlpha(fam, .18)+';--prio:'+fam+';--rand:'+FARBE.ORANGE+'">'+
+    '<button class="kl-play" data-f7pfstart="'+esc(r.id)+'" aria-label="Start">▶</button>'+
+    '<div class="kl-t" data-f7pfdetail="'+esc(r.id)+'"><b class="kl-titel">'+(best ? '✏️ Änderung · ' : '')+esc(kk.titel)+'</b><span class="kl-meta">'+meta+'</span></div>'+
+    '<button class="kl-check" data-f7pffrei="'+esc(r.id)+'" aria-label="Freigeben">✓</button></div>'+
+    '<div class="f7-pfmehr" data-f7pfid="'+esc(r.id)+'" data-f7pfauf="1">✗ Ablehnen · 💬 Besprechen</div>';
+}
+/* Entwurf auf eine bestehende Karte anwenden (Punkt 6): nur gesetzte Felder, Notiz angehängt, neue Unteraufgaben dazu, nichts entfernt.
+   subs = null: direkt auf S.unteraufgaben; sonst auf die übergebene Arbeitskopie (Karteneinstellungen) */
+function f7PfEntwurfAnwenden(k, subs, kk){
+  const g=kk.gesetzt||{};
+  if(kk.titel && kk.titel!==k.titel) k.titel=kk.titel;
+  if(g.sollMin) k.sollMin=kk.sollMin; if(g.matrixFeld && kk.matrixFeld) k.matrixFeld=kk.matrixFeld; if(g.deadline && kk.deadline) k.faelligkeit=kk.deadline; if(g.projekt && kk.projekt) k.projekt=kk.projekt;
+  if(kk.notiz){ const d=new Date(); const datum=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); k.notiz=(k.notiz ? String(k.notiz)+'\n' : '')+'['+datum+'] '+kk.notiz; }
+  const da=(subs||S.unteraufgaben.filter(u=>u.parentId===k.id)).map(u=>String(u.titel||'').trim().toLowerCase());
+  kk.unteraufgaben.forEach(t=>{ const tt=String(t).trim().toLowerCase(); if(!tt || da.indexOf(tt)>=0) return; da.push(tt); const u=neueUnteraufgabe(k.id, { titel:t }); if(subs) subs.push(u); else S.unteraufgaben.push(u); });
+  return k;
+}
+/* ✓ und ▶ auf der Kartenzeile */
+function f7PfVorschlagAnnehmen(id, starten){
+  const o=f7PfVorschlag(id); if(!o) return null;
+  let k=null;
+  if(!o.nachholen){ f7PfEntscheiden(id, 'freigegeben'); const m=(S.meta.postfachKarten||{})[id]; k=m ? S.karten.find(x=>x.id===m.karteId) : null; }
+  else { k=f7PfKarteAnlegen(o.r, o.kk);
+    FSLive.senden('datensatz_aendern', { tabelle:'Postfach', id, felder:{ Entscheidung:'freigegeben', 'Pascals Anpassung':'Karte in der App angelegt: '+k.id } }).catch(e=>toast('Postfach: '+((e && e.message)||'Fehler')));
+    const L=F7.lager.postfachNachholen; if(L && Array.isArray(L.daten)) L.daten=L.daten.filter(x=>x.id!==id);
+    haptik(10); renderPostfach(); }
+  if(k && starten){ leistePlay(k.id); fokusseiteNachStart(); }
+  return k;
+}
+/* Titel: Karteneinstellungen vorausgefüllt (neue Karte) bzw. bestehende Karte mit den Werten des Entwurfs (noch nicht gespeichert) */
+function f7PfVorschlagDetail(id){
+  const o=f7PfVorschlag(id); if(!o) return; const kk=o.kk, best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null;
+  if(best){ oeffneDetail(best.id); f7PfEntwurfAnwenden(entwurf, entwurfSubs, kk); entwurf.postfachId=id; renderDetail(); return; }
+  const vb={ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), sollMin:kk.sollMin }; if(kk.projekt) vb.projekt=kk.projekt; if(kk.matrixFeld) vb.matrixFeld=kk.matrixFeld; if(kk.notiz) vb.notiz=kk.notiz;
+  oeffneDetail(null, { vorbelegung:vb, unteraufgaben:kk.unteraufgaben, mehrAuf:true, postfachId:id });
 }
 function f7PfAgentAbt(name){ const a=(f7Agenten()||[]).find(p=>String(p.Name||'')===String(name||'')); return a ? f7LinkName(a.Abteilung) : ''; }
 function f7PostfachStandSetzen(rows){
@@ -5710,7 +5770,9 @@ function renderPostfach(){
       { const kk=f7PfKarteLesen(r); if(kk) x+='<div class="ctx">📇 Karte: '+esc(kk.titel)+' · '+kk.sollMin+' Min · '+kk.unteraufgaben.length+' Unteraufgaben</div>'; }   // Hotfix 7 · Abschnitt 2
       x+='<div class="bt"><div class="ok" data-f7pfent="freigegeben">✓ Freigeben</div><div data-f7pfent="angepasst">✏️ Anpassen</div><div data-f7pfent="abgelehnt">✗ Ablehnen</div><div data-f7pfent="besprochen">💬 Besprechen</div>'+(kat==='plan' ? '<div data-f7pfent="gesehen">👁 gesehen</div>' : '')+'</div>'; }   // Hotfix 7 · Abschnitt 1: fünfter Knopf für reine Plantexte
     return x+'</div>'; };
-  const dr=sicht.filter(r=>f7PfKat(r)==='dringend'), kl=sicht.filter(r=>f7PfKat(r)==='klaerung'), rest=sicht.filter(r=>f7PfKat(r)!=='dringend' && f7PfKat(r)!=='klaerung');
+  const vs=f7PfVorschlaege(rows), vsIds=new Set(vs.map(o=>o.r.id));   // Hotfix 9 · Abschnitt 2: Karten vom Trainer als Kartenzeile, nicht zusätzlich unter „Weitere"
+  if(vs.length){ const auf=S.ui.f7pfAuf||{}; h+='<h5 class="f7-h5 zw"><span>📇 Karten vom Trainer</span><span>'+vs.length+'</span></h5>'+vs.map(o=>f7PfVorschlagZeileHtml(o)+(auf[o.r.id] ? karte(o.r) : '')).join(''); }
+  const dr=sicht.filter(r=>f7PfKat(r)==='dringend'), kl=sicht.filter(r=>f7PfKat(r)==='klaerung'), rest=sicht.filter(r=>f7PfKat(r)!=='dringend' && f7PfKat(r)!=='klaerung' && !vsIds.has(r.id));
   if(dr.length) h+='<h5 class="f7-h5 zw"><span class="red">🔴 Dringend</span><span>nach Dringlichkeit</span></h5>'+dr.map(r=>karte(r)).join('');
   if(kl.length) h+='<h5 class="f7-h5 zw"><span>❓ Klärung</span><span></span></h5>'+kl.map(r=>karte(r)).join('');
   { const pk=f7PfAngelegteKarten(); if(pk.length) h+='<h5 class="f7-h5 zw"><span>📇 Aus dem Postfach angelegt</span><span>'+pk.length+'</span></h5>'+pk.map(k=>kartenZeileHtml(k)).join(''); }   // Hotfix 7 · Abschnitt 2: Kartenzeilen wie in der Suche (Klick: f7Klick → kettenListeKlick)
@@ -5719,7 +5781,7 @@ function renderPostfach(){
   host.innerHTML=h;
 }
 function f7PfEntscheiden(id, ent, extra){
-  extra=extra||{}; const rows=f7Postfach()||[], r=rows.find(x=>x.id===id); if(!r) return;
+  extra=extra||{}; const rows=f7Postfach()||[], r=rows.find(x=>x.id===id) || (f7PostfachOhneKarte()||[]).find(x=>x.id===id); if(!r) return;   // Hotfix 9: auch Nachhol-Einträge
   if(ent==='freigegeben' || ent==='angepasst'){   // Hotfix 7 · Abschnitt 2: Freigeben (auch mit Anpassung) legt die Karte aus dem Entwurf an, nie doppelt
     const txt=(ent==='angepasst' && extra.felder && extra.felder['Pascals Anpassung']!=null) ? extra.felder['Pascals Anpassung'] : null;
     const kk=f7PfKarteLesen(r, txt);
@@ -5936,6 +5998,9 @@ function f7Klick(e){
   if(d('data-f7chatsenden')){ f7ChatAbschicken(); return true; }
   if((z=d('data-f7chatantwort'))){ f7ChatAbschicken(z.dataset.f7chatantwort); return true; }
   // Postfach
+  if((z=d('data-f7pffrei'))){ haptik(12); f7PfVorschlagAnnehmen(z.dataset.f7pffrei, false); return true; }   // Hotfix 9 · Abschnitt 2: Kartenzeile ✓
+  if((z=d('data-f7pfstart'))){ haptik(10); f7PfVorschlagAnnehmen(z.dataset.f7pfstart, true); return true; }   // ▶
+  if((z=d('data-f7pfdetail'))){ haptik(6); f7PfVorschlagDetail(z.dataset.f7pfdetail); return true; }   // Titel → Karteneinstellungen
   if((z=d('data-f7pffilter'))){ S.ui.f7pfFilter=z.dataset.f7pffilter; saveUi(); renderPostfach(); return true; }
   if((z=d('data-f7pfauf'))){ const c=t.closest('[data-f7pfid]'); if(c){ S.ui.f7pfAuf=Object.assign({}, S.ui.f7pfAuf); S.ui.f7pfAuf[c.dataset.f7pfid]=true; saveUi(); renderPostfach(); } return true; }
   if((z=d('data-f7pfantwort'))){ const c=t.closest('[data-f7pfid]'); if(!c) return true; let a=z.dataset.f7pfantwort; if(!a){ a=prompt('Antwort'); if(!a) return true; } f7PfEntscheiden(c.dataset.f7pfid, 'freigegeben', { felder:{ 'Pascals Anpassung':a } }); return true; }
@@ -13789,6 +13854,15 @@ function detailSpeichern(){
   const neuId=entwurf.id;                                // closeSheet() raeumt entwurf weg
   saveKarten(); DB.set('unteraufgaben', S.unteraufgaben);
   if(entwurfNeu && idx<0 && !ketteHat(neuId)) ketteToggle(neuId);   // Hotfix 9 · Abschnitt 1: neue Karte ans Ende der Aktuellen Kette
+  { const pfId=entwurf.postfachId;   // Hotfix 9 · Abschnitt 2 Punkt 3: Speichern aus den Karteneinstellungen = Freigabe mit Anpassung (Nachhol-Einträge ohne Status und Bonus)
+    if(pfId && !(S.meta.postfachKarten||{})[pfId]){
+      const offen=(f7Postfach()||[]).some(x=>x.id===pfId);
+      S.meta.postfachKarten=Object.assign({}, S.meta.postfachKarten, { [pfId]:{ karteId:neuId, ts:jetztIso(), titel:entwurf.titel, aenderung:idx>=0 } }); saveMeta();
+      const felder={ Entscheidung:'angepasst', 'Pascals Anpassung':'Karte in der App angelegt (in den Karteneinstellungen angepasst): '+neuId }; if(offen){ felder.Status='erledigt'; felder['Punkte gebucht']=10; }
+      FSLive.senden('datensatz_aendern', { tabelle:'Postfach', id:pfId, felder }).catch(e=>toast('Postfach: '+((e && e.message)||'Fehler')));
+      ['postfach','postfachNachholen'].forEach(key=>{ const L=F7.lager[key]; if(L && Array.isArray(L.daten)) L.daten=L.daten.filter(x=>x.id!==pfId); });
+      if(offen){ const H=f7PfHeute(); H.n++; try{ e4BonusBuchen(null, 10, 'Postfach · angepasst'); }catch(e){} saveMeta(); try{ f7PostfachStandSetzen((F7.lager.postfach && F7.lager.postfach.daten)||[]); }catch(e){} }
+      try{ renderPostfach(); }catch(e){} } }
   closeSheet(); renderAlles();
   // C7 (v3.8.0): eine neu angelegte Karte öffnet sich in der Fokusseite OHNE Zeitmessung (kein Autostart, die laufende Karte
   // läuft weiter); Ebene 1 schliesst. (closeSheet() hat entwurf bereits geleert — die ID steht in neuId.)
