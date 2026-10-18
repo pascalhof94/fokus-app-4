@@ -13,6 +13,7 @@ function dummyEl(){ var d={ style:{}, classList:{add:function(){},remove:functio
   textContent:'', value:'', hidden:false, src:'',
   getContext:function(){ var n=function(){}; return {clearRect:n,fillRect:n,save:n,restore:n,translate:n,rotate:n,beginPath:n,arc:n,fill:n,fillStyle:''}; }, width:0, height:0 };
   Object.defineProperty(d,'innerHTML',{get:function(){return this._h||'';},set:function(v){this._h=v;}});
+  d.insertAdjacentHTML=function(pos,h){ this._h=(pos==='afterbegin') ? h+(this._h||'') : (this._h||'')+h; };   // Hotfix 9
   return d; }
 var document={ getElementById:function(id){ if(!_els[id]) _els[id]=dummyEl(); return _els[id]; },
   createElement:function(){ return dummyEl(); }, addEventListener:function(){},

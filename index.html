@@ -2650,6 +2650,7 @@ input.f7-inp{display:block;width:100%;color:#e8e9ec;font-size:15px;outline:none}
 .f7-c .hd{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:#9a9ca2;font-weight:600}.f7-c .hd .red{color:#f66d6d;font-weight:800}
 .f7-c .ti{font-size:17px;font-weight:800;margin-top:4px}.f7-c .ctx{font-size:13px;color:#9a9ca2;margin-top:2px}
 .f7-c .dr{margin-top:8px;padding:10px 12px;background:#1a1d22;border-left:3px solid #3b82f6;border-radius:10px;font-size:14.5px;color:#c9cbd0;line-height:1.35}.f7-c .why{font-size:13px;color:#9a9ca2;margin-top:8px}
+.f7-neukarte{display:block;width:100%;margin:14px 0 24px;min-height:48px;border-radius:12px;border:1px dashed #2dd4bf;background:#0f2a27;color:#2dd4bf;font:700 15px system-ui}   /* Hotfix 9 · Abschnitt 1 */
 .f7-c .bt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .bt>div{padding:9px 11px;border-radius:12px;background:#1f2228;font-size:13.5px;font-weight:800;cursor:pointer}.f7-c .bt .ok{background:#3ecf8e;color:#000}
 .f7-c .opt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.f7-c .opt>div{flex:1;text-align:center;padding:10px;border-radius:12px;background:#1f2228;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent}.f7-c .opt .ok{border-color:#3ecf8e;color:#3ecf8e;background:rgba(62,207,142,.1)}
 .f7-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid #2a2d33;font-size:16px;font-weight:700}.f7-row small{display:block;font-size:12.5px;color:#9a9ca2;font-weight:500}.f7-row b{flex:none;background:#262a32;border-radius:14px;padding:7px 13px;font-size:13.5px;cursor:pointer}
@@ -5873,12 +5874,14 @@ function f7PlanHtml(){
     try{ if(a==='durchsuchen'){ el('dsBody').innerHTML=f7DurchsuchenHtml(); return; } if(a==='erfassen'){ el('erfBody').innerHTML=f7ErfassenHtml(); f7ErfasstStatus(); return; } if(a==='routinen'){ el('routBody').innerHTML=f7RoutinenHtml(); return; }
       if(a==='chat'){ const b=el('chatBody'); b.innerHTML=f7ChatHtml(); b.scrollTop=b.scrollHeight; return; } if(a==='plan'){ el('planBody').innerHTML=f7PlanHtml(); return; } }catch(e){ console.warn('Paket 7', a, e); }
     _alt(); }; }
+const F7_NEUKARTE_HTML='<button class="f7-neukarte" data-f7neukarte="1">＋ Karte erstellen</button>';   // Hotfix 9 · Abschnitt 1: ganz unten in der Suche
 { const _alt=renderSuche;
   renderSuche=function(){
     { const inp=el('suFreitext'); if(inp && document.activeElement!==inp && inp.value!==(S.ui.suFrage||'')) inp.value=S.ui.suFrage||''; if(inp) inp.placeholder='Suchen oder tippen …'; }
     const q=suFrage(), body=el('suBody'); if(!body) return;
-    if(q){ _alt(); return; }
+    if(q){ _alt(); body.insertAdjacentHTML('beforeend', F7_NEUKARTE_HTML); return; }   // Hotfix 9: _alt() schreibt in suBody
     body.innerHTML=S.ui.suGruppe ? f7GruppeHtml(S.ui.suGruppe) : f7SucheStartHtml();
+    body.insertAdjacentHTML('beforeend', F7_NEUKARTE_HTML);
     const cl=el('suClear'); if(cl) cl.hidden=true; }; }
 function oeffnePostfach(){ seiteZeigen('postfach'); }
 oeffneRoutinen=function(){ e1Oeffnen('routinen'); };
@@ -5887,6 +5890,7 @@ function f7Klick(e){
   let z;
   if(t.closest('[data-klkarte]') && !t.closest('[data-klliste]') && !t.closest('#fokusView')){ if(kettenListeKlick(e)){ if(e1Art()) e1Rendern(); return true; } }   // Hotfix 6: Kartenzeilen in den Gruppen der Suche
   if(d('data-f7zurueck')){ const ds=f7Ds(); if(e1Art()==='durchsuchen' && ds.pfad.length){ ds.pfad.pop(); saveUi(); e1Rendern(); } else e1Oeffnen('suche'); return true; }
+  if(d('data-f7neukarte')){ const q=String(suFrage()||'').trim(); haptik(8); e1Schliessen(); oeffneDetail(null, { vorbelegung: q ? { titel:q } : {}, mehrAuf:true }); return true; }   // Hotfix 9 · Abschnitt 1
   if((z=d('data-f7akt'))){ const a=z.dataset.f7akt; haptik(6); if(a==='erfassen') e1Oeffnen('erfassen'); else if(a==='routinen') e1Oeffnen('routinen'); else if(a==='pause') oeffnePause(); else if(a==='chat') f7ChatOeffnen('Trainer'); else if(a==='neu'){ e1Schliessen(); oeffneDetail(null); } else if(a==='durchsuchen'){ const ds=f7Ds(); ds.pfad=[]; saveUi(); e1Oeffnen('durchsuchen'); } return true; }
   if((z=d('data-f7platz'))){ const id=z.dataset.f7platz; haptik(10); if(id==='pause'){ oeffnePause(); return true; } const k=id==='adhs' ? f7PauseKarte('adhs', true) : S.karten.find(x=>x.id===id); if(!k) return true; if(istTickbar(k)) kartenListeTick(k.id); else kartenListeCheck(k.id); e1Rendern(); return true; }
   if((z=d('data-f7gruppe'))){ S.ui.suGruppe=z.dataset.f7gruppe; saveUi(); haptik(6); if(e1Art()!=='suche') e1Oeffnen('suche'); else e1Rendern(); return true; }   // Paket 9: aus der linken Spalte öffnet die Gruppe in der Mitte
@@ -13414,19 +13418,20 @@ let entwurfSubs=null; // Arbeitskopie der Unteraufgaben
 let entwurfNeu=false;
 let _detailMehrAuf=false, _detailAutofocus=false;   // U6-D: „Weitere Einstellungen"-Zustand + Titel-Autofokus
 
-function oeffneDetail(kid){
+function oeffneDetail(kid, opt){   // Hotfix 9 · Abschnitt 1: opt { vorbelegung, unteraufgaben, mehrAuf, postfachId } für eine neue Karte
   // Läuft der Timer auf dieser Karte, erst die Zeit einbuchen (pausieren),
   // damit die Bearbeitung nicht die laufende Ist-Zeit überschreibt.
   if(kid && S.fokus && S.fokus.karteId===kid && S.fokus.laeuft){ fokusZeitEinbuchen(); renderFokusleiste(); }
-  const orig = kid ? S.karten.find(k=>k.id===kid) : neueKarte({faelligkeit:heuteApp()});
+  const orig = kid ? S.karten.find(k=>k.id===kid) : neueKarte(Object.assign({ faelligkeit:heuteApp() }, (opt && opt.vorbelegung) || {}));
   // §1.5 (v2.7.0): eine NEUE Karte liegt vorausgewaehlt im gerade laufenden Block
   // §12 (v3.7.0): keine Vorauswahl des laufenden Blocks nach Uhrzeit — Planung nur per Drag & Drop
   entwurfNeu = !kid;
   _vomGeraetFrage = false;
   wdhTmp = null;   // §1 (v2.8.1)
   entwurf = JSON.parse(JSON.stringify(orig));
-  entwurfSubs = kid ? JSON.parse(JSON.stringify(untermenge(kid))) : [];
-  _detailMehrAuf = !entwurfNeu;   // Neuanlage: „Weitere Einstellungen" eingeklappt; Bearbeiten: offen
+  entwurfSubs = kid ? JSON.parse(JSON.stringify(untermenge(kid))) : ((opt && opt.unteraufgaben) || []).map(t=>neueUnteraufgabe(orig.id, { titel:t }));   // Hotfix 9: vorbelegte Unteraufgaben
+  if(!kid && opt && opt.postfachId) entwurf.postfachId=opt.postfachId;   // Hotfix 9 · Abschnitt 2: Speichern = Freigabe mit Anpassung
+  _detailMehrAuf = !entwurfNeu || !!(opt && opt.mehrAuf);   // Neuanlage: „Weitere Einstellungen" eingeklappt; Bearbeiten: offen · Hotfix 9: opt.mehrAuf öffnet sie
   _detailAutofocus = entwurfNeu;  // Neuanlage: Titel autofokussieren
   const sb=el('sheetBody'); if(sb) sb.scrollTop=0;   // V3: frisch oben starten (nicht vom Vor-Sheet erben)
   renderDetail();
@@ -13783,6 +13788,7 @@ function detailSpeichern(){
   if(_nachtragE) buchungAbgleich(entwurf, _nachtragE);   // §4 (v2.9.1): der Nachtrag traegt seine Punkte
   const neuId=entwurf.id;                                // closeSheet() raeumt entwurf weg
   saveKarten(); DB.set('unteraufgaben', S.unteraufgaben);
+  if(entwurfNeu && idx<0 && !ketteHat(neuId)) ketteToggle(neuId);   // Hotfix 9 · Abschnitt 1: neue Karte ans Ende der Aktuellen Kette
   closeSheet(); renderAlles();
   // C7 (v3.8.0): eine neu angelegte Karte öffnet sich in der Fokusseite OHNE Zeitmessung (kein Autostart, die laufende Karte
   // läuft weiter); Ebene 1 schliesst. (closeSheet() hat entwurf bereits geleert — die ID steht in neuId.)
