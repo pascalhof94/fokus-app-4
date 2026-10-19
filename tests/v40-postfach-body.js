@@ -18,7 +18,7 @@ var n0=S.karten.length, u0=S.unteraufgaben.length; _gesendet.length=0;
 f7PfEntscheiden('pf-1', 'freigegeben'); warten();
 pruef('Freigeben: genau eine Karte mehr', S.karten.length===n0+1, S.karten.length-n0);
 var k=S.karten[S.karten.length-1];
-pruef('Karte: Titel, DFM, 30 Min, offen, postfachId, fällig heute, Projekt, Notiz', k.titel==='Fokus App Hotfix' && k.domain==='dfm' && num(k.sollMin)===30 && k.status==='offen' && k.postfachId==='pf-1' && k.faelligkeit===heuteApp() && k.projekt==='Fokus App' && String(k.notiz).indexOf('Anforderungen')===0, JSON.stringify({ t:k.titel, d:k.domain, s:k.sollMin, st:k.status, pf:k.postfachId, f:k.faelligkeit }));
+pruef('Karte: Titel, DFM, 30 Min, offen, postfachId, fällig am Deadline-Datum des Entwurfs (18.10.2026), Projekt, Notiz', k.titel==='Fokus App Hotfix' && k.domain==='dfm' && num(k.sollMin)===30 && k.status==='offen' && k.postfachId==='pf-1' && k.faelligkeit==='2026-10-18' && k.projekt==='Fokus App' && String(k.notiz).indexOf('Anforderungen')===0, JSON.stringify({ t:k.titel, d:k.domain, s:k.sollMin, st:k.status, pf:k.postfachId, f:k.faelligkeit }));
 pruef('drei Unteraufgaben an der Karte', S.unteraufgaben.filter(function(u){ return u.parentId===k.id; }).length===3 && S.unteraufgaben.length===u0+3);
 pruef('S.meta.postfachKarten hat den Eintrag', !!(S.meta.postfachKarten && S.meta.postfachKarten['pf-1'] && S.meta.postfachKarten['pf-1'].karteId===k.id));
 var ge=_gesendet.filter(function(g){ return g.werkzeug==='datensatz_aendern'; });
