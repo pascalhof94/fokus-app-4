@@ -67,4 +67,23 @@ pruef('Migration rangLast400: Marker, Sicherung, Schwellen auf 50 gerundet, Rang
   e4LastZustand=_z; e4RangDauerlast=_dl; r.rang=r0; r.tageUeber=0; r.gerechnet=null; saveMeta();
   pruef('Überlast: tageUeber bleibt bei 2 (kein Hochzählen, kein Reset); optimal: 3', bleibt && steigt, JSON.stringify([bleibt, steigt])); })();
 pruef('Rang-Anzeige trägt Farbe und Titel', /class="rang-z" style="color:#[0-9a-f]{6}" title="Rang 1 · /.test(e4RangHtml(1)));
+// ══ Hotfix 11: Shop-Preise in Münzen ≈ Euro, Mindestpreis 1.500 ══
+var _euro=S.settings.shopEuro, _min=S.settings.shopPreisMin; delete S.settings.shopEuro; delete S.settings.shopPreisMin;
+pruef('Standardpreise: M4 90.000 · Wohnen 12 1.200.000 · Soziales 1 1.500 · Mobilität 4 1.500', e4Preis('fahrzeuge',11)===90000 && e4Preis('wohnen',12)===1200000 && e4Preis('soziales',1)===1500 && e4Preis('mobilitaet',4)===1500, JSON.stringify([e4Preis('fahrzeuge',11), e4Preis('wohnen',12), e4Preis('soziales',1), e4Preis('mobilitaet',4)]));
+pruef('App & Avatar unverändert: e4Preis(app,1) = 3.000', e4Preis('app',1)===3000, e4Preis('app',1));
+pruef('alle 72 Stufen mindestens 1.500', KAT_KEYS.every(function(kk){ for(var n=1;n<=12;n++){ if(e4Preis(kk,n)<1500) return false; } return true; }) && KAT_KEYS.length===6);
+S.settings.shopPreisMin=2000;
+pruef('shopPreisMin 2.000: Soziales 1 → 2.000, App 1 bleibt 3.000', e4Preis('soziales',1)===2000 && e4Preis('app',1)===3000, JSON.stringify([e4Preis('soziales',1), e4Preis('app',1)]));
+delete S.settings.shopPreisMin; S.settings.shopEuro={ 'fahrzeuge-11':30000 };
+pruef('shopEuro überschreibt nur den Schlüssel: M4 30.000, Stufe 12 bleibt 150.000', e4Preis('fahrzeuge',11)===30000 && e4Preis('fahrzeuge',12)===150000, JSON.stringify([e4Preis('fahrzeuge',11), e4Preis('fahrzeuge',12)]));
+delete S.settings.shopEuro;
+var vs1=syncTuerVorschau({ einstellungen:{ engine4:{ shopEuro:{ 'reisen-9':20000 }, grund:'Prüfung' } }, karten:[] });
+pruef('Paket shopEuro reisen-9 wird angenommen', !!vs1.einstellungen && vs1.einstellungen.aenderungen.length===1 && vs1.einstellungen.aenderungen[0].feld==='shopEuro' && !vs1.einstellungen.fehler.length, JSON.stringify(vs1.einstellungen));
+syncTuerAnwenden(vs1);
+pruef('nach dem Anwenden: Reisen 9 = 20.000, Reisen 8 unverändert 20.000, Reisen 12 600.000', e4Preis('reisen',9)===20000 && e4Preis('reisen',8)===20000 && e4Preis('reisen',12)===600000, JSON.stringify([e4Preis('reisen',9), S.settings.shopEuro]));
+var vs2=syncTuerVorschau({ einstellungen:{ engine4:{ shopEuro:{ 'reisen-13':1 } } }, karten:[] });
+pruef('Paket shopEuro reisen-13 landet in unbekannt', JSON.stringify(vs2.einstellungen.unbekannt).indexOf('reisen-13')>=0 && !vs2.einstellungen.aenderungen.some(function(a){ return a.schritte && a.schritte.length; }), JSON.stringify([vs2.einstellungen.unbekannt, vs2.einstellungen.aenderungen]));
+var vs3=syncTuerVorschau({ einstellungen:{ engine4:{ shopPreisMin:1800 } }, karten:[] }); syncTuerAnwenden(vs3);
+pruef('Paket shopPreisMin 1.800 angenommen: Soziales 1 = 1.800', S.settings.shopPreisMin===1800 && e4Preis('soziales',1)===1800, JSON.stringify([S.settings.shopPreisMin, e4Preis('soziales',1)]));
+if(_euro!==undefined) S.settings.shopEuro=_euro; else delete S.settings.shopEuro; if(_min!==undefined) S.settings.shopPreisMin=_min; else delete S.settings.shopPreisMin; DB.set('settings', S.settings);
 suiteEnde('Punkte-Engine 4.0');

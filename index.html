@@ -2965,7 +2965,7 @@ const APP_VERSION = '4.0.0';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-18-32';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-19-33';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -3461,6 +3461,20 @@ const DEFAULT_SETTINGS = {
   outfitStufen: 13, outfitPlus: 3, outfitMinus: 2,   // 5.8
   outfitLeistungPunkte: 900, outfitErholungPunkte: 50,   // Betriebsbereit 3 (Pascal 17.10.): Leistungsstufe nach 900 DFM-Punkten seit der letzten Stufe, Erholungsstufe nach 50 Erholungspunkten aus einer Sitzung
   shopPreise: [3000, 4500, 6000, 8000, 44000, 65000, 87000, 110000, 130000, 175000, 220000, 260000],   // 5.10 je Stufe, × Kategorie-Faktor
+  shopPreisMin: 1500,   // Hotfix 11 (Pascal 19.10.): Mindestpreis je Shop-Kauf in Münzen
+  shopEuro: {           // Hotfix 11: Preis je Stufe in Münzen ≈ reale Kosten in Euro; Schlüssel 'kategorie-stufe'
+    'fahrzeuge-1':2000, 'fahrzeuge-2':1500, 'fahrzeuge-3':3000, 'fahrzeuge-4':3500, 'fahrzeuge-5':3000, 'fahrzeuge-6':2500,
+    'fahrzeuge-7':1500, 'fahrzeuge-8':1500, 'fahrzeuge-9':22000, 'fahrzeuge-10':35000, 'fahrzeuge-11':90000, 'fahrzeuge-12':150000,
+    'wohnen-1':1500, 'wohnen-2':1500, 'wohnen-3':3000, 'wohnen-4':4000, 'wohnen-5':5000, 'wohnen-6':2000,
+    'wohnen-7':350000, 'wohnen-8':450000, 'wohnen-9':550000, 'wohnen-10':650000, 'wohnen-11':750000, 'wohnen-12':1200000,
+    'reisen-1':1500, 'reisen-2':1500, 'reisen-3':2500, 'reisen-4':5000, 'reisen-5':6000, 'reisen-6':7000,
+    'reisen-7':4000, 'reisen-8':20000, 'reisen-9':25000, 'reisen-10':10000, 'reisen-11':30000, 'reisen-12':600000,
+    'mobilitaet-1':1500, 'mobilitaet-2':1500, 'mobilitaet-3':1500, 'mobilitaet-4':1500, 'mobilitaet-5':2000, 'mobilitaet-6':8000,
+    'mobilitaet-7':2000, 'mobilitaet-8':40000, 'mobilitaet-9':5000, 'mobilitaet-10':150000, 'mobilitaet-11':80000, 'mobilitaet-12':5000,
+    'beziehung-1':1500, 'beziehung-2':1500, 'beziehung-3':1500, 'beziehung-4':2000, 'beziehung-5':3000, 'beziehung-6':2000,
+    'beziehung-7':5000, 'beziehung-8':25000, 'beziehung-9':5000, 'beziehung-10':15000, 'beziehung-11':6000, 'beziehung-12':20000,
+    'soziales-1':1500, 'soziales-2':1500, 'soziales-3':1500, 'soziales-4':1500, 'soziales-5':1500, 'soziales-6':2500,
+    'soziales-7':1500, 'soziales-8':3000, 'soziales-9':3000, 'soziales-10':8000, 'soziales-11':5000, 'soziales-12':15000 },
   shopFreiAb: { 5:3, 6:4, 7:5, 8:6, 9:7, 10:8, 11:9, 12:10 },   // 5.10 Rang-Sperre: Stufen 5–8 ab Rang 3–6, 9–12 ab Rang 7–10
   rangSperre: true,            // 7.8: in den Einstellungen abschaltbar, Standard an
   grundwoche: { kw:'2026-W41', dfm:23324, privat:20313, gesamt:43637, werktagDfm:4465, werktagPrivat:3223, wochenendeDfm:998, wochenendePrivat:4199, erholungMin:455 },
@@ -3629,7 +3643,7 @@ const EINST_SCHEMA={
     abhakbonusAbSollMin:Z('abhakbonusAbSollMin',{min:0}), abzugOhneGrund:Z('abzugOhneGrund',{min:0}), wochenserieBonus:Z('wochenserieBonus',{min:0}),
     positionStaffel:{p:'positionStaffel', t:'zahlen'}, rangSchwellen:{p:'rangSchwellen', t:'zahlen'}, rangTage:Z('rangTage',{min:7, max:120}), spitzenTage:Z('spitzenTage',{min:1, max:28}),
     rangAufstiegTage:Z('rangAufstiegTage',{min:1, max:60}), rangAbstiegTage:Z('rangAbstiegTage',{min:1, max:120}), outfitStufen:Z('outfitStufen',{min:3, max:20}),
-    outfitPlus:Z('outfitPlus',{min:0, max:10}), outfitMinus:Z('outfitMinus',{min:0, max:10}), outfitLeistungPunkte:Z('outfitLeistungPunkte',{min:1}), outfitErholungPunkte:Z('outfitErholungPunkte',{min:1}), shopPreise:{p:'shopPreise', t:'zahlen'}, shopFreiAb:{p:'shopFreiAb', t:'tabelle'},
+    outfitPlus:Z('outfitPlus',{min:0, max:10}), outfitMinus:Z('outfitMinus',{min:0, max:10}), outfitLeistungPunkte:Z('outfitLeistungPunkte',{min:1}), outfitErholungPunkte:Z('outfitErholungPunkte',{min:1}), shopPreise:{p:'shopPreise', t:'zahlen'}, shopEuro:{p:'shopEuro', t:'tabelle'}, shopPreisMin:Z('shopPreisMin',{min:0}), shopFreiAb:{p:'shopFreiAb', t:'tabelle'},
     rangSperre:{p:'rangSperre', t:'bool'}, grundwoche:{p:'grundwoche', t:'tabelle'}, zielsteuerungSchritt:Z('zielsteuerungSchritt',{min:0}), postfachPunkte:{p:'postfachPunkte', t:'tabelle'} }
 };
 const STAT_SCHEMA={
@@ -4286,9 +4300,13 @@ function e4Pause(){ return e4OutfitSchritt('erholung'); }   // Pause per Dialog 
 function e4TagStart(){ try{ e4RangMorgens(S.tag.datum); e4OutfitStart(); }catch(e){ console.warn('e4TagStart', e); } }
 /* ── Shop (Punkt 5.10): Preise je Stufe × Kategorie-Faktor; Rang-Sperre abschaltbar ── */
 function e4Preis(kat, n){
+  const min=Math.max(0, num(S.settings && S.settings.shopPreisMin, DEFAULT_SETTINGS.shopPreisMin));
+  const euro=Object.assign({}, DEFAULT_SETTINGS.shopEuro, (S.settings && S.settings.shopEuro)||{});
+  const schl=kat+'-'+n;
+  if(kat!=='app' && Number.isFinite(Number(euro[schl])) && Number(euro[schl])>0) return Math.max(min, Math.round(Number(euro[schl])));   // Hotfix 11: Münzen ≈ Euro
   const p=(S.settings && Array.isArray(S.settings.shopPreise) && S.settings.shopPreise.length>=12) ? S.settings.shopPreise : DEFAULT_SETTINGS.shopPreise;
   const basis=num(p[Math.max(0, Math.min(11, n-1))], 0)*num(KAT_PREISFAKTOR[kat],1);
-  return Math.max(5, Math.round(basis/5)*5);
+  return Math.max(min, Math.max(5, Math.round(basis/5)*5));   // App & Avatar: wie bisher, mit Mindestpreis
 }
 function e4ShopFreiAb(n){ const t=Object.assign({}, DEFAULT_SETTINGS.shopFreiAb, (S.settings && S.settings.shopFreiAb)||{}); const r=num(t[n], 0); return r>0 ? r : 1; }
 function e4RangSperreAn(){ return S.settings.rangSperre!==false; }
@@ -4347,7 +4365,7 @@ function e4EinstellungsHistorie(teile){
       const bereiche=Array.from(new Set(t.aenderungen.map(a=>a.bereich)));
       const inhalt=t.aenderungen.map(a=>a.bereich+'.'+a.feld+': '+JSON.stringify(a.vorher)+' → '+JSON.stringify(a.nachher)).join('\n');
       let b='Punkte-Engine'; if(bereiche.length===1) b=E4_HIST_BEREICH[bereiche[0]]||'Punkte-Engine';
-      if(bereiche.length===1 && bereiche[0]==='engine4'){ const f=t.aenderungen[0].feld; b=f==='leiter' ? 'Stundenleiter' : f==='rangSchwellen' ? 'Rang-Schwellen' : f==='shopPreise' ? 'Shop-Preise' : (f==='bruecke'||f==='startBonus'||f==='wochenserieBonus') ? 'Boni' : f==='abzugOhneGrund' ? 'Abzüge' : 'Punkte-Engine'; }
+      if(bereiche.length===1 && bereiche[0]==='engine4'){ const f=t.aenderungen[0].feld; b=f==='leiter' ? 'Stundenleiter' : f==='rangSchwellen' ? 'Rang-Schwellen' : (f==='shopPreise'||f==='shopEuro'||f==='shopPreisMin') ? 'Shop-Preise' : (f==='bruecke'||f==='startBonus'||f==='wochenserieBonus') ? 'Boni' : f==='abzugOhneGrund' ? 'Abzüge' : 'Punkte-Engine'; }
       FSLive.senden('datensatz_anlegen', { tabelle:'Einstellungs-Historie', felder:{ Bezeichnung:'App '+APP_VERSION+' · '+bereiche.join(', '), 'Gültig ab':heuteApp(), Bereich:b,
         Inhalt:inhalt.slice(0, 5000), Grund:String((t.aenderungen[0]&&t.aenderungen[0].grund)||'').slice(0,300), Freigegeben:true } }); });
   }catch(e){}
@@ -4358,7 +4376,7 @@ function migration400(){
   DB.set('settings_bak400', { ts:jetztIso(), settings:JSON.parse(JSON.stringify(S.settings)) });
   const setz=(p, v)=>pfadSchreiben(S.settings, p, JSON.parse(JSON.stringify(v)));
   ['leiter','tickAktivierung','startBonus','bruecke','abhakbonusAbSollMin','abzugOhneGrund','wochenserieBonus','positionStaffel','rangSchwellen','rangTage','spitzenTage',
-   'rangAufstiegTage','rangAbstiegTage','outfitStufen','outfitPlus','outfitMinus','shopPreise','shopFreiAb','rangSperre','grundwoche','zielsteuerungSchritt','postfachPunkte',
+   'rangAufstiegTage','rangAbstiegTage','outfitStufen','outfitPlus','outfitMinus','shopPreise','shopEuro','shopPreisMin','shopFreiAb','rangSperre','grundwoche','zielsteuerungSchritt','postfachPunkte',
    'tagesZielDfm','tagesZielPrivat','tagesZielPrivatModus','zielWeDfm','zielWePrivat','weModus','syncPunkte','bewegungsBonus','subBonusDfm','subBonusPrivat',
    'zeitGewicht','tickGewicht','daempfungDfm','daempfungPrivat','abhakbonusTabelle','matrixFaktor','geldGewicht','erholungZeitzielMin','tagesEckPunkte'].forEach(p=>setz(p, DEFAULT_SETTINGS[p]));
   S.meta.engine4={ ts:jetztIso(), version:APP_VERSION, ab:heuteApp() };
