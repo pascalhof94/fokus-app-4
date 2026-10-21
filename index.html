@@ -3852,6 +3852,17 @@ function matrixFeldVon(k){
   if(Number.isFinite(n)&&n>=1&&n<=4) return MATRIX_FELDER[n-1];
   return 'ziel';
 }
+/* Hotfix 12 §B2 (21.10.2026): Wert aus Paket, Sync-Tür oder Postfach ohne Groß-/Kleinschreibung auf genau die vier Felder abbilden;
+   Zahlen 1–4 wie matrixFeldVon; alles andere → null (kein Rückfall auf „ziel"). Ergebnis null: bestehende Karte behält ihren Wert,
+   neue Karte bekommt „werkzeug". */
+function matrixFeldNorm(wert){
+  if(wert===null || wert===undefined) return null;
+  const s=String(wert).trim().toLowerCase();
+  if(MATRIX_FELDER.indexOf(s)>=0) return s;
+  const n=Number(s);
+  if(s!=='' && Number.isFinite(n)&&n>=1&&n<=4) return MATRIX_FELDER[n-1];
+  return null;
+}
 function matrixName(f){ return (MATRIX_META[f]||MATRIX_META.ziel).name; }
 function matrixIcon(f){ return (MATRIX_META[f]||MATRIX_META.ziel).icon; }
 /* §1.1: Tap auf ein Feld setzt VORSCHLAGSWERTE — nie Automatik. Der Nutzer
@@ -5729,7 +5740,7 @@ function f7PfKarteLesen(r, text){
     if(modus==='felder' && li){ const kv=li[1].match(/^([^:]+):\s*(.*)$/); if(!kv) continue; const key=kv[1].trim().toLowerCase(), wert=kv[2].trim();
       if(key==='projekt'){ k.projekt=wert||null; k.gesetzt.projekt=true; }
       else if(key==='familie' || key==='domäne' || key==='domain'){ k.domain=/^priv/i.test(wert) ? 'privat' : 'dfm'; k.gesetzt.domain=true; }
-      else if(key==='matrixfeld'){ const f=Object.keys(MX_FELD_NAME).find(x=>MX_FELD_NAME[x].toLowerCase()===wert.toLowerCase() || x===wert.toLowerCase()); if(f){ k.matrixFeld=f; k.gesetzt.matrixFeld=true; } }
+      else if(key==='matrixfeld'){ const f=matrixFeldNorm(wert); if(f){ k.matrixFeld=f; k.gesetzt.matrixFeld=true; } }   // Hotfix 12 §B2.2: über matrixFeldNorm
       else if(key==='deadline' || key==='fällig' || key==='faellig' || key==='termin'){ const d=wert.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(d) k.deadline=d[3]+'-'+d[2].padStart(2,'0')+'-'+d[1].padStart(2,'0'); else if(/^\d{4}-\d{2}-\d{2}$/.test(wert)) k.deadline=wert; if(k.deadline) k.gesetzt.deadline=true; }
       else if(key==='soll-minuten' || key==='sollminuten' || key==='soll' || key==='minuten'){ const n=parseInt(wert,10); if(Number.isFinite(n) && n>0){ k.sollMin=n; k.gesetzt.sollMin=true; } }
       else if(key==='karte-id' || key==='karteid' || key==='app-id' || key==='karten-id'){ k.karteId=wert||null; }   // Hotfix 9 · Abschnitt 2 Punkt 6: Änderung an einer bestehenden Karte
@@ -5745,8 +5756,8 @@ function f7PfKarteAnlegen(r, kk){
     S.meta.postfachKarten=Object.assign({}, S.meta.postfachKarten, { [r.id]:{ karteId:best.id, ts:jetztIso(), titel:best.titel, aenderung:true } }); saveMeta();
     try{ toast('Karte angepasst: '+best.titel); }catch(e){} try{ kettenListenNeu(); renderAlles(); }catch(e){}
     return best; }
-  const k=Object.assign(neueKarte({ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp() }), { status:'offen', sollMin:kk.sollMin, erstelltTs:jetztIso(), postfachId:r.id });
-  if(kk.projekt) k.projekt=kk.projekt; if(kk.matrixFeld) k.matrixFeld=kk.matrixFeld; if(kk.notiz) k.notiz=kk.notiz;
+  const k=Object.assign(neueKarte({ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), matrixFeld:matrixFeldNorm(kk.matrixFeld)||'werkzeug' }), { status:'offen', sollMin:kk.sollMin, erstelltTs:jetztIso(), postfachId:r.id });   // Hotfix 12 §B2.3: neue Karte ohne Wert → werkzeug
+  if(kk.projekt) k.projekt=kk.projekt; if(kk.notiz) k.notiz=kk.notiz;
   S.karten.push(k);
   if(!ketteHat(k.id)) ketteToggle(k.id);   // Hotfix 9 · Abschnitt 2 Punkt 5: sofort ans Ende der Aktuellen Kette
   kk.unteraufgaben.forEach(t=>S.unteraufgaben.push(neueUnteraufgabe(k.id, { titel:t })));
@@ -5810,7 +5821,7 @@ function f7PfVorschlagAnnehmen(id, starten){
 function f7PfVorschlagDetail(id){
   const o=f7PfVorschlag(id); if(!o) return; const kk=o.kk, best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null;
   if(best){ oeffneDetail(best.id); f7PfEntwurfAnwenden(entwurf, entwurfSubs, kk); entwurf.postfachId=id; renderDetail(); return; }
-  const vb={ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), sollMin:kk.sollMin }; if(kk.projekt) vb.projekt=kk.projekt; if(kk.matrixFeld) vb.matrixFeld=kk.matrixFeld; if(kk.notiz) vb.notiz=kk.notiz;
+  const vb={ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), sollMin:kk.sollMin, matrixFeld:matrixFeldNorm(kk.matrixFeld)||'werkzeug' }; if(kk.projekt) vb.projekt=kk.projekt; if(kk.notiz) vb.notiz=kk.notiz;   // Hotfix 12 §B2.3
   oeffneDetail(null, { vorbelegung:vb, unteraufgaben:kk.unteraufgaben, mehrAuf:true, postfachId:id });
 }
 function f7PfAgentAbt(name){ const a=(f7Agenten()||[]).find(p=>String(p.Name||'')===String(name||'')); return a ? f7LinkName(a.Abteilung) : ''; }
@@ -17132,16 +17143,17 @@ function syncImport(text, opt){
     // UNBEKANNTE Karte wird nur mit titel, domain und matrixFeld angelegt — sonst abgewiesen, nie eine Huelle
     if(!lok){
       const idTxt=String(inc.id||inc.airtableId||'?');
-      const fehlt=['titel','domain','matrixFeld'].filter(f=>inc[f]==null || String(inc[f]).trim()==='');
+      const fehlt=['titel','domain'].filter(f=>inc[f]==null || String(inc[f]).trim()==='');   // Hotfix 12 §B2.3: ohne matrixFeld → werkzeug (vorher Pflichtfeld)
       if(fehlt.indexOf('titel')>=0){ uebersprungen.push({was:'Karte '+idTxt, grund:'übersprungen: unbekannte Karte ohne Titel (id '+idTxt+')'}); return; }
       if(fehlt.length){ uebersprungen.push({was:'Karte „'+String(inc.titel).slice(0,30)+'" ('+idTxt+')', grund:'unbekannte Karte — Pflichtfeld fehlt: '+fehlt.join(', ')}); return; }
       if(inc.domain!=='dfm' && inc.domain!=='privat'){ uebersprungen.push({was:'Karte „'+String(inc.titel).slice(0,30)+'" ('+idTxt+')', grund:'unbekannte Karte — domain muss dfm oder privat sein'}); return; }
     }
+    const neuJetzt=!lok;   // Hotfix 12 §B2.3: Neuanlage in diesem Lauf → ohne gültiges matrixFeld „werkzeug"
     if(!lok){
       // §2.1 (v1.7.1): domain wirkt NUR bei Neuanlage — 'privat' legt eine
       // private Karte an, alles andere (auch fehlend) bleibt beim bisherigen dfm.
       const dom = inc.domain==='privat' ? 'privat' : 'dfm';
-      lok=neueKarte({ id: inc.id||uuid(), domain:dom,
+      lok=neueKarte({ id: inc.id||uuid(), domain:dom, matrixFeld:'werkzeug',
         airtableId: inc.airtableId || (dom==='dfm'?recId:null) });
       S.karten.push(lok); neu++; if(dom==='dfm') neuDfm++; else neuPrivat++;
       neuAngelegt.push(lok);
@@ -17173,9 +17185,9 @@ function syncImport(text, opt){
     if(inc.status==='archiviert' && lok.status!=='archiviert'){ lok.status='archiviert'; arch++; }
     // Beidseitige Felder → letzter Stand (Import bringt den abgestimmten Stand)
     if(inc.sollMin!=null) lok.sollMin=num(inc.sollMin);
-    // §1 (v2.0.0): das Matrixfeld reist mit. Unbekannte Werte werden still
-    // auf „ziel" normalisiert (matrixFeldVon), nie geraten.
-    if(inc.matrixFeld!=null) lok.matrixFeld=matrixFeldVon({matrixFeld:inc.matrixFeld});
+    // §1 (v2.0.0): das Matrixfeld reist mit. Hotfix 12 §B2: ohne Groß-/Kleinschreibung über matrixFeldNorm; unbekannt oder
+    // fehlend → bestehende Karte behält ihren Wert, neue Karte „werkzeug" (kein Rückfall auf „ziel" mehr).
+    { const mf=matrixFeldNorm(inc.matrixFeld); if(mf) lok.matrixFeld=mf; else if(neuJetzt) lok.matrixFeld='werkzeug'; }
     // §1 (v2.7.0): block = id eines Blocks im Tagesrahmen, gilt fuer heute
     if(inc.block!==undefined){ const bid=(inc.block==null || String(inc.block).trim()==='') ? null : String(inc.block).trim();
       lok.block=bid; lok.blockTag=bid?heuteApp():null; }
