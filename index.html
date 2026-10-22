@@ -6941,6 +6941,57 @@ function f12Abschicken(){
   e1Rendern(); f12NachUnten();
 }
 function f12MarkeWeg(was){ const e=f12EntwurfAktuell(), [art, id]=String(was).split(':'); if(art==='karte') e.karten=e.karten.filter(k=>k.id!==id); else e.anhaenge=e.anhaenge.filter(a=>a.id!==id); saveUi(); const m=el('chatMarken'); if(m && m.outerHTML!==undefined) m.outerHTML=f12MarkenHtml(e); f12SendenKnopf(); }
+/* ── §7 · ＋ Kontext (Ebene kontextwahl) ── */
+function f12Kw(){ if(!S.ui.kontextwahl || typeof S.ui.kontextwahl!=='object') S.ui.kontextwahl={ seg:'suche', suche:'', auswahl:[], ds:null }; const kw=S.ui.kontextwahl; if(!Array.isArray(kw.auswahl)) kw.auswahl=[]; return kw; }
+function f12KwDs(){ const kw=f12Kw(); if(!kw.ds || typeof kw.ds!=='object') kw.ds={ modus:'abteilungen', pfad:[], suche:'', filter:Object.assign({}, F7_FILTER_STD) }; if(!kw.ds.filter) kw.ds.filter=Object.assign({}, F7_FILTER_STD); return kw.ds; }
+function f12KontextOeffnen(){ const kw=f12Kw(); kw.seg='suche'; kw.suche=''; kw.auswahl=[]; kw.ds=null; saveUi(); e1Oeffnen('kontextwahl'); }
+function f12KwGewaehlt(id){ return f12Kw().auswahl.some(x=>x.id===id); }
+function f12KwKarte(id){
+  const k=S.karten.find(x=>x.id===id || x.airtableId===id); if(k) return { id:k.id, titel:k.titel||'?', airtableId:k.airtableId||null, domain:k.domain||'dfm' };
+  let a=null; Object.keys(F7.lager).forEach(key=>{ if(key.indexOf('aufg')===0 && F7.lager[key].daten){ const x=F7.lager[key].daten.find(r=>r.id===id); if(x) a=x; } });
+  return a ? { id:a.id, titel:a.Titel||'?', fsId:a.id, domain:'dfm' } : null; }
+function f12KwToggle(id){ const kw=f12Kw(), k=f12KwKarte(id); if(!k) return false; haptik(8); if(f12KwGewaehlt(id)) kw.auswahl=kw.auswahl.filter(x=>x.id!==id); else kw.auswahl.push(k); saveUi(); return true; }
+function f12KwFertig(){ const kw=f12Kw(), e=f12EntwurfAktuell(); kw.auswahl.forEach(k=>{ if(!e.karten.some(x=>x.id===k.id)) e.karten.push(k); }); kw.auswahl=[]; saveUi(); e1Oeffnen('chat'); f12Fokus(); }
+function f12KwPrivatSichtbar(){ const k=f12KanalAktuell(); return !k || k.Bereich==='privat'; }   // §7.6: private Karten nur im Privat-Kanal
+function f12PlusErsetzen(html){
+  return String(html||'').replace(/<button class="kl-play" data-klplay="([^"]+)"[^>]*>[^<]*<\/button>/g, (m, id)=>{ const on=f12KwGewaehlt(id); return '<button class="kl-add'+(on?' on':'')+'" data-f12add="'+id+'" aria-label="Kontext">'+(on?'✓':'＋')+'</button>'; })
+    .replace(/<div class="kl-z([^"]*)" style="([^"]*)" data-klkarte="([^"]+)">/g, (m, cls, st, id)=>'<div class="kl-z'+cls+(f12KwGewaehlt(id)?' gew':'')+'" style="'+st+'" data-klkarte="'+id+'" data-f12wahl="'+id+'">');
+}
+function f12AufgabenListeHtml(l){
+  const heute=heuteApp(); if(!l.length) return '<div class="leer">keine Aufgabe</div>';
+  return l.map(a=>{ const d=a.Deadline ? String(a.Deadline).slice(0,10) : '', ueber=d && d<heute, mx=a.Matrixfeld ? esc(a.Matrixfeld) : '<span style="color:#ffd23f">ohne Matrix</span>', on=f12KwGewaehlt(a.id);
+    return '<div class="f7-it'+(on?' gew':'')+'" data-f12wahl="'+esc(a.id)+'"><div class="bar"></div><div class="t">'+esc(a.Titel||'?')+'<div class="m">'+(d ? '<span'+(ueber?' class="red"':'')+'>'+anKurzDatum(d)+'</span>' : 'ohne Datum')+' · '+(num(a['Soll-Minuten'])>0 ? fmtDauer(num(a['Soll-Minuten'])) : 'ohne Soll')+' · <span class="mx">'+mx+'</span></div></div><button class="kl-add'+(on?' on':'')+'" data-f12add="'+esc(a.id)+'" aria-label="Kontext">'+(on?'✓':'＋')+'</button></div>'; }).join('');
+}
+function f12KontextHtml(){
+  const kw=f12Kw(), u=f12Ui(), kanal=f12KanalAktuell(), gs=kanal ? (f12Gespraeche(kanal)||[]).find(x=>x.gespraech===u.gespraech) : null;
+  const titel=gs ? gs.titel : (u.gespraech && /^tag-/.test(u.gespraech) ? f12TagTitel(u.gespraech.slice(4)) : 'Neues Gespräch');
+  let h='<div class="f3n-kopf f12-kopf"><button class="an-back" data-f12kwzurueck="1" aria-label="Zurück">‹</button><h3>＋ Kontext<small>für '+f12Avatar(kanal)+' '+esc(f12Name(kanal))+' · '+esc(titel)+'</small></h3><span class="sp"></span><button class="f12-fertig" data-f12fertig="1">Fertig ('+kw.auswahl.length+')</button></div>';
+  h+='<div class="f7-seg f12-seg">'+[['suche','🔍 Suche'],['abteilungen','🏢 Abteilungen'],['projekte','📁 Projekte'],['datei','📎 Datei']].map(s=>'<div class="'+(kw.seg===s[0]?'on':'')+'" data-f12seg="'+s[0]+'">'+s[1]+'</div>').join('')+'</div>';
+  h+='<div class="f12-inhalt" id="kwxInhalt">';
+  if(kw.seg==='suche'){
+    h+='<input class="f7-inp such" type="search" placeholder="Karten suchen …" data-f12kwsuche="1" value="'+esc(kw.suche||'')+'">';
+    h+='<div class="blk kl-blk su-liste">'+f12PlusErsetzen(kettenListeHtml({ karte:null, filter:kw.suche||'', kontext:'kontextwahl' }))+'</div>';
+    const q=String(kw.suche||'').trim().toLowerCase();
+    if(q){ const seen=new Set(), l=[]; Object.keys(F7.lager).forEach(key=>{ if(key.indexOf('aufg')===0 && F7.lager[key].daten) F7.lager[key].daten.forEach(a=>{ if(seen.has(a.id)) return; if(String(a.Titel||'').toLowerCase().indexOf(q)>=0 && !S.karten.some(k=>k.id===a.id || (k.airtableId && k.airtableId===a.id))){ seen.add(a.id); l.push(a); } }); });
+      h+='<h5 class="f7-h5 zw"><span>Lager · FocusSystem · '+l.length+'</span></h5>'+f12AufgabenListeHtml(l.slice(0,30)); }
+  } else if(kw.seg==='abteilungen' || kw.seg==='projekte'){
+    const ds=f12KwDs(); ds.modus=kw.seg;
+    let d=f7DurchsuchenHtml();
+    if(!ds.pfad.length) d=d.replace(/<input class="f7-inp" type="search"[^>]*>/, '').replace(/<div class="f7-seg"><div[^>]*>[^<]*<\/div><div[^>]*>[^<]*<\/div><\/div>/, '');
+    d=d.replace(/<div class="f7-save"[^>]*>[\s\S]*?<\/div>/, '');
+    h+=d;
+  } else h+='<div class="leer">📎 Datei öffnet Erfassen für dieses Gespräch.</div>';
+  return h+'</div>';
+}
+function f12KontextRendern(){ const b=el('kwxBody'); if(!b) return; b.innerHTML=f12KontextHtml(); }
+function f12KwSegment(seg){ const kw=f12Kw();
+  if(seg==='datei'){ const u=f12Ui(), kanal=f12KanalAktuell(), gs=kanal ? (f12Gespraeche(kanal)||[]).find(x=>x.gespraech===u.gespraech) : null;
+    e1Oeffnen('erfassen', { chat:{ tabelle:kanal ? kanal.Tabelle : F12_TRAINER_TABELLE, gespraech:u.gespraech, agent:kanal ? kanal.Agent : 'Trainer', name:f12Name(kanal||{ Agent:'Trainer' }), avatar:f12Avatar(kanal), titel:gs ? gs.titel : 'Neues Gespräch' } }); return; }
+  kw.seg=seg; saveUi(); e1Rendern(); }
+/* Die Durchsuchen-Ansicht arbeitet in der Kontextwahl auf einem eigenen Pfad und eigenen Filtern (§7.4) */
+{ const _alt=f7Ds; f7Ds=function(){ if(e1Art()==='kontextwahl') return f12KwDs(); return _alt(); }; }
+{ const _alt=f7AufgabenListeHtml; f7AufgabenListeHtml=function(l){ if(e1Art()==='kontextwahl') return f12AufgabenListeHtml(l); return _alt(l); }; }
+{ const _alt=kartenZeileHtml; kartenZeileHtml=function(k, opt){ if(e1Art()==='kontextwahl' && k && k.domain==='privat' && !f12KwPrivatSichtbar()) return ''; return _alt(k, opt); }; }   // §7.6
 /* ── F12 Ende ── */
 
 /* ══════════════════════════════════════════════════════════════════════
