@@ -93,7 +93,7 @@ F12.pf['pf2'].r.Status='erledigt'; F12.pf['pf2'].r.Entscheidung='abgelehnt'; F12
 var hk2=f12KartenBloeckeHtml(KT, A2);
 pruef('Entscheidung im Postfach erscheint im Chat: ✗ abgelehnt <Uhrzeit> im Postfach · „Grund", Zeile gedimmt, Überschrift grau', hk2.indexOf('✗ abgelehnt '+f12Uhrzeit(T)+' im Postfach · „30 Min reichen“')>=0 && /kl-z weg/.test(hk2) && /class="lab grau">✏️ ÄNDERUNG</.test(hk2), hk2.slice(0,700));
 _gesendet.length=0; f12PfAblehnen('pf3');
-pruef('✗ Ablehnen öffnet das Blatt mit Pflicht-Grund (wie im Postfach), auch für Datensätze außerhalb des Lagers', sheetOffen() && el('sheetBody').innerHTML.indexOf('f7pfGrund')>=0); closeSheet();
+pruef('✗ Ablehnen öffnet das Blatt mit Pflicht-Grund (wie im Postfach), auch für Datensätze außerhalb des Lagers', el('sheetBody').innerHTML.indexOf('f7pfGrund')>=0 && el('sheetBody').innerHTML.indexOf('Zielsteuerung: Vorschlag')>=0, el('sheetBody').innerHTML.slice(0,200)); closeSheet();
 
 // ══ §6 · Eingabe ══
 _els.f12Text={ style:{}, scrollHeight:35, value:'' };
@@ -115,6 +115,7 @@ f12Ui().kanal='k-tr'; f12Ui().gespraech='g1'; delete f12Ui().entwurf[f12EntwurfK
 f12KontextOeffnen();
 pruef('＋ öffnet die Ebene kontextwahl mit Segment Suche', e1Art()==='kontextwahl' && f12Kw().seg==='suche' && f12Kw().auswahl.length===0);
 pruef('Kontext wählen: ＋ nimmt die Karte auf, erneut tippen nimmt sie heraus', f12KwToggle('t-dfm')===true && f12Kw().auswahl.length===1 && f12KwToggle('t-dfm')===true && f12Kw().auswahl.length===0);
+if(!ketteHat('t-dfm')) ketteToggle('t-dfm');   // die Kettenliste zeigt aufgeklappt nur die Aktuelle Kette
 f12KwToggle('t-dfm'); f12KwSegment('projekte'); var n1=f12Kw().auswahl.length; f12KwSegment('abteilungen'); f12KwSegment('suche');
 pruef('Auswahl bleibt beim Wechsel der Segmente erhalten', n1===1 && f12Kw().auswahl.length===1 && f12Kw().seg==='suche');
 var hw=f12KontextHtml();
@@ -140,7 +141,7 @@ f12ErfassenUebernehmen(C, { wartend:true, id:'q1' }, 'ohne Verbindung', null);
 pruef('ohne Inbox-id (Warteschlange): Toast, keine Marke', E8.anhaenge.length===1 && _toasts.some(function(t){ return /Datei wartet auf den Mac mini/.test(t); }), _toasts.join(' | '));
 e1Oeffnen('erfassen', { chat:C }); var hf=f7ErfassenHtml();
 pruef('Erfassen im Chat-Betrieb: Kopf „📎 Datei", Mail-Weg ausgegraut, fester Bezug, Knopf „In die Nachricht übernehmen", Hinweis', hf.indexOf('📎 Datei<small>für 🏋️ Trainer · Paket 34 angekommen?')>=0 && /data-f7quelle="mail"/.test(hf) && / aus" data-f7quelle="mail"/.test(hf) && hf.indexOf('💬 Gespräch „Paket 34 angekommen?“ mit dem Trainer · Ablage über den Erfassungs-Agenten')>=0 && hf.indexOf('In die Nachricht übernehmen')>=0 && hf.indexOf('data-f7bezug=')<0 && hf.indexOf('darf sie lesen')>=0, hf.slice(0,600));
-_gesendet.length=0; F7.erf=null; f7Erf().text='Text aus Erfassen'; _els.ebene1=_els.ebene1||dummyEl();
+_gesendet.length=0; F7.erf=null; f7Erf().text='Text aus Erfassen'; f7Erf().datei={ name:'Screenshot.png', typ:'image/png', groesse:1024, base64:'AAAA' };   // das Textfeld ist im jsc-DOM leer, die Datei trägt den Eintrag
 f7ErfassenSenden();
 var ge=_gesendet.filter(function(g){ return g.werkzeug==='app:erfassen'; })[0];
 pruef('Übernehmen sendet app:erfassen mit Bezug chat (Tabelle, Gespräch, Agent)', !!ge && ge.args.bezug.art==='chat' && ge.args.bezug.tabelle==='Privat_Chat · Trainer' && ge.args.bezug.gespraech==='g1' && ge.args.bezug.name==='Trainer', JSON.stringify(ge && ge.args.bezug));
@@ -183,6 +184,7 @@ _f6Claude={ ts:Date.now(), laeuft:false, fehler:'', rows:[
   { id:'l2', Lauf:'l2', Zeit:heute+'T08:10:00Z', Start:heute+'T08:10:00Z', Agent:'Pipeline-Agent', 'Auslöser':'Takt', 'Dauer (s)':120, 'Tokens ein':2000, 'Tokens aus':200, Abteilung:'Sales', Kanal:'' },
   { id:'l3', Lauf:'l3', Zeit:heute+'T08:20:00Z', Start:heute+'T08:20:00Z', Agent:'Pipeline-Agent', 'Auslöser':'Auftrag', 'Dauer (s)':30, 'Tokens ein':500, 'Tokens aus':50, Abteilung:'Sales', Kanal:'' },
   { id:'l4', Lauf:'l4', Zeit:heute+'T08:30:00Z', Start:heute+'T08:30:00Z', Agent:'Dienst', 'Auslöser':'live', 'Dauer (s)':5, 'Tokens ein':0, 'Tokens aus':0, Abteilung:null, Kanal:'' } ] };
+S.ui.f6Auf=Object.assign({}, S.ui.f6Auf, { claude:true });   // Erklärung aufgeklappt
 var hc=f6Claude(analyseFenster(), f6Dom());
 pruef('Statistik: Liste je Abteilung (Sales, Trainerstab, ohne Abteilung), gestapelt nach Auslöser mit Legende Takt · Auftrag · Chat · live', hc.indexOf('data-f6auf="claude:Sales"')>=0 && hc.indexOf('data-f6auf="claude:Trainerstab"')>=0 && hc.indexOf('ohne Abteilung')>=0 && hc.indexOf('#2dd4bf')>=0 && hc.indexOf('>Takt<')>=0 && hc.indexOf('>Auftrag<')>=0 && hc.indexOf('>Chat<')>=0 && hc.indexOf('live (alte Zeilen)')>=0, hc.slice(hc.indexOf('f6-ag'), hc.indexOf('f6-ag')+400));
 pruef('Statistik: Sales zählt 2 Läufe, 2:30 Laufzeit; Chat-Antwortzeit heute Ø 1:00 · Ø 1:00', /claude:Sales"[^]*?<span>2 · /.test(hc) && hc.indexOf('Chat-Antwortzeit heute')>=0 && hc.indexOf('Ø 1:00 · Ø 1:00')>=0, hc.slice(hc.indexOf('Chat-Antwortzeit')-120, hc.indexOf('Chat-Antwortzeit')+60));
