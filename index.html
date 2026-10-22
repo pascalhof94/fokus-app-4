@@ -3405,6 +3405,41 @@ const FSLive = (()=>{
     }catch(e){ return false; }
   }
 
+  // ── Hotfix 14 §11 · Einstellungen „📱 Geräte“ ─────────────────────
+  // Geräte laden (GET /api/app/geraete), Gerät benennen (POST /api/app/geraet), Führung setzen (POST /api/app/fuehrung).
+  async function geraeteLaden(){
+    if(!gekoppelt()) return [];
+    geraeteLaufen=true;
+    try{ const d=await aufruf('GET', '/api/app/geraete', undefined, { zeitgrenze:15000 }); geraeteCache=(d && Array.isArray(d.geraete)) ? d.geraete : []; return geraeteCache; }
+    finally{ geraeteLaufen=false; }
+  }
+  async function geraetBenennen(name){
+    const n=String(name||'').trim();
+    if(!n){ try{ toast('Name fehlt'); }catch(e){} return false; }
+    try{
+      await aufruf('POST', '/api/app/geraet', JSON.stringify({ geraet_id:geraet(), anzeigename:n.slice(0,40) }));
+      try{ toast('Name gespeichert'); }catch(e){}
+      await geraeteLaden(); try{ fsGeraeteListeFuellen(geraeteCache); }catch(e){} hinweisAnzeigen();
+      return true;
+    }catch(e){ try{ toast(String((e && e.message)||'Mac mini nicht erreichbar')); }catch(x){} return false; }
+  }
+  async function fuehrungSetzen(id){
+    id=String(id||'');
+    if(id===geraet()){   // eigenes Gerät: wie §10.4 Schritte 1–5, ohne Tipp
+      const r=await fuehrungUebernehmen(null, null);
+      try{ await geraeteLaden(); fsGeraeteListeFuellen(geraeteCache); }catch(e){}
+      return r;
+    }
+    try{
+      const d=await aufruf('POST', '/api/app/fuehrung', JSON.stringify({ geraet_id:id }));
+      ichFuehre=false; fuehrend=(d && d.fuehrend)||id; fuehrungBekannt=true;
+      hinweisAnzeigen(); anzeigen();
+      try{ await geraeteLaden(); fsGeraeteListeFuellen(geraeteCache); }catch(e){}
+      standHolen(true);   // ab jetzt holt dieses Gerät den Stand
+      return true;
+    }catch(e){ try{ toast(String((e && e.message)||'Mac mini nicht erreichbar')); }catch(x){} return false; }
+  }
+
   // ── Kopplung ──────────────────────────────────────────────────────
   async function koppeln(){
     try{
@@ -3526,7 +3561,8 @@ const FSLive = (()=>{
     }catch(e){}
   }
   return { vormerken, spiegeln, senden, lesen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
-    warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length, warteschlangeHat:(id)=>warteschlange.some(x=>x && x.id===id) };
+    warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length, warteschlangeHat:(id)=>warteschlange.some(x=>x && x.id===id),
+    geraeteLaden, geraetBenennen, fuehrungSetzen, ichFuehre:()=>ichFuehre, geraet, koennteSchreiben };   // Hotfix 14 §11 (geraet: Kennung für „dieses Gerät“ in den Einstellungen)
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
@@ -18317,6 +18353,21 @@ function einstAbschnitte(h){
       (auf ? '<div class="es-inh">'+(h3 ? innen.replace(h3[0], '') : innen)+'</div>' : '')+'</div>';
   }).join('');
 }
+// Hotfix 14 §11 · Liste der Geräte für die Karte „📱 Geräte“: je Gerät eine kv-Zeile, darunter das Namensfeld dieses Geräts.
+function fsGeraeteListeHtml(liste){
+  const ich=FSLive.geraet(); let x='';
+  for(const g of (liste||[])){
+    const name=g.anzeigename ? esc(g.anzeigename) : esc(String(g.name||'').slice(0,30));
+    let zs='—'; try{ if(g.zuletzt_gesehen_am) zs=new Date(g.zuletzt_gesehen_am).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' }); }catch(e){}
+    x+='<div class="kv"><span>'+name+(g.geraet_id===ich ? ' · dieses Gerät' : '')+'<br><small>zuletzt gesehen '+zs+'</small></span><b>'+
+      (g.fuehrend ? '<span class="chip on gruen">führend</span>' : '<button class="btn sm" data-fsgeraet-fuehren="'+esc(g.geraet_id)+'">Führend setzen</button>')+'</b></div>';
+  }
+  const eigen=(liste||[]).find(g=>g.geraet_id===ich);
+  x+='<div class="field" style="margin-top:10px"><label>Name dieses Geräts</label><input type="text" id="fsGeraetName" value="'+esc((eigen && eigen.anzeigename)||'')+'" maxlength="40" autocapitalize="off" autocorrect="off" spellcheck="false"></div>'+
+     '<div class="btnrow"><button class="btn sm" data-fsgeraet-name="1">Speichern</button></div>';
+  return x;
+}
+function fsGeraeteListeFuellen(liste){ const b=el('fsGeraeteListe'); if(b) b.innerHTML=fsGeraeteListeHtml(liste); }
 function renderEinst(){
   const s=S.settings;
   let h='';
@@ -18479,6 +18530,12 @@ function renderEinst(){
       '<button class="chip '+(S.ui.debugTap?'on gruen':'')+'" data-debugtap="1">'+(S.ui.debugTap?'AN':'aus')+'</button></div>'+
     (S.ui.debugTap?'<div class="hint">Jede Tap-Fläche ist umrandet: <span style="color:#6dd3e0">Eingabefelder cyan</span>, <span style="color:#f2b84b">Chips amber</span>, <span style="color:#f66d6d">Buttons/Zonen rot</span>. Deckt sich der Rahmen nicht mit dem sichtbaren Feld, liegt dort der Fehler.</div>':'')+
   '</div>';
+  // Hotfix 14 §11: Geräte — alle gekoppelten Geräte der App 4.0, wer führt, Führung setzen, Name dieses Geräts
+  h+='<div class="card" data-fsgeraet="1"><h3>📱 Geräte</h3>'+(FSLive.gekoppelt()
+    ? '<div id="fsGeraeteListe"><p class="d">lädt …</p></div>'
+    : '<p class="d">Dieses Gerät ist nicht mit dem Mac mini gekoppelt.</p><div class="btnrow"><button class="btn sm" data-fsgeraet-koppeln="1">Koppeln</button></div>')+
+    '</div>';
+  if(FSLive.gekoppelt()) FSLive.geraeteLaden().then(l=>fsGeraeteListeFuellen(l)).catch(e=>{ const b=el('fsGeraeteListe'); if(b) b.innerHTML='<p class="d">'+esc(String((e && e.message)||'Mac mini nicht erreichbar'))+'</p>'; });
   // (v1.13.4): Speicher — Belegung sichtbar, Aufräumen per Knopf
   h+=(function(){
     const b=speicherBelegung(), baks=speicherBaks();
@@ -23593,6 +23650,10 @@ el('einstBody').addEventListener('click', e=>{
   if(e.target.closest('#btnGruppeNeu')){ const n=(prompt('Name der Gruppe:')||'').trim(); if(n){ const g=neueGruppe({name:n}); S.gruppen.push(g); saveGruppen(); renderEinst(); oeffneGruppeZuordnen(g.id); } return; }
   const ga=e.target.closest('[data-grpassign]'); if(ga){ oeffneGruppeZuordnen(ga.dataset.grpassign); return; }
   const gk=e.target.closest('[data-grpakt]'); if(gk){ oeffneGruppeAktion(gk.dataset.grpakt); return; }
+  // Hotfix 14 §11: Geräte — Führend setzen, Name speichern, Koppeln
+  { const kf=e.target.closest('[data-fsgeraet-fuehren]'); if(kf){ FSLive.fuehrungSetzen(kf.dataset.fsgeraetFuehren); return; }
+    if(e.target.closest('[data-fsgeraet-name]')){ FSLive.geraetBenennen((el('fsGeraetName')||{}).value); return; }
+    if(e.target.closest('[data-fsgeraet-koppeln]')){ FSLive.koppeln(); return; } }
   if(e.target.closest('[data-debugtap]')){ setDebugTap(!S.ui.debugTap); renderEinst(); return; }   // V3
   // §2.5 (v1.13.0): listenweiter Standard-Reset je Domäne (mit Vorschau-Zahl)
   const sre=e.target.closest('[data-standardreset]'); if(sre){
