@@ -3431,6 +3431,16 @@ const FSLive = (()=>{
       try{ await geraeteLaden(); fsGeraeteListeFuellen(geraeteCache); }catch(e){}
       return r;
     }
+    // Hotfix 14.1 §6 · Führung erst abgeben, wenn alle gemeinsamen Schlüssel gesendet sind (höchstens 5 s); sonst bleibt sie hier
+    if(ichFuehre){
+      const bis=Date.now()+5000;
+      const offenGemeinsam=()=>Array.from(offen.keys()).some(k=>GEMEINSAM.indexOf(k)>=0);
+      while(Date.now()<bis && (laeuft || offenGemeinsam())){
+        if(!laeuft) await spiegeln();
+        if(laeuft || offenGemeinsam()) await new Promise(r=>setTimeout(r,200));
+      }
+      if(laeuft || offenGemeinsam()){ try{ toast('Noch nicht alles gesendet — Führung bleibt auf diesem Gerät'); }catch(e){} return false; }
+    }
     try{
       const d=await aufruf('POST', '/api/app/fuehrung', JSON.stringify({ geraet_id:id }));
       ichFuehre=false; fuehrend=(d && d.fuehrend)||id; fuehrungBekannt=true;
