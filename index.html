@@ -2866,6 +2866,23 @@ body.breit #srChat .f12-seite{display:flex;flex-direction:column;flex:1;min-heig
 .f7-send.aus{opacity:.65;pointer-events:none}
 .f15-kreis{display:inline-block;width:14px;height:14px;border:2px solid #9a9ca2;border-top-color:#3b82f6;border-radius:50%;vertical-align:-2px;margin-right:6px;animation:f15dreh .8s linear infinite}
 @keyframes f15dreh{to{transform:rotate(360deg)}}
+/* Hotfix 15 §5 · Karten-Ansicht: Spalte mit fester Höhe (Kopf · Inhalt scrollt · Knopfleiste unten fest) */
+body[data-e1="agentenkarte"] #e1-agentenkarte{display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}
+#e1-agentenkarte .f15-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.f15-ak{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 10px 12px}
+.f15-kopf{flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px 8px;border-bottom:1px solid #2a2d33}.f15-kopf b{flex:1;font-size:17px;min-width:0}.f15-kopf .meta{font-size:12px;color:#9a9ca2;white-space:nowrap}
+.f15-zu{background:none;border:0;color:#93c5fd;font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 4px 0 8px;cursor:pointer}
+.f15-verlauf{font-size:12px;color:#9a9ca2;border-left:2px solid #262a32;padding-left:8px;margin:10px 0 8px;cursor:pointer}.f15-verlauf .r{margin:0 0 8px}.f15-verlauf .r:last-child{margin-bottom:0}.f15-verlauf b{color:#e8e9ec;font-weight:700}.f15-verlauf .x{white-space:pre-wrap;color:#c9cbd0;margin-top:2px}
+.f15-block{background:#1a1d22;border-radius:12px;padding:10px 12px;margin-bottom:8px}.f15-block h4{margin:0 0 6px;font-size:12px;color:#9a9ca2;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.f15-block .titel{font-size:16px;font-weight:800;margin-bottom:6px;line-height:1.3}.f15-block .out{font-size:14.5px;line-height:1.4;white-space:pre-wrap;color:#e8e9ec}.f15-block .why{font-size:12.5px;color:#9a9ca2;margin-top:8px;white-space:pre-wrap}
+.f15-opt{display:block;width:100%;text-align:left;background:#262a32;border:1px solid rgba(255,255,255,.08);color:#e8e9ec;border-radius:10px;padding:10px 12px;margin-bottom:6px;font:inherit;font-size:14px;min-height:44px;cursor:pointer}
+.f15-opt.an{background:rgba(59,130,246,.22);border:2px solid #3b82f6;font-weight:700;padding:9px 11px}
+.f15-text{display:block;width:100%;box-sizing:border-box;background:#262a32;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;min-height:72px;font-size:16px;color:#e8e9ec;font-family:inherit;resize:vertical;outline:none}
+.f15-hin{font-size:12px;color:#9a9ca2;margin-top:6px}
+.f15-knoepfe{flex:none;display:flex;gap:6px;padding:8px 10px calc(var(--sab) + 8px);border-top:1px solid #2a2d33;background:#121418}
+.f15-knoepfe .k{flex:1;border-radius:12px;padding:12px 6px;text-align:center;font-weight:600;font-size:14px;border:1px solid rgba(255,255,255,.08);background:#1a1d22;color:#e8e9ec;font-family:inherit;min-height:44px;cursor:pointer}
+.f15-knoepfe .k.f{background:#3ecf8e;color:#06210f;border:0}.f15-knoepfe .k.s{background:#3b82f6;color:#fff;border:0}.f15-knoepfe .k.aus{opacity:.45;pointer-events:none}.f15-knoepfe .k.r{color:#f66d6d}
+.f7-m.t.f15-hk{cursor:pointer;border-color:#FF9F0A}.f15-hko{font-size:12.5px;font-weight:700;color:#93c5fd;margin-top:6px}
 /* Hotfix 15 §4 · Kette „📬 Agenten-Karten“: Kartenzeile BLAU 18 % mit Rand ORANGE; laufende Überarbeitung gestrichelt GRAU mit Ladekreis */
 .f15-sort{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9a9ca2;margin:4px 2px 6px}
 .kl-z.f15-kr{display:flex;cursor:pointer;border-left:1px solid var(--rand);border-right:1px solid var(--rand);padding:9px 11px}.kl-z.f15-kr .kl-t{flex:1;min-width:0}.kl-z.f15-kr .pf{color:#9a9ca2;font-size:18px;flex:none}
@@ -2992,6 +3009,8 @@ body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4s
   <!-- 4.1 · Chat-Räume §7: ＋ Kontext (Karten, Dateien) für ein Gespräch -->
   <section class="e1" id="e1-kontextwahl" data-e1="kontextwahl"><div class="an-body" id="kwxBody"></div></section>
   <section class="e1" id="e1-plan" data-e1="plan"><div class="an-body" id="planBody"></div></section>
+  <!-- Hotfix 15 §5: Karten-Ansicht je Postfach-Karte (Kopf · Verlauf · Karte · Optionen · Antwort · feste Knopfleiste) -->
+  <section class="e1" id="e1-agentenkarte" data-e1="agentenkarte"><div class="f15-body" id="akBody"></div><div class="f15-drop" data-f15drop="1" hidden>⬇︎ Datei loslassen zum Anhängen</div></section>
 </div>
 
 <!-- 4.0 · Paket 9: die Spalten links (Suche, Gruppen, Schnellplätze) und rechts (Chat, Erfassen) für iPad quer und Mac -->
@@ -6263,7 +6282,7 @@ function renderPostfach(){
 }
 function f7PfEntscheiden(id, ent, extra){
   extra=extra||{}; const rows=f7Postfach()||[], r=rows.find(x=>x.id===id) || (f7PostfachOhneKarte()||[]).find(x=>x.id===id) || extra.datensatz || (typeof f12PfRecord==='function' ? f12PfRecord(id) : null); if(!r) return;   // Hotfix 9: auch Nachhol-Einträge · 4.1 §5.5: auch der im Chat gelesene Datensatz
-  if(ent==='freigegeben' || ent==='angepasst'){   // Hotfix 7 · Abschnitt 2: Freigeben (auch mit Anpassung) legt die Karte aus dem Entwurf an, nie doppelt
+  if((ent==='freigegeben' || ent==='angepasst') && !extra.keineKarte){   // Hotfix 7 · Abschnitt 2: Freigeben (auch mit Anpassung) legt die Karte aus dem Entwurf an, nie doppelt · Hotfix 15 §6.1: „↻ Senden“ nicht
     const txt=(ent==='angepasst' && extra.felder && extra.felder['Pascals Anpassung']!=null) ? extra.felder['Pascals Anpassung'] : null;
     const kk=f7PfKarteLesen(r, txt);
     if(kk && !(S.meta.postfachKarten||{})[id]){ const k=f7PfKarteAnlegen(r, kk), alt=(extra.felder||{})['Pascals Anpassung'];
@@ -6276,6 +6295,7 @@ function f7PfEntscheiden(id, ent, extra){
   saveMeta(); f7PostfachStandSetzen((L && L.daten)||[]); haptik(10); renderPostfach();
   if(typeof f12PfStand==='function') f12PfStand(id, ent, felder, !!extra.vonChat || F12.pfAusChat===id);   // Hotfix 13 §3.1: Stand im Chat, egal von wo entschieden
   if(ent==='besprochen') f12TrainerOeffnen('Zu „'+String(r.Titel||'')+'“: ');   // 4.1 §9.3
+  if(typeof f15NachEntscheidung==='function') f15NachEntscheidung(id);   // Hotfix 15 §4.4: in der Karten-Ansicht weiter zur nächsten offenen Karte
 }
 function f7PfAnpassen(id){ const r=(f7Postfach()||[]).find(x=>x.id===id); if(!r) return;
   openSheet('✏️ Anpassen', '<p class="d"><b>'+esc(r.Titel||'')+'</b></p><div class="field"><label>Entwurf, so wie er rausgehen soll</label><textarea id="f7pfText" rows="6">'+esc(r['Output/Entwurf']||'')+'</textarea></div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-f7pfanpassengo="'+esc(id)+'">Freigeben mit Anpassung</button>'); }
@@ -6415,7 +6435,8 @@ function f7PlanHtml(){
 /* ══ Ebene 1 und Seiten: Zeichnen, Klicks, Haken ══ */
 { const _alt=e1Rendern;
   e1Rendern=function(){ const a=e1Art(); if(!a) return;
-    try{ if(a==='durchsuchen'){ el('dsBody').innerHTML=f7DurchsuchenHtml(); return; } if(a==='erfassen'){ el('erfBody').innerHTML=f7ErfassenHtml(); f7ErfasstStatus(); return; } if(a==='routinen'){ el('routBody').innerHTML=f7RoutinenHtml(); return; }
+    try{ if(a==='agentenkarte'){ f15KarteRendern(); return; }   // Hotfix 15 §5
+      if(a==='durchsuchen'){ el('dsBody').innerHTML=f7DurchsuchenHtml(); return; } if(a==='erfassen'){ el('erfBody').innerHTML=f7ErfassenHtml(); f7ErfasstStatus(); return; } if(a==='routinen'){ el('routBody').innerHTML=f7RoutinenHtml(); return; }
       if(a==='chat'){ f12Rendern(); return; } if(a==='kontextwahl'){ f12KontextRendern(); return; } if(a==='plan'){ el('planBody').innerHTML=f7PlanHtml(); return; } }catch(e){ console.warn('Paket 7', a, e); }   // 4.1: Chat-Räume
     _alt(); }; }
 const F7_NEUKARTE_HTML='<button class="f7-neukarte" data-f7neukarte="1">＋ Karte erstellen</button>';   // Hotfix 9 · Abschnitt 1: ganz unten in der Suche
@@ -7166,10 +7187,10 @@ function f12NachrichtHtml(kanal, r, opt){
   opt=opt||{}; const vonPascal=String(r.Von||'')==='Pascal', art=String(r.Art||''), text=f12Text(kanal, r), agent=f12Name(kanal);
   let h='<div class="f12-n" data-mid="'+esc(r.id)+'">';
   if(vonPascal){ const s=f12Stand(kanal, r); h+='<div class="f7-m p">'+f12TextHtml(text)+f12KartenMarkenHtml(kanal, r)+'<em class="f12-st '+s.k+'" data-f12st="'+esc(r.id)+'">'+s.html+'</em></div>'; }
-  else { const kn=f12Knoepfe(text);
-    h+='<div class="f7-m t'+(art==='Hinweis' ? ' hinweis' : '')+'">'+f12TextHtml(kn ? kn.body : text)+'<small>'+(art==='Hinweis' ? '⚠️ Hinweis · ' : esc(agent)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
+  else { const kn=f12Knoepfe(text), pfKarte=(art==='Hinweis' && String(r.Anlass||'')==='Postfach' && f7Link(r.Postfach).length) ? String(f7Link(r.Postfach)[0].id) : null;   // Hotfix 15 §5.1: Hinweis zu einer Agenten-Karte
+    h+='<div class="f7-m t'+(art==='Hinweis' ? ' hinweis' : '')+(pfKarte ? ' f15-hk' : '')+'"'+(pfKarte ? ' data-f15karte="'+esc(pfKarte)+'"' : '')+'>'+f12TextHtml(kn ? kn.body : text)+(pfKarte ? '<div class="f15-hko">Karte öffnen ›</div>' : '')+'<small>'+(art==='Hinweis' ? (pfKarte ? '📬 Agenten-Karte · ' : '⚠️ Hinweis · ') : esc(agent)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
     if(kn) h+=f12KnoepfeHtml(r, { optionen:kn.optionen, aktiv:opt.letzte===undefined ? true : opt.letzte });
-    if(f7Link(r.Postfach).length) h+=f12KartenBloeckeHtml(kanal, r); }
+    if(f7Link(r.Postfach).length && !pfKarte) h+=f12KartenBloeckeHtml(kanal, r); }
   return h+'</div>';
 }
 function f12LetzteAntwortId(rows){ for(let i=(rows||[]).length-1;i>=0;i--){ if(String(rows[i].Von||'')!=='Pascal' && !rows[i].lokal) return rows[i].id; } return null; }
@@ -7462,6 +7483,98 @@ function f15KetteZeilenHtml(){
 }
 /* §7.4 · die Kette setzen und öffnen (Ebene „Karten“ mit der Kettenliste) */
 function f15KetteOeffnen(){ S.ui.tkWahl=F15_TK; saveUi(); haptik(6); ebeneSetzen({ seite:'fokus', e1:'plus' }); }
+/* ── §5 · Karten-Ansicht ── */
+function f15Karte(){ return F15.karte; }
+/* Datensatz einer Karte: offenes Lager, dann die hier geladenen (F15.pf), dann die im Chat gelesenen (F12.pf); fehlt er, wird er geladen */
+function f15PfRecord(id){ const o=(F7.lager.postfach && Array.isArray(F7.lager.postfach.daten)) ? F7.lager.postfach.daten.find(x=>x.id===id) : null; if(o) return o; const P=F15.pf[id]; if(P && P.r) return P.r; const Q=F12.pf[id]; return (Q && Q.r) ? Q.r : null; }
+function f15PfLaden(id){ if(!id || F15.lade[id] || !FSLive.gekoppelt()) return; F15.lade[id]=true;
+  FSLive.lesen('datensatz_lesen', { tabelle:'Postfach', id }).then(d=>{ const r=d && (d.datensatz||d); if(r && r.id){ F15.pf[id]={ ts:Date.now(), r }; if(e1Art()==='agentenkarte') f15KarteRendern(); } }).catch(()=>{}).then(()=>{ F15.lade[id]=false; }); }
+/* §5.3 · frühere Runden über „Vorgänger“ (höchstens 20), älteste zuerst; fehlende werden nachgeladen */
+function f15VorgaengerKette(r){ const out=[]; let x=r, n=0; while(x && n<20){ const v=f7Link(x['Vorgänger'])[0]; if(!v) break; const vr=f15PfRecord(String(v.id)); if(!vr){ f15PfLaden(String(v.id)); out.push({ id:String(v.id), laedt:true }); break; } out.push(vr); x=vr; n++; } return out.reverse(); }
+/* §5.5 · Optionen: die Zeilen „- Text“ unter einer Zeile, die mit „Optionen:“ beginnt, bis zur nächsten Leerzeile (Lesen der Listenzeilen wie f12Knoepfe) */
+function f15Optionen(text){ const lines=String(text||'').replace(/\r/g,'').split('\n'); const i=lines.findIndex(l=>/^\s*Optionen:/i.test(l)); if(i<0) return [];
+  const out=[]; for(let j=i+1;j<lines.length;j++){ const l=lines[j]; if(!l.trim()) break; const m=l.match(/^\s*[-•]\s+(.*?)\s*$/); if(m) out.push(m[1]); }
+  return out; }
+function f15OutputOhneOptionen(text){ const lines=String(text||'').replace(/\r/g,'').split('\n'); const i=lines.findIndex(l=>/^\s*Optionen:/i.test(l)); if(i<0) return String(text||''); let j=i+1; while(j<lines.length && lines[j].trim() && /^\s*[-•]\s+/.test(lines[j])) j++; return lines.slice(0,i).concat(lines.slice(j)).join('\n').replace(/\n{3,}/g,'\n\n').trim(); }
+function f15KarteOeffnen(id, opt){ opt=opt||{}; if(!id) return; F15.karte={ id:String(id), optionen:[], text:'', datei:null, ausKette:!!opt.ausKette, seit:Date.now() }; F15.laeuft=false;
+  if(!f15PfRecord(id)) f15PfLaden(String(id)); f15HinweisGelesen(String(id)); e1Oeffnen('agentenkarte'); }
+function f15KarteHtml(){
+  const K=F15.karte; if(!K) return '<div class="leer">keine Karte</div>';
+  const r=f15PfRecord(K.id);
+  const kopf=(titel, meta)=>'<div class="f15-kopf"><b>'+titel+'</b><span class="meta">'+meta+'</span><button class="f15-zu" data-e1zu="1">Schließen</button></div>';
+  if(!r) return kopf('Karte', '')+'<div class="f15-ak"><div class="leer">'+(FSLive.gekoppelt() ? 'lädt aus FocusSystem …' : 'nicht gekoppelt')+'</div></div><div class="f15-knoepfe"></div>';
+  const erledigt=String(r.Status||'').toLowerCase()==='erledigt', opts=f15Optionen(r['Output/Entwurf']), runde=f15Runde(r), zeit=r.erstellt_am ? f12Uhrzeit(r.erstellt_am) : '';
+  let h=kopf(esc(r.Art||'Karte'), esc(r.Agent||'')+(r['Sicherheit %']!=null ? ' · '+Math.round(num(r['Sicherheit %']))+' %' : ''));
+  h+='<div class="f15-ak">';
+  // §5.3 Verlauf
+  const fr=f15VorgaengerKette(r), auf=!!F15.verlaufAuf[K.id];
+  if(!fr.length) h+='<div class="f15-verlauf">Runde '+runde+' · '+esc(zeit)+' · keine frühere Runde</div>';
+  else { h+='<div class="f15-verlauf" data-f15verlauf="1">'+(auf ? fr.map(v=>v.laedt ? '<div class="r">lädt frühere Runde …</div>' : '<div class="r"><b>Runde '+f15Runde(v)+' · '+esc(v.erstellt_am ? anKurzDatum(String(v.erstellt_am).slice(0,10))+' '+f12Uhrzeit(v.erstellt_am) : '')+'</b><div class="x">'+esc(String(v['Output/Entwurf']||'').replace(/\s+/g,' ').trim().slice(0,160))+(String(v['Output/Entwurf']||'').length>160 ? ' …' : '')+'</div>'+(v['Pascals Anpassung'] ? '<div class="x">✏️ '+esc(String(v['Pascals Anpassung']).replace(/\s+/g,' ').trim().slice(0,160))+'</div>' : '')+'</div>').join('')+'<div class="r">Runde '+runde+' · '+esc(zeit)+' ▴</div>'
+      : 'Runde '+runde+' · '+esc(zeit)+' · '+fr.length+' frühere Runde'+(fr.length===1?'':'n')+' ▾')+'</div>'; }
+  // §5.4 Karte
+  h+='<div class="f15-block"><div class="titel">'+esc(r.Titel||'')+'</div><div class="out">'+f12TextHtml(f15OutputOhneOptionen(r['Output/Entwurf']))+'</div>'+(r['Begründung'] ? '<div class="why">Begründung: '+esc(r['Begründung'])+'</div>' : '')+(erledigt ? '<div class="why">Entschieden: '+esc(r.Entscheidung||'')+'</div>' : '')+'</div>';
+  // §5.5 Optionen (Mehrfachwahl)
+  if(opts.length) h+='<div class="f15-block"><h4>Optionen</h4>'+opts.map((o,i)=>{ const an=K.optionen.indexOf(o)>=0; return '<button type="button" class="f15-opt'+(an?' an':'')+'" data-f15opt="'+i+'">'+(an?'✓ ':'')+esc(o)+'</button>'; }).join('')+'</div>';
+  // §5.6 Antwort
+  h+='<div class="f15-block"><h4>Deine Antwort an den Agenten</h4><textarea class="f15-text" id="f15Text" data-f15text="1" rows="3" placeholder="Freitext … Datei per Ziehen oder Einfügen">'+esc(K.text||'')+'</textarea>'+f15DateiKachelHtml(K.datei, { ziel:'karte', hinweis:'wird mit der Antwort übertragen' })+'<div class="f15-hin">Datei per Ziehen oder Einfügen anhängen · eine Datei je Antwort</div></div>';
+  h+='</div>';
+  // §5.7 Knopfleiste
+  const sendenAktiv=!erledigt && (K.optionen.length>0 || !!String(K.text||'').trim() || !!K.datei);
+  h+='<div class="f15-knoepfe">'+(F15.laeuft ? '<button type="button" class="k s aus"><i class="f15-kreis"></i>Wird übertragen …</button>'
+    : '<button type="button" class="k f'+(erledigt?' aus':'')+'" data-f15ent="freigegeben">✅ Freigeben</button><button type="button" class="k s'+(sendenAktiv?'':' aus')+'" data-f15ent="angepasst">↻ Senden</button><button type="button" class="k r'+(erledigt?' aus':'')+'" data-f15ent="abgelehnt">✕ Ablehnen</button>')+'</div>';
+  return h;
+}
+function f15KarteRendern(){ const b=el('akBody'); if(!b) return; const ta=el('f15Text'); if(F15.karte && ta && typeof ta.value==='string') F15.karte.text=ta.value; b.innerHTML=f15KarteHtml(); }
+function f15OptionToggle(i){ const K=F15.karte, r=K ? f15PfRecord(K.id) : null; if(!r) return; const o=f15Optionen(r['Output/Entwurf'])[i]; if(o==null) return; haptik(6); const j=K.optionen.indexOf(o); if(j>=0) K.optionen.splice(j,1); else K.optionen.push(o); f15KarteRendern(); }
+/* §4.7 · die Hinweis-Zeile im Chat des Agenten gilt als gelesen, sobald die Karte geöffnet wird */
+function f15ZeileGelesen(k, r){ if(!k || !r || String(r.Status||'').toLowerCase()!=='offen') return false; if(!S.meta.chatGesehen || typeof S.meta.chatGesehen!=='object') S.meta.chatGesehen={}; if(S.meta.chatGesehen[r.id]) return false;
+  S.meta.chatGesehen[r.id]=jetztIso(); saveMeta(); FSLive.senden('datensatz_aendern', { tabelle:k.Tabelle, id:r.id, felder:{ Status:'erledigt' } }, { id:'chat-gesehen-'+r.id }).catch(()=>{}); r.Status='erledigt';
+  if(F12.ungelesen && F12.ungelesen[k.id]) F12.ungelesen[k.id]=F12.ungelesen[k.id].filter(x=>x.id!==r.id); if(F12.badge) F12.badge[k.id]=Math.max(0, num(F12.badge[k.id])-1); try{ f12BadgeZeigen(); }catch(e){} return true; }
+function f15HinweisGelesen(pfId){
+  const kan=f12Kanaele()||[]; let getan=false;
+  Object.keys(F12.ungelesen||{}).forEach(kid=>{ const k=kan.find(x=>x.id===kid); if(!k) return; (F12.ungelesen[kid]||[]).slice().forEach(r=>{ if(String(r.Art||'')!=='Hinweis' || !f7Link(r.Postfach).some(x=>String(x.id)===String(pfId))) return; if(f15ZeileGelesen(k, r)) getan=true; }); });
+  if(getan) return;
+  const r=f15PfRecord(pfId), k=r ? f12KanalVon(r.Agent) : null; if(!k || !FSLive.gekoppelt()) return;   // nicht in der Badge-Runde: in der Chat-Tabelle des Agenten nachsehen
+  FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Art','Status','Postfach'], filter:[{ feld:'Art', operator:'gleich', wert:'Hinweis' },{ feld:'Status', operator:'gleich', wert:'offen' },{ feld:'Postfach', operator:'gleich', wert:pfId }], limit:5 }).then(d=>((d && d.datensaetze)||[]).forEach(z=>f15ZeileGelesen(k, z))).catch(()=>{});
+}
+/* ── §6.1 · ↻ Senden: Datei zuerst (Inbox-Eintrag mit Quelle „Anpassung“ und Postfach-Karte), dann Entscheidung „angepasst“, Pascals Anpassung = ✓ Optionen + Freitext ── */
+function f15Anpassung(K){ return [K.optionen.map(o=>'✓ '+o).join('\n'), String(K.text||'').trim()].filter(Boolean).join('\n\n'); }
+function f15Entscheiden(ent){
+  const K=F15.karte; if(!K || F15.laeuft) return null; const r=f15PfRecord(K.id); if(!r){ toast('Karte lädt noch …'); return null; }
+  const ta=el('f15Text'); if(ta && typeof ta.value==='string') K.text=ta.value; const anp=f15Anpassung(K);
+  if(ent==='abgelehnt'){ F12.pfAusChat=null; f7PfAblehnen(K.id, r); return null; }   // §5.7: Grund Pflicht, wie heute
+  if(ent==='freigegeben'){ f7PfEntscheiden(K.id, 'freigegeben', { datensatz:r, felder: anp ? { 'Pascals Anpassung':anp } : {} }); return null; }   // §5.7: Optionen/Freitext zusätzlich in Pascals Anpassung
+  if(ent!=='angepasst' || (!anp && !K.datei)) return null;
+  F15.laeuft=true; f15KarteRendern();
+  const datei=K.datei;
+  const schritt1=datei ? FSLive.hochladen({ name:datei.name, typ:datei.typ, base64:datei.base64 }).then(up=>{ if(!up || !up.pfad) throw new Error('kein Pfad');
+      return FSLive.senden('app:erfassen', { text:'', quelle:'text', bezug:{ art:'agent' }, pfad:up.pfad, anpassung:K.id, geraetZeit:jetztIso() }).then(x=>{ if(x && x.wartend && !FSLive.warteschlangeHat(x.id)) throw new Error('Eintrag abgelehnt'); return x; }); }) : Promise.resolve(null);
+  return schritt1.then(()=>{ F15.laeuft=false; f7PfEntscheiden(K.id, 'angepasst', { datensatz:r, felder:{ 'Pascals Anpassung':anp||'(Datei)' }, keineKarte:true }); toast(datei ? '↻ Gesendet · Datei übertragen · neue Runde' : '↻ Gesendet · neue Runde', 1500); return true; })
+    .catch(x=>{ F15.laeuft=false; if(K.datei) K.datei.status='fehler'; toast(datei ? 'Datei nicht übertragen · erneut senden' : 'Senden fehlgeschlagen: '+((x && x.message)||'Fehler')); f15KarteRendern(); return false; });
+}
+/* §4.4 · nach einer Entscheidung in der Karten-Ansicht: aus der Kette heraus zur nächsten offenen Karte, sonst schließen */
+function f15NachEntscheidung(id){
+  const K=F15.karte; if(!K || K.id!==String(id) || e1Art()!=='agentenkarte') return;
+  try{ closeSheet(); }catch(e){}
+  if(K.ausKette && tageskettenWahl()===F15_TK){ const n=f15KetteKarten().find(x=>x.id!==String(id) && !f15Laeuft(x.id)); if(n){ f15KarteOeffnen(n.id, { ausKette:true }); return; } }
+  F15.karte=null; e1Schliessen();
+}
+/* Klicks und Eingaben der Karten-Ansicht, Kette und Postfach */
+function f15Klick(e){
+  const t=e.target; if(!t || !t.closest) return false; const d=x=>t.closest('['+x+']'); let z;
+  if((z=d('data-f15karte'))){ e.stopPropagation(); haptik(6); f15KarteOeffnen(z.dataset.f15karte, { ausKette:!!z.dataset.f15auskette }); return true; }
+  if(d('data-f15laeuft')){ e.stopPropagation(); return true; }   // §4.3: nicht antippbar
+  if(d('data-f15kette')){ e.stopPropagation(); f15KetteOeffnen(); return true; }
+  if(e1Art()!=='agentenkarte') return false;
+  if((z=d('data-f15opt'))){ e.stopPropagation(); f15OptionToggle(num(z.dataset.f15opt)); return true; }
+  if(d('data-f15verlauf')){ e.stopPropagation(); const K=F15.karte; if(K){ F15.verlaufAuf[K.id]=!F15.verlaufAuf[K.id]; f15KarteRendern(); } return true; }
+  if((z=d('data-f15ent'))){ e.stopPropagation(); if(z.classList.contains('aus')) return true; haptik(8); f15Entscheiden(z.dataset.f15ent); return true; }
+  return false;
+}
+{ const _alt=f7Klick; f7Klick=function(e){ try{ if(f15Klick(e)) return true; }catch(x){ console.warn('Hotfix 15 Klick', x); } return _alt(e); }; }
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.matches || !t.matches('[data-f15text]') || !F15.karte) return; F15.karte.text=t.value; const b=document.querySelector('.f15-knoepfe [data-f15ent="angepasst"]'); if(b && b.classList) b.classList.toggle('aus', !(F15.karte.optionen.length || t.value.trim() || F15.karte.datei)); });
+}
 /* ── F15 Ende ── */
 
 
@@ -21644,7 +21757,7 @@ function suFrage(){ return String(S.ui.suFrage||'').trim(); }
    Die Sichtbarkeit hängt per CSS allein an body[data-seite] und body[data-e1]. Ebene 3 (Animationen, e3Spielen) und die
    Dialoge (openSheet/closeSheet) sind flüchtig bzw. eine eigene Klasse und stehen nicht in diesem Zustand. */
 const SEITEN=['fokus','postfach','belohnung','statistik','einst'];   // 4.0 · Paket 7: Postfach
-const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch','durchsuchen','erfassen','routinen','chat','plan','kontextwahl'];   // 4.0 · Paket 7 · 4.1: kontextwahl
+const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch','durchsuchen','erfassen','routinen','chat','plan','kontextwahl','agentenkarte'];   // 4.0 · Paket 7 · 4.1: kontextwahl · Hotfix 15 §5: agentenkarte
 let _e1=null;
 function seiteAktuell(){ const s=S.ui && S.ui.seite; return SEITEN.indexOf(s)>=0 ? s : 'fokus'; }
 function e1Art(){ return _e1 ? _e1.art : null; }
