@@ -6926,6 +6926,21 @@ function f12PfDetail(id){ const r=f12PfRecord(id); if(!r) return; const kk=f7PfK
   const vb={ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), sollMin:kk.sollMin, matrixFeld:matrixFeldNorm(kk.matrixFeld)||'werkzeug' }; if(kk.projekt) vb.projekt=kk.projekt; if(kk.notiz) vb.notiz=kk.notiz;
   oeffneDetail(null, { vorbelegung:vb, unteraufgaben:kk.unteraufgaben, mehrAuf:true, postfachId:id }); }
 function f12PfAblehnen(id){ const r=f12PfRecord(id); if(!r) return; haptik(6); f7PfAblehnen(id, r); }
+/* ── §6 · Eingabe ── */
+function f12EingabeHoehe(){ try{ const t=el('f12Text'); if(!t || !t.style) return; t.style.height='auto'; const max=8*21+14; const h=Math.min(max, Math.max(21+14, t.scrollHeight)); t.style.height=h+'px'; t.style.overflowY=t.scrollHeight>max ? 'auto' : 'hidden'; }catch(e){} }
+function f12SendenKnopf(){ try{ const e=f12EntwurfAktuell(), b=el('f12Senden'); if(!b || !b.classList) return; const leer=!String(e.text||'').trim() && !e.karten.length && !e.anhaenge.length; b.classList.toggle('aus', leer); }catch(e){} }
+function f12Abschicken(){
+  const u=f12Ui(), kanal=f12KanalAktuell(); if(!kanal || !u.gespraech) return;
+  const e=f12EntwurfAktuell(), t=el('f12Text'); if(t && typeof t.value==='string') e.text=t.value;
+  const text=String(e.text||'').trim(); if(!text && !e.karten.length && !e.anhaenge.length) return;
+  const karten=e.karten.slice(), anhaenge=e.anhaenge.slice();
+  f12Senden(kanal, u.gespraech, text||(karten.length ? karten.map(k=>'📇 '+k.titel).join('\n') : '📎 Anhang'), { karten, anhaenge });
+  delete u.entwurf[f12EntwurfKey(u.kanal, u.gespraech)]; saveUi(); haptik(8);
+  if(t){ t.value=''; } f12EingabeHoehe(); const m=el('chatMarken'); if(m) m.hidden=true; f12SendenKnopf();
+  try{ if(!S.settings.chatStumm && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(x){}
+  e1Rendern(); f12NachUnten();
+}
+function f12MarkeWeg(was){ const e=f12EntwurfAktuell(), [art, id]=String(was).split(':'); if(art==='karte') e.karten=e.karten.filter(k=>k.id!==id); else e.anhaenge=e.anhaenge.filter(a=>a.id!==id); saveUi(); const m=el('chatMarken'); if(m && m.outerHTML!==undefined) m.outerHTML=f12MarkenHtml(e); f12SendenKnopf(); }
 /* ── F12 Ende ── */
 
 /* ══════════════════════════════════════════════════════════════════════
