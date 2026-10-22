@@ -192,4 +192,115 @@ S.ui.f6Auf=Object.assign({}, S.ui.f6Auf, { 'claude:Sales':true }); var hc2=f6Cla
 pruef('Tipp klappt die Agenten der Abteilung auf', hc2.indexOf('▾ Sales')>=0 && hc2.indexOf('padding-left:14px">Pipeline-Agent')>=0);
 pruef('Verlauf 14 Tage je Abteilung mit Legende; Erklärung nennt Abteilung, Kanal und die vier Auslöser', hc.indexOf('Läufe · 14 Tage · je Abteilung')>=0 && hc.indexOf('<b>Auslöser:</b> Takt')>=0 && hc.indexOf('<b>Kanal</b>')>=0 && src.indexOf("versatz<4900")>=0 && src.indexOf("'Abteilung','Kanal']")>=0);
 
-suiteEnde('Chat-Räume 4.1');
+
+// ══ Hotfix 13 ══
+function klick13(attr, wert){ var ds={}; ds[attr.replace(/^data-/,'').replace(/-([a-z0-9])/g, function(m,c){ return c.toUpperCase(); })]=wert||'1';
+  var ziel={ dataset:ds, classList:{ contains:function(){ return false; } } };
+  return f7Klick({ stopPropagation:function(){}, stopImmediatePropagation:function(){}, preventDefault:function(){}, target:{ closest:function(sel){ return (sel==='['+attr+']' || sel==='#e1-chat') ? ziel : null; } } }); }
+// §2.1 · f7Lager meldet nur neue Daten
+var _neuAlt=f7Neu, _neuRufe=[]; f7Neu=function(k){ _neuRufe.push(k||null); };
+F7.lager['probe:a']={ ts:0, daten:[{ id:1 }], fehler:'' };
+FSLive.lesen=function(){ return Promise.resolve({ datensaetze:[{ id:1 }] }); };
+f7Lager('probe:a', 1000, function(){ return f7Alle({ tabelle:'X' }); }); warten(); warten(); warten();
+pruef('§2.1 · gleiche Daten → kein f7Neu', _neuRufe.length===0 && F7.lager['probe:a'].ts>0, JSON.stringify(_neuRufe));
+F7.lager['probe:a'].ts=0; FSLive.lesen=function(){ return Promise.resolve({ datensaetze:[{ id:2 }] }); };
+f7Lager('probe:a', 1000, function(){ return f7Alle({ tabelle:'X' }); }); warten(); warten(); warten();
+pruef('§2.1 · neue Daten → f7Neu mit dem Lager-Schlüssel', _neuRufe.length===1 && _neuRufe[0]==='probe:a', JSON.stringify(_neuRufe));
+F7.lager['probe:a'].ts=0; FSLive.lesen=function(){ return Promise.reject(new Error('kaputt')); }; _neuRufe.length=0;
+f7Lager('probe:a', 1000, function(){ return f7Alle({ tabelle:'X' }); }); warten(); warten(); warten();
+f7Lager('probe:a', 0, function(){ return f7Alle({ tabelle:'X' }); }); warten(); warten(); warten();
+pruef('§2.1 · Fehler: f7Neu nur beim ersten (neuen) Fehlertext', _neuRufe.length===1 && F7.lager['probe:a'].fehler==='kaputt', JSON.stringify(_neuRufe));
+f7Neu=_neuAlt; fsliveStumm();
+// §2.2 · Zusammenfassen: höchstens ein Nachlauf je 400 ms
+var _stAlt=setTimeout, _timer=[]; setTimeout=function(f, ms){ _timer.push({ f:f, ms:ms }); return _timer.length; };
+var _e1Alt=e1Rendern, _e1N=0; e1Rendern=function(){ _e1N++; };
+F7.neuT=null; F7.neuSchluessel=null; F7.letzteEingabe=0; F7.letzteEingabeEnde=0; F7.fingerUnten=0;
+f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:null }); _e1N=0;
+f7Neu('a'); f7Neu('b'); f7Neu('c');
+pruef('§2.2 · drei Anforderungen → ein Nachlauf nach 400 ms, Schlüssel gesammelt', _timer.length===1 && _timer[0].ms===400 && F7.neuSchluessel.join(',')==='a,b,c', JSON.stringify([_timer.length, F7.neuSchluessel]));
+_timer[0].f(); pruef('§2.2 · der Nachlauf zeichnet genau einmal', _e1N===1 && F7.neuT===null, _e1N);
+// §2.3 · Verschieben bei Eingabe
+_timer.length=0; _e1N=0; F7.letzteEingabe=Date.now(); f7Neu('x'); _timer[0].f();
+pruef('§2.3 · pointerdown vor < 800 ms → kein Neuaufbau, Nachlauf in 300 ms', _e1N===0 && _timer.length===2 && _timer[1].ms===300, JSON.stringify([_e1N, _timer.map(function(t){ return t.ms; })]));
+F7.letzteEingabe=0; F7.fingerUnten=1; _timer[1].f(); pruef('§2.3 · Finger unten → weiter warten', _e1N===0 && _timer.length===3);
+F7.fingerUnten=0; F7.letzteEingabeEnde=0; _timer[2].f(); pruef('§2.3 · Eingabe vorbei → Neuaufbau', _e1N===1);
+// §2.4 · Blatt nur bei angemeldeten Schlüsseln
+var _soAlt=sheetOffen; sheetOffen=function(){ return true; }; var _blN=0; F7.blattNeu=function(){ _blN++; }; F7.blattSchluessel=['postfach'];
+F7.neuT=null; f7Neu('chatV:k-tr|g1'); _timer[_timer.length-1].f();
+pruef('§2.4 · Chat-Lager zeichnet das Blatt nicht', _blN===0);
+F7.neuT=null; f7Neu('postfach'); _timer[_timer.length-1].f();
+pruef('§2.4 · angemeldeter Schlüssel zeichnet das Blatt', _blN===1);
+closeSheet(); pruef('§2.4 · Schließen leert blattNeu und blattSchluessel', F7.blattNeu===null && F7.blattSchluessel.length===0);
+sheetOffen=_soAlt; e1Rendern=_e1Alt; setTimeout=_stAlt; F7.neuT=null;
+pruef('§2.5 · Badge-Laden ruft kein f7Neu und zeichnet keine Ebene (Quelle)', !/function f12BadgeLaden[\s\S]*?f7Neu\(/.test(src.slice(src.indexOf('function f12BadgeLaden'), src.indexOf('function f12BadgeSumme'))) && src.indexOf("l.outerHTML=f12LeisteHtml(r, f12Ui().raum)")<0);
+// §3 · Entscheidung aus dem Postfach im Chat
+f12Ui().kanal='k-tr'; f12Ui().gespraech='g1';
+F12.pf['pf7']={ ts:Date.now(), r:{ id:'pf7', Titel:'Neu: X', Agent:'Trainer', Art:'Plan', Status:'offen', 'Output/Entwurf':'Aufgabe: X\n- Soll-Minuten: 10' } };
+F12.pf['pf8']={ ts:Date.now(), r:{ id:'pf8', Titel:'Neu: Y', Agent:'Trainer', Art:'Plan', Status:'offen', 'Output/Entwurf':'Aufgabe: Y\n- Soll-Minuten: 10' } };
+delete F12.entschieden.pf7; delete F12.entschieden.pf8;
+f7PfEntscheiden('pf7', 'abgelehnt', { felder:{ Ablehnungsgrund:'nicht heute' } });
+var A7={ id:'a7', Von:'Trainer', Art:'Antwort', Text:'x', Zeitstempel:T, Postfach:[{ id:'pf7', anzeige:'x' },{ id:'pf8', anzeige:'y' }] }, h7=f12KartenBloeckeHtml(KT, A7);
+pruef('§3.1 · Entscheidung im Postfach: Chat-Lager erledigt/abgelehnt mit Grund und Zeit, Zeile zeigt „im Postfach"', F12.pf.pf7.r.Status==='erledigt' && F12.pf.pf7.r.Entscheidung==='abgelehnt' && F12.pf.pf7.r.Ablehnungsgrund==='nicht heute' && !!F12.pf.pf7.r.geaendert_am && !F12.entschieden.pf7 && h7.indexOf('✗ abgelehnt')>=0 && h7.indexOf('im Postfach · „nicht heute“')>=0, h7.slice(0,400));
+f12PfAblehnen('pf8'); closeSheet(); f7PfEntscheiden('pf8', 'abgelehnt', { felder:{ Ablehnungsgrund:'im Chat' } });
+pruef('§3.1 · Ablehnen aus dem Chat gilt als im Chat entschieden (kein „im Postfach")', F12.entschieden.pf8===true && f12KartenBloeckeHtml(KT, A7).indexOf('im Postfach · „im Chat“')<0 && f12KartenBloeckeHtml(KT, A7).indexOf('· „im Chat“')>=0);
+F12.pf['pf9']={ ts:Date.now(), r:{ id:'pf9', Titel:'Neu: Z', Status:'offen', 'Output/Entwurf':'Aufgabe: Z' } };
+F7.lager['chatV:k-tr|g1']={ ts:Date.now(), daten:[R1, R2, { id:'a9', Von:'Trainer', Art:'Antwort', Text:'z', Zeitstempel:T, Postfach:[{ id:'pf9', anzeige:'z' },{ id:'pf7', anzeige:'x' }] }], fehler:'' };
+f12PfNachlesen(KT, 'g1');
+pruef('§3.2 · Nachlesen liest offene Postfach-Datensätze neu (ts 0), erledigte nicht', F12.pf.pf9.ts===0 && F12.pf.pf7.ts>0 && src.indexOf('if(F12.nachladenTick%2===0) f12PfNachlesen(kanal, g);')>=0);
+// §4 · Marken: Ablauf Trainer → Neuer Chat → ＋ → zwei Karten → Fertig → 📎 → Datei → Übernehmen → ➤
+f12Ui().kanal='k-tr'; f12Ui().gespraech=null; f12Ui().entwurf={};
+klick13('data-f12neu'); var G=f12Ui().gespraech, K0=f12EntwurfKey('k-tr', G);
+pruef('§4 · ＋ Neuer Chat vergibt die Gesprächs-Kennung', !!G && f12Stufe()==='gespraech');
+klick13('data-f12plus');
+pruef('§4 · ＋ öffnet die Kontextwahl, Kennung bleibt, nichts vorausgewählt', e1Art()==='kontextwahl' && f12Ui().gespraech===G && f12Kw().auswahl.length===0);
+f12KwToggle('t-dfm'); f12KwToggle('t-priv'); f12KwFertig();
+var E4=f12Entwurf('k-tr', G);
+pruef('§4 · Fertig: zwei Karten als Marken im Entwurf, zurück im Gespräch, Kennung unverändert', e1Art()==='chat' && f12Ui().gespraech===G && E4.karten.length===2 && f12MarkenHtml(E4).split('📇').length===3, JSON.stringify([e1Art(), E4.karten.length]));
+f12KontextOeffnen();
+pruef('§4 · erneutes ＋ zeigt die Karten des Entwurfs ausgewählt', f12Kw().auswahl.length===2 && f12KontextHtml().indexOf('Fertig (2)')>=0);
+f12KwToggle('t-priv'); f12KwFertig();
+pruef('§4 · Fertig übernimmt die Auswahl vollständig (abgewählte Karte weg)', f12Entwurf('k-tr', G).karten.length===1 && f12Entwurf('k-tr', G).karten[0].id==='t-dfm');
+f12KontextOeffnen(); f12KwToggle('t-priv'); klick13('data-f12kwzurueck');
+pruef('§4 · ‹ ohne Fertig lässt den Entwurf unverändert', e1Art()==='chat' && f12Entwurf('k-tr', G).karten.length===1);
+f12ErfassenUebernehmen({ tabelle:'Privat_Chat · Trainer', gespraech:G, agent:'Trainer', name:'Trainer', avatar:'🏋️', titel:'Neu' }, { sofort:true, antwort:{ inbox:'inb-4' } }, 'Dateitext', { name:'Foto.png' });
+E4=f12Entwurf('k-tr', G);
+pruef('§4 · Datei: Marke 📎 im Entwurf, Text angehängt, Kennung unverändert', E4.anhaenge.length===1 && E4.anhaenge[0].name==='Foto.png' && E4.text==='Dateitext' && f12Ui().gespraech===G && f12MarkenHtml(E4).indexOf('📎 Foto.png')>=0);
+_gesendet.length=0; f12Abschicken();
+var g4=_gesendet.filter(function(g){ return g.werkzeug==='datensatz_anlegen'; })[0];
+pruef('§4 · Senden schreibt Karten (App-IDs) und Anhänge (Inbox-ids), Entwurf danach leer', !!g4 && g4.args.felder.Karten==='t-dfm' && g4.args.verknuepfungen['Anhänge'][0]==='inb-4' && g4.args.felder['Gespräch']===G && !f12Ui().entwurf[K0], JSON.stringify(g4 && g4.args));
+var zl=F7.lager[f12VerlaufKey(KT, G)].daten.filter(function(r){ return r.lokal; })[0];
+pruef('§4 · die Blase zeigt die Marken (lokal aus dem Entwurf, nach dem Laden aus Karten und Anhänge)', f12NachrichtHtml(KT, zl).indexOf('📇 '+esc(kd.titel))>=0 && f12NachrichtHtml(KT, zl).indexOf('📎 Foto.png')>=0 && f12NachrichtHtml(KT, { id:'s1', Von:'Pascal', Art:'Nachricht', Status:'erledigt', Zeitstempel:T, Text:'x', Karten:'t-dfm', 'Anhänge':[{ id:'inb-4', anzeige:'Foto.png' }] }).indexOf('📎 Foto.png')>=0);
+e1Schliessen();
+// §5 · Ungelesen auf jeder Stufe
+var jetztU=jetztIso();
+F12.ungelesen={ 'k-tr':[{ id:'u1', Text:'Neue Antwort vom Trainer, die etwas laenger ist, damit die Unterzeile gekuerzt wird und so weiter', Von:'Trainer', 'Gespräch':'g1', 'Gesprächstitel':null, Zeitstempel:vorMin(5) }], 'k-pipe':[{ id:'u2', Text:'Deal-Info', Von:'Pipeline-Agent', 'Gespräch':'gp', 'Gesprächstitel':'Deal X', Zeitstempel:jetztU },{ id:'u3', Text:'Nachtrag', Von:'Pipeline-Agent', 'Gespräch':'gp', 'Gesprächstitel':null, Zeitstempel:vorMin(1) }] };
+F12.badge={ 'k-tr':1, 'k-pipe':2 };
+var UL=f12UngelesenListe();
+pruef('§5 · Liste je Gespräch, neueste oben, Titel aus Zeile bzw. Gespräche-Lager, Zahl je Gespräch', UL.length===2 && UL[0].gespraech==='gp' && UL[0].n===2 && UL[0].titel==='Deal X' && UL[1].titel==='Paket 34 angekommen?' && f12UngelesenSumme()===3, JSON.stringify(UL.map(function(e){ return [e.gespraech, e.n, e.titel]; })));
+f12Ui().raum='Trainerstab'; f12Ui().kanal=null; f12Ui().gespraech=null; var hr=f12RaumHtml();
+pruef('§5.1 · Block „🔵 Ungelesen · 3" direkt unter der Raum-Leiste mit Sprungzeilen (Avatar, Agent · Titel, Unterzeile 60 Zeichen, Zeit, Zahl)', hr.indexOf('🔵 Ungelesen · 3')>=0 && hr.indexOf('id="chatRaeume"')<hr.indexOf('id="chatUngelesen"') && hr.indexOf('id="chatUngelesen"')<hr.indexOf('f12-rk') && hr.indexOf('data-f12spring="k-pipe|gp"')>=0 && hr.indexOf('Pipeline-Agent · Deal X')>=0 && hr.indexOf('Trainer · Paket 34 angekommen?')>=0 && hr.indexOf(esc('Neue Antwort vom Trainer, die etwas laenger ist, damit die Unterzeile gekuerzt wird und so weiter'.slice(0,60)))>=0, hr.slice(hr.indexOf('chatUngelesen'), hr.indexOf('chatUngelesen')+500));
+F12.ungelesen['k-pipe']=F12.ungelesen['k-pipe'].concat([3,4,5,6].map(function(i){ return { id:'u'+(10+i), Text:'x', Von:'Pipeline-Agent', 'Gespräch':'gq'+i, 'Gesprächstitel':'T'+i, Zeitstempel:vorMin(10+i) }; }));
+f12Ui().ungelesenAlle=false; var hr2=f12RaumHtml();
+pruef('§5.1 · höchstens 5 Zeilen, darunter „alle n zeigen"', hr2.split('data-f12spring=').length===6 && hr2.indexOf('alle 6 zeigen')>=0 && (function(){ f12Ui().ungelesenAlle=true; var h=f12RaumHtml(); f12Ui().ungelesenAlle=false; return h.split('data-f12spring=').length===7; })());
+pruef('§5.1 · Tipp springt direkt ins Gespräch (Raum und Kanal mitgesetzt)', klick13('data-f12spring', 'k-pipe|gp')===true && f12Ui().kanal==='k-pipe' && f12Ui().gespraech==='gp' && f12Ui().raum==='Sales');
+pruef('§5.3 · Stufe Gespräch: ‹ trägt die Zahl der anderen Gespräche (ohne das offene) und die Zeile „ungelesen in anderen Chats"', (function(){ var h=f12GespraechHtml(KP, 'gp'); return h.indexOf('data-f12zurueck="1" aria-label="Zurück">‹<i class="bd">5</i>')>=0 && h.indexOf('<b>5</b> ungelesen in anderen Chats')>=0; })());
+pruef('§5.3 · Stufe Agent: ‹ trägt alle ungelesenen (7)', (function(){ f12Ui().gespraech=null; var h=f12AgentHtml(KP); return h.indexOf('‹<i class="bd">7</i>')>=0; })());
+pruef('§5.3 · Tipp auf die Zeile springt in die Stufe Raum', klick13('data-f12ungelesen')===true && f12Stufe()==='raum');
+pruef('§5.2 · Trainer-Knopf öffnet die Stufe Raum Trainerstab (Block oben)', /f12Oeffnen\(\{ raum:'Trainerstab', kanal:null, gespraech:null \}\)/.test(src));
+pruef('§5.4 · Badge-Runde liefert Gespräch, Gesprächstitel und Text der ungelesenen Zeilen, limit 20, keine zweite Runde', src.indexOf("felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel']")>=0 && /limit:20 \}\)\n\s*\.then\(d=>\{ sum\[k\.id\]=num\(d && d\.gesamt\); zeilen\[k\.id\]=/.test(src));
+F12.ungelesen={}; F12.badge={}; e1Schliessen();
+// §6 · kurze Entscheidungen als Knöpfe
+pruef('§6 · 2 kurze Zeilen am Ende → Knöpfe', JSON.stringify(f12Knoepfe('Zwei Wege.\n- Freigeben\n- Ablehnen'))==='{"body":"Zwei Wege.","optionen":["Freigeben","Ablehnen"]}');
+pruef('§6 · 4 kurze Zeilen → Knöpfe, 5 → Liste', f12Knoepfe('x\n- A\n- B\n- C\n- D').optionen.length===4 && f12Knoepfe('x\n- A\n- B\n- C\n- D\n- E')===null);
+pruef('§6 · eine Zeile mit 31 Zeichen → Liste; 30 → Knopf', f12Knoepfe('x\n- A\n- '+'b'.repeat(31))===null && f12Knoepfe('x\n- A\n- '+'b'.repeat(30))!==null);
+pruef('§6 · Liste mitten im Text (Text danach) bleibt Text; eine Zeile bleibt Liste', f12Knoepfe('x\n- A\n- B\nSchreib mir.')===null && f12Knoepfe('x\n- A')===null);
+var AK={ id:'ak1', Von:'Trainer', Art:'Antwort', Text:'Zwei Wege:\n- Option A\n- Option B', Zeitstempel:T, Postfach:[] };
+var hk1=f12NachrichtHtml(KT, AK, { letzte:true }), hk0=f12NachrichtHtml(KT, AK, { letzte:false });
+pruef('§6.1 · jüngste Antwort: Knöpfe im Stil f7-act2 (erster türkis), Liste nicht im Text; ältere: Knöpfe grau', hk1.indexOf('<div class="f7-act2 f12-act" data-f12act="ak1"><div class="g" data-f12antwort="Option A">Option A</div><div class="" data-f12antwort="Option B">Option B</div></div>')>=0 && hk1.indexOf('<ul>')<0 && hk0.indexOf('f12-act aus')>=0, hk1.slice(0,400));
+f12Ui().kanal='k-tr'; f12Ui().gespraech='g1'; _gesendet.length=0; S.meta.chatWahl={};
+f12KnopfWahl('ak1', 'Option B');
+pruef('§6.2 · Tipp sendet den Knopftext als Nachricht im selben Gespräch (Anlass Chat), Wahl gemerkt, Knöpfe danach grau mit markierter Wahl', _gesendet[0].args.felder.Text==='Option B' && _gesendet[0].args.felder['Gespräch']==='g1' && _gesendet[0].args.felder.Anlass==='Chat' && S.meta.chatWahl.ak1==='Option B' && f12NachrichtHtml(KT, AK, { letzte:true }).indexOf('f12-act aus')>=0 && f12NachrichtHtml(KT, AK, { letzte:true }).indexOf('class=" on" data-f12antwort="Option B"')>=0, JSON.stringify(_gesendet[0] && _gesendet[0].args.felder));
+pruef('§6 · Liste bestimmt die Knöpfe nur an der jüngsten Antwort (f12LetzteAntwortId)', f12LetzteAntwortId([R1, R2, { id:'x', Von:'Pascal' }])==='r2');
+e1Schliessen();
+
+suiteEnde('Chat-Räume 4.1 · Hotfix 13');
