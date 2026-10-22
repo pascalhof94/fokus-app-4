@@ -3308,6 +3308,7 @@ const FSLive = (()=>{
   // ── Hotfix 14 · führendes Gerät ───────────────────────────────────
   // §7.4 · Führung lesen: GET /api/app/fuehrung → fuehrend, ichFuehre; danach Punkt und Hinweis „Nur Anzeige“ nachführen.
   async function fuehrungLesen(){
+    if(!gekoppelt()) return null;   // §8.5: nicht gekoppelte Geräte wie bisher, kein Aufruf
     const d=await aufruf('GET', '/api/app/fuehrung', undefined, { zeitgrenze:15000 });
     fuehrend=(d && d.fuehrend)||null; ichFuehre=(fuehrend===geraet()); fuehrungBekannt=true;
     anzeigen(); hinweisAnzeigen();
