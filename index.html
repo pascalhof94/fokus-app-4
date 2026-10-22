@@ -3314,7 +3314,41 @@ const FSLive = (()=>{
     return d;
   }
   function hinweisAnzeigen(){}   // §10.2 (wird dort ersetzt)
-  function standHolen(){}        // §9.1 (wird dort ersetzt)
+  // §9.1 · Stand holen: nur gekoppelt, nicht führend, keine Übernahme im Gang. 204 = nichts Neues; 200 = übernehmen.
+  async function standHolen(sofort){
+    if(!gekoppelt() || ichFuehre || uebernahmeLaeuft || standLaeuft) return;
+    standLaeuft=true;
+    try{
+      const d=await aufruf('GET', '/api/app/stand?ab='+encodeURIComponent(String(standNr)), undefined, { zeitgrenze:15000 });
+      gescheitert=false;
+      if(d && d.fuehrend && d.schluessel) standUebernehmen(d, sofort===true);
+      else if(d && d.fuehrend===null){ fuehrend=null; hinweisAnzeigen(); }   // führt kein Gerät: nichts zu übernehmen
+    }catch(e){ if(e && e.offline){ gescheitert=true; fehlerText=e.message; } }
+    finally{ standLaeuft=false; anzeigen(); }
+  }
+  // §9.2 · Stand übernehmen: Schlüssel direkt in den Speicher (nicht über DB.set, damit nichts zurückgespiegelt wird).
+  // Erste Übernahme dieses Geräts: vorher den eigenen Stand sichern, danach neu laden (Migrationsmarken aus meta).
+  // Ein offenes Blatt verschiebt die Übernahme auf den nächsten Takt, außer sofort===true.
+  function standUebernehmen(d, sofort){
+    try{
+      if(!d || !d.schluessel || typeof d.schluessel!=='object') return false;
+      if(sofort!==true){ try{ if(sheetOffen()) return false; }catch(e){} }
+      if(!ersteUebernahmeErledigt){
+        const vorher={};
+        for(const k of GEMEINSAM){ const v=lies(PREFIX+k); if(v!==null) vorher[k]=v; }
+        try{ localStorage.setItem(PREFIX+'vorUebernahme_'+new Date().toISOString().replace(/:/g,''), JSON.stringify(vorher)); }catch(e){}
+      }
+      for(const name of Object.keys(d.schluessel)){
+        if(GEMEINSAM.indexOf(name)<0) continue;
+        try{ localStorage.setItem(PREFIX+name, JSON.stringify(d.schluessel[name])); }catch(e){}
+      }
+      standNr=Number(d.stand_nr)||0; fuehrend=d.fuehrend||null;
+      if(!ersteUebernahmeErledigt){ ersteUebernahmeErledigt=true; schreib(K.ersteUebernahme,'1'); location.reload(); return true; }
+      ladeAlles(); renderAlles();
+      if(S.fokus && S.fokus.laeuft) starteTicker();   // wie init(): den Sekunden-Ticker der laufenden Uhr starten
+      return true;
+    }catch(e){ return false; }
+  }
 
   // ── Kopplung ──────────────────────────────────────────────────────
   async function koppeln(){
@@ -3394,6 +3428,7 @@ const FSLive = (()=>{
       fuehrungLesen().then(()=>{ if(!ichFuehre) standHolen(true); }).catch(()=>{});   // Hotfix 14 §7.5
       setInterval(()=>{ if(offen.size) spiegeln(); if(warteschlange.length) schlangeSenden(); }, WIEDERHOLEN_MS);
       setInterval(()=>paketeHolen(), PAKETE_MS);
+      setInterval(()=>{ if(document.visibilityState==='visible') standHolen(false); }, STAND_MS);   // Hotfix 14 §9.3
       setInterval(()=>uhrMelden(true), UHR_MS);
       document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true);
         fuehrungLesen().then(()=>{ if(!ichFuehre) standHolen(true); }).catch(()=>{}); }   // Hotfix 14 §7.6
