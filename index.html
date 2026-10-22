@@ -150,7 +150,7 @@ body[data-e1] #nav,body[data-e1] #suchFab,body[data-e1] #trainerFab,body[data-e1
 #e1Kopf{position:sticky;top:0;z-index:6;flex:none;padding:calc(var(--sat) + 4px) 8px 6px;background:linear-gradient(180deg,var(--card2),var(--card));border-bottom:1px solid var(--line)}
 #e1Kopf .sb-bar[hidden]{display:none}
 #ebene1 .e1{display:none;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--sab) + 16px)}
-body[data-e1="suche"] #e1-suche,body[data-e1="plus"] #e1-plus,body[data-e1="kettenwahl"] #e1-kettenwahl,body[data-e1="inkette"] #e1-inkette,body[data-e1="tagebuch"] #e1-tagebuch,body[data-e1="durchsuchen"] #e1-durchsuchen,body[data-e1="erfassen"] #e1-erfassen,body[data-e1="routinen"] #e1-routinen,body[data-e1="chat"] #e1-chat,body[data-e1="plan"] #e1-plan{display:block}
+body[data-e1="suche"] #e1-suche,body[data-e1="plus"] #e1-plus,body[data-e1="kettenwahl"] #e1-kettenwahl,body[data-e1="inkette"] #e1-inkette,body[data-e1="tagebuch"] #e1-tagebuch,body[data-e1="durchsuchen"] #e1-durchsuchen,body[data-e1="erfassen"] #e1-erfassen,body[data-e1="routinen"] #e1-routinen,body[data-e1="chat"] #e1-chat,body[data-e1="kontextwahl"] #e1-kontextwahl,body[data-e1="plan"] #e1-plan{display:block}
 #ebene1 .an-kopf{padding-top:8px;position:sticky;top:0;z-index:5;background:var(--bg)}
 #ebene1 .an-body{flex:none;overflow:visible;padding-bottom:12px}
 #ebene1 input,#ebene1 textarea,#ebene1 select{font-size:16px}   /* iOS zoomt sonst beim Fokus */
@@ -2790,7 +2790,63 @@ body.breit #f4sb .f4-onr{grid-column:3;margin-top:0}
 .f4n-r4 .bat:after{content:"";position:absolute;right:-5px;top:6px;width:3px;height:7px;background:#9be7c4;border-radius:0 1px 1px 0}
 .f4n-r4 .b23{min-width:0;border-radius:8px;background:#14161a;overflow:hidden;cursor:pointer}.f4n-r4 .b23 svg{display:block;width:100%;height:80px}
 .f4n-r4 .b4{border-radius:8px;background:linear-gradient(90deg,rgba(246,109,109,.25),rgba(62,207,142,.3));position:relative;overflow:hidden;cursor:pointer}.f4n-r4 .b4 svg{position:absolute;inset:0;width:100%;height:100%}
-body.breit #srChat .f3n-kopf,body.breit #srChat .f3n-neu{display:none}
+body.breit #srChat .f3n-kopf{display:none}
+/* ══ 4.1 · Chat-Räume (F12): Ebene chat als Spalte (Kopf · Inhalt · Eingabe), Raum-Leiste, Listen wie f7-l, Gespräch, Eingabe wie Claude-App, Kontextwahl ══ */
+body[data-e1="chat"] #e1-chat{display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}
+#e1-chat #chatBody{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 12px calc(var(--sab) + 6px);overflow:hidden}
+.f12-kopf{flex:none;position:static;margin-bottom:0}.f12-kopf h3{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f12-inhalt{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:12px}
+.f12-raeume{flex:none;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:10px 0 4px;white-space:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}.f12-raeume::-webkit-scrollbar{display:none}
+.f12-raeume>div{flex:none;padding:7px 12px;border-radius:15px;background:#1f2228;font-size:13px;font-weight:700;border:1px solid transparent;position:relative;cursor:pointer;color:#e8e9ec;margin-top:5px}
+.f12-raeume>div.on{border-color:#3b82f6;color:#7fb0ff;background:rgba(59,130,246,.12)}.f12-raeume>div.on.tk{border-color:#2dd4bf;color:#2dd4bf;background:rgba(45,212,191,.12)}.f12-raeume>div.grau{color:#6b6e75}
+.f12-raeume>div i{font-style:normal;position:absolute;top:-5px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:#3b82f6;color:#fff;font-size:10.5px;line-height:17px;text-align:center;padding:0 4px}
+.f12-rk{display:flex;align-items:flex-start;gap:10px;padding:14px 0 4px}.f12-rk .t{flex:1;min-width:0}.f12-rk .t b{display:block;font-size:22px;font-weight:800}.f12-rk .t span{display:block;font-size:12.5px;color:#9a9ca2;margin-top:3px;line-height:1.35}
+.f12-ext{flex:none;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:0 12px;min-height:40px;display:inline-flex;align-items:center;font-size:13px;font-weight:700;color:#cfd8e6;text-decoration:none}.f12-ext.klein{min-width:44px;min-height:44px;justify-content:center;padding:0;font-size:17px}
+.f12-pr{display:inline-block;font-size:11px;font-weight:700;border-radius:8px;padding:1px 7px;background:rgba(185,138,247,.16);color:#c9a8fb;margin-left:4px;vertical-align:1px}
+.f12-l>div{display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:11px 2px}.f12-l .av{width:40px;height:40px;border-radius:20px;background:#1f2a3d;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.f12-l .m{flex:1;min-width:0}.f12-l p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.f12-l small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.f12-l>div>.r{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px;color:inherit;font-size:inherit}.f12-l .r time{font-size:12px;color:#9a9ca2}
+.f12-l .r .bd{min-width:20px;height:20px;border-radius:10px;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;line-height:20px;text-align:center;padding:0 5px}
+.f12-l .r .kt{font-size:11px;font-weight:700;border-radius:8px;padding:2px 7px;background:rgba(255,210,63,.15);color:#ffd23f}.f12-l .r .pf{color:#6b6e75;font-size:18px;line-height:1}
+.f12-l .schreibt{color:#ffd23f}.f12-l .alt p{color:#9a9ca2}
+.f12-neu{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;min-height:48px;border-radius:14px;background:rgba(45,212,191,.12);border:1px solid #2dd4bf;color:#2dd4bf;font-weight:800;font-size:15.5px}
+.f12-tag{font:700 11.5px system-ui;color:#6d7a90;margin:12px 0 0;text-transform:uppercase;letter-spacing:.05em}
+.f12-leer{margin-top:18px;border:1px dashed #33405a;border-radius:14px;padding:18px 16px;text-align:center;color:#9a9ca2;font-size:14px;line-height:1.45}.f12-leer b{display:block;color:#cfd8e6;font-size:15.5px;margin-bottom:6px}
+.f12-eing{flex:none;margin:8px 0 10px;display:flex;align-items:center;gap:8px;background:#121418;border:1px solid #2a2d33;border-radius:12px;padding:10px 12px;color:#5d6d88;font-size:15px}.f12-eing.gesperrt{opacity:.6}
+/* Gespräch: der Verlauf ist ein eigener Scroller, unten verankert (column-reverse auf dem Scroller) */
+.f12-verlauf{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column-reverse;overscroll-behavior:contain}
+.f12-fluss{display:flex;flex-direction:column;padding-bottom:8px}
+.f12-fluss .f7-m{max-width:84%}.f12-fluss .f7-m ul{margin:6px 0 2px;padding-left:18px}.f12-fluss .f7-m li{margin:2px 0}.f12-fluss .f7-m.hinweis{border-color:rgba(255,210,63,.5)}
+.f12-st{display:block;margin-top:3px;font-size:11.5px;font-style:normal;color:rgba(255,255,255,.75)}.f12-st.ok{color:#bff5dc}.f12-st.arb{color:#ffe28a}.f12-st.no{color:#ffb4b4}.f12-st.wartet{opacity:.7}
+.f12-uhr{font-variant-numeric:tabular-nums}
+.f12-ctx{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.f12-ctx span{background:rgba(255,255,255,.18);border-radius:9px;padding:3px 8px;font-size:12px;font-weight:700;cursor:pointer}.f12-ctx span.anh{cursor:default}
+.f12-schreibt{flex:none;font-size:12.5px;color:#ffd23f;margin:6px 0 0 4px}.f12-schreibt span{color:#9a9ca2}
+.f12-pill{position:relative;flex:none;align-self:center;margin-top:-44px;z-index:3;background:#3b82f6;color:#fff;font-size:13px;font-weight:700;border-radius:16px;border:0;padding:7px 14px;min-height:36px;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+/* Karte im Chat (Zielbild 2 A/B) */
+.f12-kb{margin-top:10px;max-width:92%}.f12-kb .lab{font:700 11.5px system-ui;color:#ffd23f;letter-spacing:.04em;margin:0 0 5px 2px}.f12-kb .lab.grau{color:#9a9ca2}
+.f12-kb .kl-z{margin-bottom:0}.f12-kb .kl-z.weg{opacity:.55}.f12-kb .kl-play:disabled,.f12-kb .kl-check:disabled{opacity:.8}
+.f12-mehr{font-size:12.5px;font-weight:700;color:#9a9ca2;padding:7px 4px 0;cursor:pointer;min-height:24px}.f12-mehr b{color:#f66d6d}
+.f12-diff{font-size:11.5px;color:#9a9ca2;margin:4px 2px 0;line-height:1.4}.f12-diff s{color:#6b6e75}.f12-diff em{font-style:normal;color:#ffd23f}
+.f12-erg{font-size:12px;font-weight:700;margin:6px 2px 0}.f12-erg.ok{color:#3ecf8e}.f12-erg.no{color:#f66d6d}
+/* Eingabe (Zielbild 3 A) */
+.f12-marken{flex:none;display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}.f12-marken span{display:inline-flex;align-items:center;gap:6px;background:#1f2228;border:1px solid #2f3540;border-radius:12px;padding:5px 8px 5px 10px;font-size:12.5px;font-weight:700;max-width:100%;min-width:0}.f12-marken span em{font-style:normal;color:#9a9ca2;font-size:14px;padding:0 2px;cursor:pointer}
+.f12-inp{flex:none;display:flex;align-items:flex-end;gap:8px;background:#121418;border:1px solid #2a2d33;border-radius:14px;padding:8px;margin:6px 0 8px}
+.f12-inp .pl{width:34px;height:34px;border-radius:17px;background:#23262d;border:0;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none;color:#cfd8e6;padding:0}
+.f12-inp textarea{flex:1;min-width:0;background:none;border:0;outline:none;color:#e8eef7;font-size:16px;line-height:21px;padding:7px 0;margin:0;resize:none;height:35px;max-height:182px;overflow-y:hidden;font-family:inherit}
+.f12-inp .mi{font-size:18px;padding:7px 2px;cursor:pointer}
+.f12-inp .se{width:34px;height:34px;border-radius:17px;background:#2dd4bf;color:#000;border:0;display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;padding:0}.f12-inp .se.aus{background:#2a2d33;color:#6b6e75}
+/* ＋ Kontext (Zielbild 3 B/C) */
+body[data-e1="kontextwahl"] #e1-kontextwahl{display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}
+#e1-kontextwahl #kwxBody{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 12px;overflow:hidden}
+.f12-fertig{flex:none;min-height:40px;padding:0 14px;border-radius:12px;background:#2dd4bf;color:#04201c;border:0;font-weight:800;font-size:14.5px}
+.f12-seg{flex:none}.f12-seg>div{flex:auto;white-space:nowrap;padding:8px 5px;font-size:12.5px}
+.kl-add{flex:none;width:36px;height:36px;border-radius:10px;background:#23262d;color:#e8e9ec;border:0;font-size:20px;display:flex;align-items:center;justify-content:center;padding:0}.kl-add.on{background:#2dd4bf;color:#04201c;font-size:16px;font-weight:900}
+.kl-z.gew{box-shadow:0 0 0 2px rgba(45,212,191,.55) inset}.f7-it.gew{box-shadow:0 0 0 2px rgba(45,212,191,.55) inset;border-radius:8px}.f7-it .kl-add{align-self:center}
+/* 📎 Datei über Erfassen (Zielbild 3 D) */
+.f12-bez{margin-top:10px;background:#16203a;border:1px solid #2b3d63;border-radius:12px;padding:10px 12px;font-size:13px;color:#cfd8e6}.f12-bez b{display:block;font-size:11.5px;color:#9a9ca2;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}
+.f12-hin{font-size:12px;color:#9a9ca2;margin-top:8px;line-height:1.4}.f7-src>div.aus{opacity:.35;pointer-events:none}
+/* iPad: rechte Spalte zeigt das Gespräch mit Eingabe */
+body.breit #srChat .f12-seite{display:flex;flex-direction:column;flex:1;min-height:0}
 body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4sb .f4n-pl{grid-column:1;grid-row:1}body.breit #f4sb .f4n-kz{grid-column:1;grid-row:2}body.breit #f4sb .f4n-r4{grid-column:2;grid-row:1/4;margin-top:0}
 </style>
 </head>
@@ -2910,6 +2966,8 @@ body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4s
   <section class="e1" id="e1-erfassen" data-e1="erfassen"><div class="an-body" id="erfBody"></div></section>
   <section class="e1" id="e1-routinen" data-e1="routinen"><div class="an-body" id="routBody"></div></section>
   <section class="e1" id="e1-chat" data-e1="chat"><div class="an-body" id="chatBody"></div></section>
+  <!-- 4.1 · Chat-Räume §7: ＋ Kontext (Karten, Dateien) für ein Gespräch -->
+  <section class="e1" id="e1-kontextwahl" data-e1="kontextwahl"><div class="an-body" id="kwxBody"></div></section>
   <section class="e1" id="e1-plan" data-e1="plan"><div class="an-body" id="planBody"></div></section>
 </div>
 
@@ -6018,7 +6076,7 @@ function f7PlanHtml(){
 { const _alt=e1Rendern;
   e1Rendern=function(){ const a=e1Art(); if(!a) return;
     try{ if(a==='durchsuchen'){ el('dsBody').innerHTML=f7DurchsuchenHtml(); return; } if(a==='erfassen'){ el('erfBody').innerHTML=f7ErfassenHtml(); f7ErfasstStatus(); return; } if(a==='routinen'){ el('routBody').innerHTML=f7RoutinenHtml(); return; }
-      if(a==='chat'){ const b=el('chatBody'); b.innerHTML=f7ChatHtml(); b.scrollTop=b.scrollHeight; return; } if(a==='plan'){ el('planBody').innerHTML=f7PlanHtml(); return; } }catch(e){ console.warn('Paket 7', a, e); }
+      if(a==='chat'){ f12Rendern(); return; } if(a==='kontextwahl'){ f12KontextRendern(); return; } if(a==='plan'){ el('planBody').innerHTML=f7PlanHtml(); return; } }catch(e){ console.warn('Paket 7', a, e); }   // 4.1: Chat-Räume
     _alt(); }; }
 const F7_NEUKARTE_HTML='<button class="f7-neukarte" data-f7neukarte="1">＋ Karte erstellen</button>';   // Hotfix 9 · Abschnitt 1: ganz unten in der Suche
 { const _alt=renderSuche;
@@ -6246,7 +6304,7 @@ function f9Rendern(){
   { const inp=el('slSuche'); if(inp && document.activeElement!==inp) inp.value=S.ui.suFrage||''; }
   try{ L.innerHTML=f7SucheStartHtml(); }catch(e){ L.innerHTML='<div class="leer">—</div>'; }
   const a=e1Art();
-  try{ C.innerHTML='<div class="sr-kopf">💬 '+esc(f7ChatEmpfaenger())+'<span>zur Ansicht: '+(F9_SEITE[seiteAktuell()]||'')+'</span></div>'+(a==='chat' ? '<div class="leer">Der Chat ist in der Mitte offen.</div>' : f7ChatHtml()); }catch(e){ C.innerHTML='<div class="leer">—</div>'; }
+  try{ C.innerHTML='<div class="sr-kopf">💬 '+esc(f12Name(f12KanalAktuell()||f12TrainerKanal()||{ Agent:'Trainer' }))+'<span>zur Ansicht: '+(F9_SEITE[seiteAktuell()]||'')+'</span></div>'+(a==='chat' ? '<div class="leer">Der Chat ist in der Mitte offen.</div>' : f12SeiteHtml()); f12UhrStarten(); }catch(e){ C.innerHTML='<div class="leer">—</div>'; }   // 4.1 §2.5: iPad zeigt das Gespräch
   try{ E.innerHTML='<div class="sr-kopf">＋ Erfassen<span>'+(f7Erf().bezug==='karte' ? 'Bezug: Karte' : f7Erf().bezug==='agent' ? 'Agent entscheidet' : esc(f7Erf().bezugName||''))+'</span></div>'+(a==='erfassen' ? '<div class="leer">Erfassen ist in der Mitte offen.</div>' : f7ErfassenHtml()); }catch(e){ E.innerHTML='<div class="leer">—</div>'; }
 }
 { const _alt=ebeneRendern; ebeneRendern=function(){ _alt(); try{ f9Rendern(); }catch(e){} }; }
@@ -6586,6 +6644,87 @@ function f12Senden(kanal, g, text, opt){
   const args={ tabelle, felder }; if(Object.keys(verk).length) args.verknuepfungen=verk;
   return FSLive.senden('datensatz_anlegen', args, opt.id ? { id:opt.id } : undefined).then(r=>{ if(kanal){ f7LagerLeeren(f12VerlaufKey(kanal, g)); f7LagerLeeren('chatG:'+kanal.id); } f7Neu(); return r; }).catch(e=>{ toast('Nachricht wartet: '+((e && e.message)||'Fehler')); });
 }
+/* ── §2 · Stufen und Zustand ── */
+function f12Stufe(){ const u=f12Ui(); if(u.kanal && u.gespraech) return 'gespraech'; if(u.kanal) return 'agent'; return 'raum'; }
+function f12KanalAktuell(){ const u=f12Ui(); return u.kanal ? f12KanalId(u.kanal) : null; }
+function f12Oeffnen(z){ z=z||{}; const u=f12Ui(); if(z.raum!==undefined) u.raum=z.raum; if(z.kanal!==undefined) u.kanal=z.kanal; if(z.gespraech!==undefined) u.gespraech=z.gespraech; if(z.kanal && !z.raum){ const k=f12KanalId(z.kanal); if(k) u.raum=f12Raum(k)||u.raum; } saveUi(); if(e1Art()!=='chat') e1Oeffnen('chat'); else e1Rendern(); if(z.fokus) f12Fokus(); }
+function f12Fokus(){ try{ const t=el('f12Text'); if(t && t.focus) t.focus({ preventScroll:true }); }catch(e){} }
+function f12Zurueck(){ const u=f12Ui(); const st=f12Stufe();
+  if(st==='gespraech'){ u.gespraech=null; saveUi(); e1Rendern(); return; }
+  if(st==='agent'){ const r=f12RaumName(u.raum); if(r && r.kanaele.length===1){ e1Schliessen(); return; } u.kanal=null; saveUi(); e1Rendern(); return; }   // §3.4: ein Kanal → ‹ schließt die Ebene
+  e1Schliessen(); }
+function f12EntwurfKey(kanalId, g){ return String(kanalId||'')+'|'+String(g||''); }
+function f12Entwurf(kanalId, g){ const u=f12Ui(), key=f12EntwurfKey(kanalId, g); if(!u.entwurf[key] || typeof u.entwurf[key]!=='object') u.entwurf[key]={ text:'', karten:[], anhaenge:[] }; const e=u.entwurf[key]; if(!Array.isArray(e.karten)) e.karten=[]; if(!Array.isArray(e.anhaenge)) e.anhaenge=[]; if(typeof e.text!=='string') e.text=''; return e; }
+function f12EntwurfAktuell(){ const u=f12Ui(); return f12Entwurf(u.kanal, u.gespraech); }
+/* ── Kopf (wie .f3n-kopf, Zielbild 1 Punkt 1) ── */
+function f12KopfHtml(o){ return '<div class="f3n-kopf f12-kopf" id="chatKopf"><button class="an-back" data-f12zurueck="1" aria-label="Zurück">'+(o.zurueck||'‹')+'</button><h3>'+o.titel+(o.sub ? '<small>'+o.sub+'</small>' : '')+'</h3><span class="sp"></span>'+(o.extra||'')+
+  '<button class="f3n-bell" data-f3nstumm="1" title="Benachrichtigungen">'+(S.settings.chatStumm ? '🔕' : '🔔')+'</button><button class="f3n-x" data-e1zu="1" aria-label="Schließen">✕</button></div>'; }
+function f12LinkKnopf(link, klein){ if(!link) return ''; return '<a class="f12-ext'+(klein?' klein':'')+'" data-f12link="1" href="'+esc(link)+'" target="_blank" rel="noopener">↗'+(klein ? '' : ' Claude-Raum')+'</a>'; }
+/* ── Zeichnen und Klicks ── */
+function f12Rendern(){
+  const b=el('chatBody'); if(!b) return; const u=f12Ui(), st=f12Stufe();
+  if(st==='gespraech'){ const kanal=f12KanalAktuell(); if(!kanal){ u.kanal=null; u.gespraech=null; saveUi(); }
+    else { const list=el('chatList'), key=kanal.id+'|'+u.gespraech;
+      if(list && list.dataset && list.dataset.key===key){ f12VerlaufAktualisieren(kanal, u.gespraech); f12SendenKnopf(); return; }
+      b.innerHTML=f12GespraechHtml(kanal, u.gespraech); f12EingabeHoehe(); f12UhrStarten(); f12NachladenStarten(kanal, u.gespraech); f12GesehenMelden(kanal, f12Verlauf(kanal, u.gespraech)); f12Gespraeche(kanal); return; } }
+  f12NachladenStoppen();
+  if(st==='agent'){ const kanal=f12KanalAktuell(); if(kanal){ b.innerHTML=f12AgentHtml(kanal); f12UhrStarten(); return; } u.kanal=null; saveUi(); }
+  b.innerHTML=f12RaumHtml(); f12LeisteScrollen();
+}
+function f12RaumWaehlen(name){ const u=f12Ui(); u.raum=name; u.kanal=null; u.gespraech=null; const r=f12RaumName(name); if(r && r.kanaele.length===1) u.kanal=r.kanaele[0].id;   // §3.4
+  saveUi(); e1Rendern(); }
+function f12Klick(e){
+  const t=e.target; if(!t || !t.closest) return false; const d=x=>t.closest('['+x+']'); let z;
+  const imChat=t.closest('#e1-chat') || t.closest('#srChat'), imKw=t.closest('#e1-kontextwahl'), imErf=t.closest('#e1-erfassen') && f12ErfChat();
+  if(!imChat && !imKw && !imErf && !d('data-fkchat') && !d('data-f7planchat') && !d('data-f11chat') && !(d('data-f7akt') && d('data-f7akt').dataset.f7akt==='chat')) return false;
+  const stopp=()=>{ try{ e.stopImmediatePropagation(); }catch(x){} };   // auch die Kettenlisten-Handler auf document nicht mehr
+  if(imErf){ if(d('data-f7zurueck')){ stopp(); F7.erf=null; e1Oeffnen('chat'); f12Fokus(); return true; } return false; }
+  if(d('data-f3nstumm')){ S.settings.chatStumm=!S.settings.chatStumm; saveSettings(); const b=d('data-f3nstumm'); b.textContent=S.settings.chatStumm ? '🔕' : '🔔'; toast(S.settings.chatStumm ? 'Chat-Benachrichtigungen stumm' : 'Chat-Benachrichtigungen an');
+    if(!S.settings.chatStumm){ try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(x){} } return true; }
+  if(d('data-f3nunten')){ f12NachUnten(); return true; }
+  if(d('data-f12link')) return false;   // ↗ öffnet den Claude-Raum in einem neuen Fenster (Link selbst)
+  if((z=d('data-f7akt')) && z.dataset.f7akt==='chat'){ haptik(6); f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null }); return true; }
+  if((z=d('data-fkchat'))){ haptik(6); try{ closeSheet(); }catch(x){} f12KartenChat(z.dataset.fkchat); return true; }
+  if(d('data-f7planchat')){ f12TrainerOeffnen('Plan heute ändern: '); return true; }
+  if(d('data-f11chat')){ e.stopPropagation(); closeSheet(); F7.blattNeu=null; f12TrainerOeffnen(''); return true; }
+  // Kontextwahl
+  if(imKw){ stopp();
+    if(d('data-f12kwzurueck')){ f12Kw().auswahl=[]; saveUi(); e1Oeffnen('chat'); return true; }
+    if(d('data-f12fertig')){ haptik(8); f12KwFertig(); return true; }
+    if((z=d('data-f12seg'))){ f12KwSegment(z.dataset.f12seg); return true; }
+    if((z=d('data-f12add'))){ e.stopPropagation(); if(f12KwToggle(z.dataset.f12add)) e1Rendern(); return true; }
+    if((z=d('data-f12wahl'))){ if(t.closest('[data-f7chip]') || t.closest('select')) return false; e.stopPropagation(); if(f12KwToggle(z.dataset.f12wahl)) e1Rendern(); return true; }   // §7.5: Tipp auf den Titel wirkt wie ＋
+    if(d('data-f7zurueck')){ const ds=f12KwDs(); if(ds.pfad.length){ ds.pfad.pop(); saveUi(); e1Rendern(); } return true; }
+    if(t.closest('[data-klgruppe]')){ const kg=t.closest('[data-klgruppe]'); haptik(6); klGruppeUmschalten(kg.dataset.klgruppe); e1Rendern(); return true; }
+    return false; }
+  // Chat
+  if(d('data-f12zurueck')){ haptik(6); f12Zurueck(); return true; }
+  if((z=d('data-f12raum'))){ haptik(6); f12RaumWaehlen(z.dataset.f12raum); return true; }
+  if((z=d('data-f12kanal'))){ haptik(6); const u=f12Ui(); u.kanal=z.dataset.f12kanal; u.gespraech=null; saveUi(); e1Rendern(); return true; }
+  if((z=d('data-f12gespraech'))){ haptik(6); const u=f12Ui(); u.gespraech=z.dataset.f12gespraech; saveUi(); e1Rendern(); return true; }
+  if(d('data-f12neu')){ haptik(8); const u=f12Ui(); u.gespraech=f12NeuesGespraech(); saveUi(); e1Rendern(); f12Fokus(); return true; }
+  if(d('data-f12senden')){ f12Abschicken(); return true; }
+  if(d('data-f12plus')){ haptik(6); const u=f12Ui(), tx=el('f12Text'); if(tx && typeof tx.value==='string'){ f12EntwurfAktuell().text=tx.value; saveUi(); } if(!u.gespraech){ u.gespraech=f12NeuesGespraech(); saveUi(); } f12KontextOeffnen(); return true; }
+  if((z=d('data-f12markeweg'))){ e.stopPropagation(); haptik(6); f12MarkeWeg(z.dataset.f12markeweg); return true; }
+  if((z=d('data-f12karte'))){ e.stopPropagation(); haptik(6); f7AufgabeOeffnen(z.dataset.f12karte); return true; }
+  if(d('data-f7pfoeffnen')){ haptik(6); e1Schliessen(); seiteZeigen('postfach'); return true; }
+  if((z=d('data-f12pffrei'))){ e.stopPropagation(); if(z.disabled) return true; f12PfFreigeben(z.dataset.f12pffrei, false); return true; }
+  if((z=d('data-f12pfstart'))){ e.stopPropagation(); if(z.disabled) return true; f12PfFreigeben(z.dataset.f12pfstart, true); return true; }
+  if((z=d('data-f12pfdetail'))){ e.stopPropagation(); f12PfDetail(z.dataset.f12pfdetail); return true; }
+  if((z=d('data-f12pfablehnen'))){ e.stopPropagation(); f12PfAblehnen(z.dataset.f12pfablehnen); return true; }
+  return false;
+}
+{ const _alt=f7Klick; f7Klick=function(e){ try{ if(f12Klick(e)) return true; }catch(x){ console.warn('Chat 4.1 Klick', x); } return _alt(e); }; }
+document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.matches) return;
+  if(t.matches('[data-f12text]')){ f12EntwurfAktuell().text=t.value; clearTimeout(F12.saveT); F12.saveT=setTimeout(saveUi, 400); f12EingabeHoehe(); f12SendenKnopf(); }
+  if(t.matches('[data-f12kwsuche]')){ f12Kw().suche=t.value; clearTimeout(F12.suT); F12.suT=setTimeout(()=>{ saveUi(); e1Rendern(); }, 250); } });
+/* Wischen nach unten auf dem Kopf schließt (wie bisher) */
+{ let y0=null; document.addEventListener('touchstart', e=>{ const k=e.target && e.target.closest ? e.target.closest('#chatKopf') : null; y0=k ? e.touches[0].clientY : null; }, { passive:true });
+  document.addEventListener('touchend', e=>{ if(y0==null) return; const dy=(e.changedTouches[0].clientY-y0); y0=null; if(dy>70 && e1Art()==='chat'){ haptik(6); e1Schliessen(); } }, { passive:true }); }
+/* iPad (§2.5): rechte Spalte zeigt das zuletzt geöffnete Gespräch, sonst das Tages-Gespräch des Trainers */
+function f12SeiteHtml(){ const u=f12Ui(); let kanal=f12KanalAktuell(), g=u.gespraech; if(!kanal || !g){ kanal=f12TrainerKanal(); g=f12TagGespraech(); } if(!kanal) return '<div class="leer">Chat-Kanäle laden …</div>';
+  return '<div class="f12-seite">'+f12GespraechHtml(kanal, g, { breit:true })+'</div>'; }
+{ const _alt=f7Neu; f7Neu=function(){ _alt(); try{ f12SendenKnopf(); }catch(e){} }; }
 /* ── F12 Ende ── */
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -20909,7 +21048,7 @@ function suFrage(){ return String(S.ui.suFrage||'').trim(); }
    Die Sichtbarkeit hängt per CSS allein an body[data-seite] und body[data-e1]. Ebene 3 (Animationen, e3Spielen) und die
    Dialoge (openSheet/closeSheet) sind flüchtig bzw. eine eigene Klasse und stehen nicht in diesem Zustand. */
 const SEITEN=['fokus','postfach','belohnung','statistik','einst'];   // 4.0 · Paket 7: Postfach
-const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch','durchsuchen','erfassen','routinen','chat','plan'];   // 4.0 · Paket 7
+const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch','durchsuchen','erfassen','routinen','chat','plan','kontextwahl'];   // 4.0 · Paket 7 · 4.1: kontextwahl
 let _e1=null;
 function seiteAktuell(){ const s=S.ui && S.ui.seite; return SEITEN.indexOf(s)>=0 ? s : 'fokus'; }
 function e1Art(){ return _e1 ? _e1.art : null; }
