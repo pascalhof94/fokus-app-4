@@ -2866,6 +2866,10 @@ body.breit #srChat .f12-seite{display:flex;flex-direction:column;flex:1;min-heig
 .f7-send.aus{opacity:.65;pointer-events:none}
 .f15-kreis{display:inline-block;width:14px;height:14px;border:2px solid #9a9ca2;border-top-color:#3b82f6;border-radius:50%;vertical-align:-2px;margin-right:6px;animation:f15dreh .8s linear infinite}
 @keyframes f15dreh{to{transform:rotate(360deg)}}
+/* Hotfix 15 §4 · Kette „📬 Agenten-Karten“: Kartenzeile BLAU 18 % mit Rand ORANGE; laufende Überarbeitung gestrichelt GRAU mit Ladekreis */
+.f15-sort{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9a9ca2;margin:4px 2px 6px}
+.kl-z.f15-kr{display:flex;cursor:pointer;border-left:1px solid var(--rand);border-right:1px solid var(--rand);padding:9px 11px}.kl-z.f15-kr .kl-t{flex:1;min-width:0}.kl-z.f15-kr .pf{color:#9a9ca2;font-size:18px;flex:none}
+.f15-lauf{display:flex;gap:8px;align-items:center;background:#1a1d22;border:1px dashed #9a9ca2;border-radius:10px;padding:9px 11px;margin-bottom:6px;color:#9a9ca2;min-height:52px}.f15-lauf .f15-kreis{flex:none;margin:0}.f15-lauf b{display:block;color:#e8e9ec;font-weight:700}.f15-lauf small{display:block;font-size:12px}
 body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4sb .f4n-pl{grid-column:1;grid-row:1}body.breit #f4sb .f4n-kz{grid-column:1;grid-row:2}body.breit #f4sb .f4n-r4{grid-column:2;grid-row:1/4;margin-top:0}
 </style>
 </head>
@@ -6111,7 +6115,7 @@ function f7Mikro(feldId){
   try{ const r=new SR(); r.lang='de-DE'; r.interimResults=false; r.onresult=ev=>{ const t=ev.results[0][0].transcript, f=el(feldId); if(f){ f.value=(f.value ? f.value+' ' : '')+t; } }; r.onerror=()=>toast('Spracheingabe abgebrochen'); r.start(); toast('🎙️ spricht …'); }catch(e){ toast('Spracheingabe nicht möglich'); }
 }
 /* ── 7.5 · Postfach ── */
-function f7Postfach(){ return f7Lager('postfach', 60000, ()=>f7Alle({ tabelle:'Postfach', felder:['Titel','Agent','Art','Output/Entwurf','Quelle','Projekt','Person','Organisation','Begründung','Sicherheit %','Dringlichkeit','Push','Folge nach Freigabe','Status','Entscheidung'], filter:[{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Dringlichkeit', richtung:'ab' }] })); }
+function f7Postfach(){ return f7Lager('postfach', 60000, ()=>f7Alle({ tabelle:'Postfach', felder:['Titel','Agent','Art','Output/Entwurf','Quelle','Projekt','Person','Organisation','Begründung','Sicherheit %','Dringlichkeit','Push','Folge nach Freigabe','Status','Entscheidung','Runde','Vorgänger','Pascals Anpassung'], filter:[{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Dringlichkeit', richtung:'ab' }] })); }   // Hotfix 15 §3/§4: Runde, Vorgänger, Pascals Anpassung
 function f7PfHeute(){ const h=S.meta.postfachHeute; if(!h || h.datum!==heuteApp()){ S.meta.postfachHeute={ datum:heuteApp(), n:0, leerBonus:false }; } return S.meta.postfachHeute; }
 function f7PfKat(r){ const a=String(r.Art||''); if(a==='Dringend' || num(r.Dringlichkeit)>=80) return 'dringend'; if(a==='Klärung') return 'klaerung'; if(/^(Plan|Kurs|Ziel)$/.test(a)) return 'plan'; return 'entwurf'; }
 /* ── Hotfix 7 · Abschnitt 2: Karte aus dem Postfach. Vertrag für den Entwurfstext: erste Zeile „Aufgabe: <Titel>" (auch „Karte:"),
@@ -7436,6 +7440,29 @@ function f12Benachrichtigen(kanal, r){
 setInterval(()=>{ try{ f12BadgeLaden(); }catch(e){} }, 60000);
 setTimeout(()=>{ try{ f12BadgeLaden(); }catch(e){} }, 9000);
 /* ── F12 Ende ── */
+
+/* ══════════════════════════════════════════════════════════════════════
+   Hotfix 15 (22.10.2026) · Block F15 · Agenten-Karten: feste Kette (§4), Karten-Ansicht (§5), Senden = neue Runde (§6), Postfach = ungelesen (§7)
+   Farben und Ebenen nach Standard recwXUkjpph7FVr2y; die Karten-Ansicht ist eine Ebene-1-Sektion (Kind von <body>, folgt --vvTop/--vvH, Felder 16 px).
+   ══════════════════════════════════════════════════════════════════════ */
+const F15={ karte:null, pf:{}, lade:{}, verlaufAuf:{}, laeuft:false };
+const F15_TK='agentenkarten';
+function f15Runde(r){ const n=num(r && r.Runde); return n>0 ? Math.round(n) : 1; }
+/* §4.1 · alle offenen Postfach-Karten, Dringlichkeit absteigend, dann erstellt_am aufsteigend (aus dem Lager „postfach“, baut sich mit jeder neuen Datenlage neu) */
+function f15KetteKarten(){ const rows=(F7.lager.postfach && Array.isArray(F7.lager.postfach.daten)) ? F7.lager.postfach.daten : []; return rows.filter(r=>String(r.Status||'offen').toLowerCase()==='offen').slice().sort((a,b)=>(num(b.Dringlichkeit)-num(a.Dringlichkeit)) || (String(a.erstellt_am||'')<String(b.erstellt_am||'') ? -1 : String(a.erstellt_am||'')>String(b.erstellt_am||'') ? 1 : 0)); }
+/* §4.3 · offene Überarbeiten-Aufträge (Lager 60 s): Karte, an der ein Agent gerade arbeitet */
+function f15Auftraege(){ return f7Lager('ueberarbeiten', 60000, ()=>f7Alle({ tabelle:'Agenten-Aufträge', felder:['Art','Status','Empfänger','Postfach-Karte'], filter:[{ feld:'Art', operator:'gleich', wert:'Überarbeiten' },{ feld:'Status', operator:'einer_von', wert:['offen','vorgemerkt'] }], limit:100 })); }
+function f15Laeuft(id){ return (f15Auftraege()||[]).find(a=>f7Link(a['Postfach-Karte']).some(x=>String(x.id)===String(id)))||null; }
+function f15KetteZeilenHtml(){
+  const l=f15KetteKarten(); if(!l.length) return '<div class="leer">keine offene Agenten-Karte</div>';
+  return '<div class="f15-sort">Sortiert nach Dringlichkeit</div>'+l.map(r=>{ const a=f15Laeuft(r.id), runde=f15Runde(r);
+    if(a) return '<div class="f15-lauf" data-f15laeuft="'+esc(r.id)+'"><span class="f15-kreis"></span><div><b>'+esc(r.Titel||'')+'</b><small>'+esc(r.Agent||'Agent')+' arbeitet an Runde '+(runde+1)+' …</small></div></div>';
+    const meta=[r.Agent, r.Art, 'Runde '+runde, r['Sicherheit %']!=null ? Math.round(num(r['Sicherheit %']))+' %' : null].filter(Boolean).join(' · ');
+    return '<div class="kl-z f15-kr" data-f15karte="'+esc(r.id)+'" data-f15auskette="1" style="--fam:'+FARBE.BLAU+';--famb:'+farbeAlpha(FARBE.BLAU, .18)+';--prio:'+FARBE.BLAU+';--rand:'+FARBE.ORANGE+'"><div class="kl-t"><b class="kl-titel">'+esc(r.Titel||'')+'</b><span class="kl-meta">'+esc(meta)+'</span></div><span class="pf">›</span></div>'; }).join('');
+}
+/* §7.4 · die Kette setzen und öffnen (Ebene „Karten“ mit der Kettenliste) */
+function f15KetteOeffnen(){ S.ui.tkWahl=F15_TK; saveUi(); haptik(6); ebeneSetzen({ seite:'fokus', e1:'plus' }); }
+/* ── F15 Ende ── */
 
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -9938,10 +9965,11 @@ function getrackteKarte(){ const k=fokusKarte(); return (k && k.status!=='archiv
    EINE Quelle für Kettenliste, „nächste ▶" und Kettenknopf */
 function aktiveKetteKarten(){
   const w=tageskettenWahl(), c=w ? tagesketten().find(x=>x.id===w) : null;
+  if(w==='agentenkarten') return [];   // Hotfix 15 §4: die feste Kette führt Postfach-Karten, keine App-Karten
   if(c){ const by={}; S.karten.forEach(x=>by[x.id]=x); return (c.karten||[]).map(id=>by[id]).filter(x=>x && x.status!=='archiviert' && !karteVerborgen(x)); }
   return hauptKetteKarten();
 }
-function aktiveKetteName(){ const w=tageskettenWahl(), c=w ? tagesketten().find(x=>x.id===w) : null; return c ? (c.name||'Kette') : 'Aktuelle Kette'; }
+function aktiveKetteName(){ const w=tageskettenWahl(), c=w ? tagesketten().find(x=>x.id===w) : null; if(w==='agentenkarten') return '📬 Agenten-Karten'; return c ? (c.name||'Kette') : 'Aktuelle Kette'; }
 function hauptKetteKarten(){ const eigene=ketteKarten(navDomain()); return eigene.some(k=>k.status==='offen') ? eigene : ketteKarten(); }
 /* C6 (v3.8.0): die Karte an Position 1 der gewählten Kette — tkId leer = die aktuelle Kette (S.meta.ketten.alle), sonst die
    Tageskette (S.tagesketten). Beide Schreibwege bestehen seit 3.7.0 („In Kette"); der Datenvertrag bleibt unberührt. */
@@ -12827,11 +12855,12 @@ function fokusBloecke350(k){
    §4 (v3.5.3): die Auswahl sitzt als Chip-Reihe oben IN der Gruppe „Aktuelle Kette" (nur wenn es Tagesketten gibt);
    der eigene Tagesketten-Block ist entfallen. „Ganzer Tag" = die aktuelle Kette, sonst die Karten der gewaehlten Tageskette. */
 function tagesketten(){ return Array.isArray(S.tagesketten) ? S.tagesketten : []; }
-function tageskettenWahl(){ const w=S.ui.tkWahl; return (w && tagesketten().some(c=>c.id===w)) ? w : null; }
+function tageskettenWahl(){ const w=S.ui.tkWahl; return (w && (w==='agentenkarten' || tagesketten().some(c=>c.id===w))) ? w : null; }   // Hotfix 15 §4.1: feste Kette „agentenkarten“
 function tageskettenChipsHtml(){
-  const tk=tagesketten(); if(!tk.length) return '';
+  const tk=tagesketten();
   const wahl=tageskettenWahl(), chip=(id, name, an)=>'<button type="button" class="kl-chip'+(an?' on':'')+'" data-tkwahl="'+esc(id)+'"><span>'+esc(name)+'</span></button>';   // Tippflaeche 44 px, sichtbarer Chip 32 px
-  return '<div class="kl-chips">'+chip('', 'Ganzer Tag', !wahl)+tk.map(c=>chip(c.id, c.name||'Kette', c.id===wahl)).join('')+'</div>';
+  const n=(typeof f15KetteKarten==='function') ? f15KetteKarten().length : 0;   // Hotfix 15 §4.1: feste Tageskette „📬 Agenten-Karten“ mit Anzahl, nie per Paket
+  return '<div class="kl-chips">'+chip('', 'Ganzer Tag', !wahl)+tk.map(c=>chip(c.id, c.name||'Kette', c.id===wahl)).join('')+chip('agentenkarten', '📬 Agenten-Karten · '+n, wahl==='agentenkarten')+'</div>';
 }
 /* ══ §3 (v3.5.3) · DER TAG — drei Zeilen volle Breite: Tagesprognose · Tagesform · Tagesverlauf ══════════
    EINE Render-Funktion (derTagHtml) fuer die Fokusansicht (direkt unter „Tempo und Blöcke") und die Statistik (Gruppe 1
@@ -13209,10 +13238,12 @@ function kettenListeHtml(opt){
     // §3 (v3.7.1): bei einer Sucheingabe sind Gruppen mit Treffern aufgeklappt, ohne Treffer eingeklappt — der gemerkte Zustand gilt bei leerem Suchfeld
     const id=q[0], g=inhalt[id], auf=String(opt.filter||'').trim() ? g.n>0 : klGruppeOffen(id), optionen=(id==='kette' ? [['kette','Kettenreihenfolge']] : []).concat(KL_SORT);
     const sort='<select class="kl-sort" data-klsort="'+id+'" aria-label="Sortierung">'+optionen.map(o=>'<option value="'+o[0]+'"'+(o[0]===g.wahl?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
-    const zeilen=g.teile.map(t=>(t.name ? '<div class="kl-zwh">'+esc(t.name)+'</div>' : '')+t.karten.map(x=>kartenZeileHtml(x, g.zusatz(x))).join('')).join('');
-    return '<div class="kl-grp" data-klgrp="'+id+'"><div class="kl-grk" data-klgruppe="'+id+'" role="button" aria-expanded="'+(auf?'true':'false')+'"><b>'+q[1]+'</b>'+(auf ? sort : '')+'<span class="anz">'+g.n+'</span>'+
+    const agk=id==='kette' && tageskettenWahl()==='agentenkarten' && typeof f15KetteZeilenHtml==='function';   // Hotfix 15 §4.2: Kartenzeilen der Postfach-Karten
+    const n=agk ? f15KetteKarten().length : g.n;
+    const zeilen=agk ? f15KetteZeilenHtml() : g.teile.map(t=>(t.name ? '<div class="kl-zwh">'+esc(t.name)+'</div>' : '')+t.karten.map(x=>kartenZeileHtml(x, g.zusatz(x))).join('')).join('');
+    return '<div class="kl-grp" data-klgrp="'+id+'"><div class="kl-grk" data-klgruppe="'+id+'" role="button" aria-expanded="'+(auf?'true':'false')+'"><b>'+q[1]+'</b>'+(auf && !agk ? sort : '')+'<span class="anz">'+n+'</span>'+
       '<span class="stm-tog'+(auf?' auf':'')+(dreh===id?' dreh':'')+'" aria-hidden="true">'+STM_CHEVRON+'</span></div>'+
-      (auf && id==='kette' && chips ? chips : '')+(auf && g.n ? '<div class="kl kl-grinh">'+zeilen+'</div>' : '')+'</div>'; }).join('')+'</div>';
+      (auf && id==='kette' && chips ? chips : '')+(auf && (n || agk) ? '<div class="kl kl-grinh">'+zeilen+'</div>' : '')+'</div>'; }).join('')+'</div>';
 }
 /* alle Kettenlisten im Dokument neu zeichnen (nach Tick, Haken, Start, Sortier- oder Klappwechsel) */
 function kettenListenNeu(){
