@@ -6663,7 +6663,7 @@ function f12Rendern(){
   const b=el('chatBody'); if(!b) return; const u=f12Ui(), st=f12Stufe();
   if(st==='gespraech'){ const kanal=f12KanalAktuell(); if(!kanal){ u.kanal=null; u.gespraech=null; saveUi(); }
     else { const list=el('chatList'), key=kanal.id+'|'+u.gespraech;
-      if(list && list.dataset && list.dataset.key===key){ f12VerlaufAktualisieren(kanal, u.gespraech); f12SendenKnopf(); return; }
+      if(list && list.dataset && list.dataset.key===key){ f12VerlaufAktualisieren(kanal, u.gespraech); f12EntwurfSync(); f12SendenKnopf(); return; }   // Hotfix 13 §4: Marken und Text des Entwurfs nachziehen
       b.innerHTML=f12GespraechHtml(kanal, u.gespraech); f12EingabeHoehe(); f12UhrStarten(); f12NachladenStarten(kanal, u.gespraech); f12GesehenMelden(kanal, f12Verlauf(kanal, u.gespraech)); f12Gespraeche(kanal); f12PfNachlesen(kanal, u.gespraech); return; } }   // Hotfix 13 §3.2
   f12NachladenStoppen();
   if(st==='agent'){ const kanal=f12KanalAktuell(); if(kanal){ b.innerHTML=f12AgentHtml(kanal); f12UhrStarten(); return; } u.kanal=null; saveUi(); }
@@ -6949,18 +6949,21 @@ function f12Abschicken(){
   try{ if(!S.settings.chatStumm && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(x){}
   e1Rendern(); f12NachUnten();
 }
+/* Hotfix 13 §4.2: Marken und Text des Entwurfs in der stehenden Gesprächsansicht nachziehen (nach ＋ Kontext, 📎 Datei, erneutem Öffnen) */
+function f12EntwurfSync(){ try{ const e=f12EntwurfAktuell(), m=el('chatMarken'); if(m && m.outerHTML!==undefined){ const neu=f12MarkenHtml(e); if(m.outerHTML!==neu) m.outerHTML=neu; }
+  const t=el('f12Text'); if(t && typeof t.value==='string' && document.activeElement!==t && t.value!==String(e.text||'')){ t.value=String(e.text||''); f12EingabeHoehe(); } }catch(x){} }
 function f12MarkeWeg(was){ const e=f12EntwurfAktuell(), [art, id]=String(was).split(':'); if(art==='karte') e.karten=e.karten.filter(k=>k.id!==id); else e.anhaenge=e.anhaenge.filter(a=>a.id!==id); saveUi(); const m=el('chatMarken'); if(m && m.outerHTML!==undefined) m.outerHTML=f12MarkenHtml(e); f12SendenKnopf(); }
 /* ── §7 · ＋ Kontext (Ebene kontextwahl) ── */
 function f12Kw(){ if(!S.ui.kontextwahl || typeof S.ui.kontextwahl!=='object') S.ui.kontextwahl={ seg:'suche', suche:'', auswahl:[], ds:null }; const kw=S.ui.kontextwahl; if(!Array.isArray(kw.auswahl)) kw.auswahl=[]; return kw; }
 function f12KwDs(){ const kw=f12Kw(); if(!kw.ds || typeof kw.ds!=='object') kw.ds={ modus:'abteilungen', pfad:[], suche:'', filter:Object.assign({}, F7_FILTER_STD) }; if(!kw.ds.filter) kw.ds.filter=Object.assign({}, F7_FILTER_STD); return kw.ds; }
-function f12KontextOeffnen(){ const kw=f12Kw(); kw.seg='suche'; kw.suche=''; kw.auswahl=[]; kw.ds=null; saveUi(); e1Oeffnen('kontextwahl'); }
+function f12KontextOeffnen(){ const kw=f12Kw(); kw.seg='suche'; kw.suche=''; kw.auswahl=f12EntwurfAktuell().karten.map(k=>Object.assign({}, k)); kw.ds=null; saveUi(); e1Oeffnen('kontextwahl'); }   // Hotfix 13 §4.2: Karten des Entwurfs vorausgewählt
 function f12KwGewaehlt(id){ return f12Kw().auswahl.some(x=>x.id===id); }
 function f12KwKarte(id){
   const k=S.karten.find(x=>x.id===id || x.airtableId===id); if(k) return { id:k.id, titel:k.titel||'?', airtableId:k.airtableId||null, domain:k.domain||'dfm' };
   let a=null; Object.keys(F7.lager).forEach(key=>{ if(key.indexOf('aufg')===0 && F7.lager[key].daten){ const x=F7.lager[key].daten.find(r=>r.id===id); if(x) a=x; } });
   return a ? { id:a.id, titel:a.Titel||'?', fsId:a.id, domain:'dfm' } : null; }
 function f12KwToggle(id){ const kw=f12Kw(), k=f12KwKarte(id); if(!k) return false; haptik(8); if(f12KwGewaehlt(id)) kw.auswahl=kw.auswahl.filter(x=>x.id!==id); else kw.auswahl.push(k); saveUi(); return true; }
-function f12KwFertig(){ const kw=f12Kw(), e=f12EntwurfAktuell(); kw.auswahl.forEach(k=>{ if(!e.karten.some(x=>x.id===k.id)) e.karten.push(k); }); kw.auswahl=[]; saveUi(); e1Oeffnen('chat'); f12Fokus(); }
+function f12KwFertig(){ const kw=f12Kw(), e=f12EntwurfAktuell(); e.karten=kw.auswahl.map(k=>Object.assign({}, k)); kw.auswahl=[]; saveUi(); e1Oeffnen('chat'); f12EntwurfSync(); f12Fokus(); }   // Hotfix 13 §4.2: Fertig übernimmt die Auswahl vollständig
 function f12KwPrivatSichtbar(){ const k=f12KanalAktuell(); return !k || k.Bereich==='privat'; }   // §7.6: private Karten nur im Privat-Kanal
 function f12PlusErsetzen(html){
   return String(html||'').replace(/<button class="kl-play" data-klplay="([^"]+)"[^>]*>[^<]*<\/button>/g, (m, id)=>{ const on=f12KwGewaehlt(id); return '<button class="kl-add'+(on?' on':'')+'" data-f12add="'+id+'" aria-label="Kontext">'+(on?'✓':'＋')+'</button>'; })
@@ -7008,7 +7011,7 @@ function f12ErfassenUebernehmen(c, r, txt, datei){
   if(r && r.sofort && r.antwort && r.antwort.inbox){ const name=datei ? String(datei.name||'Datei') : (String(txt||'').replace(/\s+/g,' ').trim().slice(0,30)||'Text'); e.anhaenge.push({ id:String(r.antwort.inbox), name });
     if(txt) e.text=(e.text ? e.text+'\n' : '')+txt; saveUi(); toast('📎 an die Nachricht gehängt'); }
   else toast('Datei wartet auf den Mac mini — anhängen geht erst mit Verbindung');
-  F7.erf=null; e1Oeffnen('chat'); f12Fokus();
+  F7.erf=null; e1Oeffnen('chat'); f12EntwurfSync(); f12Fokus();   // Hotfix 13 §4.2
 }
 /* ── §9 · Einstiege und interne Nachrichten ── */
 function f12TrainerKanal(){ return f12KanalVon('Trainer'); }
