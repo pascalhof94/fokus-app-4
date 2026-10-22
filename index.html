@@ -3185,6 +3185,10 @@ const FSLive = (()=>{
     laeuft=true; ersterTs=0;
     try{
       for(const [schluessel, stand] of Array.from(offen.entries())){
+        if(GEMEINSAM.indexOf(schluessel)>=0 && !ichFuehre){   // Hotfix 14 §8.1: gemeinsame Schlüssel sendet nur das führende Gerät; ui immer
+          if(fuehrungBekannt){ offen.delete(schluessel); merken(); }   // nicht führend: nicht senden, nicht vorgemerkt lassen
+          continue;                                                  // Führung noch nicht gelesen: bleibt vorgemerkt bis zur Antwort
+        }
         const wert=lies(PREFIX+schluessel);
         if(wert===null) await aufruf('DELETE', '/api/spiegel/'+encodeURIComponent(PREFIX+schluessel));
         else await aufruf('PUT', '/api/spiegel/'+encodeURIComponent(PREFIX+schluessel), wert);
@@ -3193,13 +3197,23 @@ const FSLive = (()=>{
       gescheitert=false; fehlerText='';
       schreib(K.letzt, new Date().toISOString());
     }catch(e){
-      gescheitert=true; fehlerText=String((e && e.message) || 'Fehler');
+      if(e && e.status===409) fuehrungVerloren(e.antwort);   // Hotfix 14 §8.2: ein anderes Gerät führt — kein Fehlerzustand
+      else { gescheitert=true; fehlerText=String((e && e.message) || 'Fehler'); }
     }finally{
       laeuft=false;
       if(!gescheitert && offen.size) planen();
       anzeigen();
     }
   }
+  // Hotfix 14 §8.2 · 409 vom Dienst: Führung verloren → gemeinsame Schlüssel nicht mehr ausstehend, Stand des führenden Geräts holen.
+  function fuehrungVerloren(antwort){
+    ichFuehre=false; fuehrend=(antwort && antwort.fuehrend)||null; fuehrungBekannt=true;
+    for(const k of GEMEINSAM) offen.delete(k);
+    merken(); hinweisAnzeigen(); anzeigen();
+    standHolen(true);
+  }
+  // Hotfix 14 §8.5 · Nicht gekoppelte Geräte verhalten sich wie bisher (kein Führungskonzept, keine Sperre).
+  function koennteSchreiben(){ return !gekoppelt() || ichFuehre; }
 
   // ── Lesen und Schreiben live ──────────────────────────────────────
   // lesen: wirft bei fehlender Verbindung (e.offline) oder Ablehnung (e.status, e.message).
@@ -3245,7 +3259,7 @@ const FSLive = (()=>{
 
   // ── Paket-Eingang ─────────────────────────────────────────────────
   async function paketeHolen(){
-    if(paketeLaufen || !gekoppelt() || aktuellesPaket) return;
+    if(paketeLaufen || !gekoppelt() || aktuellesPaket || !ichFuehre) return;   // Hotfix 14 §8.3: Pakete holt nur das führende Gerät
     try{ if(sheetOffen()) return; }catch(e){}   // ein offenes Blatt wird nicht verdrängt; das Paket wartet auf den nächsten Takt
     paketeLaufen=true;
     try{
@@ -3263,6 +3277,7 @@ const FSLive = (()=>{
     finally{ paketeLaufen=false; anzeigen(); }
   }
   async function paketMelden(id, res){
+    if(!ichFuehre) return;   // Hotfix 14 §8.3
     const ok=!(res && res.fehler);
     try{ await aufruf('POST', '/api/app/pakete/'+id, JSON.stringify(ok ? { status:'uebernommen' } : { status:'abgelehnt', grund:String(res.fehler).slice(0,300) })); }
     catch(e){}   // nicht gemeldet: beim nächsten Holen kommt das Paket erneut; der Import ist je Karte idempotent
