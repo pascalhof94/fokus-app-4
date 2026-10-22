@@ -6725,6 +6725,38 @@ document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.matches) r
 function f12SeiteHtml(){ const u=f12Ui(); let kanal=f12KanalAktuell(), g=u.gespraech; if(!kanal || !g){ kanal=f12TrainerKanal(); g=f12TagGespraech(); } if(!kanal) return '<div class="leer">Chat-Kanäle laden …</div>';
   return '<div class="f12-seite">'+f12GespraechHtml(kanal, g, { breit:true })+'</div>'; }
 { const _alt=f7Neu; f7Neu=function(){ _alt(); try{ f12SendenKnopf(); }catch(e){} }; }
+/* ── §3 · Stufe Raum ── */
+function f12UngelesenKanal(k){ if(F12.badge && F12.badge[k.id]!=null) return num(F12.badge[k.id]); const G=F7.lager['chatG:'+k.id]; return (G && Array.isArray(G.daten)) ? G.daten.filter(f12Ungelesen).length : 0; }
+function f12LeisteHtml(raeume, aktiv){
+  return '<div class="f12-raeume" id="chatRaeume">'+raeume.map(r=>{ const n=r.kanaele.reduce((a,k)=>a+f12UngelesenKanal(k), 0), on=r.name===aktiv;
+    return '<div class="'+(on ? 'on'+(r.name==='Trainerstab' ? ' tk' : '') : '')+(!r.kanaele.length ? ' grau' : '')+'" data-f12raum="'+esc(r.name)+'">'+r.emoji+' '+esc(r.name)+(n ? '<i>'+n+'</i>' : '')+'</div>'; }).join('')+'</div>';
+}
+function f12KanalZeileHtml(k, raum){
+  const rows=f12Zeilen(k), letzte=rows && rows.length ? rows.slice().sort((a,b)=>String(a.Zeitstempel||'')<String(b.Zeitstempel||'') ? -1 : 1)[rows.length-1] : null, n=f12UngelesenKanal(k);
+  const sub=letzte ? '„'+esc(String(f12Text(k, letzte)).replace(/\s+/g,' ').trim().slice(0,60))+(String(letzte.Text||'').length>60 ? ' …' : '')+'“' : esc(String(k.Rolle||'').split('\n')[0]||'')+(k.Rolle ? ' · ' : '')+'noch kein Gespräch';
+  return '<div data-f12kanal="'+esc(k.id)+'"><div class="av">'+f12Avatar(k)+'</div><div class="m"><p>'+esc(f12Name(k))+'</p><small>'+sub+'</small></div><div class="r">'+(letzte ? '<time>'+esc(f12ZeitKurz(letzte.Zeitstempel))+'</time>' : '')+(n ? '<span class="bd">'+n+'</span>' : (letzte ? '' : '<span class="pf">›</span>'))+'</div></div>';
+}
+function f12RaumHtml(){
+  const u=f12Ui(), raeume=f12Raeume();
+  let h=f12KopfHtml({ zurueck:'‹ zurück', titel:'💬 Chat' });
+  if(!raeume){ return h+'<div class="f12-inhalt"><div class="leer">'+(f7LagerFehler('abteilungen') ? 'FocusSystem: '+esc(f7LagerFehler('abteilungen')) : 'lädt aus FocusSystem …')+'</div></div>'; }
+  if(!raeume.some(r=>r.name===u.raum)) u.raum=raeume.length ? raeume[0].name : 'Trainerstab';
+  const r=raeume.find(x=>x.name===u.raum)||raeume[0];
+  h+=f12LeisteHtml(raeume, r.name);
+  h+='<div class="f12-inhalt" id="chatInhalt">';
+  const link=(r.kanaele.find(k=>k['Claude-Raum-Link'])||{})['Claude-Raum-Link'];
+  const rolle=r.name==='Trainerstab' ? 'Querschnitt · liest DFM und Privat<span class="f12-pr">🔒 Chats in Privat</span>' : esc(r.teams);
+  h+='<div class="f12-rk"><div class="t"><b>'+r.emoji+' '+esc(r.name)+'</b><span>'+rolle+'</span></div>'+f12LinkKnopf(link)+'</div>';
+  if(!r.kanaele.length){
+    h+='<div class="f12-leer"><b>👥 Noch kein Agent in diesem Raum</b>Sobald ein Agent für '+esc(r.name)+' angelegt ist, erscheint er hier mit seinem Chat. Bis dahin: ↗ Claude-Raum.</div></div>';
+    h+='<div class="f12-eing gesperrt">Kein Agent · Eingabe gesperrt</div>';
+    return h; }
+  const mit=r.kanaele.filter(k=>!f12IstProjekt(k)), pro=r.kanaele.filter(f12IstProjekt).slice().sort((a,b)=>{ const za=f12Zeilen(a), zb=f12Zeilen(b); const ta=za && za.length ? String(za[za.length-1].Zeitstempel||'') : '', tb=zb && zb.length ? String(zb[zb.length-1].Zeitstempel||'') : ''; if(ta!==tb) return ta>tb ? -1 : 1; return f12Name(a).localeCompare(f12Name(b)); });
+  if(mit.length) h+='<h5 class="f7-h5 zw"><span>Mitarbeiter · '+mit.length+'</span></h5><div class="f7-l f12-l">'+mit.map(k=>f12KanalZeileHtml(k, r)).join('')+'</div>';
+  if(pro.length) h+='<h5 class="f7-h5 zw"><span>Projekt-Agenten · '+pro.length+'</span></h5><div class="f7-l f12-l">'+pro.map(k=>f12KanalZeileHtml(k, r)).join('')+'</div>';
+  return h+'</div>';
+}
+function f12LeisteScrollen(){ try{ const l=el('chatRaeume'), on=l && l.querySelector ? l.querySelector('.on') : null; if(on && on.scrollIntoView) on.scrollIntoView({ block:'nearest', inline:'center' }); }catch(e){} }
 /* ── F12 Ende ── */
 
 /* ══════════════════════════════════════════════════════════════════════
