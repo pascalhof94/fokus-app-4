@@ -44,10 +44,10 @@ pruef('Klärung: keine Karte, Antwort unverändert', S.karten.length===n0+2 && _
 // Postfach-Seite (Abschnitt 1): plan-Zeile mit „öffnen", aufgeklappt fünf Knöpfe, Kartenhinweis, Kartenzeile
 F7.lager.postfach={ ts:Date.now(), daten:[Object.assign({}, r, { id:'pf-2' })], fehler:'' }; S.ui.f7pfAuf={};
 var host=document.getElementById('postfachBody'); renderPostfach(); var H=host.innerHTML;
-pruef('Plan-Zeile zeigt „öffnen", nicht „gesehen"', H.indexOf('data-f7pfauf="1"')>=0 && H.indexOf('data-f7pfent="gesehen"')<0);
-pruef('Kartenzeile der angelegten Karte im Block „Aus dem Postfach angelegt"', H.indexOf('Aus dem Postfach angelegt')>=0 && H.indexOf('data-klkarte="'+k.id+'"')>=0 && H.indexOf('data-klplay="'+k.id+'"')>=0 && H.indexOf('data-klfokus="'+k.id+'"')>=0 && H.indexOf('data-klcheck="'+k.id+'"')>=0);
+pruef('Hotfix 15 §7: Postfach zeigt keine Postfach-Karten mehr als Liste (keine Zeile, keine Knöpfe), sondern Gruppe Agenten-Karten', H.indexOf('data-f7pfauf="1"')<0 && H.indexOf('data-f7pfent=')<0 && H.indexOf('Agenten-Karten')>=0 && H.indexOf('offene Karte')>=0, H.slice(0, 300));
+pruef('Hotfix 15 §7: angelegte Karte bleibt über f7PfAngelegteKarten erreichbar; die Postfach-Seite zeigt sie nicht mehr', f7PfAngelegteKarten().some(function(x){ return x.id===k.id; }) && H.indexOf('data-klkarte="'+k.id+'"')<0);
 S.ui.f7pfAuf={ 'pf-2':true }; renderPostfach(); H=host.innerHTML;
-pruef('aufgeklappt: fünf Knöpfe inkl. „gesehen", Entwurf, Begründung-Platz und Kartenhinweis', (H.match(/data-f7pfent="/g)||[]).length===5 && H.indexOf('data-f7pfent="gesehen"')>=0 && H.indexOf('class="dr"')>=0 && H.indexOf('📇 Karte: Fokus App Hotfix · 30 Min · 3 Unteraufgaben')>=0, (H.match(/data-f7pfent="/g)||[]).length);
+pruef('Hotfix 15 §7: aufgeklappter Eintrag entfällt — Entscheidungen laufen über die Karten-Ansicht (f15KarteHtml zeigt Freigeben · Senden · Ablehnen)', (H.match(/data-f7pfent="/g)||[]).length===0 && (function(){ f15KarteOeffnen('pf-2', {}); var hb=el('akBody').innerHTML; e1Schliessen(); return hb.indexOf('data-f15ent="freigegeben"')>=0 && hb.indexOf('data-f15ent="abgelehnt"')>=0 && hb.indexOf('gesehen')<0; })(), (H.match(/data-f7pfent="/g)||[]).length);
 // Klick auf die Kartenzeile im Postfach läuft über f7Klick → kettenListeKlick (Hotfix 6)
 var klick=f7Klick({ stopPropagation:function(){}, preventDefault:function(){}, target:{ closest:function(sel){ if(sel==='[data-klkarte]' || sel==='[data-klplay]') return { dataset:{ klplay:k.id } }; return null; } } });
 pruef('▶ in der Postfach-Kartenzeile startet die Karte', klick===true && !!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id), JSON.stringify(S.fokus));
@@ -58,8 +58,8 @@ var TEXT9='Aufgabe: Karte vom Trainer\n- Projekt: Fokus App\n- Soll-Minuten: 20\
 var r9a={ id:'pf-9a', Titel:'Neu: Karte vom Trainer', Agent:'Trainer', Art:'Plan', Dringlichkeit:40, Status:'offen', 'Output/Entwurf':TEXT9 };
 F7.lager.postfach={ ts:Date.now(), daten:[r9a], fehler:'' }; F7.lager.postfachNachholen={ ts:Date.now(), daten:[], fehler:'' }; S.ui.f7pfAuf={};
 renderPostfach(); H=host.innerHTML;
-pruef('Kartenzeile [data-f7pfkarte] mit ▶, Titel, ✓ im Block „Karten vom Trainer", nicht unter „Weitere"', H.indexOf('Karten vom Trainer')>=0 && H.indexOf('data-f7pfkarte="pf-9a"')>=0 && H.indexOf('data-f7pfstart="pf-9a"')>=0 && H.indexOf('data-f7pfdetail="pf-9a"')>=0 && H.indexOf('data-f7pffrei="pf-9a"')>=0 && H.indexOf('<div class="f7-row" data-f7pfid="pf-9a"')<0 && (H.indexOf('<span>Weitere</span>')<0 || H.indexOf('Karten vom Trainer')<H.indexOf('<span>Weitere</span>')), H.length);
-pruef('Block „Karten vom Trainer" steht direkt hinter den Chips, vor allen Gruppen', H.indexOf('Karten vom Trainer')>H.indexOf('data-f7pffilter="plan"') && H.indexOf('Karten vom Trainer')<(H.indexOf('<span class="red">🔴 Dringend</span>')<0 ? H.length : H.indexOf('<span class="red">🔴 Dringend</span>')));
+pruef('Hotfix 15 §4/§7: Trainer-Karte ist ein Vorschlag (f7PfVorschlaege) und steht in der Kette Agenten-Karten, nicht als Postfach-Zeile', f7PfVorschlaege(f7Postfach()||[]).some(function(o){ return o.r.id==='pf-9a' && !o.nachholen; }) && f15KetteZeilenHtml().indexOf('data-f15karte="pf-9a"')>=0 && H.indexOf('data-f7pfkarte="pf-9a"')<0, H.length);
+pruef('Hotfix 15 §7: keine Filter-Chips und kein Block „Karten vom Trainer" mehr auf der Postfach-Seite', H.indexOf('data-f7pffilter=')<0 && H.indexOf('Karten vom Trainer')<0);
 var n9=S.karten.length; _gesendet.length=0;
 pruef('▶: Karte angelegt, in der Kette, läuft', klick9('data-f7pfstart','pf-9a')===true && S.karten.length===n9+1 && (function(){ var k=S.karten[S.karten.length-1]; return k.titel==='Karte vom Trainer' && tagesKette().indexOf(k.id)>=0 && !!S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id; })(), JSON.stringify(S.fokus));
 pruef('▶: Postfach-Eintrag erledigt/freigegeben gesendet', _gesendet.some(function(g){ return g.werkzeug==='datensatz_aendern' && g.args.id==='pf-9a' && g.args.felder.Entscheidung==='freigegeben' && g.args.felder.Status==='erledigt'; }));
@@ -77,18 +77,18 @@ var TEXTH='Aufgabe: Mail-Zugang bauen\n- Soll-Minuten: 30\n\nUnteraufgaben:\n- A
 F7.lager.postfach={ ts:Date.now(), daten:[], fehler:'' };
 F7.lager.postfachNachholen={ ts:Date.now(), daten:[{ id:'pf-g1', Titel:'Neue Aufgabe anlegen: Mail-Zugang bauen', Agent:'Trainer', Art:'Plan', Status:'erledigt', Entscheidung:'gesehen', 'Output/Entwurf':TEXTH }, { id:'pf-g2', Titel:'Neu: Aufgabe anlegen Mail-Zugang bauen', Agent:'Trainer', Art:'Plan', Status:'erledigt', Entscheidung:'gesehen', 'Output/Entwurf':TEXTH }], fehler:'' };
 renderPostfach(); H=host.innerHTML;
-pruef('Nachholen: genau eine Zeile für zwei gesehen-Einträge gleichen Titels', (H.match(/data-f7pfkarte="pf-g/g)||[]).length===1 && H.indexOf('data-f7pfkarte="pf-g1"')>=0, (H.match(/data-f7pfkarte="pf-g/g)||[]).length);
+pruef('Nachholen: genau ein Vorschlag für zwei gesehen-Einträge gleichen Titels (Hotfix 15: Logik ohne Postfach-Zeile)', f7PfVorschlaege(f7Postfach()||[]).filter(function(o){ return o.nachholen; }).length===1 && f7PfVorschlaege(f7Postfach()||[]).some(function(o){ return o.r.id==='pf-g1'; }), f7PfVorschlaege(f7Postfach()||[]).length);
 n9=S.karten.length; var u9=S.unteraufgaben.length; _gesendet.length=0;
 klick9('data-f7pffrei','pf-g1');
 var kh=S.karten[S.karten.length-1], geh=_gesendet.filter(function(g){ return g.werkzeug==='datensatz_aendern'; });
 pruef('✓ Nachholen: eine Karte mit 3 Unteraufgaben, in der Kette, datensatz_aendern ohne Status und ohne Punkte', S.karten.length===n9+1 && kh.titel==='Mail-Zugang bauen' && S.unteraufgaben.length===u9+3 && tagesKette().indexOf(kh.id)>=0 && geh.length===1 && geh[0].args.id==='pf-g1' && geh[0].args.felder.Entscheidung==='freigegeben' && geh[0].args.felder.Status===undefined && geh[0].args.felder['Punkte gebucht']===undefined, JSON.stringify(geh.map(function(g){ return g.args; })));
 renderPostfach(); H=host.innerHTML;
-pruef('Nachholen: danach keine Zeile mehr (auch pf-g2 nicht, gleicher Titel schon angelegt)', (H.match(/data-f7pfkarte="pf-g/g)||[]).length===0);
+pruef('Nachholen: danach kein Vorschlag mehr (auch pf-g2 nicht, gleicher Titel schon angelegt)', f7PfVorschlaege(f7Postfach()||[]).filter(function(o){ return o.nachholen; }).length===0);
 // Änderung an einer bestehenden Karte: Karte-ID → keine neue Karte, Felder gesetzt, Unteraufgabe angehängt
 var kd=K.d; S.unteraufgaben.push(neueUnteraufgabe(kd.id, { titel:'Alte Unteraufgabe' })); saveKarten();
 var r9c={ id:'pf-9c', Titel:'Änderung: '+kd.titel, Agent:'Trainer', Art:'Plan', Dringlichkeit:40, Status:'offen', 'Output/Entwurf':'Aufgabe: '+kd.titel+'\n- Karte-ID: '+kd.id+'\n- Soll-Minuten: 45\n\nUnteraufgaben:\n- Alte Unteraufgabe\n- Neu dazu\n\nNotiz: Trainer schlägt 45 Minuten vor' };
 F7.lager.postfach={ ts:Date.now(), daten:[r9c], fehler:'' }; F7.lager.postfachNachholen={ ts:Date.now(), daten:[], fehler:'' }; renderPostfach(); H=host.innerHTML;
-pruef('Änderung: Zeile mit „✏️ Änderung" vor dem Titel', H.indexOf('data-f7pfkarte="pf-9c"')>=0 && H.indexOf('✏️ Änderung · '+kd.titel)>=0);
+pruef('Änderung: Vorschlag erkennt die bestehende Karte (karteId) — Hotfix 15: keine Postfach-Zeile mehr', f7PfVorschlaege(f7Postfach()||[]).some(function(o){ return o.r.id==='pf-9c' && o.kk.karteId===kd.id; }) && H.indexOf('data-f7pfkarte="pf-9c"')<0);
 n9=S.karten.length; u9=S.unteraufgaben.length; _gesendet.length=0;
 klick9('data-f7pffrei','pf-9c');
 var subsD=S.unteraufgaben.filter(function(u){ return u.parentId===kd.id; });

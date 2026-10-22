@@ -1,16 +1,16 @@
 /* Suite 4.3 · Hotfix 15 (Auftrag 22.10.2026, §9.2): §1 Datei kommt sicher an · §2 Erfassung · §4b Kette Agenten-Karten · §5 Karten-Ansicht · §6b Senden · §7 Postfach.
    Aufruf: jsc tests/v43-hotfix15.js · Geschrieben, im Rahmen des Auftrags nicht ausgeführt.
    Läuft gegen Lager-Attrappen (F7.lager, F12.ungelesen), FSLive stumm (senden/lesen gesammelt), FSLive.hochladen als Attrappe; Uhren in _timer (timerLaufen). */
-var _timer=[];
-function setTimeout(f, ms){ _timer.push({ f:f, ms:Number(ms)||0 }); return _timer.length; }
+var _timer;
+function setTimeout(f, ms){ (_timer||(_timer=[])).push({ f:f, ms:Number(ms)||0 }); return _timer.length; }   // Funktionsdeklaration gilt schon beim Laden der App (wie v42)
 function clearTimeout(){}
-function timerLaufen(){ var l=_timer; _timer=[]; l.forEach(function(t){ try{ t.f(); }catch(e){} }); }
+function timerLaufen(){ var l=_timer||[]; _timer=[]; l.forEach(function(t){ try{ t.f(); }catch(e){} }); }
 function drain(n){ for(var i=0;i<(n||40);i++) warten(); }
 var _bestaetigt=[]; function confirm(frage){ _bestaetigt.push(frage); return _confirmAntwort; } var _confirmAntwort=true;
 var _toasts=[]; var _toastAlt=toast; toast=function(m, ms){ _toasts.push({ m:m, ms:ms }); };
 /* FileReader-Attrappe: liefert ein kleines PNG als Data-URL */
 function FileReader(){ this.onload=null; this.onerror=null; this.result=null; }
-FileReader.prototype.readAsDataURL=function(f){ this.result='data:'+(f.type||'application/octet-stream')+';base64,QUJD'; var self=this; _timer.push({ f:function(){ if(self.onload) self.onload(); }, ms:0 }); };
+FileReader.prototype.readAsDataURL=function(f){ this.result='data:'+(f.type||'application/octet-stream')+';base64,QUJD'; var self=this; (_timer||(_timer=[])).push({ f:function(){ if(self.onload) self.onload(); }, ms:0 }); };
 function datei(name, typ, groesse){ return { name:name, type:typ, size:groesse||10 }; }
 fsliveStumm(); testTag();
 /* Textfeld der Erfassung und der Karten-Ansicht: die App liest beim Senden den Feldwert (DOM-Attrappe) */
@@ -34,7 +34,7 @@ var es=gesendet('app:erfassen');
 pruef('§1.3 Reihenfolge: erst Upload (1×), dann genau ein Inbox-Eintrag mit pfad und ohne datei', _hochgeladen.length===1 && _hochgeladen[0].name==='Bild.png' && es.length===1 && /21-57-00_Bild\.png$/.test(String(es[0].args.pfad)) && es[0].args.datei===undefined, JSON.stringify({ up:_hochgeladen.length, es:es.map(function(g){ return g.args; }) }));
 pruef('§1.1 Erfassen vom nicht führenden Gerät geht durch (kein Führungs-Abbruch)', es.length===1 && FSLive.ichFuehre()===false);
 pruef('§1.2 eine Erfassung = ein Eintrag: Kanal und Bezug sind Felder dieses einen Eintrags', es.length===1 && es[0].args.quelle==='screenshot' && es[0].args.bezug && es[0].args.text==='Termin mit Christian verschoben');
-pruef('§2.5 Erfolg: Toast „✓ Erfasst · Datei übertragen“ 1,5 s, Felder leer', _toasts.some(function(t){ return t.m==='✓ Erfasst · Datei übertragen' && t.ms===1500; }) && F7.erf===null && !F7.erfLaeuft, JSON.stringify(_toasts));
+pruef('§2.5 Erfolg: Toast „✓ Erfasst · Datei übertragen“ 1,5 s, Felder leer', _toasts.some(function(t){ return t.m==='✓ Erfasst · Datei übertragen' && t.ms===1500; }) && f7Erf().text==='' && !f7Erf().datei && !F7.erfLaeuft, JSON.stringify(_toasts));   // e1Rendern legt den leeren Entwurf neu an
 pruef('Zuletzt erfasst: Eintrag mit Pfad', f7ErfasstListe().slice(-1)[0] && /Bild\.png$/.test(String(f7ErfasstListe().slice(-1)[0].pfad)));
 // Upload-Fehler → kein Eintrag, Datei-Kachel rot, Eintrag bleibt
 F7.erf=null; E=f7Erf(); E.text='Noch ein Versuch'; f15DateiUebernehmen(E, datei('Scan.pdf', 'application/pdf', 500), {}); timerLaufen(); drain();
@@ -44,7 +44,7 @@ pruef('§1.4 Upload-Fehler: kein Inbox-Eintrag, Kachel rot, Text und Datei bleib
 pruef('§1.4 Toast nennt den Fehler', _toasts.some(function(t){ return t.m==='Datei nicht übertragen · erneut senden'; }));
 _hochladenFehler=null; _gesendet.length=0; _hochgeladen.length=0;
 f7ErfassenSenden(); drain(10);
-pruef('§1.4 „Erfassen“ versucht beides erneut: Upload und Eintrag', _hochgeladen.length===1 && gesendet('app:erfassen').length===1 && F7.erf===null);
+pruef('§1.4 „Erfassen“ versucht beides erneut: Upload und Eintrag', _hochgeladen.length===1 && gesendet('app:erfassen').length===1 && f7Erf().text==='' && !f7Erf().datei);
 // Eine Datei je Erfassung: zweite Datei fragt „Datei ersetzen?“
 F7.erf=null; E=f7Erf(); f15DateiUebernehmen(E, datei('a.png', 'image/png'), {}); timerLaufen(); drain();
 _bestaetigt.length=0; _confirmAntwort=false; f15DateiUebernehmen(E, datei('b.png', 'image/png'), {}); timerLaufen(); drain();
@@ -149,7 +149,7 @@ F15.pf.pf0={ ts:Date.now(), r:{ id:'pf0', Titel:'Zielsteuerung (alt)', Agent:'Tr
 f15KarteOeffnen('pf3', {}); drain(); hb=el('akBody').innerHTML;
 pruef('§5.3 Verlauf eingeklappt: „Runde 2 · HH:MM · 1 frühere Runde ▾“', /Runde 2 · \d\d:\d\d · 1 frühere Runde ▾/.test(hb) && f15VorgaengerKette(PF3).length===1 && f15VorgaengerKette(PF3)[0].id==='pf0', hb.slice(hb.indexOf('f15-verlauf'), hb.indexOf('f15-verlauf')+160));
 F15.verlaufAuf.pf3=true; f15KarteRendern(); hb=el('akBody').innerHTML;
-pruef('§5.3 aufgeklappt: Runde 1 mit Zeitpunkt, Output gekürzt und Pascals Anpassung', hb.indexOf('Runde 1 · 21.10. ')>=0 && hb.indexOf('Erster Vorschlag.')>=0 && hb.indexOf('✏️ bitte 10 % mehr')>=0, hb.slice(hb.indexOf('f15-verlauf'), hb.indexOf('f15-verlauf')+400));
+pruef('§5.3 aufgeklappt: Runde 1 mit Zeitpunkt, Output gekürzt und Pascals Anpassung', hb.indexOf('Runde 1 · 21.10 ')>=0 && hb.indexOf('Erster Vorschlag.')>=0 && hb.indexOf('✏️ bitte 10 % mehr')>=0, hb.slice(hb.indexOf('f15-verlauf'), hb.indexOf('f15-verlauf')+400));
 
 // ══ §6b · ↻ Senden ══
 var PF4={ id:'pf4', Titel:'Neu: Karte aus Entwurf', Agent:'Trainer', Art:'Plan', 'Output/Entwurf':'Aufgabe: Testkarte aus Anpassung\n- Soll-Minuten: 20\n\nOptionen:\n- A\n- B', 'Sicherheit %':60, Dringlichkeit:10, Status:'offen', Runde:1, 'Vorgänger':[], erstellt_am:'2026-10-22T09:00:00.000Z' };
@@ -188,7 +188,7 @@ F7.lager.postfach={ ts:Date.now(), daten:[PF1, PF2, PF3], fehler:'' };
 var uz=f15UngelesenZeilen();
 pruef('§7.1 nur Antwort/Hinweis mit Status offen, neueste zuerst', uz.length===2 && uz[0].r.id==='h1' && uz[1].r.id==='a1' && uz[0].karte==='pf1' && uz[1].karte===null, JSON.stringify(uz.map(function(e){ return e.r.id; })));
 seiteZeigen('postfach'); var hp=el('postfachBody').innerHTML;
-pruef('§7.1 Gruppe „Ungelesen · aus deinen Chats“ mit zwei Zeilen', hp.indexOf('Ungelesen · aus deinen Chats')>=0 && (hp.match(/class="f15-msg/g)||[]).length===2);
+pruef('§7.1 Gruppe „Ungelesen · aus deinen Chats“ mit zwei Zeilen', hp.indexOf('Ungelesen · aus deinen Chats')>=0 && (hp.match(/class="f15-msg( h)?"/g)||[]).length===2);
 pruef('§7.2 Zeile: Punkt, „Pipeline-Agent · „Mails morgen““, Text, Uhrzeit', hp.indexOf('Pipeline-Agent · „Mails morgen“')>=0 && hp.indexOf('Alles klar, ich lege mich nicht fest …')>=0 && hp.indexOf('<span class="p"></span>')>=0 && /class="z">\d\d:\d\d</.test(hp), hp.slice(0, 900));
 pruef('§7.2 Hinweis zu einer Agenten-Karte: Rand ORANGE (Klasse h), Kopf „Erfassungs-Agent · Neue Agenten-Karte“', hp.indexOf('class="f15-msg h" data-f15msg="k-erf|h1" data-f15msgkarte="pf1"')>=0 && hp.indexOf('Erfassungs-Agent · Neue Agenten-Karte')>=0);
 pruef('§7.4 Gruppe Agenten-Karten: „📬 3 offene Karten in der Kette“', hp.indexOf('📬 3 offene Karten in der Kette')>=0 && hp.indexOf('data-f15kette="1"')>=0);

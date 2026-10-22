@@ -142,7 +142,9 @@ pruef('ohne Inbox-id (Warteschlange): Toast, keine Marke', E8.anhaenge.length===
 e1Oeffnen('erfassen', { chat:C }); var hf=f7ErfassenHtml();
 pruef('Erfassen im Chat-Betrieb: Kopf „📎 Datei", Mail-Weg ausgegraut, fester Bezug, Knopf „In die Nachricht übernehmen", Hinweis', hf.indexOf('📎 Datei<small>für 🏋️ Trainer · Paket 34 angekommen?')>=0 && /data-f7quelle="mail"/.test(hf) && / aus" data-f7quelle="mail"/.test(hf) && hf.indexOf('💬 Gespräch „Paket 34 angekommen?“ mit dem Trainer · Ablage über den Erfassungs-Agenten')>=0 && hf.indexOf('In die Nachricht übernehmen')>=0 && hf.indexOf('data-f7bezug=')<0 && hf.indexOf('darf sie lesen')>=0, hf.slice(0,600));
 _gesendet.length=0; F7.erf=null; f7Erf().text='Text aus Erfassen'; f7Erf().datei={ name:'Screenshot.png', typ:'image/png', groesse:1024, base64:'AAAA' };   // das Textfeld ist im jsc-DOM leer, die Datei trägt den Eintrag
-f7ErfassenSenden();
+FSLive.hochladen=function(d){ return Promise.resolve({ ok:true, pfad:'/Users/kalle/FocusSystem-lokal/erfassung/2026-10-22/'+d.name }); };   // Hotfix 15 §1.3: Datei zuerst, dann der Eintrag mit pfad
+f7ErfassenSenden(); for(var _i=0;_i<40;_i++) warten();
+F7.lager['chatG:k-tr']={ ts:Date.now(), daten:[R4, R3, R1, R2], fehler:'' };   // das Entleeren der Promises ließ das Nachladen des Kanals (Lager-Attrappe leer) durch; Fixture zurück
 var ge=_gesendet.filter(function(g){ return g.werkzeug==='app:erfassen'; })[0];
 pruef('Übernehmen sendet app:erfassen mit Bezug chat (Tabelle, Gespräch, Agent)', !!ge && ge.args.bezug.art==='chat' && ge.args.bezug.tabelle==='Privat_Chat · Trainer' && ge.args.bezug.gespraech==='g1' && ge.args.bezug.name==='Trainer', JSON.stringify(ge && ge.args.bezug));
 e1Schliessen(); toast=_toastAlt;
@@ -251,6 +253,7 @@ pruef('§3.2 · Nachlesen liest offene Postfach-Datensätze neu (ts 0), erledigt
 f12Ui().kanal='k-tr'; f12Ui().gespraech=null; f12Ui().entwurf={};
 klick13('data-f12neu'); var G=f12Ui().gespraech, K0=f12EntwurfKey('k-tr', G);
 pruef('§4 · ＋ Neuer Chat vergibt die Gesprächs-Kennung', !!G && f12Stufe()==='gespraech');
+el('f12Text').value='';   // die DOM-Attrappe teilt sich ein Textfeld; das neue Gespräch beginnt leer
 klick13('data-f12plus');
 pruef('§4 · ＋ öffnet die Kontextwahl, Kennung bleibt, nichts vorausgewählt', e1Art()==='kontextwahl' && f12Ui().gespraech===G && f12Kw().auswahl.length===0);
 f12KwToggle('t-dfm'); f12KwToggle('t-priv'); f12KwFertig();
@@ -264,7 +267,7 @@ f12KontextOeffnen(); f12KwToggle('t-priv'); klick13('data-f12kwzurueck', null, '
 pruef('§4 · ‹ ohne Fertig lässt den Entwurf unverändert', e1Art()==='chat' && f12Entwurf('k-tr', G).karten.length===1);
 f12ErfassenUebernehmen({ tabelle:'Privat_Chat · Trainer', gespraech:G, agent:'Trainer', name:'Trainer', avatar:'🏋️', titel:'Neu' }, { sofort:true, antwort:{ inbox:'inb-4' } }, 'Dateitext', { name:'Foto.png' });
 E4=f12Entwurf('k-tr', G);
-pruef('§4 · Datei: Marke 📎 im Entwurf, Text angehängt, Kennung unverändert', E4.anhaenge.length===1 && E4.anhaenge[0].name==='Foto.png' && E4.text==='Dateitext' && f12Ui().gespraech===G && f12MarkenHtml(E4).indexOf('📎 Foto.png')>=0);
+pruef('§4 · Datei: Marke 📎 im Entwurf, Text angehängt, Kennung unverändert', E4.anhaenge.length===1 && E4.anhaenge[0].name==='Foto.png' && E4.text==='Dateitext' && f12Ui().gespraech===G && f12MarkenHtml(E4).indexOf('📎 Foto.png')>=0, JSON.stringify([E4.anhaenge, E4.text, f12Ui().gespraech, G, e1Art()]));
 _gesendet.length=0; f12Abschicken();
 var g4=_gesendet.filter(function(g){ return g.werkzeug==='datensatz_anlegen'; })[0];
 pruef('§4 · Senden schreibt Karten (App-IDs) und Anhänge (Inbox-ids), Entwurf danach leer', !!g4 && g4.args.felder.Karten==='t-dfm' && g4.args.verknuepfungen['Anhänge'][0]==='inb-4' && g4.args.felder['Gespräch']===G && (function(){ var e=f12Ui().entwurf[K0]; return !e || (!e.text && !e.karten.length && !e.anhaenge.length); })(), JSON.stringify(g4 && g4.args));   // das Zeichnen nach dem Senden legt den Entwurf leer neu an
@@ -288,7 +291,7 @@ pruef('§5.3 · Stufe Gespräch: ‹ trägt die Zahl der anderen Gespräche (ohn
 pruef('§5.3 · Stufe Agent: ‹ trägt alle ungelesenen (7)', (function(){ f12Ui().gespraech=null; var h=f12AgentHtml(KP); return h.indexOf('‹<i class="bd">7</i>')>=0; })());
 pruef('§5.3 · Tipp auf die Zeile springt in die Stufe Raum', klick13('data-f12ungelesen')===true && f12Stufe()==='raum');
 pruef('§5.2 · Trainer-Knopf öffnet die Stufe Raum Trainerstab (Block oben)', /f12Oeffnen\(\{ raum:'Trainerstab', kanal:null, gespraech:null \}\)/.test(src));
-pruef('§5.4 · Badge-Runde liefert Gespräch, Gesprächstitel und Text der ungelesenen Zeilen, limit 20, keine zweite Runde', src.indexOf("felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel']")>=0 && /limit:20 \}\)\n\s*\.then\(d=>\{ sum\[k\.id\]=num\(d && d\.gesamt\); zeilen\[k\.id\]=/.test(src));
+pruef('§5.4 · Badge-Runde liefert Gespräch, Gesprächstitel und Text der ungelesenen Zeilen, limit 20, keine zweite Runde', src.indexOf("felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel','Art','Anlass','Status','Postfach']")>=0 && /limit:20 \}\)[^\n]*\n\s*\.then\(d=>\{ sum\[k\.id\]=num\(d && d\.gesamt\); zeilen\[k\.id\]=/.test(src));
 F12.ungelesen={}; F12.badge={}; e1Schliessen();
 // §6 · kurze Entscheidungen als Knöpfe
 pruef('§6 · 2 kurze Zeilen am Ende → Knöpfe', JSON.stringify(f12Knoepfe('Zwei Wege.\n- Freigeben\n- Ablehnen'))==='{"body":"Zwei Wege.","optionen":["Freigeben","Ablehnen"]}');

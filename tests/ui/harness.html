@@ -274,10 +274,14 @@ function bestandSchreiben(){
               "{ id:'pf-plan-2', Titel:'Plan So 18.10. bis Mentoring: HTML, Pipeline, Tam', Agent:'Trainer', Art:'Plan', Dringlichkeit:60, Status:'offen', 'Output/Entwurf':'Plan heute: erst Mentoring, dann Pipeline' }], fehler:'' };"+
               "S.ui.f7pfAuf={ 'pf-plan-1':true }; saveUi();"+
               "if(!(S.meta.postfachKarten||{})['pf-plan-0']) f7PfKarteAnlegen({ id:'pf-plan-0' }, f7PfKarteLesen(null, 'Aufgabe: Karte aus dem Postfach mit einem langen Titel fuer die Kartenzeile\\n- Soll-Minuten: 25\\n\\nUnteraufgaben:\\n- Eins\\n- Zwei'));");
+      /* Hotfix 15 §7: das Postfach zeigt ungelesene Antworten und Hinweise aus den Chat-Tabellen (Badge-Runde) und die Zeile zur Kette, keine Kartenliste mehr */
+      fw.eval("F7.lager.chatKanaele={ ts:Date.now(), daten:[{ id:'k-tr', Kanal:'Trainer', Agent:'Trainer', Abteilung:[], Projekt:[], Bereich:'privat', Tabelle:'Privat_Chat · Trainer', Reihenfolge:1, Rolle:'Trainer' },{ id:'k-erf', Kanal:'Erfassungs-Agent', Agent:'Erfassungs-Agent', Abteilung:[], Projekt:[], Bereich:'dfm', Tabelle:'Chat · Erfassungs-Agent', Reihenfolge:1, Rolle:'Eingang' }], fehler:'' };"+
+              "F12.ungelesen={ 'k-tr':[{ id:'u1', 'Gespräch':'g1', 'Gesprächstitel':'Plan morgen', Von:'Trainer', Art:'Antwort', Anlass:'Chat', Status:'offen', Zeitstempel:new Date().toISOString(), Text:'Freitag: Steuer zuerst, dann RiSe …', Postfach:[] }], 'k-erf':[{ id:'u2', 'Gespräch':'g2', Von:'Erfassungs-Agent', Art:'Hinweis', Anlass:'Postfach', Status:'offen', Zeitstempel:new Date().toISOString(), Text:'📬 Neue Agenten-Karte: Pruefkarte · Klärung', Postfach:[{ id:'pf-plan-1', anzeige:'Pruefkarte' }] }] }; F12.badge={ 'k-tr':1, 'k-erf':1 };");
       fw.seiteZeigen('postfach');
-      fw.eval("var n=document.querySelectorAll('#postfachBody .f7-c [data-f7pfent]').length; if(n!==5) throw new Error('Hotfix 7: aufgeklappter Plan-Eintrag zeigt '+n+' statt 5 Knoepfe');"+
-              "if(!document.querySelector('#postfachBody .f7-row [data-f7pfauf]')) throw new Error('Hotfix 7: Plan-Zeile ohne oeffnen');"+
-              "if(!document.querySelector('#postfachBody .kl-z .kl-titel')) throw new Error('Hotfix 7: keine Kartenzeile im Block Aus dem Postfach angelegt');"); },
+      fw.eval("var n=document.querySelectorAll('#postfachBody .f15-msg').length; if(n!==2) throw new Error('Hotfix 15 §7: '+n+' statt 2 ungelesene Zeilen');"+
+              "if(!document.querySelector('#postfachBody .f15-msg.h[data-f15msgkarte]')) throw new Error('Hotfix 15 §7: Hinweis-Zeile zur Agenten-Karte ohne orangen Rand');"+
+              "if(!document.querySelector('#postfachBody [data-f15kette]')) throw new Error('Hotfix 15 §7: Zeile zur Kette Agenten-Karten fehlt');"+
+              "if(document.querySelector('#postfachBody [data-f7pfent]')) throw new Error('Hotfix 15 §7: Postfach zeigt noch Karten-Knoepfe');"); },
     /* Hotfix 9 · 8.6: alle Gruppen der Statistik offen, damit die Nachprüfung jedes Diagramm sieht */
     statistik:  function(fw){ tagSicher(fw); fw.eval("S.ui.statGruppeZu={1:false,2:false,3:false,4:false,5:false,6:false}; saveUi();"); fw.seiteZeigen('statistik'); },
     /* Hotfix 10: mit Münzen auf dem Konto, damit der Kaufen-Knopf da ist */
@@ -296,7 +300,7 @@ function bestandSchreiben(){
     kontextwahl: function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE); fw.f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:'g40' }); fw.f12KontextOeffnen(); },
     chatDatei:   function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE); fw.f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:'g40' }); fw.e1Oeffnen('erfassen', { chat:{ tabelle:'Privat_Chat · Trainer', gespraech:'g40', agent:'Trainer', name:'Trainer', avatar:'🏋️', titel:'Pause und Senke' } }); },
     /* Hotfix 13 §4.3: Trainer → Neuer Chat → ＋ → zwei Karten → Fertig → ＋ erneut (zwei ausgewählt) → ‹ → 📎 → Datei → Übernehmen → ➤ ; echte Klicks, Schritte mit Wartezeit */
-    chatMarken:  function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE+"FSLive.gekoppelt=function(){ return true; }; FSLive.senden=function(w,a){ return Promise.resolve({ sofort:true, antwort:(w==='app:erfassen' ? { inbox:'inb-9' } : {}) }); }; FSLive.lesen=function(){ return Promise.resolve({ datensaetze:[], gesamt:0 }); }; window.__MARKEN={};");
+    chatMarken:  function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE+"FSLive.gekoppelt=function(){ return true; }; FSLive.senden=function(w,a){ return Promise.resolve({ sofort:true, antwort:(w==='app:erfassen' ? { inbox:'inb-9' } : {}) }); }; FSLive.hochladen=function(d){ return Promise.resolve({ ok:true, pfad:'/Users/kalle/FocusSystem-lokal/erfassung/2026-10-22/'+d.name, name:d.name, groesse:10 }); }; FSLive.lesen=function(){ return Promise.resolve({ datensaetze:[], gesamt:0 }); }; window.__MARKEN={};");
       var d=fw.document, M=fw.__MARKEN, k=function(sel){ var e=d.querySelector(sel); if(!e) throw new Error('Knopf fehlt: '+sel); e.click(); };
       var schritt=function(fn, ms){ setTimeout(function(){ try{ fn(); }catch(e){ M.fehler=String(e.message||e); } }, ms); };
       fw.f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:null });
