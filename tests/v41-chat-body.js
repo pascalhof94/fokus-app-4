@@ -194,11 +194,11 @@ pruef('Verlauf 14 Tage je Abteilung mit Legende; Erklärung nennt Abteilung, Kan
 
 
 // ══ Hotfix 13 ══
-function klick13(attr, wert){ var ds={}; ds[attr.replace(/^data-/,'').replace(/-([a-z0-9])/g, function(m,c){ return c.toUpperCase(); })]=wert||'1';
+function klick13(attr, wert, ebene){ var ds={}; ds[attr.replace(/^data-/,'').replace(/-([a-z0-9])/g, function(m,c){ return c.toUpperCase(); })]=wert||'1';
   var ziel={ dataset:ds, classList:{ contains:function(){ return false; } } };
-  return f7Klick({ stopPropagation:function(){}, stopImmediatePropagation:function(){}, preventDefault:function(){}, target:{ closest:function(sel){ return (sel==='['+attr+']' || sel==='#e1-chat') ? ziel : null; } } }); }
+  return f7Klick({ stopPropagation:function(){}, stopImmediatePropagation:function(){}, preventDefault:function(){}, target:{ closest:function(sel){ return (sel==='['+attr+']' || sel===(ebene||'#e1-chat')) ? ziel : null; } } }); }
 // §2.1 · f7Lager meldet nur neue Daten
-var _neuAlt=f7Neu, _neuRufe=[]; f7Neu=function(k){ _neuRufe.push(k||null); };
+var _neuAlt=f7Neu, _neuRufe=[]; f7Neu=function(k){ if(k==='probe:a') _neuRufe.push(k); };   // nur das Probe-Lager zählen; Lager früherer Prüfungen lösen hier noch auf
 F7.lager['probe:a']={ ts:0, daten:[{ id:1 }], fehler:'' };
 FSLive.lesen=function(){ return Promise.resolve({ datensaetze:[{ id:1 }] }); };
 f7Lager('probe:a', 1000, function(){ return f7Alle({ tabelle:'X' }); }); warten(); warten(); warten();
@@ -215,7 +215,7 @@ f7Neu=_neuAlt; fsliveStumm();
 var _stAlt=setTimeout, _timer=[]; setTimeout=function(f, ms){ _timer.push({ f:f, ms:ms }); return _timer.length; };
 var _e1Alt=e1Rendern, _e1N=0; e1Rendern=function(){ _e1N++; };
 F7.neuT=null; F7.neuSchluessel=null; F7.letzteEingabe=0; F7.letzteEingabeEnde=0; F7.fingerUnten=0;
-f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:null }); _e1N=0;
+f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:null }); _e1N=0; _timer.length=0; F7.neuT=null;   // Timer aus dem Öffnen nicht mitzählen
 f7Neu('a'); f7Neu('b'); f7Neu('c');
 pruef('§2.2 · drei Anforderungen → ein Nachlauf nach 400 ms, Schlüssel gesammelt', _timer.length===1 && _timer[0].ms===400 && F7.neuSchluessel.join(',')==='a,b,c', JSON.stringify([_timer.length, F7.neuSchluessel]));
 _timer[0].f(); pruef('§2.2 · der Nachlauf zeichnet genau einmal', _e1N===1 && F7.neuT===null, _e1N);
@@ -260,18 +260,19 @@ f12KontextOeffnen();
 pruef('§4 · erneutes ＋ zeigt die Karten des Entwurfs ausgewählt', f12Kw().auswahl.length===2 && f12KontextHtml().indexOf('Fertig (2)')>=0);
 f12KwToggle('t-priv'); f12KwFertig();
 pruef('§4 · Fertig übernimmt die Auswahl vollständig (abgewählte Karte weg)', f12Entwurf('k-tr', G).karten.length===1 && f12Entwurf('k-tr', G).karten[0].id==='t-dfm');
-f12KontextOeffnen(); f12KwToggle('t-priv'); klick13('data-f12kwzurueck');
+f12KontextOeffnen(); f12KwToggle('t-priv'); klick13('data-f12kwzurueck', null, '#e1-kontextwahl');
 pruef('§4 · ‹ ohne Fertig lässt den Entwurf unverändert', e1Art()==='chat' && f12Entwurf('k-tr', G).karten.length===1);
 f12ErfassenUebernehmen({ tabelle:'Privat_Chat · Trainer', gespraech:G, agent:'Trainer', name:'Trainer', avatar:'🏋️', titel:'Neu' }, { sofort:true, antwort:{ inbox:'inb-4' } }, 'Dateitext', { name:'Foto.png' });
 E4=f12Entwurf('k-tr', G);
 pruef('§4 · Datei: Marke 📎 im Entwurf, Text angehängt, Kennung unverändert', E4.anhaenge.length===1 && E4.anhaenge[0].name==='Foto.png' && E4.text==='Dateitext' && f12Ui().gespraech===G && f12MarkenHtml(E4).indexOf('📎 Foto.png')>=0);
 _gesendet.length=0; f12Abschicken();
 var g4=_gesendet.filter(function(g){ return g.werkzeug==='datensatz_anlegen'; })[0];
-pruef('§4 · Senden schreibt Karten (App-IDs) und Anhänge (Inbox-ids), Entwurf danach leer', !!g4 && g4.args.felder.Karten==='t-dfm' && g4.args.verknuepfungen['Anhänge'][0]==='inb-4' && g4.args.felder['Gespräch']===G && !f12Ui().entwurf[K0], JSON.stringify(g4 && g4.args));
+pruef('§4 · Senden schreibt Karten (App-IDs) und Anhänge (Inbox-ids), Entwurf danach leer', !!g4 && g4.args.felder.Karten==='t-dfm' && g4.args.verknuepfungen['Anhänge'][0]==='inb-4' && g4.args.felder['Gespräch']===G && (function(){ var e=f12Ui().entwurf[K0]; return !e || (!e.text && !e.karten.length && !e.anhaenge.length); })(), JSON.stringify(g4 && g4.args));   // das Zeichnen nach dem Senden legt den Entwurf leer neu an
 var zl=F7.lager[f12VerlaufKey(KT, G)].daten.filter(function(r){ return r.lokal; })[0];
 pruef('§4 · die Blase zeigt die Marken (lokal aus dem Entwurf, nach dem Laden aus Karten und Anhänge)', f12NachrichtHtml(KT, zl).indexOf('📇 '+esc(kd.titel))>=0 && f12NachrichtHtml(KT, zl).indexOf('📎 Foto.png')>=0 && f12NachrichtHtml(KT, { id:'s1', Von:'Pascal', Art:'Nachricht', Status:'erledigt', Zeitstempel:T, Text:'x', Karten:'t-dfm', 'Anhänge':[{ id:'inb-4', anzeige:'Foto.png' }] }).indexOf('📎 Foto.png')>=0);
 e1Schliessen();
 // §5 · Ungelesen auf jeder Stufe
+F7.lager['chatG:k-tr']={ ts:Date.now(), daten:[R4, R3, R1, R2], fehler:'' };   // f12Senden (§4) hat das Gespräche-Lager geleert; der Titel von g1 kommt aus diesem Lager
 var jetztU=jetztIso();
 F12.ungelesen={ 'k-tr':[{ id:'u1', Text:'Neue Antwort vom Trainer, die etwas laenger ist, damit die Unterzeile gekuerzt wird und so weiter', Von:'Trainer', 'Gespräch':'g1', 'Gesprächstitel':null, Zeitstempel:vorMin(5) }], 'k-pipe':[{ id:'u2', Text:'Deal-Info', Von:'Pipeline-Agent', 'Gespräch':'gp', 'Gesprächstitel':'Deal X', Zeitstempel:jetztU },{ id:'u3', Text:'Nachtrag', Von:'Pipeline-Agent', 'Gespräch':'gp', 'Gesprächstitel':null, Zeitstempel:vorMin(1) }] };
 F12.badge={ 'k-tr':1, 'k-pipe':2 };
