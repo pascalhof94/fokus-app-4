@@ -40,7 +40,7 @@ echo "Server: http://127.0.0.1:$PORT (PID $SERVER_PID)"
 rm -rf "$SCREENS"; mkdir -p "$SCREENS"
 
 # view name | fensterhoehe (375er-Basis; leiste klein, damit sie GROSS wirkt)
-VIEWS_ALLE="fokus:932 fokusOhne:932 postfach:932 statistik:1600 shop:1400 einst:1400 suche:932 durchsuchen:932 erfassen:932 chat:932 plan:932 routinen:932 pause:932 abhaken:932 schieben:932 ausstellung:1200 reflexion:932 geschafft:932 uebergang:932 sbA:932 sbB:932 sbC:932 sbD:932"
+VIEWS_ALLE="fokus:932 fokusOhne:932 postfach:932 statistik:1600 shop:1400 einst:1400 suche:932 durchsuchen:932 erfassen:932 chatRaum:932 chatRaumLeer:932 chatAgent:932 chatGespraech:932 chatEingabe8:932 kontextwahl:932 chatDatei:932 plan:932 routinen:932 pause:932 abhaken:932 schieben:932 ausstellung:1200 reflexion:932 geschafft:932 uebergang:932 sbA:932 sbB:932 sbC:932 sbD:932"
 STORAGE_LAUF=0   # Betriebsbereit 4.2: die Sequenzen storage, echt und diag gehören zu 3.x (setTab, sucheOeffnen) und sind ausgesetzt
 ECHT_LAUF=0
 DIAG_LAUF=0

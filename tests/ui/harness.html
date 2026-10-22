@@ -217,7 +217,18 @@ function bestandSchreiben(){
   function tagSicher(fw){ fw.eval("if(!S.tag){ tagStarten(70); S.tag.startTs=jetztIso(); saveTag(); }"); }
   function postfach(fw, offen, dringend){ fw.eval("S.meta.postfach={ offen:"+offen+", dringend:"+dringend+", dringendText:'Rückruf bis 17:00', ts:jetztIso() }; saveMeta(); F4N.key=''; renderStatusbar();"); }
   /* Hotfix 9: Nachprüfungen je Ansicht (laufen nach der Wartezeit, vor den Layout-Checks) und längere Wartezeit, wo die App selbst noch nachzieht */
-  var WARTEN={ chat:1300 };
+  var WARTEN={ chatGespraech:1300, chatEingabe8:900, chatRaum:900, chatAgent:900, kontextwahl:900, chatDatei:900 };
+  /* 4.1 · Chat-Räume: Lager-Attrappen für Kanäle, Gespräche, Verlauf (40 Nachrichten, zwei Karten im Chat) und Postfach-Datensätze */
+  var CHAT_FIXTURE="F7.lager.abteilungen={ ts:Date.now(), daten:[{ id:'a-ts', Name:'Trainerstab', Emoji:'🎯', Teams:'Trainer · Zeit-Spezialist' },{ id:'a-sales', Name:'Sales', Emoji:'🤝', Teams:'Lead-Recherche, Angebote' },{ id:'a-mkt', Name:'Marketing', Emoji:'📣', Teams:'LinkedIn, Content, Kampagnen' },{ id:'a-dev', Name:'DEV', Emoji:'💻', Teams:'Team Projekte · je aktivem Projekt ein Projekt-Agent' }], fehler:'' };"+
+    "F7.lager.chatKanaele={ ts:Date.now(), daten:[{ id:'k-tr', Kanal:'Trainer', Agent:'Trainer', Abteilung:[{ id:'a-ts', anzeige:'Trainerstab' }], Projekt:[], Bereich:'privat', Tabelle:'Privat_Chat · Trainer', 'Claude-Raum-Link':'https://claude.ai/', Reihenfolge:1, Rolle:'Tagesplaner und Trainer' },{ id:'k-zeit', Kanal:'Zeit-Spezialist', Agent:'Zeit-Spezialist', Abteilung:[{ id:'a-ts', anzeige:'Trainerstab' }], Projekt:[], Bereich:'privat', Tabelle:'Privat_Chat · Zeit-Spezialist', Reihenfolge:2, Rolle:'Zeiten prüfen' },{ id:'k-pipe', Kanal:'Pipeline-Agent', Agent:'Pipeline-Agent', Abteilung:[{ id:'a-sales', anzeige:'Sales' }], Projekt:[], Bereich:'dfm', Tabelle:'Chat · Pipeline-Agent', Reihenfolge:1, Rolle:'Fach-Agent Salespipeline.' },{ id:'k-hawk', Kanal:'Projekt-Agent HAWK', Agent:'Projekt-Agent HAWK', Abteilung:[{ id:'a-dev', anzeige:'DEV' }], Projekt:[{ id:'p-hawk', anzeige:'HAWK' }], Bereich:'dfm', Tabelle:'Chat · Projekt-Agent HAWK', Reihenfolge:100, Rolle:'Projektakte' }], fehler:'' };"+
+    "F7.lager.postfach={ ts:Date.now(), daten:[], fehler:'' }; F7.lager.postfachNachholen={ ts:Date.now(), daten:[], fehler:'' };"+
+    "var R40=[]; for(var i=0;i<40;i++){ var p=(i%2===0); R40.push({ id:'h'+i, 'Gespräch':'g40', 'Gesprächstitel':(i===0?'Pause und Senke':null), Von:(p?'Pascal':'Trainer'), Art:(p?'Nachricht':'Antwort'), Anlass:'Chat', Status:'erledigt', Zeitstempel:new Date(Date.now()-(40-i)*60000).toISOString(), Laufstart:(p?new Date(Date.now()-(40-i)*60000+20000).toISOString():null), Beantwortet:(p?new Date(Date.now()-(40-i)*60000+50000).toISOString():null), Text:'Nachricht '+i+' im Harness, etwas laenger, damit die Liste wirklich scrollt und die letzte unten steht'+(i===37?'\\n- Option A\\n- Option B':''), Postfach:(i===37?[{ id:'pf1', anzeige:'Neu' },{ id:'pf2', anzeige:'Aenderung' }]:[]) }); }"+
+    "F7.lager['chatG:k-tr']={ ts:Date.now(), daten:R40.concat([{ id:'g2', 'Gespräch':'g2', 'Gesprächstitel':'Doppelbuchungen klaeren', Von:'Pascal', Art:'Nachricht', Anlass:'Chat', Status:'erledigt', Zeitstempel:new Date(Date.now()-86400000).toISOString(), Text:'Doppelbuchungen', Postfach:[] },{ id:'g3', 'Gespräch':'bisheriger-verlauf-trainer', 'Gesprächstitel':'🗄️ Bisheriger Verlauf', Von:'Pascal', Art:'Nachricht', Anlass:'Chat', Status:'erledigt', Zeitstempel:new Date(Date.now()-5*86400000).toISOString(), Text:'alt', Postfach:[] }]), fehler:'' };"+
+    "F7.lager['chatV:k-tr|g40']={ ts:Date.now(), daten:R40, fehler:'' }; F7.lager['chatG:k-zeit']={ ts:Date.now(), daten:[], fehler:'' }; F7.lager['chatG:k-pipe']={ ts:Date.now(), daten:[], fehler:'' }; F7.lager['chatG:k-hawk']={ ts:Date.now(), daten:[], fehler:'' };"+
+    "var kd=S.karten.find(function(k){ return k.status==='offen' && !k.rolle && k.domain==='dfm'; })||S.karten[0];"+
+    "F12.pf.pf1={ ts:Date.now(), r:{ id:'pf1', Titel:'Neu: Kalendertool-Dublette klaeren', Agent:'Trainer', Art:'Plan', Status:'offen', 'Output/Entwurf':'Aufgabe: Kalendertool-Dublette klaeren\\n- Soll-Minuten: 20\\n\\nUnteraufgaben:\\n- Dublette suchen\\n- Loeschen', geaendert_am:new Date().toISOString() } };"+
+    "F12.pf.pf2={ ts:Date.now(), r:{ id:'pf2', Titel:'Aenderung', Agent:'Trainer', Art:'Plan', Status:'offen', 'Output/Entwurf':'Aufgabe: '+kd.titel+'\\n- Soll-Minuten: 45\\n- Karte-ID: '+kd.id+'\\n\\nUnteraufgaben:\\n- Offene Punkte vorab an Thao', geaendert_am:new Date().toISOString() } };"+
+    "S.ui.chat={ raum:'Trainerstab', kanal:null, gespraech:null, entwurf:{} }; saveUi();";
   var NACHPRUEF={
     /* Hotfix 10: Shop — Kopfzeile und Kaufen-Knopf (sonst ein Preis) tragen das Münzsymbol als svg.mz */
     shop: function(fw){ var d=fw.document; if(!d.querySelector('#belShop svg.mz')) throw new Error('Hotfix 10: Kopfzeile „Shop“ ohne svg.mz');
@@ -233,10 +244,19 @@ function bestandSchreiben(){
             var ueberlappt=ra.left<rb.right-1 && rb.left<ra.right-1 && ra.top<rb.bottom-1 && rb.top<ra.bottom-1;
             if(ueberlappt) throw new Error('Texte überlappen in „'+name+'“: „'+texte[a].textContent.trim()+'“ und „'+texte[b].textContent.trim()+'“'); } } }
       ergebnis.checks+=n; },
-    chat: function(fw){ var l=fw.document.getElementById('chatList'); if(!l) throw new Error('Hotfix 9: #chatList fehlt');
-      var last=null; for(var i=l.children.length-1;i>=0;i--){ var c=l.children[i], rc=c.getBoundingClientRect(); if(rc.height>0){ last=c; break; } }
-      if(!last) throw new Error('Hotfix 9: keine sichtbare Nachricht in #chatList');
-      var r=last.getBoundingClientRect(); if(r.top<0 || r.bottom>fw.innerHeight+1) throw new Error('Hotfix 9: letzte Nachricht nicht im sichtbaren Bereich (top '+Math.round(r.top)+', bottom '+Math.round(r.bottom)+', Höhe '+fw.innerHeight+')'); }
+    /* 4.1 · Chat-Räume: die letzte Nachricht steht vollständig sichtbar über der Eingabe; die Raum-Leiste darf waagrecht überlaufen (eigener Scroller), die Seite nicht */
+    chatGespraech: function(fw){ var d=fw.document, l=d.getElementById('chatList'), f=d.getElementById('chatFluss'), inp=d.getElementById('chatEingabe'); if(!l || !f) throw new Error('4.1: #chatList/#chatFluss fehlt'); if(!inp) throw new Error('4.1: Eingabe fehlt');
+      var n=f.querySelectorAll('.f12-n'); var last=n.length ? n[n.length-1] : null; if(!last) throw new Error('4.1: keine Nachricht im Verlauf');
+      var r=last.getBoundingClientRect(), ri=inp.getBoundingClientRect(); if(r.top<0 || r.bottom>ri.top+1) throw new Error('4.1: letzte Nachricht nicht vollständig über der Eingabe (top '+Math.round(r.top)+', bottom '+Math.round(r.bottom)+', Eingabe ab '+Math.round(ri.top)+')');
+      if(!d.querySelector('.f12-kb .kl-z')) throw new Error('4.1: keine Kartenzeile im Chat'); if(d.querySelector('.f7-act2')) throw new Error('4.1: Knöpfe aus Listenzeilen (f7-act2) im Chat'); ergebnis.checks+=3; },
+    chatEingabe8: function(fw){ var t=fw.document.getElementById('f12Text'); if(!t) throw new Error('4.1: #f12Text fehlt'); var h=t.getBoundingClientRect().height; if(h>184) throw new Error('4.1: Eingabe höher als 8 Zeilen: '+Math.round(h)+' px'); if(h<160) throw new Error('4.1: Eingabe wächst nicht mit (nur '+Math.round(h)+' px)');
+      var inp=fw.document.getElementById('chatEingabe').getBoundingClientRect(); if(inp.bottom>fw.innerHeight+1) throw new Error('4.1: Eingabe unter dem Bildschirmrand'); ergebnis.checks+=2; },
+    chatRaum: function(fw){ var d=fw.document, l=d.getElementById('chatRaeume'); if(!l) throw new Error('4.1: Raum-Leiste fehlt'); if(l.scrollWidth<=l.clientWidth) ergebnis.warnungen.push('Raum-Leiste passt ohne Wischen (scrollWidth '+l.scrollWidth+')');
+      if(!d.querySelector('.f12-l .av')) throw new Error('4.1: keine Mitarbeiterzeile'); ergebnis.checks+=1; },
+    chatRaumLeer: function(fw){ var d=fw.document; if(!d.querySelector('.f12-leer')) throw new Error('4.1: Hinweisfeld „Noch kein Agent“ fehlt'); if(!d.querySelector('.f12-eing.gesperrt')) throw new Error('4.1: gesperrte Eingabe fehlt'); ergebnis.checks+=1; },
+    chatAgent: function(fw){ var d=fw.document; if(!d.querySelector('.f12-neu')) throw new Error('4.1: ＋ Neuer Chat fehlt'); if(!d.querySelector('.f12-l .alt')) throw new Error('4.1: Bisheriger Verlauf fehlt'); ergebnis.checks+=1; },
+    kontextwahl: function(fw){ var d=fw.document; if(!d.querySelector('.f12-fertig')) throw new Error('4.1: Fertig-Knopf fehlt'); if(!d.querySelector('.kl-add')) throw new Error('4.1: kein ＋ an einer Kartenzeile'); if(d.querySelector('#e1-kontextwahl .kl-play')) throw new Error('4.1: ▶ statt ＋ in der Kontextwahl'); ergebnis.checks+=2; },
+    chatDatei: function(fw){ var d=fw.document; if(!d.querySelector('.f12-bez')) throw new Error('4.1: fester Bezug fehlt'); var s=d.querySelector('.f7-send'); if(!s || s.textContent.indexOf('In die Nachricht übernehmen')<0) throw new Error('4.1: Knopf „In die Nachricht übernehmen“ fehlt'); ergebnis.checks+=1; }
   };
   var AKTIONEN={
     fokus:      function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet(); },
@@ -261,7 +281,14 @@ function bestandSchreiben(){
     durchsuchen:function(fw){ tagSicher(fw); fw.e1Oeffnen('durchsuchen'); },
     erfassen:   function(fw){ tagSicher(fw); fw.e1Oeffnen('erfassen'); },
     /* Hotfix 9 · 3.1: Chat mit 40 Nachrichten; die Nachprüfung (NACHPRUEF.chat) verlangt die letzte Nachricht im sichtbaren Bereich */
-    chat:       function(fw){ tagSicher(fw); fw.eval("var R=[]; for(var i=0;i<40;i++){ R.push({ id:'h'+i, Text:'Nachricht '+i+' im Harness, etwas laenger, damit die Liste wirklich scrollt und die letzte unten steht', Auftraggeber:(i%2?'Trainer':'Pascal'), 'Empfänger':(i%2?'Pascal':'Trainer'), Art:(i%2?'Antwort':'Chat'), Status:'erledigt', Zeitstempel:new Date(Date.now()-(40-i)*60000).toISOString() }); } F7.lager.chat={ ts:Date.now(), daten:R, fehler:'' };"); fw.f7ChatOeffnen('Trainer'); },
+    /* 4.1 · Chat-Räume (§12.3): Raum, Raum ohne Kanal, Agent, Gespräch (40 Nachrichten, zwei Karten), Eingabe mit 12 Zeilen, Kontextwahl, Datei */
+    chatRaum:    function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE); fw.f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null }); },
+    chatRaumLeer:function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE); fw.f12Oeffnen({ raum:'Marketing', kanal:null, gespraech:null }); },
+    chatAgent:   function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE); fw.f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:null }); },
+    chatGespraech:function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE); fw.f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:'g40' }); },
+    chatEingabe8:function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE+"S.ui.chat.entwurf['k-tr|g40']={ text:'Zeile 1\\nZeile 2\\nZeile 3\\nZeile 4\\nZeile 5\\nZeile 6\\nZeile 7\\nZeile 8\\nZeile 9\\nZeile 10\\nZeile 11\\nZeile 12', karten:[{ id:kd.id, titel:kd.titel }], anhaenge:[{ id:'inb-1', name:'Screenshot 12.28.png' }] }; saveUi();"); fw.f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:'g40' }); fw.f12EingabeHoehe(); },
+    kontextwahl: function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE); fw.f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:'g40' }); fw.f12KontextOeffnen(); },
+    chatDatei:   function(fw){ tagSicher(fw); fw.eval(CHAT_FIXTURE); fw.f12Oeffnen({ raum:'Trainerstab', kanal:'k-tr', gespraech:'g40' }); fw.e1Oeffnen('erfassen', { chat:{ tabelle:'Privat_Chat · Trainer', gespraech:'g40', agent:'Trainer', name:'Trainer', avatar:'🏋️', titel:'Pause und Senke' } }); },
     plan:       function(fw){ tagSicher(fw); fw.e1Oeffnen('plan'); },
     routinen:   function(fw){ tagSicher(fw); fw.e1Oeffnen('routinen'); },
     pause:      function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.oeffnePause(); },
