@@ -6757,6 +6757,30 @@ function f12RaumHtml(){
   return h+'</div>';
 }
 function f12LeisteScrollen(){ try{ const l=el('chatRaeume'), on=l && l.querySelector ? l.querySelector('.on') : null; if(on && on.scrollIntoView) on.scrollIntoView({ block:'nearest', inline:'center' }); }catch(e){} }
+/* ── §4 · Stufe Agent: Gesprächsliste ── */
+function f12GespraechZeileHtml(kanal, g){
+  const agent=f12Name(kanal), eigeneOffen=g.zeilen.filter(r=>String(r.Von||'')==='Pascal' && /^(offen|vorgemerkt)$/.test(String(r.Status||'').toLowerCase()) && !r.lokal).slice(-1)[0];
+  let sub;
+  if(eigeneOffen){ const vg=String(eigeneOffen.Status||'').toLowerCase()==='vorgemerkt'; sub='<small class="schreibt">✍️ '+esc(agent)+' '+(vg ? 'denkt nach' : 'empfängt')+' … <b class="f12-uhr" data-von="'+esc(vg ? (eigeneOffen.Laufstart||eigeneOffen.Zeitstempel) : eigeneOffen.Zeitstempel)+'">'+f12Mmss(Date.now()-Date.parse(vg ? (eigeneOffen.Laufstart||eigeneOffen.Zeitstempel) : eigeneOffen.Zeitstempel))+'</b></small>'; }
+  else if(g.karte) sub='<small>Gespräch zur Karte · '+g.zeilen.length+' Nachricht'+(g.zeilen.length===1?'':'en')+'</small>';
+  else if(g.verlauf) sub='<small>aus dem alten Chat übernommen</small>';
+  else { const l=g.letzte, von=String(l.Von||'')==='Pascal' ? 'Du' : esc(agent); sub='<small>'+von+': „'+esc(String(f12Text(kanal, l)).replace(/\s+/g,' ').trim().slice(0,50))+'“</small>'; }
+  const titel=(g.karte && !/^📇/.test(g.titel) ? '📇 ' : '')+esc(g.titel);
+  return '<div data-f12gespraech="'+esc(g.gespraech)+'"'+(g.verlauf ? ' class="alt"' : '')+'><div class="m"><p>'+titel+'</p>'+sub+'</div><div class="r">'+(g.verlauf ? '<span class="pf">›</span>' : '<time>'+esc(f12ZeitKurz(g.ts))+'</time>')+(g.ungelesen ? '<span class="bd">'+g.ungelesen+'</span>' : '')+(g.karten ? '<span class="kt">'+g.karten+' Karte'+(g.karten===1?'':'n')+'</span>' : '')+'</div></div>';
+}
+function f12AgentHtml(kanal){
+  const raum=f12Raum(kanal), link=kanal['Claude-Raum-Link'];
+  let h=f12KopfHtml({ titel:f12Avatar(kanal)+' '+esc(f12Name(kanal)), sub:f12RaumEmoji(raum)+' '+esc(raum), extra:f12LinkKnopf(link, true) });
+  h+='<div class="f12-inhalt" id="chatInhalt"><button class="f12-neu" data-f12neu="1">＋ Neuer Chat</button><h5 class="f7-h5">Gespräche</h5>';
+  const gs=f12Gespraeche(kanal);
+  if(!gs){ return h+'<div class="leer">'+(f7LagerFehler('chatG:'+kanal.id) ? 'FocusSystem: '+esc(f7LagerFehler('chatG:'+kanal.id)) : 'lädt aus FocusSystem …')+'</div></div>'; }
+  const heute=heuteApp(), gestern=anVorTage(heute, 1), normal=gs.filter(g=>!g.verlauf), alt=gs.filter(g=>g.verlauf);
+  const gruppen=[['Heute', normal.filter(g=>String(g.ts).slice(0,10)===heute)],['Gestern', normal.filter(g=>String(g.ts).slice(0,10)===gestern)],['Älter', normal.filter(g=>String(g.ts).slice(0,10)<gestern).concat(alt)]];
+  let leer=true;
+  gruppen.forEach(gr=>{ if(!gr[1].length) return; leer=false; h+='<div class="f12-tag">'+gr[0]+'</div><div class="f7-l f12-l">'+gr[1].map(g=>f12GespraechZeileHtml(kanal, g)).join('')+'</div>'; });
+  if(leer) h+='<div class="leer">noch kein Gespräch · „＋ Neuer Chat“</div>';
+  return h+'</div>';
+}
 /* ── F12 Ende ── */
 
 /* ══════════════════════════════════════════════════════════════════════
