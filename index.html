@@ -2819,6 +2819,8 @@ body[data-e1="chat"] #e1-chat{display:flex;flex-direction:column;overflow:hidden
 .f12-ctx{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.f12-ctx span{background:rgba(255,255,255,.18);border-radius:9px;padding:3px 8px;font-size:12px;font-weight:700;cursor:pointer}.f12-ctx span.anh{cursor:default}
 .f12-schreibt{flex:none;font-size:12.5px;color:#ffd23f;margin:6px 0 0 4px}.f12-schreibt span{color:#9a9ca2}
 .f12-pill{position:relative;flex:none;align-self:center;margin-top:-44px;z-index:3;background:#3b82f6;color:#fff;font-size:13px;font-weight:700;border-radius:16px;border:0;padding:7px 14px;min-height:36px;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.f12-ung{margin-top:4px}.f12-andere{flex:none;font-size:12.5px;font-weight:700;color:#7fb0ff;padding:6px 2px 2px;cursor:pointer}.f12-andere b{color:#fff;background:#3b82f6;border-radius:9px;padding:0 6px;font-size:11px;line-height:17px;display:inline-block}
+.f12-kopf .an-back{position:relative}.f12-kopf .an-back .bd{font-style:normal;position:absolute;top:4px;right:-6px;min-width:17px;height:17px;border-radius:9px;background:#3b82f6;color:#fff;font-size:10.5px;line-height:17px;text-align:center;padding:0 4px}
 /* Karte im Chat (Zielbild 2 A/B) */
 .f12-kb{margin-top:10px;max-width:92%}.f12-kb .lab{font:700 11.5px system-ui;color:#ffd23f;letter-spacing:.04em;margin:0 0 5px 2px}.f12-kb .lab.grau{color:#9a9ca2}
 .f12-kb .kl-z{margin-bottom:0}.f12-kb .kl-z.weg{opacity:.55}.f12-kb .kl-play:disabled,.f12-kb .kl-check:disabled{opacity:.8}
@@ -6655,7 +6657,8 @@ function f12EntwurfKey(kanalId, g){ return String(kanalId||'')+'|'+String(g||'')
 function f12Entwurf(kanalId, g){ const u=f12Ui(), key=f12EntwurfKey(kanalId, g); if(!u.entwurf[key] || typeof u.entwurf[key]!=='object') u.entwurf[key]={ text:'', karten:[], anhaenge:[] }; const e=u.entwurf[key]; if(!Array.isArray(e.karten)) e.karten=[]; if(!Array.isArray(e.anhaenge)) e.anhaenge=[]; if(typeof e.text!=='string') e.text=''; return e; }
 function f12EntwurfAktuell(){ const u=f12Ui(); return f12Entwurf(u.kanal, u.gespraech); }
 /* ── Kopf (wie .f3n-kopf, Zielbild 1 Punkt 1) ── */
-function f12KopfHtml(o){ return '<div class="f3n-kopf f12-kopf" id="chatKopf"><button class="an-back" data-f12zurueck="1" aria-label="Zurück">'+(o.zurueck||'‹')+'</button><h3>'+o.titel+(o.sub ? '<small>'+o.sub+'</small>' : '')+'</h3><span class="sp"></span>'+(o.extra||'')+
+function f12KopfHtml(o){ const st=f12Stufe(), u=f12Ui(), n=st==='raum' ? 0 : f12UngelesenSumme(st==='gespraech' ? { kanal:u.kanal, gespraech:u.gespraech } : null);   // Hotfix 13 §5.3
+  return '<div class="f3n-kopf f12-kopf" id="chatKopf"><button class="an-back" data-f12zurueck="1" aria-label="Zurück">'+(o.zurueck||'‹')+(n ? '<i class="bd">'+n+'</i>' : '')+'</button><h3>'+o.titel+(o.sub ? '<small>'+o.sub+'</small>' : '')+'</h3><span class="sp"></span>'+(o.extra||'')+
   '<button class="f3n-bell" data-f3nstumm="1" title="Benachrichtigungen">'+(S.settings.chatStumm ? '🔕' : '🔔')+'</button><button class="f3n-x" data-e1zu="1" aria-label="Schließen">✕</button></div>'; }
 function f12LinkKnopf(link, klein){ if(!link) return ''; return '<a class="f12-ext'+(klein?' klein':'')+'" data-f12link="1" href="'+esc(link)+'" target="_blank" rel="noopener">↗'+(klein ? '' : ' Claude-Raum')+'</a>'; }
 /* ── Zeichnen und Klicks ── */
@@ -6698,6 +6701,9 @@ function f12Klick(e){
   // Chat
   if(d('data-f12zurueck')){ haptik(6); f12Zurueck(); return true; }
   if((z=d('data-f12raum'))){ haptik(6); f12RaumWaehlen(z.dataset.f12raum); return true; }
+  if((z=d('data-f12spring'))){ haptik(6); const [kid, g]=z.dataset.f12spring.split('|'); const k=f12KanalId(kid); if(k){ const u=f12Ui(); u.raum=f12Raum(k)||u.raum; u.kanal=kid; u.gespraech=g; saveUi(); e1Rendern(); } return true; }   // Hotfix 13 §5.1: direkt ins Gespräch
+  if(d('data-f12ungalle')){ f12Ui().ungelesenAlle=true; saveUi(); e1Rendern(); return true; }
+  if(d('data-f12ungelesen')){ haptik(6); const u=f12Ui(); u.kanal=null; u.gespraech=null; saveUi(); e1Rendern(); return true; }   // Hotfix 13 §5.3: zur Stufe Raum
   if((z=d('data-f12kanal'))){ haptik(6); const u=f12Ui(); u.kanal=z.dataset.f12kanal; u.gespraech=null; saveUi(); e1Rendern(); return true; }
   if((z=d('data-f12gespraech'))){ haptik(6); const u=f12Ui(); u.gespraech=z.dataset.f12gespraech; saveUi(); e1Rendern(); return true; }
   if(d('data-f12neu')){ haptik(8); const u=f12Ui(); u.gespraech=f12NeuesGespraech(); saveUi(); e1Rendern(); f12Fokus(); return true; }
@@ -6741,7 +6747,7 @@ function f12RaumHtml(){
   if(!raeume.some(r=>r.name===u.raum)) u.raum=raeume.length ? raeume[0].name : 'Trainerstab';
   const r=raeume.find(x=>x.name===u.raum)||raeume[0];
   h+=f12LeisteHtml(raeume, r.name);
-  h+='<div class="f12-inhalt" id="chatInhalt">';
+  h+='<div class="f12-inhalt" id="chatInhalt">'+f12UngelesenBlockHtml();   // Hotfix 13 §5.1: direkt unter der Raum-Leiste
   const link=(r.kanaele.find(k=>k['Claude-Raum-Link'])||{})['Claude-Raum-Link'];
   const rolle=r.name==='Trainerstab' ? 'Querschnitt · liest DFM und Privat<span class="f12-pr">🔒 Chats in Privat</span>' : esc(r.teams);
   h+='<div class="f12-rk"><div class="t"><b>'+r.emoji+' '+esc(r.name)+'</b><span>'+rolle+'</span></div>'+f12LinkKnopf(link)+'</div>';
@@ -6754,6 +6760,21 @@ function f12RaumHtml(){
   if(pro.length) h+='<h5 class="f7-h5 zw"><span>Projekt-Agenten · '+pro.length+'</span></h5><div class="f7-l f12-l">'+pro.map(k=>f12KanalZeileHtml(k, r)).join('')+'</div>';
   return h+'</div>';
 }
+/* Hotfix 13 §5: ungelesene Antworten je Gespräch aus der Badge-Runde (neueste zuerst) */
+function f12UngelesenListe(){ const kan=f12Kanaele()||[], out=[]; Object.keys(F12.ungelesen||{}).forEach(kid=>{ const k=kan.find(x=>x.id===kid); if(!k) return; const je={};
+    (F12.ungelesen[kid]||[]).forEach(r=>{ const g=String(r['Gespräch']||''); if(!g) return; const e=je[g]||(je[g]={ kanal:k, gespraech:g, n:0, letzte:null, titel:null }); e.n++; if(!e.letzte || String(r.Zeitstempel||'')>String(e.letzte.Zeitstempel||'')) e.letzte=r; if(r['Gesprächstitel']) e.titel=r['Gesprächstitel']; });
+    Object.keys(je).forEach(g=>{ const e=je[g]; if(!e.titel){ const G=F7.lager['chatG:'+kid], gs=(G && Array.isArray(G.daten)) ? G.daten.find(x=>String(x['Gespräch']||'')===g && x['Gesprächstitel']) : null; e.titel=gs ? gs['Gesprächstitel'] : (/^tag-/.test(g) ? f12TagTitel(g.slice(4)) : String(e.letzte.Text||'').replace(/\s+/g,' ').trim().slice(0,40)); } out.push(e); }); });
+  return out.sort((a,b)=>String(b.letzte.Zeitstempel||'')<String(a.letzte.Zeitstempel||'') ? -1 : 1); }
+function f12UngelesenSumme(ohne){ return f12UngelesenListe().filter(e=>!(ohne && e.kanal.id===ohne.kanal && e.gespraech===ohne.gespraech)).reduce((a,e)=>a+e.n, 0); }
+function f12UngelesenBlockHtml(){ const l=f12UngelesenListe(), n=l.reduce((a,e)=>a+e.n, 0); if(!n) return '<div id="chatUngelesen" hidden></div>';
+  const alle=!!f12Ui().ungelesenAlle, sicht=alle ? l : l.slice(0,5);
+  return '<div id="chatUngelesen" class="f12-ung"><h5 class="f7-h5 zw"><span>🔵 Ungelesen · '+n+'</span></h5><div class="f7-l f12-l">'+sicht.map(e=>'<div data-f12spring="'+esc(e.kanal.id)+'|'+esc(e.gespraech)+'"><div class="av">'+f12Avatar(e.kanal)+'</div><div class="m"><p>'+esc(f12Name(e.kanal))+' · '+esc(e.titel||'')+'</p><small>'+esc(String(e.letzte.Text||'').replace(/\s+/g,' ').trim().slice(0,60))+'</small></div><div class="r"><time>'+esc(f12ZeitKurz(e.letzte.Zeitstempel))+'</time><span class="bd">'+e.n+'</span></div></div>').join('')+'</div>'+
+    (l.length>5 && !alle ? '<div class="f12-mehr" data-f12ungalle="1">alle '+l.length+' zeigen</div>' : '')+'</div>'; }
+function f12AndereHtml(){ const u=f12Ui(), st=f12Stufe(), n=f12UngelesenSumme(st==='gespraech' ? { kanal:u.kanal, gespraech:u.gespraech } : null); return '<div class="f12-andere" id="chatAndere" data-f12ungelesen="1"'+(n ? '' : ' hidden')+'>🔵 <b>'+n+'</b> ungelesen in anderen Chats ›</div>'; }
+/* ‹-Zahl, Zeile „in anderen Chats" und Block „Ungelesen" in place nachziehen (aus der Badge-Runde) */
+function f12AndereZeigen(){ try{ const u=f12Ui(), st=f12Stufe(); if(st==='raum'){ const b=el('chatUngelesen'); if(b && b.outerHTML!==undefined){ const neu=f12UngelesenBlockHtml(); if(b.outerHTML!==neu && !f7EingabeAktiv()) b.outerHTML=neu; } return; }
+    const n=f12UngelesenSumme(st==='gespraech' ? { kanal:u.kanal, gespraech:u.gespraech } : null), back=document.querySelector('#chatKopf .an-back'); if(back){ let q=back.querySelector('.bd'); if(n>0){ if(!q){ q=document.createElement('i'); q.className='bd'; back.appendChild(q); } if(q.textContent!==String(n)) q.textContent=String(n); } else if(q) q.remove(); }
+    const z=el('chatAndere'); if(z){ z.hidden=!n; const b=z.querySelector('b'); if(b && b.textContent!==String(n)) b.textContent=String(n); } }catch(e){} }
 function f12LeisteScrollen(){ try{ const l=el('chatRaeume'), on=l && l.querySelector ? l.querySelector('.on') : null; if(on && on.scrollIntoView) on.scrollIntoView({ block:'nearest', inline:'center' }); }catch(e){} }
 /* ── §4 · Stufe Agent: Gesprächsliste ── */
 function f12GespraechZeileHtml(kanal, g){
@@ -6769,7 +6790,7 @@ function f12GespraechZeileHtml(kanal, g){
 function f12AgentHtml(kanal){
   const raum=f12Raum(kanal), link=kanal['Claude-Raum-Link'];
   let h=f12KopfHtml({ titel:f12Avatar(kanal)+' '+esc(f12Name(kanal)), sub:f12RaumEmoji(raum)+' '+esc(raum), extra:f12LinkKnopf(link, true) });
-  h+='<div class="f12-inhalt" id="chatInhalt"><button class="f12-neu" data-f12neu="1">＋ Neuer Chat</button><h5 class="f7-h5">Gespräche</h5>';
+  h+=f12AndereHtml()+'<div class="f12-inhalt" id="chatInhalt"><button class="f12-neu" data-f12neu="1">＋ Neuer Chat</button><h5 class="f7-h5">Gespräche</h5>';   // Hotfix 13 §5.3
   const gs=f12Gespraeche(kanal);
   if(!gs){ return h+'<div class="leer">'+(f7LagerFehler('chatG:'+kanal.id) ? 'FocusSystem: '+esc(f7LagerFehler('chatG:'+kanal.id)) : 'lädt aus FocusSystem …')+'</div></div>'; }
   const heute=heuteApp(), gestern=anVorTage(heute, 1), normal=gs.filter(g=>!g.verlauf), alt=gs.filter(g=>g.verlauf);
@@ -6827,7 +6848,7 @@ function f12EingabeHtml(kanal, e, breit){
 function f12GespraechHtml(kanal, g, opt){
   opt=opt||{}; const rows=f12Verlauf(kanal, g), raum=f12Raum(kanal), gs=f12Gespraeche(kanal), ge=(gs||[]).find(x=>x.gespraech===g);
   const titel=ge ? ge.titel : (rows && rows.length ? ((rows.find(r=>r['Gesprächstitel'])||{})['Gesprächstitel']||String(rows[0].Text||'').slice(0,40)) : (/^tag-/.test(g) ? f12TagTitel(g.slice(4)) : /^karte-/.test(g) ? f12KarteTitel(S.karten.find(x=>x.id===g.slice(6))||{ titel:g.slice(6) }) : 'Neues Gespräch'));
-  let h=opt.breit ? '' : f12KopfHtml({ titel:esc(titel), sub:f12Avatar(kanal)+' '+esc(f12Name(kanal))+' · '+f12RaumEmoji(raum)+' '+esc(raum) });
+  let h=opt.breit ? '' : f12KopfHtml({ titel:esc(titel), sub:f12Avatar(kanal)+' '+esc(f12Name(kanal))+' · '+f12RaumEmoji(raum)+' '+esc(raum) })+f12AndereHtml();   // Hotfix 13 §5.3
   h+='<div class="f12-verlauf" id="chatList" data-key="'+esc(kanal.id+'|'+g)+'"><div class="f12-fluss" id="chatFluss">'+(rows ? f12ListeHtml(kanal, rows) : '<div class="leer" data-leer="1">'+(f7LagerFehler(f12VerlaufKey(kanal, g)) ? 'FocusSystem: '+esc(f7LagerFehler(f12VerlaufKey(kanal, g))) : 'lädt …')+'</div>')+'</div></div>';
   h+='<button class="f12-pill" id="chatNeu" hidden data-f3nunten="1">↓ neue Nachricht</button>';
   h+=f12SchreibtHtml(kanal, rows)+f12EingabeHtml(kanal, f12Entwurf(kanal.id, g), opt.breit);
@@ -7042,9 +7063,10 @@ function f12TrainerZeilenHeute(anlass){ const kanal=f12TrainerKanal(); const row
 function f12BadgeLaden(){
   if(!FSLive.gekoppelt()) return; const kan=f12Kanaele(); if(!kan || !kan.length) return;
   if(F12.badgeLaeuft) return; F12.badgeLaeuft=true; const sum={};
-  Promise.all(kan.map(k=>FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Text','Von'], filter:[{ feld:'Von', operator:'ungleich', wert:'Pascal' },{ feld:'Status', operator:'gleich', wert:'offen' }], limit:20 })
-    .then(d=>{ sum[k.id]=num(d && d.gesamt); ((d && d.datensaetze)||[]).forEach(r=>f12Benachrichtigen(k, r)); }).catch(()=>{})))
-    .then(()=>{ F12.badge=sum; F12.badgeLaeuft=false; f12BadgeZeigen(); });
+  const zeilen={};
+  Promise.all(kan.map(k=>FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel'], filter:[{ feld:'Von', operator:'ungleich', wert:'Pascal' },{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Zeitstempel', richtung:'ab' }], limit:20 })
+    .then(d=>{ sum[k.id]=num(d && d.gesamt); zeilen[k.id]=(d && d.datensaetze)||[]; zeilen[k.id].forEach(r=>f12Benachrichtigen(k, r)); }).catch(()=>{ if(F12.ungelesen && F12.ungelesen[k.id]){ zeilen[k.id]=F12.ungelesen[k.id]; sum[k.id]=num(F12.badge[k.id]); } })))
+    .then(()=>{ F12.badge=sum; F12.ungelesen=zeilen; F12.badgeLaeuft=false; f12BadgeZeigen(); });   // Hotfix 13 §5.4: dieselbe Runde liefert die ungelesenen Zeilen
 }
 function f12BadgeSumme(){ return Object.keys(F12.badge||{}).reduce((a,k)=>a+num(F12.badge[k]), 0); }
 function f12BadgeZeigen(){
