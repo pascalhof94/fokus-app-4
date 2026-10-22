@@ -6974,6 +6974,28 @@ function f12KartenChat(karteId){ const k=S.karten.find(x=>x.id===karteId); if(!k
 /* Zeilen des Trainer-Kanals von heute (§9.5 Plan, §9.6 Tagesübergang) */
 function f12TrainerZeilenHeute(anlass){ const kanal=f12TrainerKanal(); const rows=kanal ? (f12Zeilen(kanal)||[]) : []; const heute=heuteApp();
   return rows.filter(r=>String(r.Von||'')==='Trainer' && String(r.Anlass||'')===anlass && String(r.Zeitstempel||'').slice(0,10)===heute); }
+/* ── §10 · Badge und Benachrichtigung über alle Kanäle ── */
+function f12BadgeLaden(){
+  if(!FSLive.gekoppelt()) return; const kan=f12Kanaele(); if(!kan || !kan.length) return;
+  if(F12.badgeLaeuft) return; F12.badgeLaeuft=true; const sum={};
+  Promise.all(kan.map(k=>FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Text','Von'], filter:[{ feld:'Von', operator:'ungleich', wert:'Pascal' },{ feld:'Status', operator:'gleich', wert:'offen' }], limit:20 })
+    .then(d=>{ sum[k.id]=num(d && d.gesamt); ((d && d.datensaetze)||[]).forEach(r=>f12Benachrichtigen(k, r)); }).catch(()=>{})))
+    .then(()=>{ F12.badge=sum; F12.badgeLaeuft=false; f12BadgeZeigen(); });
+}
+function f12BadgeSumme(){ return Object.keys(F12.badge||{}).reduce((a,k)=>a+num(F12.badge[k]), 0); }
+function f12BadgeZeigen(){
+  const n=f12BadgeSumme(); F7.chatNeu=n;
+  try{ document.querySelectorAll('[data-f7akt="chat"]').forEach(t=>{ let q=t.querySelector('.badge'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge'; t.appendChild(q); } q.textContent=n; } else if(q) q.remove(); }); }catch(e){}
+  const f=el('trainerFab'); if(f){ let q=f.querySelector('.badge.chat'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge chat'; f.appendChild(q); } q.textContent=String(n); } else if(q) q.remove(); }
+  try{ if(e1Art()==='chat' && f12Stufe()==='raum'){ const l=el('chatRaeume'); if(l && l.outerHTML!==undefined){ const r=f12Raeume(); if(r) l.outerHTML=f12LeisteHtml(r, f12Ui().raum); } } }catch(e){}
+}
+function f12Benachrichtigen(kanal, r){
+  if(F12.benachrichtigt[r.id]) return; F12.benachrichtigt[r.id]=true;
+  if(S.settings.chatStumm || e1Art()==='chat') return;
+  try{ if('Notification' in window && Notification.permission==='granted') new Notification(String(kanal.Agent||'Agent'), { body:String(r.Text||'').replace(/… \(\d+ Zeichen\)$/,'').slice(0,140), tag:'fokus-chat-'+r.id }); }catch(e){}
+}
+setInterval(()=>{ try{ f12BadgeLaden(); }catch(e){} }, 60000);
+setTimeout(()=>{ try{ f12BadgeLaden(); }catch(e){} }, 9000);
 /* ── F12 Ende ── */
 
 
