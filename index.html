@@ -3095,19 +3095,27 @@ const FSLive = (()=>{
   const K = {
     geraet: PREFIX+'fslive_geraet', token: PREFIX+'fslive_token', adresse: PREFIX+'fslive_adresse',
     letzt: PREFIX+'fslive_letzterErfolg', ausstehend: PREFIX+'fslive_ausstehend', warteschlange: PREFIX+'fslive_warteschlange',
+    ersteUebernahme: PREFIX+'fslive_ersteUebernahme',   // Hotfix 14 §7.2: erste Stand-Übernahme dieses Geräts erledigt
+    fuehrtJetzt: PREFIX+'fslive_fuehrtJetzt',           // Hotfix 14 §10.4: Toast „Dieses Gerät führt jetzt“ nach dem Neuladen
   };
   const ADRESSE_STANDARD='https://Mac-mini-von-Pascal.local:8443';
   const APP_KENNUNG='fokus-app-4';
   const RUHE_MS=3000, SPAETESTENS_MS=10000, WIEDERHOLEN_MS=30000, ZEITGRENZE_MS=60000, PAKETE_MS=60000, UHR_MS=60000;
+  const STAND_MS=3000, SPERRE_MIN_MS=1000, SPERRE_MAX_MS=5000;   // Hotfix 14 §7.2: Stand-Takt, Sperre bei der Übernahme
   const FARBE={ gruen:'#4ade80', gelb:'#facc15', rot:'#f87171', grau:'#9ca3af' };
   const TITEL='FocusSystem · Mac mini';
   const BETRIEB=['karten','unteraufgaben','stapel','ordner','gruppen','vorlagen','settings','tag','fokus','historie','intraday',
     'routinenGruppen','tagesketten','belohnung','meta','ui','karten_vomGeraet'];
+  const GEMEINSAM=BETRIEB.filter(k=>k!=='ui');   // Hotfix 14 §7.3: gemeinsame Schlüssel (nur das führende Gerät schreibt sie); ui bleibt geräteeigen
   const WORTE={ grau:'nicht gekoppelt', rot:'Mac mini nicht erreichbar', gelb:'ausstehend', gruen:'verbunden' };
   const offen=new Map();          // Betriebsschlüssel → Zähler des letzten Vormerkens
   let zaehler=0, ersterTs=0, uhr=null, laeuft=false, gescheitert=false, fehlerText='', punkt=null;
   let warteschlange=[], sendetSchlange=false, paketeLaufen=false, zurueckgestellt=new Map(), aktuellesPaket=null, letzteUhr='';
   const ZURUECK_MS=10*60000;   // ein in der App weggetipptes Paket kommt frühestens nach 10 Minuten wieder
+  // Hotfix 14 §7.1 · Führungszustand (nicht gespiegelt): fuehrend = Kennung des führenden Geräts, ichFuehre = dieses Gerät führt,
+  // standNr = zuletzt übernommene Stand-Nummer, uebernahmeLaeuft = Sperre liegt über der App, ersteUebernahmeErledigt = Marke im Speicher.
+  let fuehrend=null, ichFuehre=false, standNr=0, uebernahmeLaeuft=false, ersteUebernahmeErledigt=(lies(PREFIX+'fslive_ersteUebernahme')==='1');
+  let fuehrungBekannt=false, standLaeuft=false, klickVerschlucken=false, sperre=null, pille=null, geraeteCache=null, geraeteLaufen=false, geraeteGeladenFuer=null, sx=null, sy=null;
 
   function lies(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function schreib(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -3282,6 +3290,17 @@ const FSLive = (()=>{
     }catch(e){}
   }
 
+  // ── Hotfix 14 · führendes Gerät ───────────────────────────────────
+  // §7.4 · Führung lesen: GET /api/app/fuehrung → fuehrend, ichFuehre; danach Punkt und Hinweis „Nur Anzeige“ nachführen.
+  async function fuehrungLesen(){
+    const d=await aufruf('GET', '/api/app/fuehrung', undefined, { zeitgrenze:15000 });
+    fuehrend=(d && d.fuehrend)||null; ichFuehre=(fuehrend===geraet()); fuehrungBekannt=true;
+    anzeigen(); hinweisAnzeigen();
+    return d;
+  }
+  function hinweisAnzeigen(){}   // §10.2 (wird dort ersetzt)
+  function standHolen(){}        // §9.1 (wird dort ersetzt)
+
   // ── Kopplung ──────────────────────────────────────────────────────
   async function koppeln(){
     try{
@@ -3357,10 +3376,13 @@ const FSLive = (()=>{
       try{ const alt=JSON.parse(lies(K.ausstehend)||'[]'); if(Array.isArray(alt)) alt.forEach(k=>{ if(BETRIEB.indexOf(String(k))>=0) offen.set(String(k), ++zaehler); }); }catch(e){}
       try{ const w=JSON.parse(lies(K.warteschlange)||'[]'); if(Array.isArray(w)) warteschlange=w.filter(x=>x && x.werkzeug); }catch(e){}
       alleBetriebsschluesselVormerken();
+      fuehrungLesen().then(()=>{ if(!ichFuehre) standHolen(true); }).catch(()=>{});   // Hotfix 14 §7.5
       setInterval(()=>{ if(offen.size) spiegeln(); if(warteschlange.length) schlangeSenden(); }, WIEDERHOLEN_MS);
       setInterval(()=>paketeHolen(), PAKETE_MS);
       setInterval(()=>uhrMelden(true), UHR_MS);
-      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true); } else { uhrMelden(true); } });
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true);
+        fuehrungLesen().then(()=>{ if(!ichFuehre) standHolen(true); }).catch(()=>{}); }   // Hotfix 14 §7.6
+        else { uhrMelden(true); } });
       addEventListener('online', ()=>{ spiegeln(); schlangeSenden(); paketeHolen(); });
       setTimeout(()=>{ paketeHolen(); uhrMelden(true); }, 2500);
       planen(); anzeigen();
