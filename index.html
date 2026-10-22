@@ -5923,7 +5923,7 @@ function renderPostfach(){
   host.innerHTML=h;
 }
 function f7PfEntscheiden(id, ent, extra){
-  extra=extra||{}; const rows=f7Postfach()||[], r=rows.find(x=>x.id===id) || (f7PostfachOhneKarte()||[]).find(x=>x.id===id); if(!r) return;   // Hotfix 9: auch Nachhol-Einträge
+  extra=extra||{}; const rows=f7Postfach()||[], r=rows.find(x=>x.id===id) || (f7PostfachOhneKarte()||[]).find(x=>x.id===id) || extra.datensatz || (typeof f12PfRecord==='function' ? f12PfRecord(id) : null); if(!r) return;   // Hotfix 9: auch Nachhol-Einträge · 4.1 §5.5: auch der im Chat gelesene Datensatz
   if(ent==='freigegeben' || ent==='angepasst'){   // Hotfix 7 · Abschnitt 2: Freigeben (auch mit Anpassung) legt die Karte aus dem Entwurf an, nie doppelt
     const txt=(ent==='angepasst' && extra.felder && extra.felder['Pascals Anpassung']!=null) ? extra.felder['Pascals Anpassung'] : null;
     const kk=f7PfKarteLesen(r, txt);
@@ -5939,7 +5939,7 @@ function f7PfEntscheiden(id, ent, extra){
 }
 function f7PfAnpassen(id){ const r=(f7Postfach()||[]).find(x=>x.id===id); if(!r) return;
   openSheet('✏️ Anpassen', '<p class="d"><b>'+esc(r.Titel||'')+'</b></p><div class="field"><label>Entwurf, so wie er rausgehen soll</label><textarea id="f7pfText" rows="6">'+esc(r['Output/Entwurf']||'')+'</textarea></div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-f7pfanpassengo="'+esc(id)+'">Freigeben mit Anpassung</button>'); }
-function f7PfAblehnen(id){ const r=(f7Postfach()||[]).find(x=>x.id===id); if(!r) return;
+function f7PfAblehnen(id, datensatz){ const r=(f7Postfach()||[]).find(x=>x.id===id) || datensatz || (typeof f12PfRecord==='function' ? f12PfRecord(id) : null); if(!r) return;   // 4.1 §5.5: auch aus dem Chat
   openSheet('✗ Ablehnen', '<p class="d"><b>'+esc(r.Titel||'')+'</b></p><div class="field"><label>Grund (Pflicht) · geht an den Agenten und ins Lernen</label><textarea id="f7pfGrund" rows="3" placeholder="Warum nicht?"></textarea></div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn warn" data-f7pfablehnengo="'+esc(id)+'">Ablehnen</button>'); }
 /* Zeit im Postfach: beim Verlassen der Seite mit 400 P/h gutschreiben (ab einer Minute) */
 function f7PostfachVerlassen(){ if(!F7.pfSeit) return; const min=(Date.now()-F7.pfSeit)/60000; F7.pfSeit=null; if(min>=1 && tagOffen()){ const p=Math.round(min/60*400); try{ e4BonusBuchen(null, p, 'Postfach-Zeit '+Math.round(min)+' Min'); }catch(e){} } }
@@ -6151,7 +6151,7 @@ function f7Klick(e){
   if((z=d('data-f7pfantwort'))){ const c=t.closest('[data-f7pfid]'); if(!c) return true; let a=z.dataset.f7pfantwort; if(!a){ a=prompt('Antwort'); if(!a) return true; } f7PfEntscheiden(c.dataset.f7pfid, 'freigegeben', { felder:{ 'Pascals Anpassung':a } }); return true; }
   if((z=d('data-f7pfent'))){ const c=t.closest('[data-f7pfid]'); if(!c) return true; const id=c.dataset.f7pfid, ent=z.dataset.f7pfent; if(ent==='angepasst') f7PfAnpassen(id); else if(ent==='abgelehnt') f7PfAblehnen(id); else f7PfEntscheiden(id, ent); return true; }
   if((z=d('data-f7pfanpassengo'))){ const tx=el('f7pfText') ? el('f7pfText').value : ''; closeSheet(); f7PfEntscheiden(z.dataset.f7pfanpassengo, 'angepasst', { felder:{ 'Pascals Anpassung':tx } }); return true; }
-  if((z=d('data-f7pfablehnengo'))){ const g=el('f7pfGrund') ? el('f7pfGrund').value.trim() : ''; if(!g){ toast('Grund ist Pflicht'); return true; } closeSheet(); f7PfEntscheiden(z.dataset.f7pfablehnengo, 'abgelehnt', { felder:{ Ablehnungsgrund:g } }); return true; }
+  if((z=d('data-f7pfablehnengo'))){ const g=el('f7pfGrund') ? el('f7pfGrund').value.trim() : ''; if(!g){ toast('Grund ist Pflicht'); return true; } closeSheet(); f7PfEntscheiden(z.dataset.f7pfablehnengo, 'abgelehnt', { felder:{ Ablehnungsgrund:g } }); if(typeof f12PfErledigt==='function' && F12.pf[z.dataset.f7pfablehnengo]){ f12PfErledigt(z.dataset.f7pfablehnengo, 'abgelehnt', { Ablehnungsgrund:g }); if(e1Art()==='chat') e1Rendern(); } return true; }   // 4.1 §5.5: Ergebnis im Chat
   // Schieben
   if((z=d('data-f7schwas'))){ f7Sch().was=z.dataset.f7schwas; f7SchiebenRender(); return true; }
   if((z=d('data-f7schdatum'))){ const s=f7Sch(); if(z.dataset.f7schdatum==='frei'){ s.frei=!s.frei; } else { s.frei=false; s.datum=z.dataset.f7schdatum; } const g=el('f7schGrund'); if(g) s.grund=g.value; f7SchiebenRender(); return true; }
@@ -6781,6 +6781,151 @@ function f12AgentHtml(kanal){
   if(leer) h+='<div class="leer">noch kein Gespräch · „＋ Neuer Chat“</div>';
   return h+'</div>';
 }
+/* ── §5 · Stufe Gespräch ── */
+/* Text mit Listen: Zeilen mit „- " oder „• " werden eine Liste, keine Knöpfe (§5.2) */
+function f12TextHtml(text){ const lines=String(text||'').replace(/\r/g,'').split('\n'); let h='', li=[]; const flush=()=>{ if(li.length){ h+='<ul>'+li.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>'; li=[]; } };
+  lines.forEach(l=>{ const m=l.match(/^\s*[-•]\s+(.*)$/); if(m){ li.push(m[1]); return; } flush(); h+=(h && !/<\/ul>$/.test(h) ? '<br>' : '')+esc(l); }); flush(); return h.replace(/^<br>/, ''); }
+function f12KartenMarkenHtml(kanal, r){
+  const ids=String(r.Karten||'').split('\n').map(s=>s.trim()).filter(Boolean), marken=(r.Marken && r.Marken.karten)||[];
+  const anh=r.Marken ? (r.Marken.anhaenge||[]) : f7Link(r['Anhänge']).map(x=>({ id:x.id, name:x.name }));
+  const teile=ids.map(id=>{ const k=S.karten.find(x=>x.id===id||x.airtableId===id), m=marken.find(x=>x.id===id); return '<span data-f12karte="'+esc(id)+'">📇 '+esc((k && k.titel)||(m && m.titel)||id)+'</span>'; }).concat(anh.map(a=>'<span class="anh">📎 '+esc(a.name||'Datei')+'</span>'));
+  return teile.length ? '<div class="f12-ctx">'+teile.join('')+'</div>' : '';
+}
+/* Stand einer eigenen Nachricht (§5.3, Zielbild 2 D) */
+function f12Stand(kanal, r, inSchlange){
+  const agent=f12Name(kanal), st=String(r.Status||'').toLowerCase();
+  if(r.lokal || inSchlange) return { k:'wartet', html:'wartet auf Mac mini' };
+  if(st==='vorgemerkt'){ const von=r.Laufstart||r.Zeitstempel; return { k:'arb', html:esc(agent)+' denkt nach · <b class="f12-uhr" data-von="'+esc(von)+'">'+f12Mmss(Date.now()-Date.parse(von))+'</b>' }; }
+  if(st==='erledigt'){ const b=r.Beantwortet; return { k:'ok', html:'✓ beantwortet '+(b ? f12Uhrzeit(b) : '')+(b && r.Zeitstempel ? ' · gesamt '+f12Mmss(Date.parse(b)-Date.parse(r.Zeitstempel)) : '') }; }
+  if(st==='abgelehnt') return { k:'no', html:'✗ nicht bearbeitet' };
+  return { k:'emp', html:esc(agent)+' empfängt · <b class="f12-uhr" data-von="'+esc(r.Zeitstempel)+'">'+f12Mmss(Date.now()-Date.parse(r.Zeitstempel))+'</b>' };
+}
+function f12StandText(kanal, r){ return f12Stand(kanal, r).html.replace(/<[^>]+>/g,''); }
+function f12NachrichtHtml(kanal, r){
+  const vonPascal=String(r.Von||'')==='Pascal', art=String(r.Art||''), text=f12Text(kanal, r), agent=f12Name(kanal);
+  let h='<div class="f12-n" data-mid="'+esc(r.id)+'">';
+  if(vonPascal){ const s=f12Stand(kanal, r); h+='<div class="f7-m p">'+f12TextHtml(text)+f12KartenMarkenHtml(kanal, r)+'<em class="f12-st '+s.k+'" data-f12st="'+esc(r.id)+'">'+s.html+'</em></div>'; }
+  else { h+='<div class="f7-m t'+(art==='Hinweis' ? ' hinweis' : '')+'">'+f12TextHtml(text)+'<small>'+(art==='Hinweis' ? '⚠️ Hinweis · ' : esc(agent)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
+    if(f7Link(r.Postfach).length) h+=f12KartenBloeckeHtml(kanal, r); }
+  return h+'</div>';
+}
+function f12SchreibtHtml(kanal, rows){
+  const agent=f12Name(kanal), o=(rows||[]).filter(r=>String(r.Von||'')==='Pascal' && /^(offen|vorgemerkt)$/.test(String(r.Status||'').toLowerCase()) && !r.lokal).slice(-1)[0];
+  if(!o) return '<div class="f12-schreibt" id="chatSchreibt" hidden></div>';
+  const vg=String(o.Status||'').toLowerCase()==='vorgemerkt', von=vg ? (o.Laufstart||o.Zeitstempel) : o.Zeitstempel;
+  return '<div class="f12-schreibt" id="chatSchreibt">✍️ '+esc(agent)+' '+(vg ? 'denkt nach' : 'empfängt')+' · <b class="f12-uhr" data-von="'+esc(von)+'">'+f12Mmss(Date.now()-Date.parse(von))+'</b>'+(vg && o.Laufstart && o.Zeitstempel ? ' <span>(empfangen nach '+f12Mmss(Date.parse(o.Laufstart)-Date.parse(o.Zeitstempel))+')</span>' : '')+'</div>';
+}
+function f12ListeHtml(kanal, rows){
+  let h='', tag=''; (rows||[]).forEach(r=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; } h+=f12NachrichtHtml(kanal, r); });
+  if(!(rows||[]).length) h+='<div class="leer" data-leer="1">noch keine Nachricht · schreib '+esc(f12Name(kanal))+'</div>';
+  return h;
+}
+function f12MarkenHtml(e){ const m=(e.karten||[]).map(k=>'<span>📇 '+esc(k.titel||k.id)+'<em data-f12markeweg="karte:'+esc(k.id)+'">✕</em></span>').concat((e.anhaenge||[]).map(a=>'<span>📎 '+esc(a.name||'Datei')+'<em data-f12markeweg="anhang:'+esc(a.id)+'">✕</em></span>'));
+  return '<div class="f12-marken" id="chatMarken"'+(m.length ? '' : ' hidden')+'>'+m.join('')+'</div>'; }
+function f12EingabeHtml(kanal, e, breit){
+  const leer=!String(e.text||'').trim() && !(e.karten||[]).length && !(e.anhaenge||[]).length;
+  return f12MarkenHtml(e)+'<div class="f12-inp" id="chatEingabe"><button class="pl" data-f12plus="1" aria-label="Kontext hinzufügen">＋</button><textarea id="f12Text" rows="1" placeholder="Nachricht an '+esc(f12Name(kanal))+' …" data-f12text="1">'+esc(e.text||'')+'</textarea><span class="mi" data-f7mic="f12Text">🎙️</span><button class="se'+(leer?' aus':'')+'" id="f12Senden" data-f12senden="1" aria-label="Senden">➤</button></div>';
+}
+function f12GespraechHtml(kanal, g, opt){
+  opt=opt||{}; const rows=f12Verlauf(kanal, g), raum=f12Raum(kanal), gs=f12Gespraeche(kanal), ge=(gs||[]).find(x=>x.gespraech===g);
+  const titel=ge ? ge.titel : (rows && rows.length ? ((rows.find(r=>r['Gesprächstitel'])||{})['Gesprächstitel']||String(rows[0].Text||'').slice(0,40)) : (/^tag-/.test(g) ? f12TagTitel(g.slice(4)) : /^karte-/.test(g) ? f12KarteTitel(S.karten.find(x=>x.id===g.slice(6))||{ titel:g.slice(6) }) : 'Neues Gespräch'));
+  let h=opt.breit ? '' : f12KopfHtml({ titel:esc(titel), sub:f12Avatar(kanal)+' '+esc(f12Name(kanal))+' · '+f12RaumEmoji(raum)+' '+esc(raum) });
+  h+='<div class="f12-verlauf" id="chatList" data-key="'+esc(kanal.id+'|'+g)+'"><div class="f12-fluss" id="chatFluss">'+(rows ? f12ListeHtml(kanal, rows) : '<div class="leer" data-leer="1">'+(f7LagerFehler(f12VerlaufKey(kanal, g)) ? 'FocusSystem: '+esc(f7LagerFehler(f12VerlaufKey(kanal, g))) : 'lädt …')+'</div>')+'</div></div>';
+  h+='<button class="f12-pill" id="chatNeu" hidden data-f3nunten="1">↓ neue Nachricht</button>';
+  h+=f12SchreibtHtml(kanal, rows)+f12EingabeHtml(kanal, f12Entwurf(kanal.id, g), opt.breit);
+  return h;
+}
+/* Anhängen statt Neuaufbau (§1.4): neue Zeilen unten dran, Stand und Karten-Blöcke in place, Scroll-Stelle bleibt */
+function f12Unten(sc){ return !sc || Math.abs(num(sc.scrollTop))<60; }   // column-reverse: scrollTop 0 = unten
+function f12NachUnten(){ const sc=el('chatList'); if(sc) sc.scrollTop=0; const b=el('chatNeu'); if(b) b.hidden=true; }
+function f12VerlaufAktualisieren(kanal, g){
+  const list=el('chatList'), fluss=el('chatFluss'); if(!list || !fluss) return;
+  const rows=f12Verlauf(kanal, g); if(!rows) return;
+  const warUnten=f12Unten(list); let neu=0;
+  const leer=fluss.querySelector ? fluss.querySelector('[data-leer]') : null; if(leer && rows.length && leer.remove) leer.remove();
+  const tage=fluss.querySelectorAll ? [...fluss.querySelectorAll('.f7-day')].map(d=>d.dataset.tag) : []; let tag=tage.length ? tage[tage.length-1] : '';
+  rows.forEach(r=>{
+    const vorh=fluss.querySelector ? fluss.querySelector('[data-mid="'+CSS.escape(String(r.id))+'"]') : null;
+    if(vorh){ const st=vorh.querySelector('.f12-st'); if(st){ const s=f12Stand(kanal, r); const neuHtml=s.html; if(st.dataset.k!==s.k || st.innerHTML!==neuHtml){ st.innerHTML=neuHtml; st.className='f12-st '+s.k; st.dataset.k=s.k; } }
+      const vollNeu=F12.voll[r.id]; if(vollNeu!=null && vorh.dataset.voll!=='1'){ vorh.dataset.voll='1'; vorh.outerHTML=f12NachrichtHtml(kanal, r).replace('data-mid="', 'data-voll="1" data-mid="'); }
+      else if(String(r.Von||'')!=='Pascal' && f7Link(r.Postfach).length){ const kb=vorh.querySelector('.f12-kb'); const neuKb=f12KartenBloeckeHtml(kanal, r); if(kb && kb.outerHTML!==neuKb) kb.outerHTML=neuKb; else if(!kb && neuKb) vorh.insertAdjacentHTML('beforeend', neuKb); }
+      return; }
+    const lokal=fluss.querySelectorAll ? [...fluss.querySelectorAll('[data-mid^="lokal-"]')].find(x=>String(r.Von||'')==='Pascal' && x.textContent.indexOf(String(r.Text||'').slice(0,40))>=0) : null;
+    const d=String(r.Zeitstempel||'').slice(0,10); let h='';
+    if(d!==tag && !lokal){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; }
+    h+=f12NachrichtHtml(kanal, r);
+    if(lokal) lokal.outerHTML=h; else fluss.insertAdjacentHTML('beforeend', h);
+    if(String(r.Von||'')!=='Pascal') neu++; });
+  const s=el('chatSchreibt'); if(s && s.outerHTML!==undefined){ const n=f12SchreibtHtml(kanal, rows); if(s.outerHTML!==n) s.outerHTML=n; }
+  if(neu){ if(warUnten) f12NachUnten(); else { const b=el('chatNeu'); if(b) b.hidden=false; } }
+  f12GesehenMelden(kanal, rows);
+}
+/* §5.4: Antworten und Hinweise mit Status offen, die angezeigt wurden, werden erledigt */
+function f12GesehenMelden(kanal, rows){
+  if(!rows || !kanal) return; if(typeof document!=='undefined' && document.visibilityState && document.visibilityState!=='visible') return;
+  if(!S.meta.chatGesehen || typeof S.meta.chatGesehen!=='object') S.meta.chatGesehen={};
+  let n=0; rows.forEach(r=>{ if(!f12Ungelesen(r)) return; if(S.meta.chatGesehen[r.id]) return; S.meta.chatGesehen[r.id]=jetztIso(); n++;
+    FSLive.senden('datensatz_aendern', { tabelle:kanal.Tabelle, id:r.id, felder:{ Status:'erledigt' } }, { id:'chat-gesehen-'+r.id }).catch(()=>{}); r.Status='erledigt'; });
+  if(n){ saveMeta(); if(F12.badge) F12.badge[kanal.id]=Math.max(0, num(F12.badge[kanal.id])-n); f12BadgeZeigen(); }
+}
+/* Uhr: jede Sekunde nur die Textknoten der .f12-uhr (§5.3) */
+function f12UhrTick(){ try{ if(typeof document==='undefined' || !document.querySelectorAll) return; document.querySelectorAll('.f12-uhr[data-von]').forEach(b=>{ const t=f12Mmss(Date.now()-Date.parse(b.dataset.von)); if(b.textContent!==t) b.textContent=t; }); }catch(e){} }
+function f12UhrStarten(){ if(F12.uhr) return; F12.uhr=setInterval(()=>{ if(e1Art()!=='chat' && !(document.body && document.body.classList && document.body.classList.contains('breit'))){ clearInterval(F12.uhr); F12.uhr=null; return; } f12UhrTick(); }, 1000); }
+/* §1.4: solange das Gespräch offen ist, alle 15 s neu lesen; neue Zeilen werden angehängt */
+function f12NachladenStarten(kanal, g){ const key=f12VerlaufKey(kanal, g); if(F12.nachladen && F12.nachladenKey===key) return; f12NachladenStoppen(); F12.nachladenKey=key;
+  F12.nachladen=setInterval(()=>{ try{ if(e1Art()!=='chat'){ f12NachladenStoppen(); return; } const L=F7.lager[key]; if(L) L.ts=0; f12Verlauf(kanal, g); f12BadgeLaden(); }catch(e){} }, 15000); }
+function f12NachladenStoppen(){ if(F12.nachladen) clearInterval(F12.nachladen); F12.nachladen=null; F12.nachladenKey=''; }
+/* ── §5.5 · Karten im Chat ── */
+function f12PfLesen(id){ const P=F12.pf[id]; if(P && Date.now()-P.ts<60000) return P.r; if(!F12.pfLade[id] && FSLive.gekoppelt()){ F12.pfLade[id]=true;
+    FSLive.lesen('datensatz_lesen', { tabelle:'Postfach', id }).then(d=>{ const r=d && (d.datensatz||d); if(r && r.id){ F12.pf[id]={ ts:Date.now(), r }; } }).catch(()=>{}).then(()=>{ F12.pfLade[id]=false; try{ f7Neu(); }catch(e){} }); }
+  return P ? P.r : null; }
+function f12PfDiff(kk){
+  const best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null; if(!best) return { teile:[], neu:kk.unteraufgaben.slice() };
+  const g=kk.gesetzt||{}, teile=[];
+  if(kk.titel && kk.titel!==best.titel) teile.push('Titel <s>'+esc(best.titel||'')+'</s> → <em>'+esc(kk.titel)+'</em>');
+  if(g.sollMin && num(kk.sollMin)!==num(best.sollMin)) teile.push('Soll <s>'+Math.round(num(best.sollMin))+'</s> → <em>'+kk.sollMin+' Min</em>');
+  if(g.matrixFeld && kk.matrixFeld && kk.matrixFeld!==matrixFeldVon(best)) teile.push('Matrixfeld <s>'+esc(MX_FELD_NAME[matrixFeldVon(best)]||'—')+'</s> → <em>'+esc(MX_FELD_NAME[kk.matrixFeld]||kk.matrixFeld)+'</em>');
+  if(g.deadline && kk.deadline && kk.deadline!==best.faelligkeit) teile.push('Deadline <s>'+esc(best.faelligkeit ? anKurzDatum(best.faelligkeit) : '—')+'</s> → <em>'+esc(anKurzDatum(kk.deadline))+'</em>');
+  if(g.projekt && kk.projekt && kk.projekt!==best.projekt) teile.push('Projekt <s>'+esc(best.projekt||'—')+'</s> → <em>'+esc(kk.projekt)+'</em>');
+  const da=S.unteraufgaben.filter(u=>u.parentId===best.id).map(u=>String(u.titel||'').trim().toLowerCase()), neu=kk.unteraufgaben.filter(t=>da.indexOf(String(t).trim().toLowerCase())<0);
+  return { teile, neu };
+}
+function f12KartenBloeckeHtml(kanal, r){
+  const ids=f7Link(r.Postfach).map(x=>String(x.id)); if(!ids.length) return '';
+  return '<div class="f12-kb" data-f12kbvon="'+esc(r.id)+'">'+ids.map(id=>{ const p=f12PfLesen(id); if(!p) return '<div class="f7-info">📥 lädt …</div>';
+    const kk=f7PfKarteLesen(p), erledigt=String(p.Status||'').toLowerCase()==='erledigt', ent=String(p.Entscheidung||''), wann=p.geaendert_am ? f12Uhrzeit(p.geaendert_am) : '', imPf=erledigt && !F12.entschieden[id] ? ' im Postfach' : '';
+    if(!kk) return '<div class="f7-info" data-f7pfoeffnen="1">📥 '+esc(p.Titel||'Postfach')+'</div>';
+    const best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null, aend=!!kk.karteId, fam=famFarbe({ domain:kk.domain });
+    const abgelehnt=erledigt && /abgelehnt/i.test(ent), frei=erledigt && !abgelehnt;
+    const meta=(kk.domain==='privat' ? 'Privat' : 'DFM')+' · '+kk.sollMin+' Min · '+(aend ? (f12PfDiff(kk).neu.length+' neue Unteraufgabe'+(f12PfDiff(kk).neu.length===1?'':'n')) : kk.unteraufgaben.length+' Unteraufgaben')+(kk.projekt ? ' · '+esc(kk.projekt) : '');
+    let h='<div class="lab'+(erledigt?' grau':'')+'">'+(aend ? '✏️ ÄNDERUNG'+(erledigt ? '' : ' AN DEINER KARTE') : '📥 NEUE KARTE'+(erledigt ? '' : ' · AUCH IM POSTFACH'))+'</div>';
+    h+='<div class="kl-z'+(abgelehnt?' weg':'')+'" data-f12pfid="'+esc(id)+'" style="--fam:'+fam+';--famb:'+farbeAlpha(fam, .18)+';--prio:'+fam+';--rand:'+FARBE.ORANGE+'">'+
+      '<button class="kl-play" data-f12pfstart="'+esc(id)+'" aria-label="Start"'+(erledigt?' disabled':'')+'>▶</button>'+
+      '<div class="kl-t" data-f12pfdetail="'+esc(id)+'"><b class="kl-titel">'+(aend ? '✏️ ' : '')+esc(kk.titel)+'</b><span class="kl-meta">'+meta+'</span></div>'+
+      '<button class="kl-check'+(frei?' ok':'')+'" data-f12pffrei="'+esc(id)+'" aria-label="Freigeben"'+(erledigt?' disabled':'')+'>✓</button></div>';
+    if(aend){ const d=f12PfDiff(kk); const t=d.teile.concat(d.neu.map(n=>'neu: <em>„'+esc(n)+'“</em>')); if(t.length) h+='<div class="f12-diff">'+t.join(' · ')+'</div>'; }
+    if(!erledigt) h+='<div class="f12-mehr" data-f12pfablehnen="'+esc(id)+'"><b>✗</b> Ablehnen</div>';
+    else if(abgelehnt) h+='<div class="f12-erg no">✗ abgelehnt '+wann+imPf+(p.Ablehnungsgrund ? ' · „'+esc(String(p.Ablehnungsgrund).slice(0,80))+'“' : '')+'</div>';
+    else { const m=(S.meta.postfachKarten||{})[id], k=m ? S.karten.find(x=>x.id===m.karteId) : null, platz=k ? tagesKette().indexOf(k.id)+1 : 0;
+      h+='<div class="f12-erg ok">'+(aend ? '✓ übernommen '+wann : '✓ freigegeben '+wann+' · angelegt'+(platz>0 ? ' · Kette Platz '+platz : ''))+imPf+'</div>'; }
+    return h; }).join('')+'</div>';
+}
+/* Entscheidungen aus dem Chat: gleicher Weg wie im Postfach (f7PfEntscheiden nimmt den gelesenen Datensatz mit) */
+function f12PfRecord(id){ const P=F12.pf[id]; return P ? P.r : null; }
+function f12PfErledigt(id, ent, felder){ const P=F12.pf[id]; if(P && P.r){ P.r.Status='erledigt'; P.r.Entscheidung=ent; P.r.geaendert_am=jetztIso(); Object.assign(P.r, felder||{}); } F12.entschieden[id]=true; }
+function f12PfFreigeben(id, starten){ const r=f12PfRecord(id); if(!r) return null; haptik(starten ? 10 : 12);
+  f7PfEntscheiden(id, 'freigegeben', { datensatz:r }); f12PfErledigt(id, 'freigegeben');
+  const m=(S.meta.postfachKarten||{})[id], k=m ? S.karten.find(x=>x.id===m.karteId) : null;
+  if(k && starten){ leistePlay(k.id); fokusseiteNachStart(); } else e1Rendern();
+  return k; }
+function f12PfDetail(id){ const r=f12PfRecord(id); if(!r) return; const kk=f7PfKarteLesen(r); if(!kk) return; haptik(6);
+  const erledigt=String(r.Status||'').toLowerCase()==='erledigt', m=(S.meta.postfachKarten||{})[id];
+  if(erledigt){ const k=m ? S.karten.find(x=>x.id===m.karteId) : (kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null); if(k) f7AufgabeOeffnen(k.id); return; }
+  const best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null;
+  if(best){ oeffneDetail(best.id); f7PfEntwurfAnwenden(entwurf, entwurfSubs, kk); entwurf.postfachId=id; renderDetail(); return; }
+  const vb={ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), sollMin:kk.sollMin, matrixFeld:matrixFeldNorm(kk.matrixFeld)||'werkzeug' }; if(kk.projekt) vb.projekt=kk.projekt; if(kk.notiz) vb.notiz=kk.notiz;
+  oeffneDetail(null, { vorbelegung:vb, unteraufgaben:kk.unteraufgaben, mehrAuf:true, postfachId:id }); }
+function f12PfAblehnen(id){ const r=f12PfRecord(id); if(!r) return; haptik(6); f7PfAblehnen(id, r); }
 /* ── F12 Ende ── */
 
 /* ══════════════════════════════════════════════════════════════════════
