@@ -5280,51 +5280,71 @@ function f6Spiel(F, dom){
     '<div class="f6-g"><div><h5>Konto</h5><b style="color:'+FARBE.GOLD+'">'+fmtP(D.konto)+'</b><small>Münzen</small></div><div><h5>Galerie</h5><b>'+galerie+' Kulisse'+(galerie===1?'':'n')+'</b><small>fertig ausgemalt</small></div></div>';
   return m1+f6Modul('meilensteine', 'Meilensteine · ab jetzt', h2);
 }
-/* ══ 21 · Claude-Nutzung (dfm.agenten_protokoll aus FocusSystem, live gelesen) ══ */
+/* ══ 21 · Claude-Nutzung (dfm.agenten_protokoll aus FocusSystem, live gelesen) · 4.1 §11: je Abteilung, gestapelt nach Auslöser (Takt · Auftrag · Chat · live), Chat-Antwortzeit ══ */
 let _f6Claude={ ts:0, laeuft:false, rows:null, fehler:'' };
+const F6_AUSL=['Takt','Auftrag','Chat','live'];
+function f6AuslFarbe(a){ return a==='Takt' ? FARBE.BLAU : a==='Auftrag' ? FARBE.LILA : a==='Chat' ? '#2dd4bf' : FARBE.GRAU; }
+function f6AuslNorm(a){ a=String(a||'').trim(); return F6_AUSL.indexOf(a)>=0 ? a : (a ? 'Auftrag' : 'Takt'); }
+function f6AbtFarbe(name){ const folge=['Trainerstab'].concat(F7_ABT_FOLGE), i=folge.indexOf(name); return i<0 ? FARBE.GRAU : FARBEN[i%FARBEN.length]; }
 function f6ClaudeLaden(){
   if(_f6Claude.laeuft) return; if(!FSLive.gekoppelt()){ _f6Claude.fehler='nicht gekoppelt'; return; }
   _f6Claude.laeuft=true;
-  const ab=anVorTage(f6Heute(), 13)+'T00:00:00', rows=[], felder=['Lauf','Zeit','Agent','Auslöser','Start','Dauer (s)','Tokens ein','Tokens aus'];
+  const ab=anVorTage(f6Heute(), 13)+'T00:00:00', rows=[], felder=['Lauf','Zeit','Agent','Auslöser','Start','Dauer (s)','Tokens ein','Tokens aus','Abteilung','Kanal'];
   const seite=(versatz)=>FSLive.lesen('datensaetze_auflisten', { tabelle:'Agenten-Protokoll', felder, filter:[{ feld:'Zeit', operator:'groesser_gleich', wert:ab }], sortierung:[{ feld:'Zeit', richtung:'auf' }], limit:100, versatz })
-    .then(d=>{ const l=(d && d.datensaetze)||[]; l.forEach(x=>rows.push(x)); if(l.length===100 && versatz<1900) return seite(versatz+100); });
+    .then(d=>{ const l=(d && d.datensaetze)||[]; l.forEach(x=>rows.push(x)); if(l.length===100 && versatz<4900) return seite(versatz+100); });   // §11.1: bis 5.000 Zeilen in Seiten zu 100
   seite(0).then(()=>{ _f6Claude={ ts:Date.now(), laeuft:false, rows, fehler:'' }; if(seiteAktuell()==='statistik') renderStatistik(); })
     .catch(e=>{ _f6Claude.laeuft=false; _f6Claude.ts=Date.now(); _f6Claude.fehler=(e && e.message)||'Fehler'; if(seiteAktuell()==='statistik') renderStatistik(); });
 }
 function f6ClaudeFeld(x, name){ const f=x && (x.felder||x); if(!f) return null; if(f[name]!==undefined) return f[name]; const k=Object.keys(f).find(q=>q.toLowerCase()===name.toLowerCase()); return k ? f[k] : null; }
+/* Chat-Antwortzeit heute über alle Kanäle: Ø empfangen (Laufstart − Zeitstempel) und Ø nachgedacht (Beantwortet − Laufstart) */
+function f6ChatAntwortzeit(){
+  const heute=heuteApp(), e=[], n=[];
+  (typeof f12Kanaele==='function' ? (f12Kanaele()||[]) : []).forEach(k=>{ (f12Zeilen(k)||[]).forEach(r=>{ if(String(r.Von||'')!=='Pascal' || !r.Beantwortet || !r.Laufstart || !r.Zeitstempel) return; if(String(r.Beantwortet).slice(0,10)!==heute) return;
+    e.push(Date.parse(r.Laufstart)-Date.parse(r.Zeitstempel)); n.push(Date.parse(r.Beantwortet)-Date.parse(r.Laufstart)); }); });
+  return { empfangen:e.length ? anMean(e) : null, nachgedacht:n.length ? anMean(n) : null, n:e.length };
+}
 function f6Claude(F, dom){
   const heute=f6Heute();
   if(!_f6Claude.rows || Date.now()-_f6Claude.ts>5*60000) f6ClaudeLaden();
   let haupt='<div class="f6-st">Messung aller Agentenläufe · Betrieb über das Claude-Abo</div>';
   if(!_f6Claude.rows){ haupt+=f6Leer(_f6Claude.laeuft ? 'lädt aus FocusSystem …' : (_f6Claude.fehler==='nicht gekoppelt' ? 'nicht mit FocusSystem gekoppelt' : 'FocusSystem nicht erreichbar · '+_f6Claude.fehler)); return f6Modul('claude', '🤖 Claude-Nutzung · heute', haupt); }
-  // je Lauf: Agent, Auslöser, Tag, Dauer (höchster Wert), Tokens (Summe)
+  // je Lauf: Agent, Abteilung, Kanal, Auslöser, Tag, Dauer (höchster Wert), Tokens (Summe)
   const laeufe={}; _f6Claude.rows.forEach(x=>{ const id=f6ClaudeFeld(x,'Lauf')||x.id, zeit=f6ClaudeFeld(x,'Start')||f6ClaudeFeld(x,'Zeit'); if(!zeit) return;
-    const d=String(zeit).slice(0,10), L=laeufe[id]||(laeufe[id]={ agent:f6ClaudeFeld(x,'Agent')||'?', art:f6ClaudeFeld(x,'Auslöser')||'Takt', d, dauer:0, ein:0, aus:0 });
+    const d=String(zeit).slice(0,10), L=laeufe[id]||(laeufe[id]={ agent:f6ClaudeFeld(x,'Agent')||'?', abt:String(f6ClaudeFeld(x,'Abteilung')||'')||'ohne Abteilung', kanal:f6ClaudeFeld(x,'Kanal')||'', art:f6AuslNorm(f6ClaudeFeld(x,'Auslöser')), d, dauer:0, ein:0, aus:0 });
     L.dauer=Math.max(L.dauer, num(f6ClaudeFeld(x,'Dauer (s)'))); L.ein+=num(f6ClaudeFeld(x,'Tokens ein')); L.aus+=num(f6ClaudeFeld(x,'Tokens aus')); });
   const alle=Object.keys(laeufe).map(k=>laeufe[k]), heuteL=alle.filter(l=>l.d===heute);
   const tage=[]; for(let i=13;i>=0;i--) tage.push(anVorTage(heute, i));
-  const jeTag={}; tage.forEach(d=>jeTag[d]={ takt:0, live:0 }); alle.forEach(l=>{ const q=jeTag[l.d]; if(q) q[l.art==='live'?'live':'takt']++; });
-  const werk=tage.filter(d=>d<heute && !istWochenendTag(d)).slice(-4), avg=werk.length ? anMean(werk.map(d=>jeTag[d].takt+jeTag[d].live)) : null;
+  const jeTag={}; tage.forEach(d=>jeTag[d]={ n:0, abt:{} }); alle.forEach(l=>{ const q=jeTag[l.d]; if(q){ q.n++; q.abt[l.abt]=(q.abt[l.abt]||0)+1; } });
+  const werk=tage.filter(d=>d<heute && !istWochenendTag(d)).slice(-4), avg=werk.length ? anMean(werk.map(d=>jeTag[d].n)) : null;
   const dauer=heuteL.reduce((a,l)=>a+l.dauer,0), ein=heuteL.reduce((a,l)=>a+l.ein,0), aus=heuteL.reduce((a,l)=>a+l.aus,0), mio=v=>(Math.round(v/1e5)/10).toFixed(1).replace('.',',')+' Mio.';
   const rahmen=num(S.settings.claudeAboTokensTag), anteil=rahmen>0 ? Math.round((ein+aus)/rahmen*100) : null;
+  const az=f6ChatAntwortzeit(), mmss=ms=>f12Mmss(ms);
   haupt+='<div class="f6-k"><div><b>'+heuteL.length+'</b> Läufe<small>'+(avg!=null ? 'Ø '+Math.round(avg)+' · letzte '+werk.length+' Werktage' : 'noch kein Vergleich')+'</small></div><div><b>'+fmtDauer(dauer/60)+'</b><small>Laufzeit gesamt</small></div>'+
-    '<div><b>'+mio(ein+aus)+'</b> Tokens<small>ein '+mio(ein)+' · aus '+mio(aus)+'</small></div><div><b style="color:'+(anteil==null ? FARBE.GRAU : anteil<60 ? FARBE.GRUEN : anteil<85 ? FARBE.GELB : FARBE.ROT)+'">'+(anteil!=null ? anteil+' %' : '—')+'</b><small>vom Abo-Rahmen, soweit messbar</small></div></div>';
-  // je Agent bzw. Team
-  const jeAgent={}; heuteL.forEach(l=>{ const q=jeAgent[l.agent]||(jeAgent[l.agent]={ takt:0, live:0, dauer:0 }); q[l.art==='live'?'live':'takt']++; q.dauer+=l.dauer; });
-  const agenten=Object.keys(jeAgent).sort((a,b)=>(jeAgent[b].takt+jeAgent[b].live)-(jeAgent[a].takt+jeAgent[a].live)), mxA=Math.max(1, Math.max.apply(null, agenten.map(a=>jeAgent[a].takt+jeAgent[a].live).concat([1])));
-  if(agenten.length){ haupt+='<div class="f6-ag">'+agenten.map(a=>{ const q=jeAgent[a]; return '<div><span>'+esc(a)+'</span><span class="bar"><i style="width:'+(q.takt/mxA*100).toFixed(1)+'%;background:'+FARBE.BLAU+'"></i><i style="width:'+(q.live/mxA*100).toFixed(1)+'%;background:'+FARBE.LILA+'"></i></span><span>'+(q.takt+q.live)+' · '+fmtDauer(q.dauer/60)+'</span></div>'; }).join('')+'</div>';
-    haupt+='<div class="f6-lg"><span><i style="background:'+FARBE.BLAU+'"></i>Takt</span><span><i style="background:'+FARBE.LILA+'"></i>live, während du aktiv bist</span></div>'; }
+    '<div><b>'+mio(ein+aus)+'</b> Tokens<small>ein '+mio(ein)+' · aus '+mio(aus)+'</small></div><div><b style="color:'+(anteil==null ? FARBE.GRAU : anteil<60 ? FARBE.GRUEN : anteil<85 ? FARBE.GELB : FARBE.ROT)+'">'+(anteil!=null ? anteil+' %' : '—')+'</b><small>vom Abo-Rahmen, soweit messbar</small></div>'+
+    '<div class="sp"><b style="color:#2dd4bf">'+(az.n ? 'Ø '+mmss(az.empfangen)+' · Ø '+mmss(az.nachgedacht) : '—')+'</b><small>Chat-Antwortzeit heute · empfangen · nachgedacht'+(az.n ? ' · '+az.n+' Nachricht'+(az.n===1?'':'en') : '')+'</small></div></div>';
+  // je Abteilung, gestapelt nach Auslöser; Tipp klappt die Agenten der Abteilung auf
+  const jeAbt={}; heuteL.forEach(l=>{ const q=jeAbt[l.abt]||(jeAbt[l.abt]={ n:0, dauer:0, art:{}, agenten:{} }); q.n++; q.dauer+=l.dauer; q.art[l.art]=(q.art[l.art]||0)+1;
+    const a=q.agenten[l.agent]||(q.agenten[l.agent]={ n:0, dauer:0, art:{} }); a.n++; a.dauer+=l.dauer; a.art[l.art]=(a.art[l.art]||0)+1; });
+  const abts=Object.keys(jeAbt).sort((a,b)=>(a==='ohne Abteilung')-(b==='ohne Abteilung') || jeAbt[b].n-jeAbt[a].n), mxA=Math.max(1, Math.max.apply(null, abts.map(a=>jeAbt[a].n).concat([1])));
+  const balken=(q, mx)=>'<span class="bar">'+F6_AUSL.map(a=>q.art[a] ? '<i style="width:'+(q.art[a]/mx*100).toFixed(1)+'%;background:'+f6AuslFarbe(a)+'"></i>' : '').join('')+'</span>';
+  if(abts.length){ const auf=S.ui.f6Auf||{};
+    haupt+='<div class="f6-ag">'+abts.map(ab=>{ const q=jeAbt[ab], offen=!!auf['claude:'+ab];
+      let z='<div data-f6auf="claude:'+esc(ab)+'" style="cursor:pointer"><span>'+(offen?'▾ ':'▸ ')+esc(ab)+'</span>'+balken(q, mxA)+'<span>'+q.n+' · '+fmtDauer(q.dauer/60)+'</span></div>';
+      if(offen){ const ag=Object.keys(q.agenten).sort((a,b)=>q.agenten[b].n-q.agenten[a].n); z+=ag.map(a=>{ const x=q.agenten[a]; return '<div style="opacity:.85"><span style="padding-left:14px">'+esc(a)+'</span>'+balken(x, mxA)+'<span>'+x.n+' · '+fmtDauer(x.dauer/60)+'</span></div>'; }).join(''); }
+      return z; }).join('')+'</div>';
+    haupt+='<div class="f6-lg">'+F6_AUSL.map(a=>'<span><i style="background:'+f6AuslFarbe(a)+'"></i>'+(a==='live' ? 'live (alte Zeilen)' : a)+'</span>').join('')+'</div>'; }
   else haupt+=f6Leer('heute noch kein Lauf');
-  // Verlauf 14 Tage
-  { const W=360, H=192, pL=30, pR=6, pT=14, pB=22, mx=Math.max(5, Math.max.apply(null, tage.map(d=>jeTag[d].takt+jeTag[d].live).concat([avg||0])))*1.1, Y=v=>pT+(1-Math.min(mx,v)/mx)*(H-pT-pB), n=tage.length, bw=(W-pL-pR)/n*0.8;
+  // Verlauf 14 Tage: Säulen gestapelt nach Abteilung, Ø-Linie
+  { const W=360, H=192, pL=30, pR=6, pT=14, pB=22, mx=Math.max(5, Math.max.apply(null, tage.map(d=>jeTag[d].n).concat([avg||0])))*1.1, Y=v=>pT+(1-Math.min(mx,v)/mx)*(H-pT-pB), n=tage.length, bw=(W-pL-pR)/n*0.8;
+    const folge=['Trainerstab'].concat(F7_ABT_FOLGE), abtAlle=Object.keys(alle.reduce((o,l)=>{ o[l.abt]=1; return o; }, {})).sort((a,b)=>{ const ia=folge.indexOf(a), ib=folge.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib); });
     let s=''; [mx/3, 2*mx/3, mx].forEach(v=>{ s+='<line x1="'+pL+'" y1="'+Y(v).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(v).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/><text x="0" y="'+(Y(v)+3).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'">'+Math.round(v)+'</text>'; });
-    tage.forEach((d,i)=>{ const q=jeTag[d], x=pL+(i+0.5)*(W-pL-pR)/n-bw/2, y0=Y(0);
-      if(q.takt) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(q.takt).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(y0-Y(q.takt)).toFixed(1)+'" rx="3" fill="'+FARBE.BLAU+'"/>';
-      if(q.live) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(q.takt+q.live).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(Y(q.takt)-Y(q.takt+q.live)).toFixed(1)+'" rx="3" fill="'+FARBE.LILA+'"/>';
+    tage.forEach((d,i)=>{ const q=jeTag[d], x=pL+(i+0.5)*(W-pL-pR)/n-bw/2; let sum=0;
+      abtAlle.forEach(ab=>{ const v=q.abt[ab]||0; if(!v) return; s+='<rect x="'+x.toFixed(1)+'" y="'+Y(sum+v).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(Y(sum)-Y(sum+v)).toFixed(1)+'" rx="2" fill="'+f6AbtFarbe(ab)+'"/>'; sum+=v; });
       s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-6)+'" font-size="9.5" fill="'+(d===heute?'#ff9f40':FARBE.GRAU)+'" text-anchor="middle">'+d.slice(8,10)+'.</text>'; });
     if(avg!=null) s+='<line x1="'+pL+'" y1="'+Y(avg).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+Y(avg).toFixed(1)+'" stroke="#ff9f40" stroke-dasharray="4 3"/><text x="'+(W-pR)+'" y="'+(Y(avg)-4).toFixed(1)+'" font-size="9.5" fill="#ff9f40" text-anchor="end">Ø '+werk.length+' Werktage</text>';
-    haupt+='<div class="blk-h" style="margin:14px 0 4px">Läufe · 14 Tage</div><svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>'; }
-  haupt+=f6Ex('claude', '▸ Erklärung: was gemessen wird und woher', '<p><b>Quelle:</b> die Tabelle Agenten-Protokoll in FocusSystem. Jeder Lauf eines Agenten trägt dort Start, Dauer, Modell, Tokens ein und aus sowie den Auslöser (Takt oder live).</p><p><b>Gezählt wird</b> je Lauf-Kennung einmal; die Laufzeit ist die Dauer des Laufs, Tokens sind die Summe über den Lauf. Die App liest die letzten 14 Tage live über die Verbindung zu FocusSystem, höchstens alle 5 Minuten neu.</p><p><b>Abo-Rahmen:</b> der Anteil wird nur gezeigt, wenn ein Tagesrahmen in Tokens bekannt ist (Einstellung claudeAboTokensTag); sonst „—".</p>');
+    haupt+='<div class="blk-h" style="margin:14px 0 4px">Läufe · 14 Tage · je Abteilung</div><svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>';
+    if(abtAlle.length) haupt+='<div class="f6-lg">'+abtAlle.map(ab=>'<span><i style="background:'+f6AbtFarbe(ab)+'"></i>'+esc(ab)+'</span>').join('')+'</div>'; }
+  haupt+=f6Ex('claude', '▸ Erklärung: was gemessen wird und woher', '<p><b>Quelle:</b> die Tabelle Agenten-Protokoll in FocusSystem. Jeder Lauf eines Agenten trägt dort Start, Dauer, Modell, Tokens ein und aus, seit Chat-Räumen auch Abteilung, Kanal und den Auslöser.</p><p><b>Abteilung</b> ist die Abteilung des Agenten (bei Projekt-Agenten die des Projekts); <b>Kanal</b> ist die Chat-Tabelle bei Chat-Läufen, sonst leer. <b>Auslöser:</b> Takt = fester Lauf nach Uhrzeit · Auftrag = Agenten-Auftrag (Eingang, Befund, Prüfung …) · Chat = Antwort auf eine Nachricht von dir · live = alte Zeilen vor Chat-Räumen.</p><p><b>Gezählt wird</b> je Lauf-Kennung einmal; die Laufzeit ist die Dauer des Laufs, Tokens sind die Summe über den Lauf. Die App liest die letzten 14 Tage (bis 5.000 Zeilen) live über die Verbindung zu FocusSystem, höchstens alle 5 Minuten neu.</p><p><b>Chat-Antwortzeit:</b> Ø empfangen = Laufstart − Abschicken, Ø nachgedacht = Antwort − Laufstart, über alle heute beantworteten Nachrichten aller Kanäle.</p><p><b>Abo-Rahmen:</b> der Anteil wird nur gezeigt, wenn ein Tagesrahmen in Tokens bekannt ist (Einstellung claudeAboTokensTag); sonst „—".</p>');
   return f6Modul('claude', '🤖 Claude-Nutzung · heute', haupt);
 }
 /* ══ Gruppe Heute: die Blöcke der Fokusseite (Paket 5) ══ */
