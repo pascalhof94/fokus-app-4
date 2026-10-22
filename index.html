@@ -5388,8 +5388,9 @@ function f7Lager(key, ttlMs, laden){
   const L=F7.lager[key];
   if(L && Date.now()-L.ts<ttlMs) return L.daten;
   if(!F7.laeuft[key] && FSLive.gekoppelt()){ F7.laeuft[key]=true;
-    Promise.resolve().then(laden).then(d=>{ F7.lager[key]={ ts:Date.now(), daten:d, fehler:'' }; }).catch(e=>{ F7.lager[key]={ ts:Date.now(), daten:(L && L.daten)||null, fehler:(e && e.message)||'Fehler' }; })
-      .then(()=>{ F7.laeuft[key]=false; f7Neu(); }); }
+    Promise.resolve().then(laden).then(d=>{ const alt=L ? JSON.stringify(L.daten) : null, neu=JSON.stringify(d); F7.lager[key]={ ts:Date.now(), daten:d, fehler:'' }; return neu!==alt || !!(L && L.fehler); })   // Hotfix 13 §2.1: nur neue Daten zeichnen neu
+      .catch(e=>{ const f=(e && e.message)||'Fehler', geaendert=!L || L.fehler!==f; F7.lager[key]={ ts:Date.now(), daten:(L && L.daten)||null, fehler:f }; return geaendert; })
+      .then(geaendert=>{ F7.laeuft[key]=false; if(geaendert) f7Neu(key); }); }
   return L ? L.daten : null;
 }
 function f7LagerFehler(key){ const L=F7.lager[key]; return L ? L.fehler : (FSLive.gekoppelt() ? '' : 'nicht gekoppelt'); }
@@ -5402,7 +5403,35 @@ async function f7Alle(args){
 }
 function f7Link(v){ return Array.isArray(v) ? v.map(x=>(x && typeof x==='object') ? { id:x.id, name:x.anzeige } : { id:String(x), name:String(x) }) : []; }
 function f7LinkName(v){ const l=f7Link(v); return l.length ? l.map(x=>x.name).join(', ') : ''; }
-function f7Neu(){ try{ if(_e1) e1Rendern(); if(seiteAktuell()==='postfach') renderPostfach(); if(sheetOffen() && F7.blattNeu) F7.blattNeu(); }catch(e){ console.warn('f7Neu', e); } }
+/* Hotfix 13 §2.2–2.4: f7Neu(schluessel) sammelt Anforderungen und zeichnet höchstens einmal je 400 ms; bei Eingabe (Finger unten, pointerdown < 800 ms,
+   pointerup < 300 ms) wartet der Neuaufbau; ein Feld mit Fokus in der Ebene wird nie neu aufgebaut (der Chat hängt nur an); ein offenes Blatt
+   zeichnet nur, wenn ein Lager-Schlüssel dabei ist, den es beim Öffnen angemeldet hat (F7.blattSchluessel). */
+function f7Neu(schluessel){
+  if(schluessel){ if(!F7.neuSchluessel) F7.neuSchluessel=[]; if(F7.neuSchluessel.indexOf(String(schluessel))<0) F7.neuSchluessel.push(String(schluessel)); }
+  if(F7.neuT) return;
+  F7.neuT=setTimeout(f7NeuJetzt, 400);
+}
+function f7EingabeAktiv(){ const j=Date.now(); return num(F7.fingerUnten)>0 || j-num(F7.letzteEingabe)<800 || j-num(F7.letzteEingabeEnde)<300; }
+function f7NeuJetzt(){
+  F7.neuT=null;
+  if(f7EingabeAktiv()){ F7.neuT=setTimeout(f7NeuJetzt, 300); return; }   // §2.3: bis 300 ms nach dem letzten pointerup
+  const keys=F7.neuSchluessel||[]; F7.neuSchluessel=null;
+  try{
+    if(_e1){ const fokus=(typeof document!=='undefined') ? document.activeElement : null, imFeld=!!(fokus && /^(INPUT|TEXTAREA|SELECT)$/.test(String(fokus.tagName||'')) && fokus.closest && fokus.closest('#ebene1'));
+      if(!imFeld) e1Rendern(); else if(e1Art()==='chat' && typeof f12Rendern==='function') f12Rendern(); }
+    if(seiteAktuell()==='postfach') renderPostfach();
+    if(sheetOffen() && F7.blattNeu && keys.some(k=>(F7.blattSchluessel||[]).indexOf(k)>=0)) F7.blattNeu();   // §2.4
+    if(typeof f9Rendern==='function') f9Rendern();
+    if(typeof f12SendenKnopf==='function') f12SendenKnopf();
+  }catch(e){ console.warn('f7Neu', e); }
+}
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('pointerdown', ()=>{ F7.letzteEingabe=Date.now(); F7.fingerUnten=num(F7.fingerUnten)+1; }, { capture:true, passive:true });
+  const los=()=>{ F7.fingerUnten=Math.max(0, num(F7.fingerUnten)-1); F7.letzteEingabeEnde=Date.now(); };
+  document.addEventListener('pointerup', los, { capture:true, passive:true }); document.addEventListener('pointercancel', los, { capture:true, passive:true });
+  document.addEventListener('touchstart', ()=>{ F7.letzteEingabe=Date.now(); }, { capture:true, passive:true });
+  document.addEventListener('touchend', e=>{ if(!e.touches || !e.touches.length) F7.fingerUnten=0; F7.letzteEingabeEnde=Date.now(); }, { capture:true, passive:true });
+}
 function f7Abteilungen(){ return f7Lager('abteilungen', 10*60000, ()=>f7Alle({ tabelle:'Abteilungen', felder:['Name','Emoji','Leitung','Teams','Claude-Raum'], sortierung:[{feld:'Name', richtung:'auf'}] })); }
 function f7Projekte(){ return f7Lager('projekte', 5*60000, ()=>f7Alle({ tabelle:'Projekte', felder:['Projekt','Status','Intern/Extern','Abteilung','Owner','Privat','Oberprojekt','Ablageordner'], sortierung:[{feld:'Projekt', richtung:'auf'}] })); }
 function f7Agenten(){ return f7Lager('agenten', 10*60000, ()=>f7Alle({ tabelle:'Personen', felder:['Name','Abteilung','Art'], filter:[{ feld:'Art', operator:'gleich', wert:'Agent' }] })); }
@@ -5701,7 +5730,7 @@ function f7PauseVorschlag(){
 function f7PauseOnramp(){ const p=f7Pz(); if(p.onrampId){ const k=S.karten.find(x=>x.id===p.onrampId); if(k) return k; } const l=f7Onramps().filter(k=>!zielErreicht(k)).sort((a,b)=>num(a.sollMin)-num(b.sollMin)); return l[0]||null; }
 function f7PauseZiel(){ const p=f7Pz(); if(p.zielId){ const k=S.karten.find(x=>x.id===p.zielId); if(k) return k; } const lk=getrackteKarte(); if(lk && lk.status==='offen' && !lk.erholung) return lk; const r=ketteRechts().filter(k=>k.status==='offen' && !k.erholung); return r[0]||null; }
 function oeffnePause(){
-  F7.pz=null; const p=f7Pz(); F7.blattNeu=f7PauseRender; f7PauseRender();
+  F7.pz=null; const p=f7Pz(); F7.blattNeu=f7PauseRender; F7.blattSchluessel=[]; f7PauseRender();   // Hotfix 13 §2.4: die Pause braucht kein Lager
 }
 function f7PauseRender(){
   const p=f7Pz(), V=f7PauseVorschlag(), W=e4BrueckeWerte(), ende=new Date(Date.now()+p.min*60000);
@@ -5954,7 +5983,7 @@ function f7SchDatumRhythmus(k){ const heute=heuteApp(); if(!k.rhythmus) return a
 function f7SchWochenende(n){ const heute=heuteApp(); let d=anVorTage(heute, -1); while(new Date(d+'T12:00:00').getDay()!==6) d=anVorTage(d, -1); if(n===2) d=anVorTage(d, -7); return d; }
 oeffneSchieben=function(kid){
   const k=S.karten.find(x=>x.id===kid); if(!k) return;
-  F7.sch={ kid, was:'datum', datum:morgenIso(), bis:anVorTage(heuteApp(), -7), grund:'', person:'' }; F7.blattNeu=f7SchiebenRender; f7SchiebenRender();
+  F7.sch={ kid, was:'datum', datum:morgenIso(), bis:anVorTage(heuteApp(), -7), grund:'', person:'' }; F7.blattNeu=f7SchiebenRender; F7.blattSchluessel=[]; f7SchiebenRender();
 };
 function f7SchiebenRender(){
   const s=f7Sch(), k=S.karten.find(x=>x.id===s.kid); if(!k) return;
@@ -6276,7 +6305,7 @@ function f9Rendern(){
   try{ E.innerHTML='<div class="sr-kopf">＋ Erfassen<span>'+(f7Erf().bezug==='karte' ? 'Bezug: Karte' : f7Erf().bezug==='agent' ? 'Agent entscheidet' : esc(f7Erf().bezugName||''))+'</span></div>'+(a==='erfassen' ? '<div class="leer">Erfassen ist in der Mitte offen.</div>' : f7ErfassenHtml()); }catch(e){ E.innerHTML='<div class="leer">—</div>'; }
 }
 { const _alt=ebeneRendern; ebeneRendern=function(){ _alt(); try{ f9Rendern(); }catch(e){} }; }
-{ const _alt=f7Neu; f7Neu=function(){ _alt(); try{ f9Rendern(); }catch(e){} }; }
+/* Hotfix 13 §2.2: f9Rendern läuft in f7NeuJetzt */
 document.addEventListener('input', e=>{ const t=e.target; if(t && t.id==='slSuche'){ S.ui.suFrage=t.value; saveUi(); if(e1Art()!=='suche'){ if(t.value.trim()) e1Oeffnen('suche'); } else e1Rendern(); } });
 document.addEventListener('keydown', e=>{ const t=e.target; if(t && t.id==='slSuche' && e.key==='Enter'){ e.preventDefault(); if(e1Art()!=='suche') e1Oeffnen('suche'); } });
 if(F9_MQ){ try{ F9_MQ.addEventListener('change', f9Anwenden); }catch(e){ try{ F9_MQ.addListener(f9Anwenden); }catch(x){} } }
@@ -6332,7 +6361,7 @@ function migration401(){
     const m=S.tag && S.tag.morgen;
     if(vortagOffen() && m && m.aufstehTs){ const a=m.aufstehTs; m.aufstehTs=null; try{ _alt(); } finally{ m.aufstehTs=a; } return; }   // Hotfix 4.0.0-10: der Vortag blockiert den neuen Morgen nicht
     return _alt(); }; }
-function oeffneTagesuebergang(schritt){ if(schritt) F11.schritt=schritt; F7.blattNeu=renderTagesuebergang; renderTagesuebergang(); }
+function oeffneTagesuebergang(schritt){ if(schritt) F11.schritt=schritt; F7.blattNeu=renderTagesuebergang; F7.blattSchluessel=['postfach','projekte','abteilungen','chatG:'+(((typeof f12TrainerKanal==='function' && f12TrainerKanal())||{}).id||'')]; renderTagesuebergang(); }   // Hotfix 13 §2.4
 function f11Reste(){
   const d=S.tag ? S.tag.datum : heuteApp(), ent=(S.tag && S.tag.abschlussEntscheid)||{};
   const aufg=S.karten.filter(k=>k.status==='offen' && !k.freeze && istAufgabeKarte(k) && k.faelligkeit && k.faelligkeit<=d && !ent[k.id]);
@@ -6692,7 +6721,7 @@ document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.matches) r
 /* iPad (§2.5): rechte Spalte zeigt das zuletzt geöffnete Gespräch, sonst das Tages-Gespräch des Trainers */
 function f12SeiteHtml(){ const u=f12Ui(); let kanal=f12KanalAktuell(), g=u.gespraech; if(!kanal || !g){ kanal=f12TrainerKanal(); g=f12TagGespraech(); } if(!kanal) return '<div class="leer">Chat-Kanäle laden …</div>';
   return '<div class="f12-seite">'+f12GespraechHtml(kanal, g, { breit:true })+'</div>'; }
-{ const _alt=f7Neu; f7Neu=function(){ _alt(); try{ f12SendenKnopf(); }catch(e){} }; }
+/* Hotfix 13 §2.2: f12SendenKnopf läuft in f7NeuJetzt */
 /* ── §3 · Stufe Raum ── */
 function f12UngelesenKanal(k){ if(F12.badge && F12.badge[k.id]!=null) return num(F12.badge[k.id]); const G=F7.lager['chatG:'+k.id]; return (G && Array.isArray(G.daten)) ? G.daten.filter(f12Ungelesen).length : 0; }
 function f12LeisteHtml(raeume, aktiv){
@@ -6845,7 +6874,7 @@ function f12NachladenStarten(kanal, g){ const key=f12VerlaufKey(kanal, g); if(F1
 function f12NachladenStoppen(){ if(F12.nachladen) clearInterval(F12.nachladen); F12.nachladen=null; F12.nachladenKey=''; }
 /* ── §5.5 · Karten im Chat ── */
 function f12PfLesen(id){ const P=F12.pf[id]; if(P && Date.now()-P.ts<60000) return P.r; if(!F12.pfLade[id] && FSLive.gekoppelt()){ F12.pfLade[id]=true;
-    FSLive.lesen('datensatz_lesen', { tabelle:'Postfach', id }).then(d=>{ const r=d && (d.datensatz||d); if(r && r.id){ F12.pf[id]={ ts:Date.now(), r }; } }).catch(()=>{}).then(()=>{ F12.pfLade[id]=false; try{ f7Neu(); }catch(e){} }); }
+    FSLive.lesen('datensatz_lesen', { tabelle:'Postfach', id }).then(d=>{ const r=d && (d.datensatz||d); if(r && r.id){ const alt=P ? JSON.stringify(P.r) : null; F12.pf[id]={ ts:Date.now(), r }; if(JSON.stringify(r)!==alt) f12KbNeuZeichnen(id); } }).catch(()=>{}).then(()=>{ F12.pfLade[id]=false; }); }   // Hotfix 13 §2: nur der Block, nicht die Ebene
   return P ? P.r : null; }
 function f12PfDiff(kk){
   const best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null; if(!best) return { teile:[], neu:kk.unteraufgaben.slice() };
@@ -6880,6 +6909,11 @@ function f12KartenBloeckeHtml(kanal, r){
 }
 /* Entscheidungen aus dem Chat: gleicher Weg wie im Postfach (f7PfEntscheiden nimmt den gelesenen Datensatz mit) */
 function f12PfRecord(id){ const P=F12.pf[id]; return P ? P.r : null; }
+/* Hotfix 13 §2/§3: die Karten-Blöcke zu einem Postfach-Datensatz im offenen Gespräch in place neu zeichnen */
+function f12KbNeuZeichnen(pfId){
+  try{ const u=f12Ui(), kanal=f12KanalAktuell(); if(!kanal || !u.gespraech) return; const L=F7.lager[f12VerlaufKey(kanal, u.gespraech)], rows=(L && L.daten)||[];
+    rows.forEach(r=>{ if(!f7Link(r.Postfach).some(x=>String(x.id)===String(pfId))) return; const n=document.querySelector('[data-mid="'+CSS.escape(String(r.id))+'"]'); if(!n) return; const kb=n.querySelector('.f12-kb'); const neu=f12KartenBloeckeHtml(kanal, r); if(kb){ if(kb.outerHTML!==neu) kb.outerHTML=neu; } else if(neu) n.insertAdjacentHTML('beforeend', neu); }); }catch(e){}
+}
 function f12PfErledigt(id, ent, felder){ const P=F12.pf[id]; if(P && P.r){ P.r.Status='erledigt'; P.r.Entscheidung=ent; P.r.geaendert_am=jetztIso(); Object.assign(P.r, felder||{}); } F12.entschieden[id]=true; }
 function f12PfFreigeben(id, starten){ const r=f12PfRecord(id); if(!r) return null; haptik(starten ? 10 : 12);
   f7PfEntscheiden(id, 'freigegeben', { datensatz:r }); f12PfErledigt(id, 'freigegeben');
@@ -7007,7 +7041,14 @@ function f12BadgeZeigen(){
   const n=f12BadgeSumme(); F7.chatNeu=n;
   try{ document.querySelectorAll('[data-f7akt="chat"]').forEach(t=>{ let q=t.querySelector('.badge'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge'; t.appendChild(q); } q.textContent=n; } else if(q) q.remove(); }); }catch(e){}
   const f=el('trainerFab'); if(f){ let q=f.querySelector('.badge.chat'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge chat'; f.appendChild(q); } q.textContent=String(n); } else if(q) q.remove(); }
-  try{ if(e1Art()==='chat' && f12Stufe()==='raum'){ const l=el('chatRaeume'); if(l && l.outerHTML!==undefined){ const r=f12Raeume(); if(r) l.outerHTML=f12LeisteHtml(r, f12Ui().raum); } } }catch(e){}
+  // Hotfix 13 §2.5: nur Zahlen im DOM ändern — Raum-Chips, Mitarbeiterzeilen, ‹-Zahl und Zeile „ungelesen in anderen Chats"
+  try{ if(e1Art()==='chat' || (document.body && document.body.classList && document.body.classList.contains('breit'))){
+    const zahl=(host, sel, cls, wert)=>{ if(!host || !host.querySelector) return; let q=host.querySelector(sel); if(wert>0){ if(!q){ q=document.createElement(cls==='i' ? 'i' : 'span'); if(cls!=='i') q.className=cls; host.appendChild(q); } if(q.textContent!==String(wert)) q.textContent=String(wert); } else if(q) q.remove(); };
+    const raeume=f12Raeume()||[];
+    document.querySelectorAll('#chatRaeume [data-f12raum]').forEach(c=>{ const r=raeume.find(x=>x.name===c.dataset.f12raum); zahl(c, 'i', 'i', r ? r.kanaele.reduce((a,k)=>a+f12UngelesenKanal(k), 0) : 0); });
+    document.querySelectorAll('[data-f12kanal]').forEach(z=>{ const k=f12KanalId(z.dataset.f12kanal); const r=z.querySelector('.r'); if(r && k) zahl(r, '.bd', 'bd', f12UngelesenKanal(k)); });
+    if(typeof f12AndereZeigen==='function') f12AndereZeigen();
+  } }catch(e){}
 }
 function f12Benachrichtigen(kanal, r){
   if(F12.benachrichtigt[r.id]) return; F12.benachrichtigt[r.id]=true;
@@ -13991,6 +14032,7 @@ function closeSheet(){
   el('backdrop').classList.remove('on');
   sheetSaveFn=null; entwurf=null; stapelEntwurf=null;
   if(typeof abv3==='object' && abv3) abv3.aktiv=false;   // §6 (v3.0.0): nur Pascals Schliessen schliesst den Tag ab
+  if(typeof F7==='object' && F7){ F7.blattNeu=null; F7.blattSchluessel=[]; }   // Hotfix 13 §2.4: auf jedem Schließweg
 }
 
 /* ── D3 Karten-Detail ────────────────────────────────────────────── */
