@@ -2847,6 +2847,25 @@ body[data-e1="kontextwahl"] #e1-kontextwahl{display:flex;flex-direction:column;o
 .f12-hin{font-size:12px;color:#9a9ca2;margin-top:8px;line-height:1.4}.f7-src>div.aus{opacity:.35;pointer-events:none}
 /* iPad: rechte Spalte zeigt das Gespräch mit Eingabe */
 body.breit #srChat .f12-seite{display:flex;flex-direction:column;flex:1;min-height:0}
+/* ══ Hotfix 15 (22.10.2026) · Erfassung: gewählte Auswahl BLAU 22 % mit Rand BLAU 2 px und ✓ · Trefferliste · Datei-Kachel · Drop-Fläche · Sendezustand ══ */
+#ebene1 .e1{position:relative}
+.f7-erf .f7-src>div.on{background:rgba(59,130,246,.22);border:2px solid #3b82f6;font-weight:800;padding:13px 3px 9px}
+.f7-erf .f7-chips>div.on{background:rgba(59,130,246,.22);border:2px solid #3b82f6;color:#e8e9ec;font-weight:800;padding:5px 10px}
+.f15-bezug{margin-top:8px}
+.f15-treffer{background:#1a1d22;border:1px solid rgba(255,255,255,.08);border-radius:10px;margin-top:4px;overflow:hidden}
+.f15-treffer>div{display:flex;align-items:center;min-height:44px;padding:8px 11px;border-bottom:1px solid rgba(255,255,255,.08);font-size:13.5px;cursor:pointer}
+.f15-treffer>div:last-child{border-bottom:0}.f15-treffer>div.an{background:rgba(59,130,246,.22);font-weight:700}.f15-treffer>div.keiner{color:#9a9ca2;cursor:default}
+.f15-treffer small{color:#9a9ca2;margin-left:6px}
+.f15-datei{display:flex;gap:10px;align-items:center;background:#262a32;border-radius:10px;padding:8px;margin-top:8px;border:1px solid transparent}
+.f15-datei.fehler{border-color:#f66d6d;background:rgba(246,109,109,.12)}
+.f15-datei .thumb{width:44px;height:44px;border-radius:6px;background:#3b4a66 center/cover no-repeat;flex:none;display:flex;align-items:center;justify-content:center;font-size:22px}
+.f15-datei .t{flex:1;min-width:0;font-size:13.5px;overflow-wrap:anywhere}.f15-datei small{display:block;font-size:12px}.f15-datei small.ok{color:#3ecf8e}.f15-datei small.err{color:#f66d6d}
+.f15-datei b{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;color:#9a9ca2;cursor:pointer;flex:none}
+.f15-drop{position:absolute;inset:60px 10px 10px;border:2px dashed #3b82f6;border-radius:18px;background:rgba(14,22,38,.92);display:flex;align-items:center;justify-content:center;color:#93c5fd;font-weight:700;font-size:15px;z-index:7;pointer-events:none;text-align:center;padding:12px}
+.f15-drop[hidden]{display:none}
+.f7-send.aus{opacity:.65;pointer-events:none}
+.f15-kreis{display:inline-block;width:14px;height:14px;border:2px solid #9a9ca2;border-top-color:#3b82f6;border-radius:50%;vertical-align:-2px;margin-right:6px;animation:f15dreh .8s linear infinite}
+@keyframes f15dreh{to{transform:rotate(360deg)}}
 body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4sb .f4n-pl{grid-column:1;grid-row:1}body.breit #f4sb .f4n-kz{grid-column:1;grid-row:2}body.breit #f4sb .f4n-r4{grid-column:2;grid-row:1/4;margin-top:0}
 </style>
 </head>
@@ -3222,6 +3241,13 @@ const FSLive = (()=>{
     try{ const d=await aufruf('POST', '/api/db/'+encodeURIComponent(werkzeug), JSON.stringify(args||{})); gescheitert=false; fehlerText=''; anzeigen(); return d; }
     catch(e){ if(e.offline){ gescheitert=true; fehlerText=e.message; anzeigen(); } throw e; }
   }
+  // Hotfix 15 §1.3 · Datei zuerst: POST /api/app/datei → {pfad, name, groesse}; erst danach legt die App den Inbox-Eintrag mit pfad an.
+  // Nicht in der Warteschlange: schlägt der Upload fehl (offline, abgelehnt), wirft die Funktion und der Eintrag bleibt in der Erfassung stehen (§1.4).
+  async function hochladen(datei){
+    if(!gekoppelt()){ const e=new Error('nicht gekoppelt'); e.offline=true; throw e; }
+    try{ const d=await aufruf('POST', '/api/app/datei', JSON.stringify({ datei }), { zeitgrenze:120000 }); gescheitert=false; fehlerText=''; anzeigen(); return d; }
+    catch(e){ if(e.offline){ gescheitert=true; fehlerText=e.message; anzeigen(); } throw e; }
+  }
   // senden: Schreibvorgang in die Warteschlange, sofort versuchen; ohne Verbindung bleibt er stehen und geht später nach.
   // Ergebnis: {sofort:true, antwort} wenn gesendet, {wartend:true, id} wenn gesammelt. Eine Ablehnung des Dienstes (400/409)
   // nimmt den Eintrag aus der Schlange und ruft, falls angegeben, args._beiFehler nicht auf — der Fehler steht im Blatt.
@@ -3571,7 +3597,7 @@ const FSLive = (()=>{
       planen(); anzeigen();
     }catch(e){}
   }
-  return { vormerken, spiegeln, senden, lesen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
+  return { vormerken, spiegeln, senden, lesen, hochladen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
     warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length, warteschlangeHat:(id)=>warteschlange.some(x=>x && x.id===id),
     geraeteLaden, geraetBenennen, fuehrungSetzen, ichFuehre:()=>ichFuehre, geraet, koennteSchreiben };   // Hotfix 14 §11 (geraet: Kennung für „dieses Gerät“ in den Einstellungen)
 })();
@@ -5824,62 +5850,156 @@ function f7Erf(){ if(!F7.erf) F7.erf={ quelle:null, datei:null, text:'', bezug:(
 function f7ErfasstListe(){ return (S.meta && Array.isArray(S.meta.erfasst)) ? S.meta.erfasst : []; }
 function f7ErfassenHtml(){
   const e=f7Erf(), lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null, warte=FSLive.warteschlangeAnzahl ? FSLive.warteschlangeAnzahl('app:erfassen') : 0, c=f12ErfChat();   // 4.1 §8: Erfassen für ein Gespräch
-  let h=c ? '<div class="f3n-kopf f12-kopf"><button class="an-back" data-f7zurueck="1" aria-label="Zurück">‹</button><h3>📎 Datei<small>für '+esc(c.avatar||'🤖')+' '+esc(c.name||c.agent||'')+' · '+esc(c.titel||'')+'</small></h3><span class="sp"></span></div>'
-    : '<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> ＋ Erfassen<span class="f7-r">an den Erfassungs-Agenten</span></div></div>';
-  h+='<div class="f7-src">'+F7_QUELLEN.map(q=>'<div class="'+(e.quelle===q[0]?'on':'')+(c && q[0]==='mail' ? ' aus' : '')+'" data-f7quelle="'+q[0]+'"><b>'+q[1]+'</b>'+q[2]+'</div>').join('')+'</div>';
-  if(e.datei) h+='<div class="f7-q ok">📎 '+esc(e.datei.name)+' · '+Math.round(e.datei.groesse/1024)+' KB</div>';
-  h+='<textarea class="f7-txt" data-f7erftext="1" placeholder="… oder Text tippen" rows="3">'+esc(e.text||'')+'</textarea>';
+  let h='<div class="f7-erf">'+(c ? '<div class="f3n-kopf f12-kopf"><button class="an-back" data-f7zurueck="1" aria-label="Zurück">‹</button><h3>📎 Datei<small>für '+esc(c.avatar||'🤖')+' '+esc(c.name||c.agent||'')+' · '+esc(c.titel||'')+'</small></h3><span class="sp"></span></div>'
+    : '<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> ＋ Erfassen<span class="f7-r">an den Erfassungs-Agenten</span></div></div>');
+  // Hotfix 15 §2.1: gewählter Kanal mit „✓ “ (Stil .f7-erf .f7-src>div.on)
+  h+='<h5 class="f7-h5">Kanal</h5><div class="f7-src">'+F7_QUELLEN.map(q=>{ const on=e.quelle===q[0]; return '<div class="'+(on?'on':'')+(c && q[0]==='mail' ? ' aus' : '')+'" data-f7quelle="'+q[0]+'"><b>'+q[1]+'</b>'+(on?'✓ ':'')+q[2]+'</div>'; }).join('')+'</div>';
+  h+='<h5 class="f7-h5">Text</h5><textarea class="f7-txt" data-f7erftext="1" placeholder="… oder Text tippen · Bild einfügen oder hierher ziehen" rows="3">'+esc(e.text||'')+'</textarea>';
+  h+=f15DateiKachelHtml(e.datei);   // Hotfix 15 §2.3/§2.4: eine Datei je Erfassung
+  const senden=(text)=>F7.erfLaeuft ? '<div class="f7-send aus" data-f7erfsenden="1"><i class="f15-kreis"></i>Wird übertragen …</div>' : '<div class="f7-send" data-f7erfsenden="1">'+text+'</div>';   // Hotfix 15 §2.5
   if(c){ h+='<div class="f12-bez"><b>Bezug</b>💬 Gespräch „'+esc(c.titel||'')+'“ mit dem '+esc(c.name||c.agent||'Agenten')+' · Ablage über den Erfassungs-Agenten</div>';
-    h+='<div class="f7-send" data-f7erfsenden="1">In die Nachricht übernehmen</div><div class="f12-hin">Die Datei geht wie heute an den Erfassungs-Agenten und wird abgelegt. '+esc(c.name||c.agent||'Der Agent')+' bekommt sie mit deiner Nachricht und darf sie lesen.</div>';
+    h+=senden('In die Nachricht übernehmen')+'<div class="f12-hin">Die Datei geht wie heute an den Erfassungs-Agenten und wird abgelegt. '+esc(c.name||c.agent||'Der Agent')+' bekommt sie mit deiner Nachricht und darf sie lesen.</div>';
     if(warte>0) h+='<div class="f7-q">📤 '+warte+' '+(warte===1?'Eintrag wartet':'Einträge warten')+' auf den Mac mini</div>';
-    return h; }
+    return h+'<div class="f15-drop" data-f15drop="1" hidden>⬇︎ Datei loslassen zum Anhängen</div></div>'; }
+  // Hotfix 15 §2.2: Bezug per Namenseingabe (Personen, Organisationen, Projekte, Karten) neben „Agent entscheidet“, „laufende Karte“ und „Abteilung ▾“
   h+='<h5 class="f7-h5">Bezug</h5><div class="f7-chips">'+
-    '<div class="'+(e.bezug==='agent'?'on':'')+'" data-f7bezug="agent">🤖 Agent entscheidet</div>'+
-    (lk ? '<div class="'+(e.bezug==='karte'?'on':'')+'" data-f7bezug="karte">▶ laufende Karte</div>' : '')+
-    '<div class="'+(e.bezug==='abteilung'?'on':'')+'" data-f7bezug="abteilung">🏢 '+(e.bezug==='abteilung' && e.bezugName ? esc(e.bezugName) : 'Abteilung')+' ▾</div>'+
-    '<div class="'+(e.bezug==='projekt'?'on':'')+'" data-f7bezug="projekt">📁 '+(e.bezug==='projekt' && e.bezugName ? esc(e.bezugName) : 'Projekt')+' ▾</div>'+
-    '<div class="'+(e.bezug==='person'?'on':'')+'" data-f7bezug="person">👤 '+(e.bezug==='person' && e.bezugName ? esc(e.bezugName) : 'Person')+' ▾</div></div>'+
+    '<div class="'+(e.bezug==='agent'?'on':'')+'" data-f7bezug="agent">'+(e.bezug==='agent'?'✓ ':'')+'🤖 Agent entscheidet</div>'+
+    (lk ? '<div class="'+(e.bezug==='karte' && !e.bezugId ?'on':'')+'" data-f7bezug="karte">'+(e.bezug==='karte' && !e.bezugId ?'✓ ':'')+'▶ laufende Karte</div>' : '')+
+    '<div class="'+(e.bezug==='abteilung'?'on':'')+'" data-f7bezug="abteilung">'+(e.bezug==='abteilung'?'✓ ':'')+'🏢 '+(e.bezug==='abteilung' && e.bezugName ? esc(e.bezugName) : 'Abteilung')+' ▾</div></div>';
+  h+='<div class="f15-bezug"><input class="f7-inp" type="search" data-f15bezug="1" placeholder="Name tippen: Person, Organisation, Projekt, Karte" value="'+esc(F7.erfSuche||'')+'" autocomplete="off"><div id="f15Treffer">'+f15TrefferHtml()+'</div>'+
+    (f15BezugGewaehlt(e) ? '<div class="f7-chips"><div class="on" data-f15bezugweg="1">'+f15BezugEmoji(e.bezug)+' '+esc(e.bezugName||'')+' ✕</div></div>' : '')+'</div>'+
     ((e.bezug==='projekt' && e.bezugId && typeof f11Ablageordner==='function' && f11Ablageordner(e.bezugId)) ? '<div class="f7-info">📂 Ablage: '+esc(f11Ablageordner(e.bezugId))+'</div>' : '');   // 4.0 · Paket 11 (3.9)
-  h+='<div class="f7-send" data-f7erfsenden="1">Abschicken</div>';
+  h+=senden('Erfassen');
   if(warte>0) h+='<div class="f7-q">📤 '+warte+' '+(warte===1?'Eintrag wartet':'Einträge warten')+' auf den Mac mini · '+(warte===1?'wird':'werden')+' automatisch geschickt</div>';
   const l=f7ErfasstListe().slice(-8).reverse();
   h+='<h5 class="f7-h5">Zuletzt erfasst</h5><div class="f7-l">'+(l.length ? l.map(x=>{ const st=x.status||'wartet', cls=st==='abgelegt' ? 'ok' : st==='Frage im Postfach' ? 'ask' : 'run';
     return '<div><p>'+esc(x.titel)+'<small>'+esc([x.bezug, fmtUhr(x.ts)].filter(Boolean).join(' · '))+'</small></p><span class="st '+cls+'">'+esc(st)+'</span></div>'; }).join('') : '<div class="leer">noch nichts erfasst</div>')+'</div>';
-  return h;
+  return h+'<div class="f15-drop" data-f15drop="1" hidden>⬇︎ Datei loslassen zum Anhängen</div></div>';
+}
+/* Hotfix 15 §2.3 · Datei-Kachel: Vorschaubild bei Bildern, Name, Stand (grün angehängt · rot nicht übertragen), ✕ entfernt */
+function f15DateiKachelHtml(d, opt){
+  if(!d) return ''; opt=opt||{}; const bild=/^image\//.test(String(d.typ||'')) && d.base64 ? ' style="background-image:url(data:'+esc(d.typ)+';base64,'+d.base64+')"' : '';
+  const fehler=d.status==='fehler';
+  return '<div class="f15-datei'+(fehler?' fehler':'')+'" data-f15datei="1"><span class="thumb"'+bild+'>'+(bild ? '' : '📄')+'</span><div class="t">'+esc(d.name||'Datei')+'<small class="'+(fehler?'err':'ok')+'">'+(fehler ? 'Datei nicht übertragen · erneut senden' : '✓ angehängt · '+(opt.hinweis||'wird mit dem Eintrag übertragen'))+'</small></div><b data-f15dateiweg="'+esc(opt.ziel||'erfassen')+'" aria-label="Datei entfernen">✕</b></div>';
+}
+/* Hotfix 15 §1.6 · Dateiname, wenn die Quelle keinen hat (Einfügen): YYMMDD_HHMM_Einfuegen.<endung> */
+const F15_ENDUNG={ 'image/png':'png', 'image/jpeg':'jpg', 'image/jpg':'jpg', 'image/gif':'gif', 'image/webp':'webp', 'image/heic':'heic', 'image/heif':'heif', 'image/tiff':'tif', 'application/pdf':'pdf', 'text/plain':'txt', 'audio/mpeg':'mp3', 'audio/mp4':'m4a', 'audio/x-m4a':'m4a' };
+function f15EinfuegenName(typ, name, wann){
+  const d=wann ? new Date(wann) : new Date(), p=n=>String(n).padStart(2,'0');
+  const ausName=(String(name||'').match(/\.([A-Za-z0-9]{1,5})$/)||[])[1];
+  const endung=F15_ENDUNG[String(typ||'').toLowerCase()] || (ausName ? ausName.toLowerCase() : 'bin');
+  return String(d.getFullYear()).slice(2)+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+'_Einfuegen.'+endung;
+}
+/* Hotfix 15 §1.5 · Eine Datei je Erfassung: eine zweite fragt „Datei ersetzen?“ (Ja · Nein). ziel = Objekt mit .datei (Erfassung oder Karten-Ansicht) */
+function f15DateiUebernehmen(ziel, f, opt){
+  opt=opt||{}; if(!ziel || !f) return Promise.resolve(false);
+  if(f.size>8*1024*1024){ toast('Datei zu groß (max. 8 MB)'); return Promise.resolve(false); }
+  if(ziel.datei && !confirm('Datei ersetzen?')) return Promise.resolve(false);
+  return new Promise(res=>{ const r=new FileReader(); r.onload=()=>{ const base64=String(r.result).split(',')[1]||'';
+      const name=opt.einfuegen ? f15EinfuegenName(f.type, f.name) : (f.name||f15EinfuegenName(f.type, '', null));
+      ziel.datei={ name, typ:f.type||'application/octet-stream', groesse:f.size, base64, status:'angehaengt', quelle:opt.quelle||null }; res(true); };
+    r.onerror=()=>res(false); r.readAsDataURL(f); });
 }
 function f7QuelleWaehlen(q){
   const e=f7Erf(); e.quelle=q; const def=F7_QUELLEN.find(x=>x[0]===q);
-  if(q==='einfuegen'){ if(navigator.clipboard && navigator.clipboard.readText){ navigator.clipboard.readText().then(t=>{ if(t){ e.text=(e.text ? e.text+'\n' : '')+t; e1Rendern(); } else toast('Zwischenablage leer'); }).catch(()=>toast('Zwischenablage nicht lesbar — Text einfügen')); } else toast('Zwischenablage nicht lesbar — Text einfügen'); e1Rendern(); return; }
+  if(q==='einfuegen'){ if(navigator.clipboard && navigator.clipboard.readText){ navigator.clipboard.readText().then(t=>{ if(t){ e.text=(e.text ? e.text+'\n' : '')+t; e1Rendern(); } else toast('Zwischenablage leer — Bild im Textfeld einfügen'); }).catch(()=>toast('Zwischenablage nicht lesbar — im Textfeld einfügen')); } else toast('Zwischenablage nicht lesbar — im Textfeld einfügen'); e1Rendern(); return; }
   if(q==='mail' && f12ErfChat()){ e1Rendern(); return; }   // 4.1 §8: im Chat ausgegraut
   if(q==='mail'){ openSheet('📧 Mail-Weg', '<p class="d">Mails gehen über Outlook: die Mail in den Ordner <b>„Claude in"</b> verschieben. Der Erfassungs-Agent liest den Ordner und legt Aufgabe, Dokument oder Frage im Postfach an.</p><p class="d">Weiterleiten ist nicht nötig; Anhänge kommen mit.</p>', '<button class="btn ghost sm" data-close="1">Schließen</button>'); e1Rendern(); return; }
   if(def && def[3]){ const inp=document.createElement('input'); inp.type='file'; inp.accept=def[3]; if(def[4]) inp.setAttribute('capture', def[4]);
-    inp.onchange=()=>{ const f=inp.files && inp.files[0]; if(!f) return; if(f.size>8*1024*1024){ toast('Datei zu groß (max. 8 MB)'); return; }
-      const r=new FileReader(); r.onload=()=>{ e.datei={ name:f.name||(q+'.bin'), typ:f.type||'application/octet-stream', groesse:f.size, base64:String(r.result).split(',')[1]||'' }; e1Rendern(); }; r.readAsDataURL(f); };
+    inp.onchange=()=>{ const f=inp.files && inp.files[0]; if(!f) return; f15DateiUebernehmen(e, f, { quelle:q }).then(ok=>{ if(ok) e1Rendern(); }); };   // Hotfix 15 §1.5
     inp.click(); }
   e1Rendern();
 }
 function f7BezugWaehlen(art){
   const e=f7Erf();
-  if(art==='agent' || art==='karte'){ e.bezug=art; e.bezugId=null; e.bezugName=''; e1Rendern(); return; }
+  if(art==='agent' || art==='karte'){ e.bezug=art; e.bezugId=null; e.bezugName=''; e.bezugKarte=null; e1Rendern(); return; }
   const liste=art==='abteilung' ? (f7Abteilungen()||[]).map(a=>({ id:a.id, name:f7AbtEmoji(a)+' '+a.Name })) : art==='projekt' ? (f7Projekte()||[]).filter(p=>!/erledigt|archiv/i.test(String(p.Status||''))).map(p=>({ id:p.id, name:p.Projekt })) : null;
-  if(art==='person'){ const q=prompt('Name der Person'); if(q){ e.bezug='person'; e.bezugId=null; e.bezugName=q; } e1Rendern(); return; }
+  if(art==='person'){ const q=prompt('Name der Person'); if(q){ e.bezug='person'; e.bezugId=null; e.bezugName=q; e.bezugKarte=null; } e1Rendern(); return; }
   if(!liste || !liste.length){ toast('lädt aus FocusSystem …'); e1Rendern(); return; }
   openSheet(art==='abteilung' ? '🏢 Abteilung' : '📁 Projekt', '<div class="chips">'+liste.map(x=>'<button class="chip'+(e.bezugId===x.id?' on':'')+'" data-f7bezugwahl="'+esc(x.id)+'" data-f7bezugart="'+art+'" data-f7bezugname="'+esc(x.name)+'">'+esc(x.name)+'</button>').join('')+'</div>', '<button class="btn ghost sm" data-close="1">Schließen</button>');
 }
+/* ── Hotfix 15 §2.2 · Bezug per Namenseingabe: ab 2 Zeichen Treffer aus Personen, Organisationen (FocusSystem), Projekten (Lager) und Karten (Gerät) ── */
+const F15_BEZUG_EMOJI={ person:'👤', organisation:'🏢', projekt:'📁', karte:'🃏' };
+function f15BezugEmoji(art){ return F15_BEZUG_EMOJI[art]||'🔖'; }
+function f15BezugGewaehlt(e){ return !!(e && ['person','organisation','projekt','karte'].indexOf(e.bezug)>=0 && (e.bezugId || e.bezugName) && !(e.bezug==='karte' && !e.bezugId)); }
+function f15TrefferHtml(){
+  const q=String(F7.erfSuche||'').trim(); if(q.length<2) return '';
+  const l=F7.erfTreffer||[], an=F7.erfTrefferAn;
+  if(!l.length) return '<div class="f15-treffer"><div class="keiner">'+(F7.erfSucheLaeuft ? 'sucht …' : 'Kein Treffer · wird als Text übernommen')+'</div></div>';
+  return '<div class="f15-treffer">'+l.map(t=>'<div class="'+(an===t.art+'|'+t.id?'an':'')+'" data-f15treffer="'+esc(t.art+'|'+t.id)+'" data-f15name="'+esc(t.name)+'" data-f15airtable="'+esc(t.airtableId||'')+'">'+(an===t.art+'|'+t.id?'✓ ':'')+esc(t.name)+'<small>· '+esc(t.artName)+(t.zusatz ? ' · '+esc(t.zusatz) : '')+'</small></div>').join('')+'</div>';
+}
+function f15TrefferZeigen(){ const t=el('f15Treffer'); if(t && t.innerHTML!==undefined) t.innerHTML=f15TrefferHtml(); }
+function f15BezugSuchen(q){
+  q=String(q||'').trim(); F7.erfSuche=q; F7.erfTrefferAn=null;
+  if(q.length<2){ F7.erfTreffer=[]; f15TrefferZeigen(); return; }
+  const ql=q.toLowerCase(), lokal=[];
+  (f7Projekte()||[]).filter(p=>String(p.Projekt||'').toLowerCase().indexOf(ql)>=0 && !/erledigt|archiv/i.test(String(p.Status||''))).slice(0,5).forEach(p=>lokal.push({ art:'projekt', artName:'Projekt', id:p.id, name:String(p.Projekt||''), zusatz:f7LinkName(p.Abteilung) }));
+  S.karten.filter(k=>k.status!=='archiviert' && String(k.titel||'').toLowerCase().indexOf(ql)>=0).slice(0,5).forEach(k=>lokal.push({ art:'karte', artName:'Karte', id:k.id, name:String(k.titel||''), airtableId:k.airtableId||null, zusatz:k.projekt||(k.domain==='privat' ? 'Privat' : 'DFM') }));
+  const cache=F7.erfSucheCache||(F7.erfSucheCache={});
+  const fertig=(fern)=>{ if(F7.erfSuche!==q) return; F7.erfTreffer=fern.concat(lokal).slice(0,12); F7.erfSucheLaeuft=false; f15TrefferZeigen(); };
+  if(cache[ql]){ fertig(cache[ql]); return; }
+  if(!FSLive.gekoppelt()){ fertig([]); return; }
+  F7.erfSucheLaeuft=true; F7.erfTreffer=[]; f15TrefferZeigen();
+  Promise.all([
+    FSLive.lesen('datensaetze_auflisten', { tabelle:'Personen', felder:['Name','Organisation'], filter:[{ feld:'Name', operator:'enthaelt', wert:q }], limit:8 }).then(d=>((d && d.datensaetze)||[]).map(r=>({ art:'person', artName:'Person', id:r.id, name:String(r.Name||''), zusatz:f7LinkName(r.Organisation) }))).catch(()=>[]),
+    FSLive.lesen('datensaetze_auflisten', { tabelle:'Organisationen', felder:['Name'], filter:[{ feld:'Name', operator:'enthaelt', wert:q }], limit:6 }).then(d=>((d && d.datensaetze)||[]).map(r=>({ art:'organisation', artName:'Organisation', id:r.id, name:String(r.Name||''), zusatz:'' }))).catch(()=>[]),
+  ]).then(([p,o])=>{ cache[ql]=p.concat(o); fertig(cache[ql]); });
+}
+/* Tipp auf eine Zeile: kurz BLAU mit ✓, danach steht der Bezug als Chip unter dem Feld (§2.2) */
+function f15TrefferWaehlen(schluessel, name, airtableId){
+  const e=f7Erf(), [art, id]=String(schluessel).split('|'); F7.erfTrefferAn=schluessel; f15TrefferZeigen(); haptik(6);
+  setTimeout(()=>{ e.bezug=art; e.bezugId=id; e.bezugName=name; e.bezugKarte=art==='karte' ? { id, airtableId:airtableId||null, titel:name } : null; F7.erfSuche=''; F7.erfTreffer=[]; F7.erfTrefferAn=null; e1Rendern(); }, 250);
+}
+function f15BezugWeg(){ const e=f7Erf(); e.bezug=(S.fokus && S.fokus.laeuft) ? 'karte' : 'agent'; e.bezugId=null; e.bezugName=''; e.bezugKarte=null; e1Rendern(); }
+/* Hotfix 15 §2.5 · Sendezustand des Knopfs „Erfassen“ in place (gesperrt mit Ladekreis) */
+function f15SendenZustand(an){ try{ document.querySelectorAll('[data-f7erfsenden]').forEach(b=>{ if(an){ b.dataset.f15text=b.textContent; b.classList.add('aus'); b.innerHTML='<i class="f15-kreis"></i>Wird übertragen …'; } else { b.classList.remove('aus'); if(b.dataset.f15text) b.textContent=b.dataset.f15text; } }); }catch(x){} }
+/* Hotfix 15 §1.3/§1.4 · Senden: zuerst die Datei hochladen (Pfad zurück), dann der Inbox-Eintrag mit Datei/Pfad. Schlägt der Upload fehl: kein Eintrag,
+   Kachel rot, Text und Bezug bleiben stehen; „Erfassen“ versucht beides erneut. Ohne Datei wie bisher über die Warteschlange. */
 function f7ErfassenSenden(){
-  const e=f7Erf(), txt=(el('ebene1') && document.querySelector('[data-f7erftext]')) ? document.querySelector('[data-f7erftext]').value.trim() : (e.text||'');
-  if(!txt && !e.datei){ toast('Nichts zu erfassen — Text oder Quelle wählen'); return; }
+  const e=f7Erf(), ta=(el('ebene1') && document.querySelector('[data-f7erftext]')) ? document.querySelector('[data-f7erftext]') : null, txt=(ta && typeof ta.value==='string') ? ta.value.trim() : String(e.text||'').trim();
+  e.text=txt;
+  if(F7.erfLaeuft) return null;
+  if(!txt && !e.datei){ toast('Nichts zu erfassen — Text oder Datei'); return null; }
   const lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null, c=f12ErfChat();
-  const bezug=c ? { art:'chat', tabelle:c.tabelle, gespraech:c.gespraech, name:c.agent } : { art:e.bezug, id:e.bezugId, name:e.bezug==='karte' && lk ? lk.titel : e.bezugName, karte:e.bezug==='karte' && lk ? { id:lk.id, airtableId:lk.airtableId||null, titel:lk.titel } : null };   // 4.1 §8.2
-  const quelle=e.quelle||'text', titel=e.datei ? (F7_QUELLEN.find(q=>q[0]===quelle)||['','','Datei'])[2]+': '+e.datei.name : txt.slice(0,60);
-  const eintrag={ titel, ts:jetztIso(), bezug:c ? '💬 '+String(c.name||c.agent||'') : (bezug.name||(bezug.art==='agent' ? 'Agent entscheidet' : '')), status:'wartet', inboxId:null };
-  (S.meta.erfasst=f7ErfasstListe()).push(eintrag); if(S.meta.erfasst.length>30) S.meta.erfasst=S.meta.erfasst.slice(-30); saveMeta();
-  const datei=e.datei;
-  const p=FSLive.senden('app:erfassen', { text:txt, quelle, bezug, datei, geraetZeit:jetztIso() })
-    .then(r=>{ if(r && r.sofort && r.antwort && r.antwort.inbox){ eintrag.inboxId=r.antwort.inbox; eintrag.status='wird gelesen'; saveMeta(); } if(c) f12ErfassenUebernehmen(c, r, txt, datei); else f7Neu(); return r; })
-    .catch(x=>{ eintrag.status='abgelehnt'; saveMeta(); toast('Erfassen abgelehnt: '+((x && x.message)||'Fehler')); if(c){ F7.erf=null; e1Oeffnen('chat'); } else f7Neu(); });
-  if(c){ haptik(10); return p; }   // 4.1 §8.2: zurück ins Gespräch mit Marke, sobald die Antwort da ist
-  F7.erf=null; toast('📤 Erfasst — an den Erfassungs-Agenten'); haptik(10); e1Rendern();
+  const karte=e.bezug==='karte' ? (e.bezugKarte || (lk ? { id:lk.id, airtableId:lk.airtableId||null, titel:lk.titel } : null)) : null;
+  const bezug=c ? { art:'chat', tabelle:c.tabelle, gespraech:c.gespraech, name:c.agent } : { art:e.bezug, id:e.bezugId, name:e.bezug==='karte' ? (karte ? karte.titel : '') : e.bezugName, karte };   // 4.1 §8.2 · Hotfix 15 §2.2
+  const datei=e.datei, quelle=e.quelle||(datei ? (datei.quelle || (/^image\//.test(String(datei.typ||'')) ? 'screenshot' : 'datei')) : 'text');
+  const titel=datei ? (F7_QUELLEN.find(q=>q[0]===quelle)||['','','Datei'])[2]+': '+datei.name : txt.slice(0,60);
+  F7.erfLaeuft=true; f15SendenZustand(true);
+  const schritt1=datei ? FSLive.hochladen({ name:datei.name, typ:datei.typ, base64:datei.base64 }) : Promise.resolve(null);
+  return schritt1.then(up=>{
+      const args={ text:txt, quelle, bezug, geraetZeit:jetztIso() }; if(up && up.pfad) args.pfad=up.pfad; else if(datei) throw new Error('kein Pfad');
+      return FSLive.senden('app:erfassen', args).then(r=>{ if(r && r.wartend && datei && !FSLive.warteschlangeHat(r.id)) throw new Error('Eintrag abgelehnt'); return { r, up }; });
+    }).then(({ r, up })=>{
+      F7.erfLaeuft=false;
+      const eintrag={ titel, ts:jetztIso(), bezug:c ? '💬 '+String(c.name||c.agent||'') : (bezug.name||(bezug.art==='agent' ? 'Agent entscheidet' : '')), status:(r && r.sofort) ? 'wird gelesen' : 'wartet', inboxId:(r && r.sofort && r.antwort && r.antwort.inbox) ? r.antwort.inbox : null, pfad:up ? up.pfad : null };
+      (S.meta.erfasst=f7ErfasstListe()).push(eintrag); if(S.meta.erfasst.length>30) S.meta.erfasst=S.meta.erfasst.slice(-30); saveMeta();
+      if(c){ haptik(10); f12ErfassenUebernehmen(c, r, txt, datei); return r; }   // 4.1 §8.2: zurück ins Gespräch mit Marke
+      F7.erf=null; F7.erfSuche=''; F7.erfTreffer=[]; toast(datei ? '✓ Erfasst · Datei übertragen' : '✓ Erfasst', 1500); haptik(10); e1Rendern(); return r;
+    }).catch(x=>{
+      F7.erfLaeuft=false;
+      if(e.datei) e.datei.status='fehler';   // §1.4: Kachel rot „Datei nicht übertragen · erneut senden“, nichts geht verloren
+      toast(datei ? 'Datei nicht übertragen · erneut senden' : 'Erfassen abgelehnt: '+((x && x.message)||'Fehler')); e1Rendern(); return null;
+    });
+}
+/* ── Hotfix 15 §2.3/§2.4 · Ziehen auf die ganze Ebene und Einfügen im Textfeld (Erfassung und Karten-Ansicht) ── */
+function f15DateiZiel(){ const a=e1Art(); if(a==='erfassen') return { ziel:f7Erf(), quelle:null }; if(a==='agentenkarte' && typeof f15Karte==='function') return { ziel:f15Karte(), quelle:null }; return null; }
+function f15DropZeigen(an){ try{ const a=e1Art(); const sec=a ? el('e1-'+a) : null; const d=sec && sec.querySelector ? sec.querySelector('[data-f15drop]') : null; if(d) d.hidden=!an; }catch(x){} }
+let _f15DragTiefe=0;
+function f15DateiAusEreignis(ev, einfuegen){
+  const z=f15DateiZiel(); if(!z) return false; const dt=ev.clipboardData||ev.dataTransfer; if(!dt) return false;
+  let f=null; if(dt.files && dt.files.length) f=dt.files[0]; else if(dt.items){ for(const it of dt.items){ if(it.kind==='file'){ f=it.getAsFile(); if(f) break; } } }
+  if(!f) return false;
+  f15DateiUebernehmen(z.ziel, f, { einfuegen:!!einfuegen }).then(ok=>{ if(ok){ toast('📎 '+(z.ziel.datei ? z.ziel.datei.name : 'Datei')+' angehängt'); e1Rendern(); } });
+  return true;
+}
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('dragenter', ev=>{ if(!f15DateiZiel()) return; _f15DragTiefe++; ev.preventDefault(); f15DropZeigen(true); });
+  document.addEventListener('dragover', ev=>{ if(!f15DateiZiel()) return; ev.preventDefault(); if(ev.dataTransfer) ev.dataTransfer.dropEffect='copy'; f15DropZeigen(true); });
+  document.addEventListener('dragleave', ev=>{ if(!f15DateiZiel()) return; _f15DragTiefe=Math.max(0, _f15DragTiefe-1); if(!_f15DragTiefe) f15DropZeigen(false); });
+  document.addEventListener('drop', ev=>{ if(!f15DateiZiel()) return; ev.preventDefault(); _f15DragTiefe=0; f15DropZeigen(false); f15DateiAusEreignis(ev, false); });
+  document.addEventListener('paste', ev=>{ const t=ev.target; if(!t || !t.matches || !(t.matches('[data-f7erftext]') || t.matches('[data-f15text]'))) return; f15DateiAusEreignis(ev, true); });   // Text läuft wie bisher ins Feld
+  document.addEventListener('input', ev=>{ const t=ev.target; if(!t || !t.matches || !t.matches('[data-f15bezug]')) return; clearTimeout(F7.erfSucheT); const q=t.value; F7.erfSuche=q; F7.erfSucheT=setTimeout(()=>f15BezugSuchen(q), 250); });
 }
 /* Status der letzten Einträge aus der Inbox nachlesen (alle 2 Minuten, wenn die Ansicht offen ist) */
 function f7ErfasstStatus(){
@@ -6332,6 +6452,9 @@ function f7Klick(e){
   if((z=d('data-f7bezug'))){ f7BezugWaehlen(z.dataset.f7bezug); return true; }
   if((z=d('data-f7bezugwahl'))){ const e2=f7Erf(); e2.bezug=z.dataset.f7bezugart; e2.bezugId=z.dataset.f7bezugwahl; e2.bezugName=z.dataset.f7bezugname; closeSheet(); e1Rendern(); return true; }
   if(d('data-f7erfsenden')){ f7ErfassenSenden(); return true; }
+  if((z=d('data-f15treffer'))){ f15TrefferWaehlen(z.dataset.f15treffer, z.dataset.f15name, z.dataset.f15airtable); return true; }   // Hotfix 15 §2.2
+  if(d('data-f15bezugweg')){ haptik(6); f15BezugWeg(); return true; }
+  if((z=d('data-f15dateiweg'))){ haptik(6); if(z.dataset.f15dateiweg==='karte' && typeof f15Karte==='function'){ f15Karte().datei=null; } else f7Erf().datei=null; e1Rendern(); return true; }   // Hotfix 15 §2.3
   // Routinen
   if((z=d('data-f7routdom'))){ S.ui.f7routDom=z.dataset.f7routdom; saveUi(); e1Rendern(); return true; }
   if((z=d('data-f7routblock'))){ S.ui.f7routAuf=S.ui.f7routAuf===z.dataset.f7routblock ? null : z.dataset.f7routblock; saveUi(); e1Rendern(); return true; }
@@ -22638,9 +22761,9 @@ function stBelastung(){
    16 · Toast / Konfetti
    ══════════════════════════════════════════════════════════════════════ */
 let toastTimer=null;
-function toast(msg){
+function toast(msg, ms){
   const t=el('toast'); t.textContent=msg; t.classList.add('on');
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'), 1900);
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'), num(ms)>0 ? num(ms) : 1900);   // Hotfix 15 §2.5: 1,5 s für „✓ Erfasst“
 }
 /* ══ C8 (v3.8.0) · EBENE 3 — e3Spielen ═══════════════════════════════════════════════════════════════════
    art: 'funkeln' {dauerMs} · 'konfetti' {von: Rechteck des gedrückten Knopfs} · 'flug' {text} · 'stern' {text} ·
