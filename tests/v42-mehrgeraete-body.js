@@ -147,6 +147,24 @@ pruef('Führend setzen (eigenes Gerät): Sperre, Führung angefordert, kein Klic
 timerLaufen(); drain();
 pruef('… danach führt dieses Gerät, Sperre weg', FSLive.ichFuehre()===true && sperre().style.display==='none');
 
+// ══ Hotfix 14.1 §6 · Führung erst abgeben, wenn alles gesendet ist ══
+var _toasts=[]; toast=function(m){ _toasts.push(String(m)); };
+localStorage.setItem(PREFIX+'karten', '[]');
+neuStart({ 'GET /api/app/fuehrung':{ json:{ fuehrend:FSLive.geraet(), ich:FSLive.geraet(), seit:null, stand_nr:20 } }, 'GET /api/app/stand':{ status:204 },
+  'PUT /api/spiegel/':{ json:{ version:3 } }, 'POST /api/app/fuehrung':{ json:{ fuehrend:'GERAET-B' } }, 'GET /api/app/geraete':{ json:{ geraete:[] } } });
+pruef('Ausgang: dieses Gerät führt', FSLive.ichFuehre()===true);
+FSLive.vormerken('karten'); _aufrufe=[]; var _erg1=null;
+FSLive.fuehrungSetzen('GERAET-B').then(function(r){ _erg1=r; });
+for(var i6=0;i6<40;i6++){ drain(); timerLaufen(); }
+var iPut=_aufrufe.findIndex(function(a){ return a.methode==='PUT' && a.pfad.indexOf('/api/spiegel/fokus4_karten')===0; }), iPost=_aufrufe.findIndex(function(a){ return a.methode==='POST' && a.pfad==='/api/app/fuehrung'; });
+pruef('§6 · führend mit ausstehendem gemeinsamem Schlüssel: erst PUT fokus4_karten, dann POST /api/app/fuehrung; danach nicht führend', iPut>=0 && iPost>iPut && _erg1===true && FSLive.ichFuehre()===false, JSON.stringify([iPut, iPost, _erg1, FSLive.ichFuehre(), _aufrufe]));
+neuStart({ 'GET /api/app/fuehrung':{ json:{ fuehrend:FSLive.geraet(), ich:FSLive.geraet(), seit:null, stand_nr:21 } }, 'GET /api/app/stand':{ status:204 },
+  'PUT /api/spiegel/':{ offline:true }, 'POST /api/app/fuehrung':{ json:{ fuehrend:'GERAET-B' } } });
+FSLive.vormerken('karten'); _aufrufe=[]; _toasts.length=0; var _erg2=null; var _t0=Date.now();
+FSLive.fuehrungSetzen('GERAET-B').then(function(r){ _erg2=r; });
+for(var i7=0;i7<80;i7++){ drain(); timerLaufen(); }
+pruef('§6 · Dienst antwortet nicht: nach höchstens 5 s kein POST /api/app/fuehrung, Toast, Rückgabe false, ichFuehre bleibt true', _aufrufe.some(function(a){ return a.methode==='POST' && a.pfad==='/api/app/fuehrung'; })===false && _erg2===false && FSLive.ichFuehre()===true && _toasts.indexOf('Noch nicht alles gesendet — Führung bleibt auf diesem Gerät')>=0 && Date.now()-_t0>=5000, JSON.stringify([_erg2, FSLive.ichFuehre(), _toasts, Date.now()-_t0, _aufrufe.length]));
+
 // ══ nicht gekoppelt → Verhalten unverändert ══
 localStorage.removeItem(PREFIX+'fslive_token');
 neuStart({});
@@ -154,6 +172,6 @@ localStorage.setItem(PREFIX+'karten', '[]');
 _aufrufe=[]; FSLive.vormerken('karten'); FSLive.spiegeln(); drain();
 var u4=ereignis(100, 200); feuern('pointerdown', ereignis(100, 200)); feuern('pointerup', u4); drain();
 pruef('nicht gekoppelt: kein Aufruf, kein Abfangen, keine Pille, koennteSchreiben true', _aufrufe.length===0 && u4.pd===0 && sperre().style.display!=='flex' && pille().style.display!=='block' && FSLive.koennteSchreiben()===true && FSLive.zustand()==='grau', JSON.stringify([_aufrufe, u4.pd, sperre().style.display, pille().style.display, FSLive.zustand()]));
-pruef('Version 4.1.2 · Build 2026-10-22-37', APP_VERSION==='4.1.2' && APP_BUILD==='2026-10-22-37');
+pruef('Version 4.1.3 · Build 2026-10-22-38 (Hotfix 14.1 §7)', APP_VERSION==='4.1.3' && APP_BUILD==='2026-10-22-38');
 
 suiteEnde('Mehrgeräte 4.2 · Hotfix 14');
