@@ -3313,7 +3313,62 @@ const FSLive = (()=>{
     anzeigen(); hinweisAnzeigen();
     return d;
   }
-  function hinweisAnzeigen(){}   // §10.2 (wird dort ersetzt)
+  // §10.2 · Pille „Nur Anzeige · führend: <Name>“ auf nicht führenden Geräten; Name aus /api/app/geraete, sonst die ersten 8 Zeichen.
+  function geraetName(id){ const g=(geraeteCache||[]).find(x=>x && x.geraet_id===id); return (g && g.anzeigename) ? g.anzeigename : String(id||'').slice(0,8); }
+  function hinweisAnzeigen(){
+    try{
+      if(!pille) return;
+      const zeigen=gekoppelt() && !ichFuehre;
+      if(zeigen){
+        if(fuehrend && geraeteGeladenFuer!==fuehrend && !geraeteLaufen){ geraeteGeladenFuer=fuehrend; geraeteLaden().then(hinweisAnzeigen).catch(()=>{}); }
+        pille.textContent='Nur Anzeige · führend: '+(fuehrend ? geraetName(fuehrend) : '—');
+      }
+      pille.style.display=zeigen ? 'block' : 'none';
+    }catch(e){}
+  }
+  function sperreZeigen(an){ try{ if(sperre) sperre.style.display=an ? 'flex' : 'none'; }catch(e){} }
+  // §10.4 · Führung übernehmen (Pascals Variante B): Sperre mindestens 1 s, Stand des bisher führenden Geräts holen, Führung setzen,
+  // danach den Tipp an derselben Stelle ausführen. Scheitert der Dienst: Sperre weg, Tipp verfällt, Gerät bleibt Anzeige.
+  // Abweichung zum Auftrag (siehe Bericht): der Stand wird VOR dem Setzen der Führung geholt (nach dem Setzen liefert
+  // /api/app/stand den eigenen, veralteten Spiegel), und nach der Übernahme werden alle Betriebsschlüssel gespiegelt.
+  async function fuehrungUebernehmen(x, y){
+    if(uebernahmeLaeuft) return false;
+    uebernahmeLaeuft=true; sperreZeigen(true);
+    const t0=Date.now(); let ok=false, neuGeladen=false;
+    try{
+      const rest=()=>Math.max(200, SPERRE_MAX_MS-(Date.now()-t0));
+      const d=await aufruf('GET', '/api/app/stand?ab=0', undefined, { zeitgrenze:rest() });
+      await aufruf('POST', '/api/app/fuehrung', undefined, { zeitgrenze:rest() });
+      ok=true;
+      const vorher=ersteUebernahmeErledigt;
+      if(d && d.fuehrend && d.fuehrend!==geraet() && d.schluessel){
+        if(!vorher) schreib(K.fuehrtJetzt,'1');   // Toast nach dem Neuladen
+        standUebernehmen(d, true);
+        neuGeladen=(!vorher && ersteUebernahmeErledigt);
+      }
+      ichFuehre=true; fuehrend=geraet(); fuehrungBekannt=true; hinweisAnzeigen(); anzeigen();
+      if(!neuGeladen){ alleBetriebsschluesselVormerken(); planen(); }
+    }catch(e){
+      ok=false;
+    }
+    if(neuGeladen) return true;   // die Seite lädt neu; Sperre bleibt bis dahin
+    const warte=SPERRE_MIN_MS-(Date.now()-t0);
+    if(warte>0) await new Promise(r=>setTimeout(r, warte));
+    sperreZeigen(false); uebernahmeLaeuft=false;
+    if(!ok){ try{ toast('Mac mini nicht erreichbar — Gerät bleibt Anzeige'); }catch(e){} return false; }
+    if(x!=null && y!=null){
+      klickVerschlucken=false;
+      try{
+        const ziel=document.elementFromPoint(x, y);
+        if(ziel){
+          try{ ziel.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, clientX:x, clientY:y })); ziel.dispatchEvent(new PointerEvent('pointerup', { bubbles:true, clientX:x, clientY:y })); }catch(e){}
+          ziel.click();
+          try{ if(ziel.matches && ziel.matches('input, textarea, [contenteditable]')) ziel.focus(); }catch(e){}
+        }
+      }catch(e){}
+    }
+    return true;
+  }
   // §9.1 · Stand holen: nur gekoppelt, nicht führend, keine Übernahme im Gang. 204 = nichts Neues; 200 = übernehmen.
   async function standHolen(sofort){
     if(!gekoppelt() || ichFuehre || uebernahmeLaeuft || standLaeuft) return;
@@ -3414,6 +3469,38 @@ const FSLive = (()=>{
       flaeche.appendChild(punkt);
       flaeche.addEventListener('click', e=>{ e.stopPropagation(); blattOeffnen(); });
       document.body.appendChild(flaeche);
+      // Hotfix 14 §10.1 · Vollbild-Sperre mit Ladekreis (96 px, Rand 8 px #4ade80, oben transparent, rotate 0.9 s)
+      try{ const st=document.createElement('style'); st.textContent='@keyframes rotate{to{transform:rotate(360deg)}}'; document.head.appendChild(st); }catch(e){}
+      sperre=document.createElement('div');
+      sperre.id='fsSperre';
+      sperre.style.cssText='position:fixed;inset:0;z-index:2147483100;background:rgba(13,20,32,.72);display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:auto;touch-action:none';
+      const kreis=document.createElement('div');
+      kreis.style.cssText='width:96px;height:96px;box-sizing:border-box;border:8px solid #4ade80;border-top-color:transparent;border-radius:50%;animation:rotate 0.9s linear infinite';
+      const sperreText=document.createElement('div');
+      sperreText.textContent='Übernehme Führung …';
+      sperreText.style.cssText='margin-top:14px;font-size:16px;color:#fff';
+      sperre.appendChild(kreis); sperre.appendChild(sperreText);
+      document.body.appendChild(sperre);
+      // Hotfix 14 §10.2 · Pille „Nur Anzeige“
+      pille=document.createElement('div');
+      pille.id='fsNurAnzeige';
+      pille.style.cssText='position:fixed;top:calc(env(safe-area-inset-top) + 34px);left:50%;transform:translateX(-50%);z-index:2147482990;padding:4px 10px;border-radius:999px;background:#1f2937;color:#facc15;font-size:12px;pointer-events:none;display:none';
+      document.body.appendChild(pille);
+      // Hotfix 14 §10.3 · Tipp-Abfang auf nicht führenden Geräten: pointerdown merkt den Startpunkt (verschluckt nichts, Scrollen bleibt),
+      // pointerup ≤ 10 px = Tipp → übernehmen; der folgende click wird verschluckt. Ausgenommen: FSLive-Punkt und Elemente mit data-fsgeraet.
+      const ausgenommen=(t)=>{ try{ return !!(t && t.closest && (t.closest('#fsLiveFlaeche') || t.closest('[data-fsgeraet]'))); }catch(e){ return false; } };
+      const abfangen=()=>gekoppelt() && !ichFuehre && !uebernahmeLaeuft;
+      document.addEventListener('pointerdown', e=>{ if(!abfangen() || ausgenommen(e.target)) return; sx=e.clientX; sy=e.clientY; }, { capture:true });
+      document.addEventListener('pointerup', e=>{
+        if(!abfangen() || ausgenommen(e.target) || sx==null) return;
+        const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; sy=null;
+        if(Math.sqrt(dx*dx+dy*dy)>10) return;   // Wischen oder Scrollen: keine Übernahme
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        klickVerschlucken=true;
+        fuehrungUebernehmen(e.clientX, e.clientY);
+      }, { capture:true });
+      document.addEventListener('click', e=>{ if(!klickVerschlucken) return; e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); klickVerschlucken=false; }, { capture:true });
+      if(lies(K.fuehrtJetzt)==='1'){ try{ localStorage.removeItem(K.fuehrtJetzt); }catch(e){} setTimeout(()=>{ try{ toast('Dieses Gerät führt jetzt'); }catch(e){} }, 1500); }
       const sheet=document.getElementById('sheet');
       if(sheet) sheet.addEventListener('click', e=>{
         const b=e.target && e.target.closest && e.target.closest('[data-fslive]'); if(!b) return;
