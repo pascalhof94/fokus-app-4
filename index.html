@@ -5568,11 +5568,16 @@ const F7_QUELLEN=[['foto','📷','Foto / Scan','image/*','environment'],['screen
 function f7Erf(){ if(!F7.erf) F7.erf={ quelle:null, datei:null, text:'', bezug:(S.fokus && S.fokus.laeuft) ? 'karte' : 'agent', bezugId:null, bezugName:'' }; return F7.erf; }
 function f7ErfasstListe(){ return (S.meta && Array.isArray(S.meta.erfasst)) ? S.meta.erfasst : []; }
 function f7ErfassenHtml(){
-  const e=f7Erf(), lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null, warte=FSLive.warteschlangeAnzahl ? FSLive.warteschlangeAnzahl('app:erfassen') : 0;
-  let h='<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> ＋ Erfassen<span class="f7-r">an den Erfassungs-Agenten</span></div></div>';
-  h+='<div class="f7-src">'+F7_QUELLEN.map(q=>'<div class="'+(e.quelle===q[0]?'on':'')+'" data-f7quelle="'+q[0]+'"><b>'+q[1]+'</b>'+q[2]+'</div>').join('')+'</div>';
+  const e=f7Erf(), lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null, warte=FSLive.warteschlangeAnzahl ? FSLive.warteschlangeAnzahl('app:erfassen') : 0, c=f12ErfChat();   // 4.1 §8: Erfassen für ein Gespräch
+  let h=c ? '<div class="f3n-kopf f12-kopf"><button class="an-back" data-f7zurueck="1" aria-label="Zurück">‹</button><h3>📎 Datei<small>für '+esc(c.avatar||'🤖')+' '+esc(c.name||c.agent||'')+' · '+esc(c.titel||'')+'</small></h3><span class="sp"></span></div>'
+    : '<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> ＋ Erfassen<span class="f7-r">an den Erfassungs-Agenten</span></div></div>';
+  h+='<div class="f7-src">'+F7_QUELLEN.map(q=>'<div class="'+(e.quelle===q[0]?'on':'')+(c && q[0]==='mail' ? ' aus' : '')+'" data-f7quelle="'+q[0]+'"><b>'+q[1]+'</b>'+q[2]+'</div>').join('')+'</div>';
   if(e.datei) h+='<div class="f7-q ok">📎 '+esc(e.datei.name)+' · '+Math.round(e.datei.groesse/1024)+' KB</div>';
   h+='<textarea class="f7-txt" data-f7erftext="1" placeholder="… oder Text tippen" rows="3">'+esc(e.text||'')+'</textarea>';
+  if(c){ h+='<div class="f12-bez"><b>Bezug</b>💬 Gespräch „'+esc(c.titel||'')+'“ mit dem '+esc(c.name||c.agent||'Agenten')+' · Ablage über den Erfassungs-Agenten</div>';
+    h+='<div class="f7-send" data-f7erfsenden="1">In die Nachricht übernehmen</div><div class="f12-hin">Die Datei geht wie heute an den Erfassungs-Agenten und wird abgelegt. '+esc(c.name||c.agent||'Der Agent')+' bekommt sie mit deiner Nachricht und darf sie lesen.</div>';
+    if(warte>0) h+='<div class="f7-q">📤 '+warte+' '+(warte===1?'Eintrag wartet':'Einträge warten')+' auf den Mac mini</div>';
+    return h; }
   h+='<h5 class="f7-h5">Bezug</h5><div class="f7-chips">'+
     '<div class="'+(e.bezug==='agent'?'on':'')+'" data-f7bezug="agent">🤖 Agent entscheidet</div>'+
     (lk ? '<div class="'+(e.bezug==='karte'?'on':'')+'" data-f7bezug="karte">▶ laufende Karte</div>' : '')+
@@ -5590,6 +5595,7 @@ function f7ErfassenHtml(){
 function f7QuelleWaehlen(q){
   const e=f7Erf(); e.quelle=q; const def=F7_QUELLEN.find(x=>x[0]===q);
   if(q==='einfuegen'){ if(navigator.clipboard && navigator.clipboard.readText){ navigator.clipboard.readText().then(t=>{ if(t){ e.text=(e.text ? e.text+'\n' : '')+t; e1Rendern(); } else toast('Zwischenablage leer'); }).catch(()=>toast('Zwischenablage nicht lesbar — Text einfügen')); } else toast('Zwischenablage nicht lesbar — Text einfügen'); e1Rendern(); return; }
+  if(q==='mail' && f12ErfChat()){ e1Rendern(); return; }   // 4.1 §8: im Chat ausgegraut
   if(q==='mail'){ openSheet('📧 Mail-Weg', '<p class="d">Mails gehen über Outlook: die Mail in den Ordner <b>„Claude in"</b> verschieben. Der Erfassungs-Agent liest den Ordner und legt Aufgabe, Dokument oder Frage im Postfach an.</p><p class="d">Weiterleiten ist nicht nötig; Anhänge kommen mit.</p>', '<button class="btn ghost sm" data-close="1">Schließen</button>'); e1Rendern(); return; }
   if(def && def[3]){ const inp=document.createElement('input'); inp.type='file'; inp.accept=def[3]; if(def[4]) inp.setAttribute('capture', def[4]);
     inp.onchange=()=>{ const f=inp.files && inp.files[0]; if(!f) return; if(f.size>8*1024*1024){ toast('Datei zu groß (max. 8 MB)'); return; }
@@ -5608,14 +5614,16 @@ function f7BezugWaehlen(art){
 function f7ErfassenSenden(){
   const e=f7Erf(), txt=(el('ebene1') && document.querySelector('[data-f7erftext]')) ? document.querySelector('[data-f7erftext]').value.trim() : (e.text||'');
   if(!txt && !e.datei){ toast('Nichts zu erfassen — Text oder Quelle wählen'); return; }
-  const lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null;
-  const bezug={ art:e.bezug, id:e.bezugId, name:e.bezug==='karte' && lk ? lk.titel : e.bezugName, karte:e.bezug==='karte' && lk ? { id:lk.id, airtableId:lk.airtableId||null, titel:lk.titel } : null };
+  const lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null, c=f12ErfChat();
+  const bezug=c ? { art:'chat', tabelle:c.tabelle, gespraech:c.gespraech, name:c.agent } : { art:e.bezug, id:e.bezugId, name:e.bezug==='karte' && lk ? lk.titel : e.bezugName, karte:e.bezug==='karte' && lk ? { id:lk.id, airtableId:lk.airtableId||null, titel:lk.titel } : null };   // 4.1 §8.2
   const quelle=e.quelle||'text', titel=e.datei ? (F7_QUELLEN.find(q=>q[0]===quelle)||['','','Datei'])[2]+': '+e.datei.name : txt.slice(0,60);
-  const eintrag={ titel, ts:jetztIso(), bezug:bezug.name||(bezug.art==='agent' ? 'Agent entscheidet' : ''), status:'wartet', inboxId:null };
+  const eintrag={ titel, ts:jetztIso(), bezug:c ? '💬 '+String(c.name||c.agent||'') : (bezug.name||(bezug.art==='agent' ? 'Agent entscheidet' : '')), status:'wartet', inboxId:null };
   (S.meta.erfasst=f7ErfasstListe()).push(eintrag); if(S.meta.erfasst.length>30) S.meta.erfasst=S.meta.erfasst.slice(-30); saveMeta();
-  FSLive.senden('app:erfassen', { text:txt, quelle, bezug, datei:e.datei, geraetZeit:jetztIso() })
-    .then(r=>{ if(r && r.sofort && r.antwort && r.antwort.inbox){ eintrag.inboxId=r.antwort.inbox; eintrag.status='wird gelesen'; saveMeta(); } f7Neu(); })
-    .catch(x=>{ eintrag.status='abgelehnt'; saveMeta(); toast('Erfassen abgelehnt: '+((x && x.message)||'Fehler')); f7Neu(); });
+  const datei=e.datei;
+  const p=FSLive.senden('app:erfassen', { text:txt, quelle, bezug, datei, geraetZeit:jetztIso() })
+    .then(r=>{ if(r && r.sofort && r.antwort && r.antwort.inbox){ eintrag.inboxId=r.antwort.inbox; eintrag.status='wird gelesen'; saveMeta(); } if(c) f12ErfassenUebernehmen(c, r, txt, datei); else f7Neu(); return r; })
+    .catch(x=>{ eintrag.status='abgelehnt'; saveMeta(); toast('Erfassen abgelehnt: '+((x && x.message)||'Fehler')); if(c){ F7.erf=null; e1Oeffnen('chat'); } else f7Neu(); });
+  if(c){ haptik(10); return p; }   // 4.1 §8.2: zurück ins Gespräch mit Marke, sobald die Antwort da ist
   F7.erf=null; toast('📤 Erfasst — an den Erfassungs-Agenten'); haptik(10); e1Rendern();
 }
 /* Status der letzten Einträge aus der Inbox nachlesen (alle 2 Minuten, wenn die Ansicht offen ist) */
@@ -6992,6 +7000,15 @@ function f12KwSegment(seg){ const kw=f12Kw();
 { const _alt=f7Ds; f7Ds=function(){ if(e1Art()==='kontextwahl') return f12KwDs(); return _alt(); }; }
 { const _alt=f7AufgabenListeHtml; f7AufgabenListeHtml=function(l){ if(e1Art()==='kontextwahl') return f12AufgabenListeHtml(l); return _alt(l); }; }
 { const _alt=kartenZeileHtml; kartenZeileHtml=function(k, opt){ if(e1Art()==='kontextwahl' && k && k.domain==='privat' && !f12KwPrivatSichtbar()) return ''; return _alt(k, opt); }; }   // §7.6
+/* ── §8 · 📎 Datei über Erfassen: Chat-Betrieb der Erfassen-Ansicht ── */
+function f12ErfChat(){ const a=e1Arg(); return (e1Art()==='erfassen' && a && a.chat && typeof a.chat==='object') ? a.chat : null; }
+function f12ErfassenUebernehmen(c, r, txt, datei){
+  const e=f12Entwurf(f12Ui().kanal, c.gespraech);
+  if(r && r.sofort && r.antwort && r.antwort.inbox){ const name=datei ? String(datei.name||'Datei') : (String(txt||'').replace(/\s+/g,' ').trim().slice(0,30)||'Text'); e.anhaenge.push({ id:String(r.antwort.inbox), name });
+    if(txt) e.text=(e.text ? e.text+'\n' : '')+txt; saveUi(); toast('📎 an die Nachricht gehängt'); }
+  else toast('Datei wartet auf den Mac mini — anhängen geht erst mit Verbindung');
+  F7.erf=null; e1Oeffnen('chat'); f12Fokus();
+}
 /* ── F12 Ende ── */
 
 /* ══════════════════════════════════════════════════════════════════════
