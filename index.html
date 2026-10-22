@@ -5941,6 +5941,7 @@ function f7PfEntscheiden(id, ent, extra){
   const H=f7PfHeute(); H.n++; try{ e4BonusBuchen(null, 10, 'Postfach · '+ent); }catch(e){}
   if(L && L.daten && !L.daten.length && !H.leerBonus){ H.leerBonus=true; try{ e4BonusBuchen(null, 50, 'Postfach leer'); }catch(e){} toast('📭 Postfach leer · +50'); }
   saveMeta(); f7PostfachStandSetzen((L && L.daten)||[]); haptik(10); renderPostfach();
+  if(typeof f12PfStand==='function') f12PfStand(id, ent, felder, !!extra.vonChat || F12.pfAusChat===id);   // Hotfix 13 §3.1: Stand im Chat, egal von wo entschieden
   if(ent==='besprochen') f12TrainerOeffnen('Zu „'+String(r.Titel||'')+'“: ');   // 4.1 §9.3
 }
 function f7PfAnpassen(id){ const r=(f7Postfach()||[]).find(x=>x.id===id); if(!r) return;
@@ -6149,7 +6150,7 @@ function f7Klick(e){
   if((z=d('data-f7pfantwort'))){ const c=t.closest('[data-f7pfid]'); if(!c) return true; let a=z.dataset.f7pfantwort; if(!a){ a=prompt('Antwort'); if(!a) return true; } f7PfEntscheiden(c.dataset.f7pfid, 'freigegeben', { felder:{ 'Pascals Anpassung':a } }); return true; }
   if((z=d('data-f7pfent'))){ const c=t.closest('[data-f7pfid]'); if(!c) return true; const id=c.dataset.f7pfid, ent=z.dataset.f7pfent; if(ent==='angepasst') f7PfAnpassen(id); else if(ent==='abgelehnt') f7PfAblehnen(id); else f7PfEntscheiden(id, ent); return true; }
   if((z=d('data-f7pfanpassengo'))){ const tx=el('f7pfText') ? el('f7pfText').value : ''; closeSheet(); f7PfEntscheiden(z.dataset.f7pfanpassengo, 'angepasst', { felder:{ 'Pascals Anpassung':tx } }); return true; }
-  if((z=d('data-f7pfablehnengo'))){ const g=el('f7pfGrund') ? el('f7pfGrund').value.trim() : ''; if(!g){ toast('Grund ist Pflicht'); return true; } closeSheet(); f7PfEntscheiden(z.dataset.f7pfablehnengo, 'abgelehnt', { felder:{ Ablehnungsgrund:g } }); if(typeof f12PfErledigt==='function' && F12.pf[z.dataset.f7pfablehnengo]){ f12PfErledigt(z.dataset.f7pfablehnengo, 'abgelehnt', { Ablehnungsgrund:g }); if(e1Art()==='chat') e1Rendern(); } return true; }   // 4.1 §5.5: Ergebnis im Chat
+  if((z=d('data-f7pfablehnengo'))){ const g=el('f7pfGrund') ? el('f7pfGrund').value.trim() : ''; if(!g){ toast('Grund ist Pflicht'); return true; } closeSheet(); f7PfEntscheiden(z.dataset.f7pfablehnengo, 'abgelehnt', { felder:{ Ablehnungsgrund:g } }); return true; }   // 4.1 §5.5 · Hotfix 13 §3.1: der Chat-Stand kommt aus f7PfEntscheiden
   // Schieben
   if((z=d('data-f7schwas'))){ f7Sch().was=z.dataset.f7schwas; f7SchiebenRender(); return true; }
   if((z=d('data-f7schdatum'))){ const s=f7Sch(); if(z.dataset.f7schdatum==='frei'){ s.frei=!s.frei; } else { s.frei=false; s.datum=z.dataset.f7schdatum; } const g=el('f7schGrund'); if(g) s.grund=g.value; f7SchiebenRender(); return true; }
@@ -6663,7 +6664,7 @@ function f12Rendern(){
   if(st==='gespraech'){ const kanal=f12KanalAktuell(); if(!kanal){ u.kanal=null; u.gespraech=null; saveUi(); }
     else { const list=el('chatList'), key=kanal.id+'|'+u.gespraech;
       if(list && list.dataset && list.dataset.key===key){ f12VerlaufAktualisieren(kanal, u.gespraech); f12SendenKnopf(); return; }
-      b.innerHTML=f12GespraechHtml(kanal, u.gespraech); f12EingabeHoehe(); f12UhrStarten(); f12NachladenStarten(kanal, u.gespraech); f12GesehenMelden(kanal, f12Verlauf(kanal, u.gespraech)); f12Gespraeche(kanal); return; } }
+      b.innerHTML=f12GespraechHtml(kanal, u.gespraech); f12EingabeHoehe(); f12UhrStarten(); f12NachladenStarten(kanal, u.gespraech); f12GesehenMelden(kanal, f12Verlauf(kanal, u.gespraech)); f12Gespraeche(kanal); f12PfNachlesen(kanal, u.gespraech); return; } }   // Hotfix 13 §3.2
   f12NachladenStoppen();
   if(st==='agent'){ const kanal=f12KanalAktuell(); if(kanal){ b.innerHTML=f12AgentHtml(kanal); f12UhrStarten(); return; } u.kanal=null; saveUi(); }
   b.innerHTML=f12RaumHtml(); f12LeisteScrollen();
@@ -6869,8 +6870,11 @@ function f12GesehenMelden(kanal, rows){
 function f12UhrTick(){ try{ if(typeof document==='undefined' || !document.querySelectorAll) return; document.querySelectorAll('.f12-uhr[data-von]').forEach(b=>{ const t=f12Mmss(Date.now()-Date.parse(b.dataset.von)); if(b.textContent!==t) b.textContent=t; }); }catch(e){} }
 function f12UhrStarten(){ if(F12.uhr) return; F12.uhr=setInterval(()=>{ if(e1Art()!=='chat' && !(document.body && document.body.classList && document.body.classList.contains('breit'))){ clearInterval(F12.uhr); F12.uhr=null; return; } f12UhrTick(); }, 1000); }
 /* §1.4: solange das Gespräch offen ist, alle 15 s neu lesen; neue Zeilen werden angehängt */
-function f12NachladenStarten(kanal, g){ const key=f12VerlaufKey(kanal, g); if(F12.nachladen && F12.nachladenKey===key) return; f12NachladenStoppen(); F12.nachladenKey=key;
-  F12.nachladen=setInterval(()=>{ try{ if(e1Art()!=='chat'){ f12NachladenStoppen(); return; } const L=F7.lager[key]; if(L) L.ts=0; f12Verlauf(kanal, g); f12BadgeLaden(); }catch(e){} }, 15000); }
+function f12NachladenStarten(kanal, g){ const key=f12VerlaufKey(kanal, g); if(F12.nachladen && F12.nachladenKey===key) return; f12NachladenStoppen(); F12.nachladenKey=key; F12.nachladenTick=0;
+  F12.nachladen=setInterval(()=>{ try{ if(e1Art()!=='chat'){ f12NachladenStoppen(); return; } const L=F7.lager[key]; if(L) L.ts=0; f12Verlauf(kanal, g); f12BadgeLaden(); F12.nachladenTick++; if(F12.nachladenTick%2===0) f12PfNachlesen(kanal, g); }catch(e){} }, 15000); }
+/* Hotfix 13 §3.2: Postfach-Datensätze der sichtbaren Antworten neu lesen, deren Status offen war; Änderung → Zeile in place (f12PfLesen) */
+function f12PfNachlesen(kanal, g){ try{ const L=F7.lager[f12VerlaufKey(kanal, g)], rows=(L && L.daten)||[];
+  rows.forEach(r=>{ if(String(r.Von||'')==='Pascal') return; f7Link(r.Postfach).forEach(x=>{ const id=String(x.id), P=F12.pf[id]; if(!P || String((P.r||{}).Status||'').toLowerCase()!=='erledigt'){ if(P) P.ts=0; f12PfLesen(id); } }); }); }catch(e){} }
 function f12NachladenStoppen(){ if(F12.nachladen) clearInterval(F12.nachladen); F12.nachladen=null; F12.nachladenKey=''; }
 /* ── §5.5 · Karten im Chat ── */
 function f12PfLesen(id){ const P=F12.pf[id]; if(P && Date.now()-P.ts<60000) return P.r; if(!F12.pfLade[id] && FSLive.gekoppelt()){ F12.pfLade[id]=true;
@@ -6914,9 +6918,12 @@ function f12KbNeuZeichnen(pfId){
   try{ const u=f12Ui(), kanal=f12KanalAktuell(); if(!kanal || !u.gespraech) return; const L=F7.lager[f12VerlaufKey(kanal, u.gespraech)], rows=(L && L.daten)||[];
     rows.forEach(r=>{ if(!f7Link(r.Postfach).some(x=>String(x.id)===String(pfId))) return; const n=document.querySelector('[data-mid="'+CSS.escape(String(r.id))+'"]'); if(!n) return; const kb=n.querySelector('.f12-kb'); const neu=f12KartenBloeckeHtml(kanal, r); if(kb){ if(kb.outerHTML!==neu) kb.outerHTML=neu; } else if(neu) n.insertAdjacentHTML('beforeend', neu); }); }catch(e){}
 }
-function f12PfErledigt(id, ent, felder){ const P=F12.pf[id]; if(P && P.r){ P.r.Status='erledigt'; P.r.Entscheidung=ent; P.r.geaendert_am=jetztIso(); Object.assign(P.r, felder||{}); } F12.entschieden[id]=true; }
+/* Hotfix 13 §3.1: Postfach-Daten im Chat-Lager auf die Entscheidung setzen (Status, Entscheidung, Ablehnungsgrund, geaendert_am = jetzt), Zeile in place */
+function f12PfStand(id, ent, felder, vonChat){ const P=F12.pf[id]; if(P && P.r){ P.r.Status='erledigt'; P.r.Entscheidung=ent; P.r.geaendert_am=jetztIso(); if(felder && felder.Ablehnungsgrund!=null) P.r.Ablehnungsgrund=felder.Ablehnungsgrund; }
+  if(vonChat) F12.entschieden[id]=true; if(F12.pfAusChat===id) F12.pfAusChat=null; f12KbNeuZeichnen(id); }
+function f12PfErledigt(id, ent, felder){ f12PfStand(id, ent, felder, true); }
 function f12PfFreigeben(id, starten){ const r=f12PfRecord(id); if(!r) return null; haptik(starten ? 10 : 12);
-  f7PfEntscheiden(id, 'freigegeben', { datensatz:r }); f12PfErledigt(id, 'freigegeben');
+  f7PfEntscheiden(id, 'freigegeben', { datensatz:r, vonChat:true });
   const m=(S.meta.postfachKarten||{})[id], k=m ? S.karten.find(x=>x.id===m.karteId) : null;
   if(k && starten){ leistePlay(k.id); fokusseiteNachStart(); } else e1Rendern();
   return k; }
@@ -6927,7 +6934,7 @@ function f12PfDetail(id){ const r=f12PfRecord(id); if(!r) return; const kk=f7PfK
   if(best){ oeffneDetail(best.id); f7PfEntwurfAnwenden(entwurf, entwurfSubs, kk); entwurf.postfachId=id; renderDetail(); return; }
   const vb={ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), sollMin:kk.sollMin, matrixFeld:matrixFeldNorm(kk.matrixFeld)||'werkzeug' }; if(kk.projekt) vb.projekt=kk.projekt; if(kk.notiz) vb.notiz=kk.notiz;
   oeffneDetail(null, { vorbelegung:vb, unteraufgaben:kk.unteraufgaben, mehrAuf:true, postfachId:id }); }
-function f12PfAblehnen(id){ const r=f12PfRecord(id); if(!r) return; haptik(6); f7PfAblehnen(id, r); }
+function f12PfAblehnen(id){ const r=f12PfRecord(id); if(!r) return; haptik(6); F12.pfAusChat=id; f7PfAblehnen(id, r); }   // Hotfix 13 §3.1: Entscheidung gilt als „im Chat"
 /* ── §6 · Eingabe ── */
 function f12EingabeHoehe(){ try{ const t=el('f12Text'); if(!t || !t.style) return; t.style.height='auto'; const max=8*21+14; const h=Math.min(max, Math.max(21+14, t.scrollHeight)); t.style.height=h+'px'; t.style.overflowY=t.scrollHeight>max ? 'auto' : 'hidden'; }catch(e){} }
 function f12SendenKnopf(){ try{ const e=f12EntwurfAktuell(), b=el('f12Senden'); if(!b || !b.classList) return; const leer=!String(e.text||'').trim() && !e.karten.length && !e.anhaenge.length; b.classList.toggle('aus', leer); }catch(e){} }
