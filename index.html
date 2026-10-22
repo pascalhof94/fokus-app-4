@@ -6503,6 +6503,92 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) r
 function f11Ablageordner(projektId){ const p=(f7Projekte()||[]).find(x=>x.id===projektId); return p ? String(p.Ablageordner||'') : ''; }
 
 /* ══════════════════════════════════════════════════════════════════════
+   4.1 · Chat-Räume (Auftrag 22.10.2026, Teil 2) · Block F12
+   Pascal schreibt mit jedem Agenten in dessen Chat-Tabelle (FocusSystem, Teil 1): Tabelle Chat-Kanäle nennt je Agent Abteilung,
+   Bereich und Tabelle. Drei Stufen in der Ebene „chat": Raum (Raum-Leiste, Mitarbeiter) · Agent (Gesprächsliste) · Gespräch
+   (Verlauf, Stand-Uhr, Karten im Chat, Eingabe mit Kontext). Dazu ＋ Kontext (Ebene „kontextwahl"), 📎 Datei über Erfassen,
+   Einstiege und interne Nachrichten (§9), Badge über alle Kanäle (§10). Ersetzt die Ansicht aus Paket 7 / Nachbesserung 3 (f7Chat*, f3n*).
+   ══════════════════════════════════════════════════════════════════════ */
+const F12={ voll:{}, lade:{}, pf:{}, pfLade:{}, entschieden:{}, uhr:null, nachladen:null, nachladenKey:'', badge:{}, benachrichtigt:{}, gesehen:{}, nachUnten:false };
+const F12_AVATAR={ 'Trainer':'🏋️', 'Zeit-Spezialist':'⏱️', 'Scoring-Spezialist':'🎯', 'Belastungs-Spezialist':'🔋' };
+const F12_TRAINER_TABELLE='Privat_Chat · Trainer';   // Rückfall, wenn Chat-Kanäle noch nicht geladen sind (Warteschlange offline)
+const F12_FELDER=['Text','Von','Gespräch','Gesprächstitel','Art','Anlass','Status','Zeitstempel','Laufstart','Beantwortet','Antwortet auf','Karten','Anhänge','Postfach','Session','Lauf'];
+const F12_RAUM_FOLGE=['Trainerstab'].concat(F7_ABT_FOLGE);
+function f12Ui(){ if(!S.ui.chat || typeof S.ui.chat!=='object') S.ui.chat={ raum:'Trainerstab', kanal:null, gespraech:null, entwurf:{} }; if(!S.ui.chat.entwurf || typeof S.ui.chat.entwurf!=='object') S.ui.chat.entwurf={}; return S.ui.chat; }
+function f12Mmss(ms){ const s=Math.max(0, Math.floor(num(ms)/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function f12Uhrzeit(ts){ return fmtUhr(ts).replace(' Uhr',''); }
+function f12IstProjekt(k){ return /^Projekt-Agent /.test(String((k && k.Agent)||'')); }
+function f12Name(k){ if(!k) return ''; return f12IstProjekt(k) ? String(k.Agent).slice('Projekt-Agent '.length) : String(k.Agent||k.Kanal||''); }
+function f12Avatar(k){ if(!k) return '🤖'; return f12IstProjekt(k) ? '🗂' : (F12_AVATAR[String(k.Agent||'')]||'🤖'); }
+function f12Raum(k){ return f7LinkName(k && k.Abteilung)||''; }
+function f12RaumEmoji(name){ const a=(f7Abteilungen()||[]).find(x=>String(x.Name||'')===String(name||'')); return a ? f7AbtEmoji(a) : (F7_ABT_EMOJI[name]||(name==='Trainerstab' ? '🎯' : '🏢')); }
+/* Zeit in einer Listenzeile: heute Uhrzeit · gestern „gestern" · in der Woche Wochentag kurz · sonst TT.MM. */
+function f12ZeitKurz(ts){ if(!ts) return ''; const d=String(ts).slice(0,10), heute=heuteApp(); if(d===heute) return f12Uhrzeit(ts); if(d===anVorTage(heute,1)) return 'gestern';
+  for(let i=2;i<7;i++){ if(d===anVorTage(heute,i)) return AN_WT[anWochentag(d)]; } return anKurzDatum(d); }
+/* ── §1 · Datenzugriff ── */
+function f12Kanaele(){ return f7Lager('chatKanaele', 10*60000, ()=>f7Alle({ tabelle:'Chat-Kanäle', felder:['Kanal','Agent','Abteilung','Projekt','Bereich','Tabelle','Claude-Raum-Link','Reihenfolge','Rolle'], filter:[{ feld:'Aktiv', operator:'gleich', wert:true }], sortierung:[{ feld:'Reihenfolge', richtung:'auf' },{ feld:'Kanal', richtung:'auf' }] })); }
+function f12KanalVon(agent){ return (f12Kanaele()||[]).find(k=>String(k.Agent||'')===String(agent||''))||null; }
+function f12KanalId(id){ return (f12Kanaele()||[]).find(k=>k.id===id)||null; }
+function f12KanalTabelle(name){ return (f12Kanaele()||[]).find(k=>String(k.Tabelle||'')===String(name||''))||null; }
+function f12Raeume(){
+  const abts=f7Abteilungen(), kan=f12Kanaele()||[]; if(!abts) return null;
+  const pos=n=>{ const i=F12_RAUM_FOLGE.indexOf(n); return i<0 ? 99 : i; };
+  return abts.slice().sort((a,b)=>pos(a.Name)-pos(b.Name) || String(a.Name||'').localeCompare(String(b.Name||''))).map(a=>{
+    const ks=kan.filter(k=>f7Link(k.Abteilung).some(l=>l.id===a.id)).sort((x,y)=>(num(x.Reihenfolge)-num(y.Reihenfolge)) || String(x.Kanal||'').localeCompare(String(y.Kanal||'')));
+    return { id:a.id, name:String(a.Name||''), emoji:f7AbtEmoji(a), teams:String(a.Teams||'').split('\n')[0]||'', kanaele:ks }; });
+}
+function f12RaumName(name){ return (f12Raeume()||[]).find(r=>r.name===name)||null; }
+function f12Zeilen(kanal){ if(!kanal || !kanal.Tabelle) return null; const ab=anVorTage(heuteApp(), 90)+'T00:00:00';
+  return f7Lager('chatG:'+kanal.id, 60000, ()=>f7Alle({ tabelle:kanal.Tabelle, felder:['Gespräch','Gesprächstitel','Von','Art','Anlass','Status','Zeitstempel','Laufstart','Beantwortet','Text','Postfach','Karten'], filter:[{ feld:'Zeitstempel', operator:'groesser_gleich', wert:ab }], sortierung:[{ feld:'Zeitstempel', richtung:'auf' }] })); }
+function f12PostfachOffen(){ return new Set((f7Postfach()||[]).map(r=>String(r.id))); }
+function f12Ungelesen(r){ return String(r.Von||'')!=='Pascal' && String(r.Status||'').toLowerCase()==='offen' && !r.lokal; }
+function f12Gespraeche(kanal){
+  const rows=f12Zeilen(kanal); if(!rows) return null; const je={}, folge=[];
+  rows.forEach(r=>{ const g=String(r['Gespräch']||''); if(!g) return; if(!je[g]){ je[g]=[]; folge.push(g); } je[g].push(r); });
+  const offen=f12PostfachOffen();
+  return folge.map(g=>{ const z=je[g].slice().sort((a,b)=>String(a.Zeitstempel||'')<String(b.Zeitstempel||'') ? -1 : 1), letzte=z[z.length-1], mitTitel=z.find(r=>r['Gesprächstitel']);
+    const erste=z.find(r=>String(r.Von||'')==='Pascal')||z[0];
+    return { gespraech:g, titel:mitTitel ? String(mitTitel['Gesprächstitel']) : (String(erste.Text||'').replace(/\s+/g,' ').trim().slice(0,40)||'(ohne Titel)'), zeilen:z, letzte,
+      ungelesen:z.filter(f12Ungelesen).length, karten:z.reduce((a,r)=>a+f7Link(r.Postfach).filter(x=>offen.has(String(x.id))).length, 0),
+      verlauf:/^bisheriger-verlauf-/.test(g), karte:/^karte-/.test(g) ? g.slice(6) : null, ts:letzte.Zeitstempel||letzte.erstellt_am||'' }; })
+    .sort((a,b)=>String(b.ts)<String(a.ts) ? -1 : String(b.ts)>String(a.ts) ? 1 : 0);
+}
+function f12VerlaufKey(kanal, g){ return 'chatV:'+kanal.id+'|'+g; }
+function f12Verlauf(kanal, g){ if(!kanal || !g) return null; const felder=F12_FELDER.concat(kanal.Bereich==='dfm' ? ['Aufgaben'] : []);
+  return f7Lager(f12VerlaufKey(kanal, g), 30000, ()=>f7Alle({ tabelle:kanal.Tabelle, felder, filter:[{ feld:'Gespräch', operator:'gleich', wert:g }], sortierung:[{ feld:'Zeitstempel', richtung:'auf' }] })); }
+/* volle Texte: datensaetze_auflisten kürzt nach 300 Zeichen — der volle Text kommt über datensatz_lesen */
+function f12Gekuerzt(t){ return /… \(\d+ Zeichen\)$/.test(String(t||'')); }
+function f12Text(kanal, r){ if(!r) return ''; if(F12.voll[r.id]!=null) return F12.voll[r.id]; const t=String(r.Text||'');
+  if(f12Gekuerzt(t) && !F12.lade[r.id] && !r.lokal && FSLive.gekoppelt() && kanal){ F12.lade[r.id]=true;
+    FSLive.lesen('datensatz_lesen', { tabelle:kanal.Tabelle, id:r.id }).then(d=>{ const v=d && (d.datensatz||d); const txt=v && (v.Text!=null ? v.Text : (v.felder && v.felder.Text)); if(txt!=null) F12.voll[r.id]=String(txt); }).catch(()=>{}).then(()=>{ F12.lade[r.id]=false; try{ f7Neu(); }catch(e){} }); }
+  return t; }
+/* Gespräch-Kennungen (§1.6) */
+function f12NeuesGespraech(){ return (crypto.randomUUID && crypto.randomUUID()) || ('g-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)); }
+function f12TagGespraech(datum){ return 'tag-'+(datum||heuteApp()); }
+function f12TagTitel(datum){ const d=datum||heuteApp(); return '📅 Tag '+AN_WT[anWochentag(d)]+' '+anKurzDatum(d)+'.'; }
+function f12KarteGespraech(karteId){ return 'karte-'+karteId; }
+function f12KarteTitel(k){ return '📇 '+String((k && k.titel)||'Karte'); }
+/* Titel der ersten Nachricht eines Gesprächs (§1.5): fester Titel bei Tages- und Karten-Gesprächen, sonst erste Zeile des Texts bis 60 Zeichen */
+function f12TitelFuer(kanal, g, text){ if(/^tag-/.test(g)) return f12TagTitel(g.slice(4)); if(/^karte-/.test(g)){ const k=S.karten.find(x=>x.id===g.slice(6)); return f12KarteTitel(k||{ titel:g.slice(6) }); } return String(text||'').split('\n')[0].trim().slice(0,60)||'Neues Gespräch'; }
+function f12GespraechHatZeilen(kanal, g){ const L=F7.lager[f12VerlaufKey(kanal, g)]; if(L && Array.isArray(L.daten) && L.daten.length) return true; const G=F7.lager['chatG:'+kanal.id]; return !!(G && Array.isArray(G.daten) && G.daten.some(r=>String(r['Gespräch']||'')===g)); }   // lokale Vorab-Zeilen zählen mit: die erste Nachricht trägt den Titel
+/* §1.5 · senden: Datensatz in die Chat-Tabelle des Kanals, lokale Vorab-Zeile, Warteschlange von FSLive */
+function f12Senden(kanal, g, text, opt){
+  opt=opt||{}; const ts=jetztIso(), karten=opt.karten||[], anhaenge=opt.anhaenge||[], tabelle=(kanal && kanal.Tabelle)||F12_TRAINER_TABELLE, bereich=(kanal && kanal.Bereich)||'privat';
+  const felder={ Text:text, Von:'Pascal', 'Gespräch':g, Art:'Nachricht', Anlass:opt.anlass||'Chat', Status:'offen', Zeitstempel:ts };
+  if(opt.titel!=null ? opt.titel : (!kanal || !f12GespraechHatZeilen(kanal, g))){ felder['Gesprächstitel']=opt.titel!=null ? opt.titel : f12TitelFuer(kanal, g, text); }
+  if(karten.length) felder.Karten=karten.map(k=>k.id).join('\n');
+  const verk={};
+  if(bereich==='dfm'){ const ids=karten.map(k=>k.airtableId||k.fsId||null).filter(Boolean); if(ids.length) verk.Aufgaben=ids; }
+  const anh=anhaenge.map(a=>a.id).filter(Boolean); if(anh.length) verk['Anhänge']=anh;
+  const lokal=Object.assign({}, felder, { id:'lokal-'+Date.now()+'-'+Math.random().toString(36).slice(2,6), lokal:true, Marken:{ karten:karten.slice(), anhaenge:anhaenge.slice() } });
+  if(kanal){ const key=f12VerlaufKey(kanal, g), L=F7.lager[key]; if(L && Array.isArray(L.daten)) L.daten.push(lokal); else F7.lager[key]={ ts:0, daten:[lokal], fehler:'' };
+    const G=F7.lager['chatG:'+kanal.id]; if(G && Array.isArray(G.daten)) G.daten.push(lokal); }
+  const args={ tabelle, felder }; if(Object.keys(verk).length) args.verknuepfungen=verk;
+  return FSLive.senden('datensatz_anlegen', args, opt.id ? { id:opt.id } : undefined).then(r=>{ if(kanal){ f7LagerLeeren(f12VerlaufKey(kanal, g)); f7LagerLeeren('chatG:'+kanal.id); } f7Neu(); return r; }).catch(e=>{ toast('Nachricht wartet: '+((e && e.message)||'Fehler')); });
+}
+/* ── F12 Ende ── */
+
+/* ══════════════════════════════════════════════════════════════════════
    4.0 · Nachbesserung · Abschnitt 3 (Chat: Stand, volle Antworten, Badge, Benachrichtigung) und 5.1/5.2 (fester Kopf, Anhängen statt Neuaufbau)
    Der Stand jeder eigenen Nachricht kommt aus dem Status ihres Agenten-Auftrags: gesendet (Warteschlange) · angekommen (offen) ·
    Trainer arbeitet · seit … (vorgemerkt) · beantwortet · … (erledigt) · nicht bearbeitet (abgelehnt). Antworten des Trainers werden
