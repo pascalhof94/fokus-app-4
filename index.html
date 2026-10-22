@@ -2813,6 +2813,7 @@ body[data-e1="chat"] #e1-chat{display:flex;flex-direction:column;overflow:hidden
 /* Gespräch: der Verlauf ist ein eigener Scroller, unten verankert (column-reverse auf dem Scroller) */
 .f12-verlauf{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column-reverse;overscroll-behavior:contain}
 .f12-fluss{display:flex;flex-direction:column;padding-bottom:8px}
+.f12-act{max-width:84%}.f12-act.aus>div{opacity:.45;pointer-events:none}.f12-act.aus>div.on{opacity:1;border-color:#2dd4bf;color:#2dd4bf;background:rgba(45,212,191,.1)}
 .f12-fluss .f7-m{max-width:84%}.f12-fluss .f7-m ul{margin:6px 0 2px;padding-left:18px}.f12-fluss .f7-m li{margin:2px 0}.f12-fluss .f7-m.hinweis{border-color:rgba(255,210,63,.5)}
 .f12-st{display:block;margin-top:3px;font-size:11.5px;font-style:normal;color:rgba(255,255,255,.75)}.f12-st.ok{color:#bff5dc}.f12-st.arb{color:#ffe28a}.f12-st.no{color:#ffb4b4}.f12-st.wartet{opacity:.7}
 .f12-uhr{font-variant-numeric:tabular-nums}
@@ -6711,6 +6712,7 @@ function f12Klick(e){
   if(d('data-f12plus')){ haptik(6); const u=f12Ui(), tx=el('f12Text'); if(tx && typeof tx.value==='string'){ f12EntwurfAktuell().text=tx.value; saveUi(); } if(!u.gespraech){ u.gespraech=f12NeuesGespraech(); saveUi(); } f12KontextOeffnen(); return true; }
   if((z=d('data-f12markeweg'))){ e.stopPropagation(); haptik(6); f12MarkeWeg(z.dataset.f12markeweg); return true; }
   if((z=d('data-f12karte'))){ e.stopPropagation(); haptik(6); f7AufgabeOeffnen(z.dataset.f12karte); return true; }
+  if((z=d('data-f12antwort'))){ e.stopPropagation(); const a=t.closest('[data-f12act]'); if(!a || a.classList.contains('aus')) return true; f12KnopfWahl(a.dataset.f12act, z.dataset.f12antwort); return true; }   // Hotfix 13 §6
   if(d('data-f7pfoeffnen')){ haptik(6); e1Schliessen(); seiteZeigen('postfach'); return true; }
   if((z=d('data-f12pffrei'))){ e.stopPropagation(); if(z.disabled) return true; f12PfFreigeben(z.dataset.f12pffrei, false); return true; }
   if((z=d('data-f12pfstart'))){ e.stopPropagation(); if(z.disabled) return true; f12PfFreigeben(z.dataset.f12pfstart, true); return true; }
@@ -6820,14 +6822,29 @@ function f12Stand(kanal, r, inSchlange){
   return { k:'emp', html:esc(agent)+' empfängt · <b class="f12-uhr" data-von="'+esc(r.Zeitstempel)+'">'+f12Mmss(Date.now()-Date.parse(r.Zeitstempel))+'</b>' };
 }
 function f12StandText(kanal, r){ return f12Stand(kanal, r).html.replace(/<[^>]+>/g,''); }
-function f12NachrichtHtml(kanal, r){
-  const vonPascal=String(r.Von||'')==='Pascal', art=String(r.Art||''), text=f12Text(kanal, r), agent=f12Name(kanal);
+/* Hotfix 13 §6: kurze Entscheidungen am Ende einer Antwort (2–4 Listenzeilen, je höchstens 30 Zeichen) werden Knöpfe; sonst bleibt die Liste Text */
+function f12Knoepfe(text){ const lines=String(text||'').replace(/\r/g,'').split('\n'); while(lines.length && !lines[lines.length-1].trim()) lines.pop();
+  const opts=[]; let i=lines.length-1; while(i>=0){ const m=lines[i].match(/^\s*[-•]\s+(.*?)\s*$/); if(!m) break; opts.unshift(m[1]); i--; }
+  if(opts.length<2 || opts.length>4 || opts.some(o=>o.length>30)) return null;
+  return { body:lines.slice(0, i+1).join('\n'), optionen:opts }; }
+function f12KnoepfeHtml(r, opt){ const wahl=(S.meta.chatWahl||{})[r.id], aktiv=!!opt.aktiv && !wahl;
+  return '<div class="f7-act2 f12-act'+(aktiv ? '' : ' aus')+'" data-f12act="'+esc(r.id)+'">'+opt.optionen.map((o,j)=>'<div class="'+(j?'':'g')+(wahl===o ? ' on' : '')+'" data-f12antwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'</div>'; }
+function f12NachrichtHtml(kanal, r, opt){
+  opt=opt||{}; const vonPascal=String(r.Von||'')==='Pascal', art=String(r.Art||''), text=f12Text(kanal, r), agent=f12Name(kanal);
   let h='<div class="f12-n" data-mid="'+esc(r.id)+'">';
   if(vonPascal){ const s=f12Stand(kanal, r); h+='<div class="f7-m p">'+f12TextHtml(text)+f12KartenMarkenHtml(kanal, r)+'<em class="f12-st '+s.k+'" data-f12st="'+esc(r.id)+'">'+s.html+'</em></div>'; }
-  else { h+='<div class="f7-m t'+(art==='Hinweis' ? ' hinweis' : '')+'">'+f12TextHtml(text)+'<small>'+(art==='Hinweis' ? '⚠️ Hinweis · ' : esc(agent)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
+  else { const kn=f12Knoepfe(text);
+    h+='<div class="f7-m t'+(art==='Hinweis' ? ' hinweis' : '')+'">'+f12TextHtml(kn ? kn.body : text)+'<small>'+(art==='Hinweis' ? '⚠️ Hinweis · ' : esc(agent)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
+    if(kn) h+=f12KnoepfeHtml(r, { optionen:kn.optionen, aktiv:opt.letzte===undefined ? true : opt.letzte });
     if(f7Link(r.Postfach).length) h+=f12KartenBloeckeHtml(kanal, r); }
   return h+'</div>';
 }
+function f12LetzteAntwortId(rows){ for(let i=(rows||[]).length-1;i>=0;i--){ if(String(rows[i].Von||'')!=='Pascal' && !rows[i].lokal) return rows[i].id; } return null; }
+/* Tipp auf einen Knopf: der Text geht als neue Nachricht ins Gespräch, die Knöpfe dieser Antwort werden grau, der gewählte bleibt markiert */
+function f12KnopfWahl(mid, text){ const u=f12Ui(), kanal=f12KanalAktuell(); if(!kanal || !u.gespraech) return; haptik(8);
+  if(!S.meta.chatWahl || typeof S.meta.chatWahl!=='object') S.meta.chatWahl={}; S.meta.chatWahl[mid]=text; saveMeta();
+  try{ const a=document.querySelector('.f12-act[data-f12act="'+CSS.escape(String(mid))+'"]'); if(a){ a.classList.add('aus'); a.querySelectorAll('[data-f12antwort]').forEach(x=>x.classList.toggle('on', x.dataset.f12antwort===text)); } }catch(e){}
+  f12Senden(kanal, u.gespraech, text, { anlass:'Chat' }); e1Rendern(); f12NachUnten(); }
 function f12SchreibtHtml(kanal, rows){
   const agent=f12Name(kanal), o=(rows||[]).filter(r=>String(r.Von||'')==='Pascal' && /^(offen|vorgemerkt)$/.test(String(r.Status||'').toLowerCase()) && !r.lokal).slice(-1)[0];
   if(!o) return '<div class="f12-schreibt" id="chatSchreibt" hidden></div>';
@@ -6835,7 +6852,7 @@ function f12SchreibtHtml(kanal, rows){
   return '<div class="f12-schreibt" id="chatSchreibt">✍️ '+esc(agent)+' '+(vg ? 'denkt nach' : 'empfängt')+' · <b class="f12-uhr" data-von="'+esc(von)+'">'+f12Mmss(Date.now()-Date.parse(von))+'</b>'+(vg && o.Laufstart && o.Zeitstempel ? ' <span>(empfangen nach '+f12Mmss(Date.parse(o.Laufstart)-Date.parse(o.Zeitstempel))+')</span>' : '')+'</div>';
 }
 function f12ListeHtml(kanal, rows){
-  let h='', tag=''; (rows||[]).forEach(r=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; } h+=f12NachrichtHtml(kanal, r); });
+  let h='', tag='', letzte=f12LetzteAntwortId(rows); (rows||[]).forEach(r=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; } h+=f12NachrichtHtml(kanal, r, { letzte:r.id===letzte }); });   // Hotfix 13 §6: Knöpfe nur an der jüngsten Antwort
   if(!(rows||[]).length) h+='<div class="leer" data-leer="1">noch keine Nachricht · schreib '+esc(f12Name(kanal))+'</div>';
   return h;
 }
@@ -6860,7 +6877,7 @@ function f12NachUnten(){ const sc=el('chatList'); if(sc) sc.scrollTop=0; const b
 function f12VerlaufAktualisieren(kanal, g){
   const list=el('chatList'), fluss=el('chatFluss'); if(!list || !fluss) return;
   const rows=f12Verlauf(kanal, g); if(!rows) return;
-  const warUnten=f12Unten(list); let neu=0;
+  const warUnten=f12Unten(list), letzte=f12LetzteAntwortId(rows); let neu=0;
   const leer=fluss.querySelector ? fluss.querySelector('[data-leer]') : null; if(leer && rows.length && leer.remove) leer.remove();
   const tage=fluss.querySelectorAll ? [...fluss.querySelectorAll('.f7-day')].map(d=>d.dataset.tag) : []; let tag=tage.length ? tage[tage.length-1] : '';
   rows.forEach(r=>{
@@ -6872,9 +6889,9 @@ function f12VerlaufAktualisieren(kanal, g){
     const lokal=fluss.querySelectorAll ? [...fluss.querySelectorAll('[data-mid^="lokal-"]')].find(x=>String(r.Von||'')==='Pascal' && x.textContent.indexOf(String(r.Text||'').slice(0,40))>=0) : null;
     const d=String(r.Zeitstempel||'').slice(0,10); let h='';
     if(d!==tag && !lokal){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; }
-    h+=f12NachrichtHtml(kanal, r);
+    h+=f12NachrichtHtml(kanal, r, { letzte:r.id===letzte });
     if(lokal) lokal.outerHTML=h; else fluss.insertAdjacentHTML('beforeend', h);
-    if(String(r.Von||'')!=='Pascal') neu++; });
+    if(String(r.Von||'')!=='Pascal'){ neu++; fluss.querySelectorAll('.f12-act').forEach(a=>{ if(a.dataset.f12act!==String(r.id)) a.classList.add('aus'); }); } });   // Hotfix 13 §6: ältere Knöpfe grau
   const s=el('chatSchreibt'); if(s && s.outerHTML!==undefined){ const n=f12SchreibtHtml(kanal, rows); if(s.outerHTML!==n) s.outerHTML=n; }
   if(neu){ if(warUnten) f12NachUnten(); else { const b=el('chatNeu'); if(b) b.hidden=false; } }
   f12GesehenMelden(kanal, rows);
