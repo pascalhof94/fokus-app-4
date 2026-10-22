@@ -2756,9 +2756,6 @@ body.breit #f4sb .f4-onr{grid-column:3;margin-top:0}
 /* Nachbesserung · Chat */
 .f3n-kopf{position:sticky;top:0;z-index:7;display:flex;align-items:center;gap:8px;padding:8px 0 6px;margin:0 0 4px;background:var(--bg);border-bottom:1px solid var(--line)}.f3n-kopf h3{font-size:18px;font-weight:800;margin:0}.f3n-kopf .sp{flex:1}
 .f3n-kopf .f3n-bell,.f3n-kopf .f3n-x{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:17px}
-.f3n-st{display:block;margin-top:3px;font-size:11.5px;font-style:normal;color:rgba(255,255,255,.75)}.f3n-st.arbeitet{color:#ffd23f}.f3n-st.beantwortet{color:#3ecf8e}.f3n-st.abgelehnt{color:#f66d6d}.f3n-st.gesendet{opacity:.7}
-.f3n-schreibt{margin:8px 0 2px;font-size:13px;color:#9a9ca2;font-weight:600}.f3n-schreibt span{color:#ffd23f}
-.f3n-neu{position:sticky;bottom:64px;margin:6px auto 0;display:block;border-radius:22px;border:1px solid #2dd4bf;background:#0f2a27;color:#2dd4bf;font-weight:800;font-size:13px;padding:0 14px;min-height:44px;z-index:5}
 #suchFab .badge.chat{right:auto;left:-6px;top:auto;bottom:-4px;background:#3b82f6}
 [data-f7akt="chat"]{position:relative}[data-f7akt="chat"] .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#3b82f6;color:#fff;font:700 11px/20px system-ui;text-align:center;padding:0 5px}
 /* Nachbesserung 5.3: Namen und Titel brechen um, nie abgeschnitten */
@@ -5705,7 +5702,7 @@ function f7PauseStarten(){
   const pk=f7PauseKarte(p.art, true);
   if(V.on || V.ziel) e4BrueckeSetzen(V.on ? V.on.id : null, V.ziel ? V.ziel.id : null, p.art);
   S.tag.pause={ art:p.art, min:p.min, start:jetztIso(), bis:new Date(Date.now()+p.min*60000).toISOString(), karteId:pk.id, gemeldet:false }; saveTag();
-  if(p.text) f7ChatSenden('Trainer', '☕ Pause ('+p.min+' Min.): '+p.text, { art:'Pause' });
+  if(p.text) f12TrainerSenden('☕ Pause ('+p.min+' Min.): '+p.text, { anlass:'Pause' });   // 4.1 §9.2
   closeSheet(); F7.blattNeu=null; F7.pz=null;
   if(p.art==='adhs'){ try{ kartenListeTick(pk.id); }catch(e){} toast('🧠 ADHS-Blockade notiert · '+p.min+' Min. Pause'); }
   fokusStarten(pk.id, 'pause'); try{ e4Pause(); }catch(e){}
@@ -5729,55 +5726,7 @@ function oeffneOnrampWahl(zielId){
   const l=f7Onramps().filter(k=>k.id!==zielId);
   openSheet('🚀 Onramp wählen', (l.length ? '<p class="d">Leichte Karte vor „'+esc((S.karten.find(x=>x.id===zielId)||{}).titel||'')+'": Onramp erledigt +'+num(e4BrueckeWerte().onramp,100)+' · Zielaufgabe in '+num(e4BrueckeWerte().zielMin,10)+' Min gestartet +'+num(e4BrueckeWerte().ziel,100)+'.</p><div class="kl">'+l.map(k=>'<div class="kl-z" data-f7onramp="'+k.id+':'+zielId+'" style="--fam:'+famFarbe(k)+'"><div class="kl-t"><b class="kl-titel">'+esc(k.titel||'?')+'</b><span class="kl-meta">'+(num(k.sollMin)>0 ? Math.round(num(k.sollMin))+' Min' : 'ohne Soll')+'</span></div></div>').join('')+'</div>' : '<div class="leer">keine Onramp-Karte (leichte Karte unter 15 Min)</div>'), '<button class="btn ghost sm" data-close="1">Schließen</button>');
 }
-/* ── 7.4 · Chat: jeder Agent über dfm.agenten_auftraege (Art Chat); Antworten kommen in denselben Chat ── */
-function f7Chat(){ if(!S.ui.f7chat || typeof S.ui.f7chat!=='object') S.ui.f7chat={ an:'Trainer', bezug:null, karteId:null }; if(S.ui.f7chat.karteId===undefined) S.ui.f7chat.karteId=null; return S.ui.f7chat; }   // Hotfix 9 · 3.2: karteId = eigener Chat je Karte
-const F7_CHAT_ARTEN=['Chat','Antwort','Planänderung','Auftrag','Pause','Kommentar','Schiebe-Grund','Postfach'];
-function f7ChatLaden(){ const ab=anVorTage(heuteApp(), 14)+'T00:00:00';
-  return f7Lager('chat', 30000, ()=>f7Alle({ tabelle:'Agenten-Aufträge', felder:['Text','Auftraggeber','Empfänger','Art','Status','Ergebnis','Zeitstempel','Aufgabe','Projekt','Antwortet auf'], filter:[{ feld:'Zeitstempel', operator:'groesser_gleich', wert:ab }], sortierung:[{ feld:'Zeitstempel', richtung:'auf' }] })); }
-function f7ChatEmpfaenger(){ const c=f7Chat(); return c.an||'Trainer'; }
-function f7ChatSenden(an, text, opt){
-  opt=opt||{}; const lk=getrackteKarte(), verk={};
-  if(opt.karte && opt.karte.airtableId) verk.Aufgabe=[opt.karte.airtableId]; else if(opt.bezugKarte && lk && lk.airtableId) verk.Aufgabe=[lk.airtableId];
-  if(opt.projektId) verk.Projekt=[opt.projektId];
-  const felder={ Text:text, Auftraggeber:'Pascal', 'Empfänger':an, Art:opt.art||'Chat', Status:'offen', Zeitstempel:jetztIso() };
-  const eintrag={ id:'lokal-'+Date.now(), Text:text, Auftraggeber:'Pascal', 'Empfänger':an, Art:opt.art||'Chat', Zeitstempel:jetztIso(), lokal:true };
-  const L=F7.lager.chat; if(!opt.ohneLokal && L && Array.isArray(L.daten)) L.daten.push(eintrag);   // Hotfix 9 · 3.2: der zweite Datensatz (Fachagent) erscheint nicht doppelt
-  return FSLive.senden('datensatz_anlegen', { tabelle:'Agenten-Aufträge', felder, verknuepfungen:verk }, opt.id ? { id:opt.id } : undefined).then(r=>{ f7LagerLeeren('chat'); f7Neu(); return r; }).catch(e=>{ toast('Nachricht wartet: '+((e && e.message)||'Fehler')); });
-}
-function f7ChatOeffnen(an, bezug, vorlage, karteId){ const c=f7Chat(); if(an) c.an=an; c.bezug=bezug||null; c.vorlage=vorlage||''; c.karteId=karteId||null; saveUi(); e1Oeffnen('chat'); }   // Hotfix 9 · 3.2: vierter Parameter karteId
-function f7ChatHtml(){
-  const c=f7Chat(), rows=f7ChatLaden(), an=f7ChatEmpfaenger(), lk=getrackteKarte(), abts=f7Abteilungen()||[], proj=f7Projekte()||[];
-  let h='<div class="f7-top"><div class="f7-tt"><em data-f7zurueck="1">‹</em> 💬 Chat</div></div>';
-  h+='<div class="f7-chips gr"><div class="'+(an==='Trainer'?'on tk':'')+'" data-f7chatan="Trainer">🏋️ Trainer</div>'+
-    '<div class="'+(c.anArt==='abteilung'?'on':'')+'" data-f7chatwahl="abteilung">🏢 '+(c.anArt==='abteilung' ? esc(an) : 'Abteilung')+' ▾</div>'+
-    '<div class="'+(c.anArt==='projekt'?'on':'')+'" data-f7chatwahl="projekt">📁 '+(c.anArt==='projekt' ? esc(an) : 'Projekt')+' ▾</div>'+
-    (lk ? '<div class="'+(c.bezug==='karte'?'on':'')+'" data-f7chatbezug="karte">▶ zur laufenden Karte</div>' : '')+'</div>';
-  if(c.bezugText) h+='<div class="f7-info">'+esc(c.bezugText)+'</div>';
-  if(!rows) h+='<div class="leer">'+(f7LagerFehler('chat') ? 'FocusSystem: '+esc(f7LagerFehler('chat')) : 'lädt …')+'</div>';
-  else{
-    const mine=rows.filter(r=>{ const A=String(r.Auftraggeber||''), E=String(r['Empfänger']||''); if(an==='Trainer') return (A==='Pascal' && /trainer/i.test(E)) || /trainer/i.test(A); return (A==='Pascal' && E===an) || A===an; });
-    let tag=''; mine.forEach(r=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; }
-      const vonPascal=String(r.Auftraggeber||'')==='Pascal', art=String(r.Art||'');
-      if(/plan|auftrag/i.test(art) && !vonPascal){ h+='<div class="f7-info">'+(/plan/i.test(art) ? '📥 Planänderung im Postfach: ' : '➡️ ')+esc(r.Text||'')+'</div>'; return; }
-      const text=String(r.Text||''), lines=text.split('\n'), opts=lines.filter(l=>/^\s*[-•]\s+/.test(l)).map(l=>l.replace(/^\s*[-•]\s+/,'').trim()), body=lines.filter(l=>!/^\s*[-•]\s+/.test(l)).join('\n');
-      h+='<div class="f7-m '+(vonPascal?'p':'t')+'">'+esc(body).replace(/\n/g,'<br>')+'<small>'+(vonPascal ? '' : esc(r.Auftraggeber||an)+' · ')+fmtUhr(r.Zeitstempel)+(r.lokal ? ' · wird gesendet' : '')+'</small></div>';
-      if(!vonPascal && opts.length) h+='<div class="f7-act2">'+opts.map((o,i)=>'<div class="'+(i?'':'g')+'" data-f7chatantwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'</div>';
-      if(!vonPascal && r.Ergebnis) h+='<div class="f7-m t">'+esc(String(r.Ergebnis)).replace(/\n/g,'<br>')+'<small>Ergebnis</small></div>';
-      if(vonPascal && /auftrag|plan/i.test(art)) h+='<div class="f7-info">➡️ Auftrag an '+esc(r['Empfänger']||'')+' · Antwort erscheint hier</div>'; });
-    if(!mine.length) h+='<div class="leer">noch keine Nachricht · schreib dem '+(an==='Trainer'?'Trainer':esc(an))+'</div>';
-  }
-  h+='<div class="f7-inp unten"><input type="text" id="f7chatText" placeholder="Nachricht an '+(an==='Trainer'?'den Trainer':esc(an))+' …" value="'+esc(c.vorlage||'')+'" enterkeyhint="send"><span data-f7mic="f7chatText">🎙️</span><b data-f7chatsenden="1">➤</b></div>';
-  return h;
-}
-function f7ChatAbschicken(text){
-  const c=f7Chat(), inp=el('f7chatText'); text=(text!=null ? text : (inp ? inp.value : '')).trim(); if(!text) return;
-  const lk=getrackteKarte(), kc=f3nChatKarte();
-  if(kc){ const fa=f3nFachagent(kc), txt='[Karte '+kc.id+'] '+text, pid=f3nProjektId(kc);   // Hotfix 9 · 3.2: Karten-Chat — Kennung, Trainer und Fachagent, Projekt verknüpft
-    f7ChatSenden('Trainer', txt, { karte:kc, projektId:pid });
-    if(fa) f7ChatSenden(fa, txt, { karte:kc, projektId:pid, ohneLokal:true }); }
-  else f7ChatSenden(f7ChatEmpfaenger(), text, { karte:c.bezug==='karte' ? lk : null, projektId:c.anArt==='projekt' ? c.anId : null });
-  c.vorlage=''; if(inp) inp.value=''; saveUi(); haptik(8); e1Rendern();
-}
+/* ── 7.4 · Chat: seit 4.1 in Block F12 (Chat-Räume): f7Chat*, f3n* sind entfernt ── */
 /* Spracheingabe, wo das Gerät sie anbietet */
 function f7Mikro(feldId){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR){ toast('Spracheingabe hier nicht verfügbar — Mikrofon der Tastatur nutzen'); return; }
@@ -5943,7 +5892,7 @@ function f7PfEntscheiden(id, ent, extra){
   const H=f7PfHeute(); H.n++; try{ e4BonusBuchen(null, 10, 'Postfach · '+ent); }catch(e){}
   if(L && L.daten && !L.daten.length && !H.leerBonus){ H.leerBonus=true; try{ e4BonusBuchen(null, 50, 'Postfach leer'); }catch(e){} toast('📭 Postfach leer · +50'); }
   saveMeta(); f7PostfachStandSetzen((L && L.daten)||[]); haptik(10); renderPostfach();
-  if(ent==='besprochen') f7ChatOeffnen('Trainer', 'postfach', 'Zu „'+String(r.Titel||'')+'": ');
+  if(ent==='besprochen') f12TrainerOeffnen('Zu „'+String(r.Titel||'')+'“: ');   // 4.1 §9.3
 }
 function f7PfAnpassen(id){ const r=(f7Postfach()||[]).find(x=>x.id===id); if(!r) return;
   openSheet('✏️ Anpassen', '<p class="d"><b>'+esc(r.Titel||'')+'</b></p><div class="field"><label>Entwurf, so wie er rausgehen soll</label><textarea id="f7pfText" rows="6">'+esc(r['Output/Entwurf']||'')+'</textarea></div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-f7pfanpassengo="'+esc(id)+'">Freigeben mit Anpassung</button>'); }
@@ -5977,7 +5926,7 @@ renderAbhakDialog=function(){
     _alt();
     if(fertig && /^\d{2}:\d{2}$/.test(fertig) && k){ const d=new Date(); const [hh,mm]=fertig.split(':').map(Number); d.setHours(hh, mm, 0, 0);
       if(Math.abs(d.getTime()-Date.now())>90000){ const e=(S.intraday||[]).slice().reverse().find(x=>x && x.kartenId===k.id && x.typ==='abhaken'); if(e){ e.ts=d.toISOString(); DB.set('intraday', S.intraday); } } }
-    if(kom && k) f7ChatSenden('Trainer', '✓ „'+k.titel+'": '+kom, { art:'Kommentar', karte:k });
+    if(kom && k) f12TrainerSenden('✓ „'+k.titel+'“: '+kom, { anlass:'Kommentar', karte:k });   // 4.1 §9.2
   }; }
 /* ── 7.6 · Schieben ── */
 function f7Sch(){ return F7.sch; }
@@ -6015,11 +5964,11 @@ function f7SchiebenGo(){
     if(k.rhythmus){ k.letzteErfuellung=heute; k.streak=num(k.streak)+1; if(S.tag) (S.tag.routinenBilanz=S.tag.routinenBilanz||[]).push({ id:k.id, titel:k.titel, verpasst:false, entschuldigt:true, anderer:person||'jemand' }); logIntraday(k, { punkte:0, typ:'anderer', quelle:'uhr' }); }
     else { overrideSetzen(k, 0); karteAbhaken(k.id, false); }
     k.schiebeGrund=grund||null; beruehre(k); saveKarten(); saveTag(); closeSheet(); F7.blattNeu=null; renderAlles(); toast('👥 Von '+(person||'jemand anderem')+' erledigt · 0 Punkte');
-    if(grund || person) f7ChatSenden('Trainer', '👥 „'+k.titel+'" von '+(person||'jemand anderem')+' erledigt'+(grund ? ': '+grund : ''), { art:'Schiebe-Grund', karte:k });
+    if(grund || person) f12TrainerSenden('👥 „'+k.titel+'“ von '+(person||'jemand anderem')+' erledigt'+(grund ? ': '+grund : ''), { anlass:'Schiebe-Grund', karte:k });   // 4.1 §9.2
     return; }
   if(s.was==='archiv'){ k.status='archiviert'; k.schiebeGrund=grund||null; beruehre(k); saveKarten(); closeSheet(); F7.blattNeu=null; renderAlles(); toast('🗄️ Archiviert — nie gelöscht');
     if(k.airtableId) FSLive.senden('datensatz_aendern', { tabelle:'Aufgaben', id:k.airtableId, felder:{ Status:'Archiv' } }).catch(()=>{});
-    f7ChatSenden('Trainer', '🗄️ „'+k.titel+'" nicht mehr nötig'+(grund ? ': '+grund : ''), { art:'Schiebe-Grund', karte:k }); return; }
+    f12TrainerSenden('🗄️ „'+k.titel+'“ nicht mehr nötig'+(grund ? ': '+grund : ''), { anlass:'Schiebe-Grund', karte:k }); return; }   // 4.1 §9.2
   let ziel=s.datum; if(s.was==='aussetzen'){ const b=el('f7schBis'); ziel=(b && /^\d{4}-\d{2}-\d{2}$/.test(b.value)) ? b.value : s.bis; }
   else if(s.frei){ const f=el('f7schFrei'); if(f && /^\d{4}-\d{2}-\d{2}$/.test(f.value)) ziel=f.value; }
   if(!(ziel>heute)) ziel=morgenIso();
@@ -6030,12 +5979,12 @@ function f7SchiebenGo(){
   ketteRausHeute(k); beruehre(k); saveKarten(); saveTag(); closeSheet(); F7.blattNeu=null; renderAlles();
   toast((s.was==='aussetzen' ? '⏸️ Ausgesetzt bis ' : '↷ Auf ')+fmtDatum(ziel)+' ('+wochentagLang(ziel)+')'+(ab>0 ? ' · −'+ab+' Münzen' : grund ? ' · mit Grund' : '')); haptik(15);
   if(k.airtableId) FSLive.senden('datensatz_aendern', { tabelle:'Aufgaben', id:k.airtableId, felder:{ Deadline:ziel, 'Schieben mit Grund':!!grund } }).catch(()=>{});
-  if(grund) f7ChatSenden('Trainer', '↷ „'+k.titel+'" → '+fmtDatum(ziel)+': '+grund, { art:'Schiebe-Grund', karte:k });
+  if(grund) f12TrainerSenden('↷ „'+k.titel+'“ → '+fmtDatum(ziel)+': '+grund, { anlass:'Schiebe-Grund', karte:k });   // 4.1 §9.2
   matrixAbfrageNach(k.id, 'schieben');
 }
 function f7SchiebenChat(){ const s=f7Sch(), k=S.karten.find(x=>x.id===s.kid); if(!k) return;
   const schuebe=(S.intraday||[]).filter(e=>e && e.kartenId===k.id && e.typ==='schub').slice(-5).map(e=>fmtDatum(belFensterDatum(e.ts))+(e.ziel?' → '+fmtDatum(e.ziel):'')).join(', ');
-  closeSheet(); F7.blattNeu=null; f7ChatOeffnen('Trainer', 'karte', 'Zu „'+k.titel+'" ('+num(k.schiebeZaehler)+'× geschoben'+(schuebe ? ': '+schuebe : '')+'): '); }
+  closeSheet(); F7.blattNeu=null; f12TrainerOeffnen('Zu „'+k.titel+'“ ('+num(k.schiebeZaehler)+'× geschoben'+(schuebe ? ': '+schuebe : '')+'): ', { karte:k }); }   // 4.1 §9.3: Karte als Marke
 /* ── 7.7 · Planansicht ── */
 function f7Plan(){ if(!S.ui.f7plan || typeof S.ui.f7plan!=='object') S.ui.f7plan={ sicht:'heute' }; return S.ui.f7plan; }
 function f7PlanBloecke(datum){ const bl=tagesBloecke(datum)||[]; return bl.filter(b=>!b.parent).slice().sort((a,b)=>a.von-b.von); }
@@ -6065,7 +6014,7 @@ function f7PlanHtml(){
   if(datum===heute){ const rest=aktiveKetteKarten().filter(k=>k.status==='offen' && k.domain==='dfm').reduce((a,k)=>a+Math.max(0, num(k.sollMin)-heuteInvestiertMin(k)),0), frei=bl.filter(b=>b.typ==='dfm').reduce((a,b)=>a+Math.max(0, b.bis-Math.max(b.von, now)),0)*60;
     const plan=(f7Postfach()||[]).filter(r=>f7PfKat(r)==='plan')[0];
     h+='<div class="f7-sum'+(rest>frei?' warn':'')+'">Rest DFM heute: <b>'+fmtDauer(rest)+' geplant</b> in '+fmtDauer(frei)+' DFM-Zeit.'+(plan ? ' Trainer schlägt vor: '+esc(plan.Titel||'') : (rest>frei ? ' Das geht nicht auf — mit dem Trainer kürzen.' : ''))+'</div>'; }
-  const aend=datum===heute ? (f7ChatLaden()||[]).filter(r=>/plan/i.test(String(r.Art||'')) && String(r.Zeitstempel||'').slice(0,10)===heute) : [];
+  const aend=datum===heute ? f12TrainerZeilenHeute('Planänderung') : [];   // 4.1 §9.5: aus dem Trainer-Kanal
   bl.forEach(b=>{ const ist=datum===heute ? f7PlanIst(b) : null, fertig=datum===heute && b.bis<=now && !(lb && lb.id===b.id), jetzt=lb && lb.id===b.id, karten=f7PlanKarten(b, datum), typ=b.typ==='dfm'?'d':b.typ==='privat'?'p':b.typ==='pause'?'e':'s';
     const name=(ICON[b.typ]||'📦')+' '+esc(b.name||BLOCK_TYP_NAME[b.typ]||'Block');
     h+='<div class="f7-b"><div class="tm'+(jetzt?' jetzt':'')+'">'+anFmtUhr(b.von)+(jetzt ? '<br>jetzt' : '')+'</div><div class="bx '+typ+(fertig?' done':'')+(jetzt?' now':'')+'">';
@@ -6103,13 +6052,13 @@ function f7Klick(e){
   if(t.closest('[data-klkarte]') && !t.closest('[data-klliste]') && !t.closest('#fokusView')){ if(kettenListeKlick(e)){ if(e1Art()) e1Rendern(); return true; } }   // Hotfix 6: Kartenzeilen in den Gruppen der Suche
   if(d('data-f7zurueck')){ const ds=f7Ds(); if(e1Art()==='durchsuchen' && ds.pfad.length){ ds.pfad.pop(); saveUi(); e1Rendern(); } else e1Oeffnen('suche'); return true; }
   if(d('data-f7neukarte')){ const q=String(suFrage()||'').trim(); haptik(8); e1Schliessen(); oeffneDetail(null, { vorbelegung: q ? { titel:q } : {}, mehrAuf:true }); return true; }   // Hotfix 9 · Abschnitt 1
-  if((z=d('data-f7akt'))){ const a=z.dataset.f7akt; haptik(6); if(a==='erfassen') e1Oeffnen('erfassen'); else if(a==='routinen') e1Oeffnen('routinen'); else if(a==='pause') oeffnePause(); else if(a==='chat') f7ChatOeffnen('Trainer'); else if(a==='neu'){ e1Schliessen(); oeffneDetail(null); } else if(a==='durchsuchen'){ const ds=f7Ds(); ds.pfad=[]; saveUi(); e1Oeffnen('durchsuchen'); } return true; }
+  if((z=d('data-f7akt'))){ const a=z.dataset.f7akt; haptik(6); if(a==='erfassen') e1Oeffnen('erfassen'); else if(a==='routinen') e1Oeffnen('routinen'); else if(a==='pause') oeffnePause(); else if(a==='chat') f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null }); else if(a==='neu'){ e1Schliessen(); oeffneDetail(null); } else if(a==='durchsuchen'){ const ds=f7Ds(); ds.pfad=[]; saveUi(); e1Oeffnen('durchsuchen'); } return true; }
   if((z=d('data-f7platz'))){ const id=z.dataset.f7platz; haptik(10); if(id==='pause'){ oeffnePause(); return true; } const k=id==='adhs' ? f7PauseKarte('adhs', true) : S.karten.find(x=>x.id===id); if(!k) return true; if(istTickbar(k)) kartenListeTick(k.id); else kartenListeCheck(k.id); e1Rendern(); return true; }
   if((z=d('data-f7gruppe'))){ S.ui.suGruppe=z.dataset.f7gruppe; saveUi(); haptik(6); if(e1Art()!=='suche') e1Oeffnen('suche'); else e1Rendern(); return true; }   // Paket 9: aus der linken Spalte öffnet die Gruppe in der Mitte
   if(d('data-f7gruppezu')){ S.ui.suGruppe=null; saveUi(); e1Rendern(); return true; }
   if((z=d('data-f7plan'))){ e.preventDefault(); f7Plan().sicht=z.dataset.f7plan||'heute'; saveUi(); e1Oeffnen('plan'); return true; }
   if((z=d('data-f7plansicht'))){ f7Plan().sicht=z.dataset.f7plansicht; saveUi(); e1Rendern(); return true; }
-  if(d('data-f7planchat')){ f7ChatOeffnen('Trainer', 'plan', 'Plan heute ändern: '); return true; }
+  if(d('data-f7planchat')){ f12TrainerOeffnen('Plan heute ändern: '); return true; }   // 4.1 §9.3
   // Durchsuchen
   if((z=d('data-f7dsmodus'))){ f7Ds().modus=z.dataset.f7dsmodus; saveUi(); e1Rendern(); return true; }
   if((z=d('data-f7abt'))){ const a=(f7Abteilungen()||[]).find(x=>x.id===z.dataset.f7abt); f7Ds().pfad=[{ art:'abteilung', id:z.dataset.f7abt, name:a?a.Name:'' }]; saveUi(); e1Rendern(); return true; }
@@ -6140,16 +6089,8 @@ function f7Klick(e){
   if((z=d('data-f7onramp'))){ const [on,ziel]=z.dataset.f7onramp.split(':'); e4BrueckeSetzen(on, ziel, 'manuell'); closeSheet(); toast('🚀 Onramp gesetzt'); renderAlles(); return true; }
   if((z=d('data-f7mic'))){ f7Mikro(z.dataset.f7mic); return true; }
   // Chat
-  if((z=d('data-f7chatan'))){ const c=f7Chat(); c.an=z.dataset.f7chatan; c.anArt=null; c.anId=null; saveUi(); e1Rendern(); return true; }
-  if((z=d('data-f7chatwahl'))){ const art=z.dataset.f7chatwahl, l=art==='abteilung' ? (f7Abteilungen()||[]).map(a=>({ id:a.id, name:a.Name })) : (f7Projekte()||[]).filter(p=>!/erledigt|archiv/i.test(String(p.Status||''))).map(p=>({ id:p.id, name:p.Projekt }));
-    openSheet(art==='abteilung' ? '🏢 Abteilung' : '📁 Projekt', '<div class="chips">'+l.map(x=>'<button class="chip" data-f7chatziel="'+esc(x.id)+'" data-f7chatart="'+art+'" data-f7chatname="'+esc(x.name)+'">'+esc(x.name)+'</button>').join('')+(l.length?'':'<div class="leer">lädt …</div>')+'</div>', '<button class="btn ghost sm" data-close="1">Schließen</button>'); return true; }
-  if((z=d('data-f7chatziel'))){ const c=f7Chat(); c.an=z.dataset.f7chatname; c.anArt=z.dataset.f7chatart; c.anId=z.dataset.f7chatziel; saveUi(); closeSheet(); e1Rendern(); return true; }
-  if((z=d('data-f7chatbezug'))){ const c=f7Chat(), lk=getrackteKarte(); if(c.karteId){ c.karteId=null; c.bezug=null; } else { c.karteId=lk ? lk.id : null; c.bezug=c.karteId ? 'karte' : null; } saveUi(); e1Rendern(); return true; }   // Hotfix 9 · 3.2: Chip öffnet den Karten-Chat der laufenden Karte
-  if(d('data-f7chatkarteaus')){ const c=f7Chat(); c.karteId=null; c.bezug=null; saveUi(); e1Rendern(); return true; }   // ‹ zurück zum allgemeinen Trainer-Chat
-  if((z=d('data-fkchat'))){ haptik(6); try{ closeSheet(); }catch(x){} f7ChatOeffnen('Trainer', 'karte', '', z.dataset.fkchat); return true; }   // 💬 Zur Karte schreiben (Fokusansicht, Karteneinstellungen)
+  if((z=d('data-fkchat'))){ haptik(6); try{ closeSheet(); }catch(x){} f12KartenChat(z.dataset.fkchat); return true; }   // 💬 Zur Karte schreiben (Fokusansicht, Karteneinstellungen) · 4.1 §9.4: Karten-Gespräch
   if(d('data-f7pfoeffnen')){ haptik(6); e1Schliessen(); seiteZeigen('postfach'); return true; }   // 3.4: „Änderung im Postfach" öffnet das Postfach
-  if(d('data-f7chatsenden')){ f7ChatAbschicken(); return true; }
-  if((z=d('data-f7chatantwort'))){ f7ChatAbschicken(z.dataset.f7chatantwort); return true; }
   // Postfach
   if((z=d('data-f7pffrei'))){ haptik(12); f7PfVorschlagAnnehmen(z.dataset.f7pffrei, false); return true; }   // Hotfix 9 · Abschnitt 2: Kartenzeile ✓
   if((z=d('data-f7pfstart'))){ haptik(10); f7PfVorschlagAnnehmen(z.dataset.f7pfstart, true); return true; }   // ▶
@@ -6170,7 +6111,6 @@ function f7Klick(e){
 }
 document.addEventListener('click', e=>{ try{ if(f7Klick(e)){ e.stopPropagation(); } }catch(x){ console.warn('Paket 7 Klick', x); } }, true);
 document.addEventListener('input', e=>{ const t=e.target; if(!t) return; if(t.matches && t.matches('[data-f7erftext]')) f7Erf().text=t.value; if(t.matches && t.matches('[data-f7dssuche]')){ f7Ds().suche=t.value; clearTimeout(F7.dsT); F7.dsT=setTimeout(()=>e1Rendern(), 250); } });
-document.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target && e.target.id==='f7chatText'){ e.preventDefault(); f7ChatAbschicken(); } });
 /* Seite Postfach: beim Verlassen die Zeit gutschreiben; Stand des Postfachs alle 2 Minuten für das rote Band der Statusleiste */
 { const _alt=ebeneSetzen; ebeneSetzen=function(p){ const vor=seiteAktuell(); _alt(p); if(vor==='postfach' && seiteAktuell()!=='postfach') f7PostfachVerlassen(); if(seiteAktuell()==='postfach' && !F7.pfSeit) F7.pfSeit=Date.now(); }; }
 function f7Takt(){ try{ f7PausePruefen(); }catch(e){} try{ if(FSLive.gekoppelt() && (!F7.lager.postfach || Date.now()-F7.lager.postfach.ts>120000)){ const r=f7Postfach(); } }catch(e){} }
@@ -6399,7 +6339,7 @@ function renderTagesuebergang(){
     openSheet('☀️ Tagesübergang', h, '<button class="btn ghost sm" data-f11schritt="1">‹ Reste</button>'+(vortag ? '<button class="btn prim" data-f11buchen="1">Vortag buchen · Tag starten</button>' : '<button class="btn prim" data-f11schritt="3">Weiter · Feedback</button>')); return;
   }
   if(st===3){
-    let fb=null; try{ fb=(f7ChatLaden()||[]).filter(r=>/trainer/i.test(String(r.Auftraggeber||''))&&/feedback|antwort/i.test(String(r.Art||''))&&String(r.Zeitstempel||'').slice(0,10)===heuteApp()).slice(-1)[0]; }catch(e){}
+    let fb=null; try{ fb=f12TrainerZeilenHeute('Feedback').slice(-1)[0]; }catch(e){}   // 4.1 §9.6: letzte Zeile des Trainers mit Anlass Feedback von heute
     h+='<p class="d"><b>Feedback des Trainers zum Vortag</b> — auch Unangenehmes, belegt.</p>'+(fb ? '<div class="f7-m t">'+esc(String(fb.Text||'')).replace(/\n/g,'<br>')+'<small>Trainer · '+esc(fmtUhr(fb.Zeitstempel))+'</small></div>'
       : '<div class="leer">'+(FSLive.gekoppelt() ? 'Der Trainer ist angefragt — seine Antwort erscheint hier und im Chat.' : 'Nicht mit dem Mac mini verbunden — das Feedback kommt später im Chat.')+'</div>');
     openSheet('☀️ Tagesübergang', h, '<button class="btn ghost sm" data-f11chat="1">💬 Rückfragen</button><button class="btn prim" data-f11schritt="4">Weiter · Tagesplan</button>'); return;
@@ -6432,7 +6372,7 @@ function f11VortagBuchen(){
   try{ const k=tagesuebergangKarte(); if(S.tag && tagOffen()){ S.tag.uebergang={ ts:jetztIso(), karte:k ? k.id : null, vortag:vortagDatum }; const imLog=(S.intraday||[]).some(e=>e && e.tagId===S.tag.tagId && e.eck==='uebergang'); const p=f11EckpunkteBuchen('uebergang'); f11Log('eckpunkte', p>0 ? p+' P gebucht (Stunden-Log)' : (imLog ? 'schon im Stunden-Log' : 'nichts gebucht: Tag nicht buchbar')); saveTag(); } }catch(e){ console.warn('Übergang: Eckpunkte', e); f11Log('eckpunkte', 'Fehler: '+((e&&e.message)||e)); }
   try{ const text='Tagesübergang: Vortag '+(vortagDatum ? f11Datum(vortagDatum) : '')+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.';
     S.meta.f11Ausstehend=Object.assign({}, S.meta.f11Ausstehend, { chat:{ text, art:'Feedback', tag:vortagDatum, seit:jetztIso() } }); saveMeta();   // Nachbesserung 2
-    const p=f7ChatSenden('Trainer', text, { art:'Feedback', id:'chat-uebergang-'+vortagDatum });
+    const p=f12TrainerSenden(text, { anlass:'Feedback', id:'chat-uebergang-'+vortagDatum });   // 4.1 §9.2
     if(p && p.then) p.then(r=>f11Log('chat', r && r.sofort ? 'gesendet' : (r && r.wartend ? 'wartend' : 'ohne Antwort'))).catch(e=>f11Log('chat', 'Fehler: '+((e&&e.message)||e))); }
   catch(e){ f11Log('chat', 'Fehler: '+((e&&e.message)||e)); }
   F11.auf=null; renderAlles();
@@ -6485,7 +6425,7 @@ async function f11Nachsenden(){
     if(A.chat && !FSLive.warteschlangeHat('chat-uebergang-'+A.chat.tag)){
       const d=await FSLive.lesen('datensaetze_auflisten', { tabelle:'Agenten-Aufträge', felder:['Text'], filter:[{ feld:'Text', operator:'gleich', wert:A.chat.text }], limit:1 });
       if(d && d.datensaetze && d.datensaetze.length){ delete A.chat; saveMeta(); f11Log('chat', 'beim Dienst bestätigt'); }
-      else { f11Log('chat', 'nachsenden'); f7ChatSenden('Trainer', A.chat.text, { art:A.chat.art||'Feedback', id:'chat-uebergang-'+A.chat.tag }); } }
+      else { f11Log('chat', 'nachsenden'); f12TrainerSenden(A.chat.text, { anlass:A.chat.art||'Feedback', id:'chat-uebergang-'+A.chat.tag }); } }   // 4.1 §9.2
   }catch(e){ f11Log('nachsenden', 'Fehler: '+((e&&e.message)||e)); }
 }
 setInterval(()=>{ try{ f11Nachsenden(); }catch(e){} }, 60000);   // unabhängig vom Sekunden-Ticker, der nur mit laufender Uhr läuft
@@ -6525,7 +6465,7 @@ function f11ReflexionSpeichern(){
   if(a.reflexion.akku!=null) S.tag.akku=Math.round(a.reflexion.akku);
   try{ const k=reflexionKarte(); if(k && k.status==='offen' && tickAnzahlHeute(k)===0) routineTick(k, {still:true}); }catch(e){}
   saveTag(); closeSheet(); renderAlles(); toast('🌙 Reflexion gespeichert');
-  try{ const r=a.reflexion; if(r.wort || r.energieGegeben || r.energieGekostet) f7ChatSenden('Trainer', 'Reflexion: '+[r.wort, r.energieGegeben ? 'Energie gegeben: '+r.energieGegeben : '', r.energieGekostet ? 'Energie gekostet: '+r.energieGekostet : ''].filter(Boolean).join(' · ')+' · Akku '+Math.round(num(r.akku))+' %', { art:'Reflexion' }); }catch(e){}
+  try{ const r=a.reflexion; if(r.wort || r.energieGegeben || r.energieGekostet) f12TrainerSenden('Reflexion: '+[r.wort, r.energieGegeben ? 'Energie gegeben: '+r.energieGegeben : '', r.energieGekostet ? 'Energie gekostet: '+r.energieGekostet : ''].filter(Boolean).join(' · ')+' · Akku '+Math.round(num(r.akku))+' %', { anlass:'Reflexion' }); }catch(e){}   // 4.1 §9.2
 }
 /* ── Geschafft: nach „Schlafen starten" nur Erreichtes — erledigte Karten, Punkte, Ziele ── */
 function geschafftHtml(){
@@ -6554,8 +6494,8 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) r
   if((z=t.closest('[data-f11schritt]'))){ e.stopPropagation(); const n=num(z.dataset.f11schritt); if(n>2 && vortagOffen()){ toast('Erst den Vortag buchen (Schritt 2)'); oeffneTagesuebergang(2); return; } oeffneTagesuebergang(n); return; }
   if(t.closest('[data-f11buchen]')){ e.stopPropagation(); f11VortagBuchen(); return; }
   if(t.closest('[data-f11fertig]')){ e.stopPropagation(); f11Fertig(); return; }
-  if(t.closest('[data-f11chat]')){ e.stopPropagation(); closeSheet(); F7.blattNeu=null; f7ChatOeffnen('Trainer', 'uebergang', ''); return; }
-  if(t.closest('[data-f11plananfordern]')){ e.stopPropagation(); f7ChatSenden('Trainer', 'Bitte den Tagesplan für heute als Paket in die App.', { art:'Tagesplan' }); toast('Plan beim Trainer angefragt'); return; }
+  if(t.closest('[data-f11chat]')){ e.stopPropagation(); closeSheet(); F7.blattNeu=null; f12TrainerOeffnen(''); return; }   // 4.1 §9.3
+  if(t.closest('[data-f11plananfordern]')){ e.stopPropagation(); f12TrainerSenden('Bitte den Tagesplan für heute als Paket in die App.', { anlass:'Tagesplan' }); toast('Plan beim Trainer angefragt'); return; }   // 4.1 §9.2
   if((z=t.closest('[data-f11haken]'))){ e.stopPropagation(); F11.weiter=true; closeSheet(); abhakDialog(z.dataset.f11haken); return; }
   if((z=t.closest('[data-f11schieb]'))){ e.stopPropagation(); F11.weiter=true; closeSheet(); oeffneSchieben(z.dataset.f11schieb); return; }
   if((z=t.closest('[data-f11skip]'))){ e.stopPropagation(); if(S.tag){ S.tag.abschlussEntscheid=Object.assign({}, S.tag.abschlussEntscheid); S.tag.abschlussEntscheid[z.dataset.f11skip]='ueberspringen'; saveTag(); } renderTagesuebergang(); return; }
@@ -7009,175 +6949,33 @@ function f12ErfassenUebernehmen(c, r, txt, datei){
   else toast('Datei wartet auf den Mac mini — anhängen geht erst mit Verbindung');
   F7.erf=null; e1Oeffnen('chat'); f12Fokus();
 }
+/* ── §9 · Einstiege und interne Nachrichten ── */
+function f12TrainerKanal(){ return f12KanalVon('Trainer'); }
+/* interne Nachricht an den Trainer ins Tages-Gespräch (Anlass Pause, Kommentar, Schiebe-Grund, Feedback, Reflexion, Tagesplan) */
+function f12TrainerSenden(text, opt){ opt=opt||{}; const kanal=f12TrainerKanal(), g=f12TagGespraech(), karten=opt.karte ? [{ id:opt.karte.id, titel:opt.karte.titel, airtableId:opt.karte.airtableId||null }] : [];
+  return f12Senden(kanal, g, text, { anlass:opt.anlass||'Chat', karten, id:opt.id, titel:(kanal && f12GespraechHatZeilen(kanal, g)) ? null : f12TagTitel() }); }
+/* Chat öffnen mit Vorlage: Tages-Gespräch des Trainers, Vorlage als Entwurfstext, Karte als Marke (§9.3) */
+function f12TrainerOeffnen(vorlage, opt){ opt=opt||{}; const kanal=f12TrainerKanal(); if(!kanal){ toast('Chat-Kanäle laden noch …'); f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null }); return; }
+  const g=f12TagGespraech(), e=f12Entwurf(kanal.id, g); if(vorlage) e.text=vorlage; if(opt.karte && !e.karten.some(k=>k.id===opt.karte.id)) e.karten.push({ id:opt.karte.id, titel:opt.karte.titel, airtableId:opt.karte.airtableId||null });
+  f12Oeffnen({ raum:f12Raum(kanal)||'Trainerstab', kanal:kanal.id, gespraech:g, fokus:true }); }
+/* Karten-Chat (§9.4): private Karte → Trainer · Karte mit Projekt → Projekt-Agent des Projekts, falls aktiv · sonst erster Kanal der Abteilung des Projekts · sonst Trainer */
+function f12KartenKanal(k){
+  const kan=f12Kanaele()||[], trainer=f12TrainerKanal();
+  if(!k || k.domain==='privat' || !k.projekt) return trainer;
+  const pn=String(k.projekt||'').trim().toLowerCase();
+  const pa=kan.find(x=>f12IstProjekt(x) && f12Name(x).trim().toLowerCase()===pn); if(pa) return pa;
+  const p=(f7Projekte()||[]).find(x=>String(x.Projekt||'').trim().toLowerCase()===pn), abt=p ? f7Link(p.Abteilung)[0] : null;
+  if(abt){ const r=(f12Raeume()||[]).find(x=>x.id===abt.id); if(r && r.kanaele.length) return r.kanaele[0]; }
+  return trainer;
+}
+function f12KartenChat(karteId){ const k=S.karten.find(x=>x.id===karteId); if(!k) return; const kanal=f12KartenKanal(k); if(!kanal){ toast('Chat-Kanäle laden noch …'); f12Oeffnen({ raum:'Trainerstab' }); return; }
+  const g=f12KarteGespraech(k.id), e=f12Entwurf(kanal.id, g); if(!f12GespraechHatZeilen(kanal, g) && !e.karten.some(x=>x.id===k.id)) e.karten.push({ id:k.id, titel:k.titel, airtableId:k.airtableId||null });
+  f12Oeffnen({ raum:f12Raum(kanal), kanal:kanal.id, gespraech:g, fokus:true }); }
+/* Zeilen des Trainer-Kanals von heute (§9.5 Plan, §9.6 Tagesübergang) */
+function f12TrainerZeilenHeute(anlass){ const kanal=f12TrainerKanal(); const rows=kanal ? (f12Zeilen(kanal)||[]) : []; const heute=heuteApp();
+  return rows.filter(r=>String(r.Von||'')==='Trainer' && String(r.Anlass||'')===anlass && String(r.Zeitstempel||'').slice(0,10)===heute); }
 /* ── F12 Ende ── */
 
-/* ══════════════════════════════════════════════════════════════════════
-   4.0 · Nachbesserung · Abschnitt 3 (Chat: Stand, volle Antworten, Badge, Benachrichtigung) und 5.1/5.2 (fester Kopf, Anhängen statt Neuaufbau)
-   Der Stand jeder eigenen Nachricht kommt aus dem Status ihres Agenten-Auftrags: gesendet (Warteschlange) · angekommen (offen) ·
-   Trainer arbeitet · seit … (vorgemerkt) · beantwortet · … (erledigt) · nicht bearbeitet (abgelehnt). Antworten des Trainers werden
-   vollständig über datensatz_lesen geholt und setzen ihren Auftrag auf erledigt, sobald sie in der App angezeigt wurden.
-   ══════════════════════════════════════════════════════════════════════ */
-const F3N={ seit:{}, voll:{}, lade:{}, takt:null, an:null, gesehenGemeldet:{}, benachrichtigt:{} };
-function f3nGekuerzt(t){ return /… \(\d+ Zeichen\)$/.test(String(t||'')); }
-function f3nText(r){ if(!r) return ''; if(F3N.voll[r.id]!=null) return F3N.voll[r.id]; const t=String(r.Text||'');
-  if(f3nGekuerzt(t) && !F3N.lade[r.id] && FSLive.gekoppelt()){ F3N.lade[r.id]=true;
-    FSLive.lesen('datensatz_lesen', { tabelle:'Agenten-Aufträge', id:r.id }).then(d=>{ const v=d && (d.datensatz||d); const txt=v && (v.Text!=null ? v.Text : (v.felder && v.felder.Text)); if(txt!=null) F3N.voll[r.id]=String(txt); })
-      .catch(()=>{}).then(()=>{ F3N.lade[r.id]=false; try{ f3nChatAktualisieren(); }catch(e){} }); }
-  return t; }
-function f3nIstAntwort(r){ return !!r && String(r.Auftraggeber||'')!=='Pascal' && /antwort|feedback/i.test(String(r.Art||'')); }
-function f3nAntwortZu(rows, r, i){ for(let j=i+1;j<rows.length;j++){ if(f3nIstAntwort(rows[j])) return rows[j]; } return null; }
-function f3nStand(rows, r, i){
-  if(r.lokal) return { k:'gesendet', t:'gesendet' };
-  const st=String(r.Status||'').toLowerCase();
-  if(st==='vorgemerkt'){ if(!F3N.seit[r.id]) F3N.seit[r.id]=jetztIso(); return { k:'arbeitet', t:'Trainer arbeitet · seit '+fmtUhr(F3N.seit[r.id]) }; }
-  if(st==='erledigt'){ const a=f3nAntwortZu(rows, r, i); return { k:'beantwortet', t:'beantwortet · '+fmtUhr((a && a.Zeitstempel) || F3N.seit[r.id] || r.Zeitstempel) }; }
-  if(st==='abgelehnt') return { k:'abgelehnt', t:'nicht bearbeitet' };
-  return { k:'angekommen', t:'angekommen' };
-}
-function f3nNachrichtHtml(rows, r, i, an){
-  const vonPascal=String(r.Auftraggeber||'')==='Pascal', art=String(r.Art||'');
-  if(/plan|auftrag/i.test(art) && !vonPascal) return '<div class="f7-info" data-mid="'+esc(r.id)+'"'+(/plan/i.test(art) ? ' data-f7pfoeffnen="1"' : '')+'>'+(/plan/i.test(art) ? (f7Chat().karteId ? '📥 Änderung im Postfach: ' : '📥 Planänderung im Postfach: ') : '➡️ ')+esc(f3nOhneKennung(f3nText(r)))+'</div>';   // Hotfix 9 · 3.4: Tipp öffnet das Postfach
-  const text=f3nOhneKennung(f3nText(r)), lines=text.split('\n'), opts=vonPascal ? [] : lines.filter(l=>/^\s*[-•]\s+/.test(l)).map(l=>l.replace(/^\s*[-•]\s+/,'').trim()), body=vonPascal ? text : lines.filter(l=>!/^\s*[-•]\s+/.test(l)).join('\n');
-  let h='<div class="f3n-n" data-mid="'+esc(r.id)+'"><div class="f7-m '+(vonPascal?'p':'t')+'">'+esc(body).replace(/\n/g,'<br>')+'<small>'+(vonPascal ? '' : esc(r.Auftraggeber||an)+' · ')+fmtUhr(r.Zeitstempel)+(f3nGekuerzt(text) ? ' · lädt …' : '')+'</small>'+
-    (vonPascal ? (function(){ const s=f3nStand(rows, r, i); return '<em class="f3n-st '+s.k+'">'+esc(s.t)+'</em>'; })() : '')+'</div>';
-  if(!vonPascal && opts.length) h+='<div class="f7-act2">'+opts.map((o,j)=>'<div class="'+(j?'':'g')+'" data-f7chatantwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'</div>';
-  if(!vonPascal && r.Ergebnis) h+='<div class="f7-m t">'+esc(String(r.Ergebnis)).replace(/\n/g,'<br>')+'<small>Ergebnis</small></div>';
-  if(vonPascal && /auftrag|plan/i.test(art)) h+='<div class="f7-info">➡️ Auftrag an '+esc(r['Empfänger']||'')+' · Antwort erscheint hier</div>';
-  return h+'</div>';
-}
-/* ── Hotfix 9 · Abschnitt 3.2: eigener Chat je Karte — Kennung „[Karte <App-ID>]" am Textanfang; Fachagent = Projekt-Agent des Projekts ── */
-const F3N_KENNUNG=/^\s*\[Karte ([^\]]+)\]\s*/;
-function f3nKennungVon(r){ const m=String((r && r.Text)||'').match(F3N_KENNUNG); return m ? m[1] : null; }
-function f3nOhneKennung(t){ return String(t||'').replace(F3N_KENNUNG, ''); }
-function f3nChatKarte(){ const c=f7Chat(); return c.karteId ? (S.karten.find(x=>x.id===c.karteId)||null) : null; }
-function f3nFachagent(k){ return (k && k.projekt) ? 'Projekt-Agent '+String(k.projekt).trim() : null; }
-function f3nProjektId(k){ const n=String((k && k.projekt)||'').trim().toLowerCase(); if(!n) return null; const p=(f7Projekte()||[]).find(x=>String(x.Projekt||'').trim().toLowerCase()===n); return p ? p.id : null; }
-/* Nachrichten einer Karte: Text beginnt mit der Kennung, oder „Antwortet auf" zeigt auf eine solche Nachricht */
-function f3nKartenNachrichten(rows, karteId){
-  const ids=new Set(); (rows||[]).forEach(r=>{ if(f3nKennungVon(r)===karteId) ids.add(String(r.id)); });
-  return (rows||[]).filter(r=>f3nKennungVon(r)===karteId || f7Link(r['Antwortet auf']).some(x=>ids.has(String(x.id))));
-}
-function f3nMeine(rows, an, karteId){
-  if(karteId===undefined) karteId=f7Chat().karteId||null;
-  if(karteId) return f3nKartenNachrichten(rows, karteId);   // Hotfix 9 · 3.2: Karten-Chat — beide Agenten, nur Nachrichten mit Kennung
-  return (rows||[]).filter(r=>{ if(f3nKennungVon(r)) return false; const A=String(r.Auftraggeber||''), E=String(r['Empfänger']||''); if(an==='Trainer') return (A==='Pascal' && /trainer/i.test(E)) || /trainer/i.test(A); return (A==='Pascal' && E===an) || A===an; });   // ohne Karten-Nachrichten
-}
-function f3nListeHtml(rows, an, karteId){
-  const mine=f3nMeine(rows, an, karteId); let h='', tag='';
-  mine.forEach((r,i)=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; } h+=f3nNachrichtHtml(mine, r, i, an); });
-  if(!mine.length) h+='<div class="leer" data-leer="1">noch keine Nachricht · schreib dem '+(an==='Trainer'?'Trainer':esc(an))+'</div>';
-  const arbeitet=mine.find(r=>String(r.Auftraggeber||'')==='Pascal' && String(r.Status||'').toLowerCase()==='vorgemerkt');
-  h+='<div class="f3n-schreibt" id="chatSchreibt"'+(arbeitet ? '' : ' hidden')+'>✍️ Trainer schreibt … <span>'+(arbeitet ? 'seit '+f3nSeitText(F3N.seit[arbeitet.id]||arbeitet.Zeitstempel) : '')+'</span></div>';
-  return h;
-}
-function f3nSeitText(ts){ const m=Math.max(0, Math.round((Date.now()-Date.parse(ts))/60000)); return m<1 ? 'gerade eben' : m+' Min.'; }
-/* Chat-Ansicht: fester Kopf mit Schließen, Chips, Liste, Eingabe */
-f7ChatHtml=function(){
-  const c=f7Chat(), rows=f7ChatLaden(), an=f7ChatEmpfaenger(), lk=getrackteKarte(), kc=f3nChatKarte(), fa=kc ? f3nFachagent(kc) : null;   // Hotfix 9 · 3.2: Karten-Chat
-  const bell='<span class="sp"></span><button class="f3n-bell" data-f3nstumm="1" title="Benachrichtigungen">'+(S.settings.chatStumm ? '🔕' : '🔔')+'</button><button class="f3n-x" data-e1zu="1" aria-label="Schließen">✕</button></div>';
-  let h;
-  if(kc){ h='<div class="f3n-kopf f3n-karte" id="chatKopf"><button class="an-back" data-f7chatkarteaus="1" aria-label="Zurück zum Trainer-Chat">‹</button><h3>💬 '+esc(kc.titel||'(ohne Titel)')+'<small>Trainer'+(fa ? ' + '+esc(fa) : '')+'</small></h3>'+bell; }
-  else {
-    h='<div class="f3n-kopf" id="chatKopf"><button class="an-back" data-e1zu="1" aria-label="Schließen">‹ zurück</button><h3>💬 '+(an==='Trainer' ? 'Trainer' : esc(an))+'</h3>'+bell;
-    h+='<div class="f7-chips gr"><div class="'+(an==='Trainer'?'on tk':'')+'" data-f7chatan="Trainer">🏋️ Trainer</div>'+
-      '<div class="'+(c.anArt==='abteilung'?'on':'')+'" data-f7chatwahl="abteilung">🏢 '+(c.anArt==='abteilung' ? esc(an) : 'Abteilung')+' ▾</div>'+
-      '<div class="'+(c.anArt==='projekt'?'on':'')+'" data-f7chatwahl="projekt">📁 '+(c.anArt==='projekt' ? esc(an) : 'Projekt')+' ▾</div>'+
-      (lk ? '<div class="'+(c.bezug==='karte'?'on':'')+'" data-f7chatbezug="karte">▶ zur laufenden Karte</div>' : '')+'</div>';
-    if(c.bezugText) h+='<div class="f7-info">'+esc(c.bezugText)+'</div>'; }
-  h+='<div id="chatList" data-an="'+esc(an)+(kc ? '|'+esc(kc.id) : '')+'">'+(rows ? f3nListeHtml(rows, an, kc ? kc.id : null) : '<div class="leer" data-leer="1">'+(f7LagerFehler('chat') ? 'FocusSystem: '+esc(f7LagerFehler('chat')) : 'lädt …')+'</div>')+'</div>';
-  h+='<button class="f3n-neu" id="chatNeu" hidden data-f3nunten="1">↓ neue Nachricht</button>';
-  h+='<div class="f7-inp unten"><input type="text" id="f7chatText" placeholder="'+(kc ? 'Nachricht zur Karte …' : 'Nachricht an '+(an==='Trainer'?'den Trainer':esc(an))+' …')+'" value="'+esc(c.vorlage||'')+'" enterkeyhint="send"><span data-f7mic="f7chatText">🎙️</span><b data-f7chatsenden="1">➤</b></div>';
-  return h;
-};
-/* Hotfix 9 · 3.1: das Element, das tatsächlich scrollt — von #chatList aufwärts das erste mit Überlauf und overflow-y auto|scroll, sonst document.scrollingElement */
-function f3nScroller(){
-  let e=el('chatList');
-  while(e && e!==document.body && e!==document.documentElement){
-    try{ const st=getComputedStyle(e); if(e.scrollHeight>e.clientHeight+1 && /auto|scroll/.test(String(st.overflowY||''))) return e; }catch(x){}
-    e=e.parentElement; }
-  return document.scrollingElement || el('e1-chat');
-}
-function f3nUnten(sc){ return sc ? (sc.scrollTop+sc.clientHeight>=sc.scrollHeight-60) : true; }
-function f3nNachUnten(){ const sc=f3nScroller(); if(sc) sc.scrollTop=sc.scrollHeight;
-  try{ const l=el('chatList'), last=l && l.lastElementChild; if(last && last.scrollIntoView) last.scrollIntoView({ block:'end' }); }catch(e){}   // Hotfix 9 · 3.1
-  const b=el('chatNeu'); if(b) b.hidden=true; }
-/* Anhängen statt Neuaufbau (5.2): neue Nachrichten unten dran, Stand der eigenen in place, Scroll-Stelle bleibt */
-function f3nChatAktualisieren(){
-  const list=el('chatList'); if(!list || e1Art()!=='chat') return;
-  const rows=f7ChatLaden(); if(!rows) return;
-  if(F3N.ohneDaten){ F3N.ohneDaten=false; f3nChatRendern(true); return; }   // Hotfix 9 · 3.1: beim Aufbau kam das Lager noch nicht — jetzt neu bauen und nach unten
-  const an=f7ChatEmpfaenger(), kId=f7Chat().karteId||null; if(list.dataset.an!==an+(kId ? '|'+kId : '')){ f3nChatRendern(true); return; }   // Hotfix 9 · 3.2
-  const sc=f3nScroller(), warUnten=f3nUnten(sc), mine=f3nMeine(rows, an, kId);
-  let neu=0, tag='';
-  const leer=list.querySelector('[data-leer]'); if(leer && mine.length) leer.remove();
-  const tage=[...list.querySelectorAll('.f7-day')].map(d=>d.dataset.tag); tag=tage.length ? tage[tage.length-1] : '';
-  const schreibt=el('chatSchreibt');
-  mine.forEach((r,i)=>{
-    const vorhanden=list.querySelector('[data-mid="'+CSS.escape(String(r.id))+'"]');
-    if(vorhanden){ const st=vorhanden.querySelector('.f3n-st'); if(st){ const s=f3nStand(mine, r, i); if(st.textContent!==s.t){ st.textContent=s.t; st.className='f3n-st '+s.k; } }
-      const vollNeu=F3N.voll[r.id]; if(vollNeu!=null && vorhanden.dataset.voll!=='1'){ vorhanden.dataset.voll='1'; vorhanden.outerHTML=f3nNachrichtHtml(mine, r, i, an).replace('data-mid="', 'data-voll="1" data-mid="'); }
-      return; }
-    // lokale Vorab-Nachricht durch die echte ersetzen (gleicher Text, gleicher Auftraggeber)
-    const lokal=[...list.querySelectorAll('[data-mid^="lokal-"]')].find(x=>x.querySelector('.f7-m') && x.querySelector('.f7-m').firstChild && String(r.Auftraggeber||'')==='Pascal' && x.textContent.indexOf(String(r.Text||'').slice(0,40))>=0);
-    const d=String(r.Zeitstempel||'').slice(0,10); let h='';
-    if(d!==tag && !lokal){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; }
-    h+=f3nNachrichtHtml(mine, r, i, an);
-    if(lokal){ lokal.outerHTML=h; } else { if(schreibt) schreibt.insertAdjacentHTML('beforebegin', h); else list.insertAdjacentHTML('beforeend', h); }
-    if(String(r.Auftraggeber||'')!=='Pascal') neu++;
-  });
-  if(schreibt){ const arbeitet=mine.find(r=>String(r.Auftraggeber||'')==='Pascal' && String(r.Status||'').toLowerCase()==='vorgemerkt'); schreibt.hidden=!arbeitet; if(arbeitet) schreibt.querySelector('span').textContent='seit '+f3nSeitText(F3N.seit[arbeitet.id]||arbeitet.Zeitstempel); }
-  if(neu){ if(warUnten) f3nNachUnten(); else { const b=el('chatNeu'); if(b) b.hidden=false; } }
-  f3nAntwortenGesehen(mine);
-}
-function f3nChatRendern(neuAufbau){
-  const b=el('chatBody'); if(!b) return;
-  const vorhanden=el('chatList');
-  if(vorhanden && !neuAufbau && vorhanden.dataset.an===f7ChatEmpfaenger()){ f3nChatAktualisieren(); return; }
-  b.innerHTML=f7ChatHtml(); F3N.an=f7ChatEmpfaenger(); F3N.ohneDaten=!f7ChatLaden();
-  requestAnimationFrame(()=>f3nNachUnten()); setTimeout(f3nNachUnten, 60); setTimeout(f3nNachUnten, 400);
-  requestAnimationFrame(()=>requestAnimationFrame(f3nNachUnten)); setTimeout(f3nNachUnten, 900);   // Hotfix 9 · 3.1   // beim Öffnen auf der letzten Nachricht, auch wenn die Ansicht erst danach sichtbar wird
-  try{ const rows=f7ChatLaden(); if(rows) f3nAntwortenGesehen(f3nMeine(rows, F3N.an)); }catch(e){}
-}
-{ const _alt=e1Rendern; e1Rendern=function(){ if(e1Art()==='chat'){ f3nChatRendern(false); return; } return _alt(); }; }
-/* Antworten, die angezeigt wurden, setzen ihren Auftrag auf erledigt (3.5) */
-function f3nAntwortenGesehen(mine){
-  if(document.visibilityState!=='visible' || e1Art()!=='chat') return;
-  if(!S.meta.chatGesehen || typeof S.meta.chatGesehen!=='object') S.meta.chatGesehen={};
-  let n=0; (mine||[]).forEach(r=>{ if(!f3nIstAntwort(r) || r.lokal) return; if(S.meta.chatGesehen[r.id]) return; S.meta.chatGesehen[r.id]=jetztIso(); n++;
-    if(String(r.Status||'').toLowerCase()==='offen') FSLive.senden('datensatz_aendern', { tabelle:'Agenten-Aufträge', id:r.id, felder:{ Status:'erledigt' } }, { id:'chat-gesehen-'+r.id }).catch(()=>{}); });
-  if(n){ saveMeta(); f3nBadge(); }
-}
-/* Minutentakt: Stand neu lesen, solange der Chat offen ist; im Hintergrund neue Antworten zählen (Badge, Benachrichtigung) */
-function f3nTakt(){
-  try{
-    const L=F7.lager.chat; if(L) L.ts=0;   // Lager verfallen lassen → f7ChatLaden holt neu und ruft f7Neu → e1Rendern → Anhängen
-    const rows=f7ChatLaden(); if(rows) f3nHintergrund(rows);
-  }catch(e){}
-}
-function f3nHintergrund(rows){
-  const g=(S.meta.chatGesehen && typeof S.meta.chatGesehen==='object') ? S.meta.chatGesehen : {};
-  const neu=(rows||[]).filter(r=>f3nIstAntwort(r) && !g[r.id] && String(r.Status||'').toLowerCase()==='offen');
-  F7.chatNeu=neu.length; f3nBadge();
-  neu.forEach(r=>{ if(F3N.benachrichtigt[r.id]) return; F3N.benachrichtigt[r.id]=true;
-    if(S.settings.chatStumm || e1Art()==='chat') return;
-    try{ if('Notification' in window && Notification.permission==='granted') new Notification('Trainer', { body:String(f3nText(r)).replace(/… \(\d+ Zeichen\)$/,'').slice(0,140), tag:'fokus-chat-'+r.id }); }catch(e){} });
-}
-function f3nBadge(){
-  const n=num(F7.chatNeu);
-  document.querySelectorAll('[data-f7akt="chat"]').forEach(t=>{ let q=t.querySelector('.badge'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge'; t.appendChild(q); } q.textContent=n; } else if(q) q.remove(); });
-  const f=el('trainerFab'); if(f){ let q=f.querySelector('.badge.chat'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge chat'; f.appendChild(q); } q.textContent=String(n); } else if(q) q.remove(); }   // Hotfix 8 · Abschnitt 1: Chat-Badge am Trainer-Knopf, nur die Zahl
-}
-setInterval(()=>{ try{ f3nTakt(); }catch(e){} }, 60000);
-setTimeout(()=>{ try{ f3nTakt(); }catch(e){} }, 8000);
-{ const _alt=f7Neu; f7Neu=function(){ _alt(); try{ const L=F7.lager.chat; if(L && Array.isArray(L.daten)) f3nHintergrund(L.daten); }catch(e){} }; }   // nach jedem Nachladen: Badge und Benachrichtigung
-/* Kopf: Wischen nach unten schließt (5.1) · Glocke · „↓ neue Nachricht“ */
-document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
-  if(t.closest('[data-f3nstumm]')){ e.stopPropagation(); S.settings.chatStumm=!S.settings.chatStumm; saveSettings(); const b=t.closest('[data-f3nstumm]'); b.textContent=S.settings.chatStumm ? '🔕' : '🔔'; toast(S.settings.chatStumm ? 'Chat-Benachrichtigungen stumm' : 'Chat-Benachrichtigungen an');
-    if(!S.settings.chatStumm){ try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(x){} } return; }
-  if(t.closest('[data-f3nunten]')){ e.stopPropagation(); f3nNachUnten(); return; } }, true);
-{ let y0=null; document.addEventListener('touchstart', e=>{ const k=e.target && e.target.closest ? e.target.closest('#chatKopf') : null; y0=k ? e.touches[0].clientY : null; }, { passive:true });
-  document.addEventListener('touchend', e=>{ if(y0==null) return; const dy=(e.changedTouches[0].clientY-y0); y0=null; if(dy>70 && e1Art()==='chat'){ haptik(6); e1Schliessen(); } }, { passive:true }); }
-{ const _alt=f7ChatAbschicken; f7ChatAbschicken=function(){ try{ if(!S.settings.chatStumm && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(e){} return _alt.apply(this, arguments); }; }
 
 /* ══════════════════════════════════════════════════════════════════════
    4.0 · Nachbesserung · Abschnitt 6 · STATUSLEISTE KOMPAKT (Zielbild 261017_Statusleiste_v3, freigegeben 17.10.2026)
@@ -23738,7 +23536,7 @@ ikDragBinden();   // §2 (v3.7.0)
 /* §5 (v3.7.0): die wischbaren Sichten der Suche sind entfallen — unter dem Suchfeld steht die Kettenliste */
 // §11 (v3.7.0): der 🔍-Knopf öffnet die Suche (Suchfeld + Kettenliste, §5); liegt sie schon vor, bekommt das Suchfeld den Fokus
 el('suchFab').addEventListener('click', ()=>{ haptik(8); e1Oeffnen('suche'); });
-el('trainerFab').addEventListener('click', ()=>{ haptik(8); f7ChatOeffnen('Trainer'); });   // Hotfix 8 · Abschnitt 1
+el('trainerFab').addEventListener('click', ()=>{ haptik(8); f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null }); });   // Hotfix 8 · Abschnitt 1 · 4.1 §9.1: Stufe Raum Trainerstab
 el('suZu').addEventListener('click', ()=>{ haptik(6); e1Schliessen(); });   // leert das Feld (ebeneSetzen) und schliesst Ebene 1
 el('suFreitext').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); try{ e.target.blur(); }catch(x){} } });   // §4 (v3.7.6): „Fertig" schliesst nur die Tastatur
 
