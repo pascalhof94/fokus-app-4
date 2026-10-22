@@ -2883,6 +2883,12 @@ body[data-e1="agentenkarte"] #e1-agentenkarte{display:flex;flex-direction:column
 .f15-knoepfe .k{flex:1;border-radius:12px;padding:12px 6px;text-align:center;font-weight:600;font-size:14px;border:1px solid rgba(255,255,255,.08);background:#1a1d22;color:#e8e9ec;font-family:inherit;min-height:44px;cursor:pointer}
 .f15-knoepfe .k.f{background:#3ecf8e;color:#06210f;border:0}.f15-knoepfe .k.s{background:#3b82f6;color:#fff;border:0}.f15-knoepfe .k.aus{opacity:.45;pointer-events:none}.f15-knoepfe .k.r{color:#f66d6d}
 .f7-m.t.f15-hk{cursor:pointer;border-color:#FF9F0A}.f15-hko{font-size:12.5px;font-weight:700;color:#93c5fd;margin-top:6px}
+/* Hotfix 15 §7 · Postfach: ungelesene Nachrichten (Punkt BLAU, Kopf BLAU_HELL, zwei Zeilen Text); Hinweis zu einer Agenten-Karte mit Rand links ORANGE; Zeile zur Kette */
+.f15-msg{background:#1a1d22;border-radius:12px;padding:10px 12px;margin-bottom:6px;display:flex;gap:10px;cursor:pointer;min-height:52px}
+.f15-msg .p{width:8px;height:8px;border-radius:50%;background:#3b82f6;margin-top:6px;flex:none}.f15-msg .t{flex:1;min-width:0}.f15-msg .a{font-size:12px;color:#93c5fd;margin-bottom:2px}
+.f15-msg .x{font-size:14.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.f15-msg .z{font-size:12px;color:#9a9ca2;margin-top:3px}
+.f15-msg.h{border-left:3px solid #FF9F0A}
+.f15-kz{background:rgba(59,130,246,.18);border:1px solid #FF9F0A;border-radius:10px;padding:9px 11px;margin-bottom:6px;display:flex;gap:8px;align-items:center;cursor:pointer;min-height:52px}.f15-kz .t{flex:1;font-weight:700}.f15-kz small{display:block;color:#9a9ca2;font-size:12px;font-weight:500}.f15-kz .pf{color:#9a9ca2;font-size:18px}
 /* Hotfix 15 §4 · Kette „📬 Agenten-Karten“: Kartenzeile BLAU 18 % mit Rand ORANGE; laufende Überarbeitung gestrichelt GRAU mit Ladekreis */
 .f15-sort{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9a9ca2;margin:4px 2px 6px}
 .kl-z.f15-kr{display:flex;cursor:pointer;border-left:1px solid var(--rand);border-right:1px solid var(--rand);padding:9px 11px}.kl-z.f15-kr .kl-t{flex:1;min-width:0}.kl-z.f15-kr .pf{color:#9a9ca2;font-size:18px;flex:none}
@@ -6243,43 +6249,52 @@ function f7PfVorschlagDetail(id){
 function f7PfAgentAbt(name){ const a=(f7Agenten()||[]).find(p=>String(p.Name||'')===String(name||'')); return a ? f7LinkName(a.Abteilung) : ''; }
 function f7PostfachStandSetzen(rows){
   const dr=rows.filter(r=>f7PfKat(r)==='dringend').sort((a,b)=>num(b.Dringlichkeit)-num(a.Dringlichkeit))[0];
-  S.meta.postfach={ offen:rows.length, dringend:rows.filter(r=>f7PfKat(r)==='dringend').length, dringendText:dr ? String(dr.Titel||'') : '', dringendBis:null }; saveMeta();
+  S.meta.postfach={ offen:(typeof f15UngelesenZeilen==='function') ? f15UngelesenZeilen().length : rows.length, karten:rows.length, dringend:rows.filter(r=>f7PfKat(r)==='dringend').length, dringendText:dr ? String(dr.Titel||'') : '', dringendBis:null }; saveMeta();   // Hotfix 15 §7.5: Badge = ungelesene Antworten und Hinweise
   try{ renderStatusbar(); }catch(e){} try{ f7NavBadge(); }catch(e){}
 }
 function f7NavBadge(){ const b=document.querySelector('#nav button[data-seite="postfach"]'); if(!b) return; const p=(S.meta && S.meta.postfach)||{}; let s=b.querySelector('.badge'); if(num(p.offen)>0){ if(!s){ s=document.createElement('span'); s.className='badge'; b.appendChild(s); } s.textContent=num(p.offen); s.classList.toggle('rot', num(p.dringend)>0); } else if(s) s.remove();
   const f=el('suchFab'); if(f){ let q=f.querySelector('.badge'); if(num(p.dringend)>0){ if(!q){ q=document.createElement('span'); q.className='badge'; f.appendChild(q); } q.textContent=num(p.dringend); } else if(q) q.remove(); } }
 function renderPostfach(){
+  // Hotfix 15 §7 · Postfach = ungelesene Antworten und Hinweise aus allen Chat-Tabellen (dfm und privat), neueste zuerst; darunter die Kette „Agenten-Karten“.
   const host=el('postfachBody'); if(!host) return;
-  const rows=f7Postfach(), fl=S.ui.f7pfFilter||'alle', H=f7PfHeute();
+  const rows=f7Postfach();
   if(rows && F7.pfStandTs!==F7.lager.postfach.ts){ F7.pfStandTs=F7.lager.postfach.ts; f7PostfachStandSetzen(rows); }
   if(!F7.pfSeit) F7.pfSeit=Date.now();
-  const n=rows ? rows.length : 0, ges=n+H.n, pct=ges ? H.n/ges*100 : 0;
-  let h='<div class="f7-pkopf"><span>📥 Postfach</span><small>'+n+' offen · heute '+H.n+' erledigt</small></div>';
-  h+='<div class="f7-prog"><i style="width:'+pct.toFixed(0)+'%"></i></div><div class="f7-ps"><span>+10 je Karte · Zeit mit 400 P/h</span><span>leer → +50</span></div>';
-  if(!rows){ host.innerHTML=h+'<div class="leer">'+(f7LagerFehler('postfach') ? 'FocusSystem: '+esc(f7LagerFehler('postfach')) : 'lädt aus FocusSystem …')+'</div>'; return; }
-  const z=k=>rows.filter(r=>f7PfKat(r)===k).length;
-  h+='<div class="f7-chips gr">'+[['alle','Alle '+n],['dringend','🔴 Dringend '+z('dringend')],['klaerung','❓ Klärung '+z('klaerung')],['entwurf','📝 Entwurf '+z('entwurf')],['plan','📅 Plan '+z('plan')]].map(x=>'<div class="'+(fl===x[0]?'on':'')+(x[0]==='dringend'?' rd':'')+'" data-f7pffilter="'+x[0]+'">'+x[1]+'</div>').join('')+'</div>';
-  const sicht=rows.filter(r=>fl==='alle' || f7PfKat(r)===fl);
-  if(!sicht.length) h+='<div class="leer">'+(n ? 'nichts in dieser Gruppe' : '📭 Postfach leer · +50 Münzen')+'</div>';
-  const karte=(r, voll)=>{ const kat=f7PfKat(r), abt=f7PfAgentAbt(r.Agent), bezug=[f7LinkName(r.Organisation), f7LinkName(r.Projekt), f7LinkName(r.Person), r.Quelle].filter(Boolean).join(' · ');
-    let x='<div class="f7-c'+(kat==='dringend'?' u':'')+'" data-f7pfid="'+esc(r.id)+'"><div class="hd"><span>'+(kat==='dringend'?'🛡️ ':kat==='klaerung'?'📥 ':'📝 ')+esc(r.Agent||'Agent')+(abt?' · '+esc(abt):'')+'</span><span'+(kat==='dringend'?' class="red"':'')+'>'+(kat==='dringend' ? Math.round(num(r.Dringlichkeit))+' / 100' : (r['Sicherheit %']!=null ? 'Sicherheit '+Math.round(num(r['Sicherheit %']))+' %' : ''))+'</span></div><div class="ti">'+esc(r.Titel||'')+'</div>';
-    if(bezug || (r['Sicherheit %']!=null && kat==='dringend')) x+='<div class="ctx">'+esc(bezug)+(kat==='dringend' && r['Sicherheit %']!=null ? (bezug?' · ':'')+'Sicherheit '+Math.round(num(r['Sicherheit %']))+' %' : '')+'</div>';
-    if(kat==='klaerung'){ const opts=String(r['Output/Entwurf']||'').split('\n').map(l=>l.replace(/^\s*[-•]\s*/,'').trim()).filter(Boolean).slice(0,5);
-      x+='<div class="opt">'+opts.map((o,i)=>'<div class="'+(i?'':'ok')+'" data-f7pfantwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'<div data-f7pfantwort="">anders …</div></div>'; }
-    else { if(r['Output/Entwurf']) x+='<div class="dr">'+esc(String(r['Output/Entwurf'])).replace(/\n/g,'<br>')+'</div>'; if(r['Begründung']) x+='<div class="why">Warum: '+esc(r['Begründung'])+'</div>';
-      { const kk=f7PfKarteLesen(r); if(kk) x+='<div class="ctx">📇 Karte: '+esc(kk.titel)+' · '+kk.sollMin+' Min · '+kk.unteraufgaben.length+' Unteraufgaben</div>'; }   // Hotfix 7 · Abschnitt 2
-      x+='<div class="bt"><div class="ok" data-f7pfent="freigegeben">✓ Freigeben</div><div data-f7pfent="angepasst">✏️ Anpassen</div><div data-f7pfent="abgelehnt">✗ Ablehnen</div><div data-f7pfent="besprochen">💬 Besprechen</div>'+(kat==='plan' ? '<div data-f7pfent="gesehen">👁 gesehen</div>' : '')+'</div>'; }   // Hotfix 7 · Abschnitt 1: fünfter Knopf für reine Plantexte
-    return x+'</div>'; };
-  const vs=f7PfVorschlaege(rows), vsIds=new Set(vs.map(o=>o.r.id));   // Hotfix 9 · Abschnitt 2: Karten vom Trainer als Kartenzeile, nicht zusätzlich unter „Weitere"
-  if(vs.length){ const auf=S.ui.f7pfAuf||{}; h+='<h5 class="f7-h5 zw"><span>📇 Karten vom Trainer</span><span>'+vs.length+'</span></h5>'+vs.map(o=>f7PfVorschlagZeileHtml(o)+(auf[o.r.id] ? karte(o.r) : '')).join(''); }
-  const dr=sicht.filter(r=>f7PfKat(r)==='dringend'), kl=sicht.filter(r=>f7PfKat(r)==='klaerung'), rest=sicht.filter(r=>f7PfKat(r)!=='dringend' && f7PfKat(r)!=='klaerung' && !vsIds.has(r.id));
-  if(dr.length) h+='<h5 class="f7-h5 zw"><span class="red">🔴 Dringend</span><span>nach Dringlichkeit</span></h5>'+dr.map(r=>karte(r)).join('');
-  if(kl.length) h+='<h5 class="f7-h5 zw"><span>❓ Klärung</span><span></span></h5>'+kl.map(r=>karte(r)).join('');
-  { const pk=f7PfAngelegteKarten(); if(pk.length) h+='<h5 class="f7-h5 zw"><span>📇 Aus dem Postfach angelegt</span><span>'+pk.length+'</span></h5>'+pk.map(k=>kartenZeileHtml(k)).join(''); }   // Hotfix 7 · Abschnitt 2: Kartenzeilen wie in der Suche (Klick: f7Klick → kettenListeKlick)
-  if(rest.length){ const auf=S.ui.f7pfAuf||{}; h+='<h5 class="f7-h5 zw"><span>Weitere</span><span></span></h5>'+rest.map(r=>{ const kat=f7PfKat(r); if(auf[r.id]) return karte(r);
-    return '<div class="f7-row" data-f7pfid="'+esc(r.id)+'"><div>'+(kat==='plan'?'📅 ':'📝 ')+esc(r.Titel||'')+'<small>'+esc([r.Agent, kat==='plan' ? 'Planänderung' : 'Entwurf'].filter(Boolean).join(' · '))+'</small></div>'+'<b data-f7pfauf="1">öffnen</b></div>'; }).join(''); }   // Hotfix 7 · Abschnitt 1: Plan-Einträge klappen auf wie Entwürfe
+  const z=f15UngelesenZeilen(), n=rows ? f15KetteKarten().length : 0;
+  let h='<div class="f7-pkopf"><span>📥 Postfach</span><small>'+z.length+' ungelesen</small></div>';
+  h+='<h5 class="f7-h5 zw"><span>Ungelesen · aus deinen Chats</span><span>'+(z.length||'')+'</span></h5>';
+  if(!z.length) h+='<div class="leer">'+(f12Kanaele() ? 'Keine ungelesenen Nachrichten.' : 'lädt aus FocusSystem …')+'</div>';
+  else h+='<div class="f15-msgs">'+z.map(e=>f15MsgHtml(e)).join('')+'</div>';
+  h+='<h5 class="f7-h5 zw"><span>Agenten-Karten</span><span></span></h5>';
+  h+='<div class="f15-kz" data-f15kette="1"><div class="t">📬 '+(rows ? n+' offene Karte'+(n===1?'':'n')+' in der Kette' : 'Karten laden …')+'<small>Tipp öffnet die Kette „Agenten-Karten“</small></div><span class="pf">›</span></div>';
   host.innerHTML=h;
 }
+/* §7.1 · ungelesene Zeilen (Art Antwort oder Hinweis, Status offen, Von ≠ Pascal) aus der Badge-Runde, neueste zuerst */
+function f15UngelesenZeilen(){
+  const kan=f12Kanaele()||[], out=[];
+  Object.keys(F12.ungelesen||{}).forEach(kid=>{ const k=kan.find(x=>x.id===kid); if(!k) return;
+    (F12.ungelesen[kid]||[]).forEach(r=>{ if(!f12Ungelesen(r)) return; const art=String(r.Art||''); if(art!=='Antwort' && art!=='Hinweis') return;
+      const pf=f7Link(r.Postfach), karte=(art==='Hinweis' && String(r.Anlass||'')==='Postfach' && pf.length) ? String(pf[0].id) : null;
+      out.push({ kanal:k, r, karte, titel:f15GespraechTitel(k, r) }); }); });
+  return out.sort((a,b)=>String(b.r.Zeitstempel||'')<String(a.r.Zeitstempel||'') ? -1 : String(b.r.Zeitstempel||'')>String(a.r.Zeitstempel||'') ? 1 : 0);
+}
+function f15GespraechTitel(k, r){ if(r['Gesprächstitel']) return String(r['Gesprächstitel']); const g=String(r['Gespräch']||''); const G=F7.lager['chatG:'+k.id], gs=(G && Array.isArray(G.daten)) ? G.daten.find(x=>String(x['Gespräch']||'')===g && x['Gesprächstitel']) : null;
+  if(gs) return String(gs['Gesprächstitel']); if(/^tag-/.test(g)) return f12TagTitel(g.slice(4)); if(/^karte-/.test(g)){ const kk=S.karten.find(x=>x.id===g.slice(6)); return f12KarteTitel(kk||{ titel:g.slice(6) }); } return String(r.Text||'').replace(/\s+/g,' ').trim().slice(0,40); }
+/* §7.2 · Zeile: blauer Punkt, „<Agent> · „<Gesprächstitel>““ in BLAU_HELL, Text auf zwei Zeilen, Uhrzeit; Hinweis zu einer Agenten-Karte mit Rand links ORANGE */
+function f15MsgHtml(e){
+  const r=e.r, k=e.kanal, text=String(r.Text||'').replace(/… \(\d+ Zeichen\)$/,'').replace(/\s+/g,' ').trim();
+  const kopf=e.karte ? esc(f12Name(k))+' · Neue Agenten-Karte' : esc(f12Name(k))+' · „'+esc(e.titel||'')+'“';
+  return '<div class="f15-msg'+(e.karte?' h':'')+'" data-f15msg="'+esc(k.id)+'|'+esc(r.id)+'"'+(e.karte ? ' data-f15msgkarte="'+esc(e.karte)+'"' : '')+'><span class="p"></span><div class="t"><div class="a">'+kopf+'</div><div class="x">'+esc(text)+'</div><div class="z">'+esc(f12ZeitKurz(r.Zeitstempel))+'</div></div></div>';
+}
+/* §7.3 · Tipp: Antwort → Gespräch an dieser Nachricht (Öffnen markiert gelesen, Hotfix 13 §5) · Hinweis zu einer Karte → Karten-Ansicht */
+function f15MsgOeffnen(kid, rid, karte){
+  const k=f12KanalId(kid); const r=k ? (F12.ungelesen[kid]||[]).find(x=>x.id===rid) : null; haptik(6);
+  if(karte){ f15KarteOeffnen(karte, {}); return; }
+  if(!k || !r){ return; }
+  const u=f12Ui(); u.raum=f12Raum(k)||u.raum; u.kanal=k.id; u.gespraech=String(r['Gespräch']||''); saveUi(); e1Oeffnen('chat');
+  try{ setTimeout(()=>{ const n=document.querySelector('[data-mid="'+CSS.escape(String(rid))+'"]'); if(n && n.scrollIntoView) n.scrollIntoView({ block:'center' }); }, 300); }catch(x){}
+}
+{ const _alt=f7Klick; f7Klick=function(e){ const t=e.target; if(t && t.closest){ const z=t.closest('[data-f15msg]'); if(z){ const [kid, rid]=String(z.dataset.f15msg).split('|'); f15MsgOeffnen(kid, rid, z.dataset.f15msgkarte||null); return true; } } return _alt(e); }; }
 function f7PfEntscheiden(id, ent, extra){
   extra=extra||{}; const rows=f7Postfach()||[], r=rows.find(x=>x.id===id) || (f7PostfachOhneKarte()||[]).find(x=>x.id===id) || extra.datensatz || (typeof f12PfRecord==='function' ? f12PfRecord(id) : null); if(!r) return;   // Hotfix 9: auch Nachhol-Einträge · 4.1 §5.5: auch der im Chat gelesene Datensatz
   if((ent==='freigegeben' || ent==='angepasst') && !extra.keineKarte){   // Hotfix 7 · Abschnitt 2: Freigeben (auch mit Anpassung) legt die Karte aus dem Entwurf an, nie doppelt · Hotfix 15 §6.1: „↻ Senden“ nicht
@@ -7435,13 +7450,14 @@ function f12BadgeLaden(){
   if(!FSLive.gekoppelt()) return; const kan=f12Kanaele(); if(!kan || !kan.length) return;
   if(F12.badgeLaeuft) return; F12.badgeLaeuft=true; const sum={};
   const zeilen={};
-  Promise.all(kan.map(k=>FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel'], filter:[{ feld:'Von', operator:'ungleich', wert:'Pascal' },{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Zeitstempel', richtung:'ab' }], limit:20 })
+  Promise.all(kan.map(k=>FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel','Art','Anlass','Status','Postfach'], filter:[{ feld:'Von', operator:'ungleich', wert:'Pascal' },{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Zeitstempel', richtung:'ab' }], limit:20 })   // Hotfix 15 §7: Art, Anlass, Postfach für die Postfach-Ansicht
     .then(d=>{ sum[k.id]=num(d && d.gesamt); zeilen[k.id]=(d && d.datensaetze)||[]; zeilen[k.id].forEach(r=>f12Benachrichtigen(k, r)); }).catch(()=>{ if(F12.ungelesen && F12.ungelesen[k.id]){ zeilen[k.id]=F12.ungelesen[k.id]; sum[k.id]=num(F12.badge[k.id]); } })))
     .then(()=>{ F12.badge=sum; F12.ungelesen=zeilen; F12.badgeLaeuft=false; f12BadgeZeigen(); });   // Hotfix 13 §5.4: dieselbe Runde liefert die ungelesenen Zeilen
 }
 function f12BadgeSumme(){ return Object.keys(F12.badge||{}).reduce((a,k)=>a+num(F12.badge[k]), 0); }
 function f12BadgeZeigen(){
   const n=f12BadgeSumme(); F7.chatNeu=n;
+  try{ if(typeof f7PostfachStandSetzen==='function') f7PostfachStandSetzen((F7.lager.postfach && Array.isArray(F7.lager.postfach.daten)) ? F7.lager.postfach.daten : []); if(seiteAktuell()==='postfach' && !f7EingabeAktiv()) renderPostfach(); }catch(e){}   // Hotfix 15 §7.5
   try{ document.querySelectorAll('[data-f7akt="chat"]').forEach(t=>{ let q=t.querySelector('.badge'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge'; t.appendChild(q); } q.textContent=n; } else if(q) q.remove(); }); }catch(e){}
   const f=el('trainerFab'); if(f){ let q=f.querySelector('.badge.chat'); if(n>0){ if(!q){ q=document.createElement('span'); q.className='badge chat'; f.appendChild(q); } q.textContent=String(n); } else if(q) q.remove(); }
   // Hotfix 13 §2.5: nur Zahlen im DOM ändern — Raum-Chips, Mitarbeiterzeilen, ‹-Zahl und Zeile „ungelesen in anderen Chats"
