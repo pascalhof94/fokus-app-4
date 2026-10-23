@@ -59,7 +59,7 @@ pruef('§4.2 Kommentar beim Abhaken → Gespräch karte-<id> im Kanal des Projek
 _gesendet.length=0; f12KartenSenden(kp, '↷ „'+kp.titel+'“ → morgen: krank', { anlass:'Schiebe-Grund' }); drain();
 ks=gesendet('datensatz_anlegen')[0];
 pruef('§4.2 private Karte → Trainer-Kanal, Gespräch karte-<id>, Anlass Schiebe-Grund', !!ks && ks.args.tabelle==='Privat_Chat · Trainer' && ks.args.felder['Gespräch']==='karte-t-priv' && ks.args.felder.Anlass==='Schiebe-Grund');
-pruef('§4.2 Aufrufstellen Abhaken/Schieben nutzen f12KartenSenden, nicht mehr f12TrainerSenden mit karte', (src.match(/f12KartenSenden\(k, /g)||[]).length===4 && src.indexOf("f12TrainerSenden('✓ „'")<0 && src.indexOf("{ anlass:'Schiebe-Grund', karte:k }")<0);
+pruef('§4.2 Aufrufstellen Abhaken/Schieben nutzen f12KartenSenden, nicht mehr f12TrainerSenden mit karte', (src.match(/f12KartenSenden\(k, '/g)||[]).length===4 && src.indexOf("f12TrainerSenden('✓ „'")<0 && src.indexOf("{ anlass:'Schiebe-Grund', karte:k }")<0);
 pruef('§4.2 Nachrichten ohne Karte bleiben im Tagesgespräch (Pause, Tagesplan)', src.indexOf("f12TrainerSenden('☕ Pause (")>=0 && src.indexOf("f12TrainerSenden('Bitte den Tagesplan für heute als Paket in die App.'")>=0);
 // Farben und Kopf
 var G='karte-t-dfm';
@@ -83,6 +83,7 @@ pruef('§4.4 Einstellung engine4.chatAgentenMax: Standard 5, Schema-Eintrag', DE
 
 // ══ §4d · Chat rechts folgt der Karte im Fokus ══
 var _breitAlt=f9Breit; f9Breit=function(){ return true; };
+delete F7.lager['chatV:k-hawk|'+G]; delete F7.lager['chatG:k-hawk'];   // leeres Gespräch für §4.7
 f12Ui().raum='Trainerstab'; f12Ui().kanal='k-tr'; f12Ui().gespraech='tag-x'; saveUi();
 S.fokus={ karteId:'t-dfm', laeuft:true, startMs:Date.now(), sessionSek:0 }; saveFokus();
 f9Rendern();
@@ -109,12 +110,12 @@ var A4={ id:'a4', 'Gespräch':'karte-t-dfm', 'Gesprächstitel':'📇 Daily', Von
 var H2={ id:'h2', 'Gespräch':'ag-pipe', 'Gesprächstitel':'Agenten-Karten', Von:'Pipeline-Agent', Art:'Hinweis', Anlass:'Postfach', Status:'erledigt', Zeitstempel:vorMin(55), Text:'📬 Neue Agenten-Karte: HSI · Korrektur', Postfach:[{ id:'pf2', anzeige:'HSI' }] };
 F12.ungelesen={ 'k-pipe':[A1, A2], 'k-tr':[A3], 'k-hawk':[A4] }; F12.badge={ 'k-pipe':2, 'k-tr':1, 'k-hawk':1 };
 F7.lager['pfz:k-hawk']={ ts:Date.now(), daten:[A4], fehler:'' }; F7.lager['pfz:k-pipe']={ ts:Date.now(), daten:[H2], fehler:'' };
-var Z=f16PostfachDaten();
-pruef('§5.2 Chats: genau eine Zeile je Gespräch, egal wie viele Agenten (g-x mit 2 Absendern = 1 Zeile)', Z.chats.length===2 && Z.chats.some(function(c){ return c.gespraech==='g-x' && c.zeilen.length===2; }), JSON.stringify(Z.chats.map(function(c){ return c.gespraech; })));
-pruef('§5.2 Gespräch mit ⏸ steht oben; Gespräch mit offener Postfach-Karte (karte-t-dfm) nicht unter Chats', Z.chats[0].gespraech==='tag-heute' && Z.chats[0].wartet && !Z.chats.some(function(c){ return c.gespraech==='karte-t-dfm'; }));
-pruef('§5.3 Kartenfreigaben: zwei Gruppen — Gespräch der Antwort (karte-t-dfm) und „Agenten-Karten“ des Pipeline-Agenten; Zähler 2', Z.freigaben.karten===2 && Z.freigaben.gruppen.length===2 && Z.freigaben.gruppen.some(function(g){ return g.gespraech==='karte-t-dfm' && g.karten[0].id==='pf1' && g.zeilen.length===1; }) && Z.freigaben.gruppen.some(function(g){ return g.gespraech==='ag-pipe' && g.karten[0].id==='pf2'; }), JSON.stringify(Z.freigaben.gruppen.map(function(g){ return [g.gespraech, g.titel]; })));
+var ZD=f16PostfachDaten();
+pruef('§5.2 Chats: genau eine Zeile je Gespräch, egal wie viele Agenten (g-x mit 2 Absendern = 1 Zeile)', ZD.chats.length===2 && ZD.chats.some(function(c){ return c.gespraech==='g-x' && c.zeilen.length===2; }), JSON.stringify(ZD.chats.map(function(c){ return c.gespraech; })));
+pruef('§5.2 Gespräch mit ⏸ steht oben; Gespräch mit offener Postfach-Karte (karte-t-dfm) nicht unter Chats', ZD.chats[0].gespraech==='tag-heute' && ZD.chats[0].wartet && !ZD.chats.some(function(c){ return c.gespraech==='karte-t-dfm'; }));
+pruef('§5.3 Kartenfreigaben: zwei Gruppen — Gespräch der Antwort (karte-t-dfm) und „Agenten-Karten“ des Pipeline-Agenten; Zähler 2', ZD.freigaben.karten===2 && ZD.freigaben.gruppen.length===2 && ZD.freigaben.gruppen.some(function(g){ return g.gespraech==='karte-t-dfm' && g.karten[0].id==='pf1' && g.zeilen.length===1; }) && ZD.freigaben.gruppen.some(function(g){ return g.gespraech==='ag-pipe' && g.karten[0].id==='pf2'; }), JSON.stringify(ZD.freigaben.gruppen.map(function(g){ return [g.gespraech, g.titel]; })));
 F16.pfFilter=null; seiteZeigen('postfach'); var hp=el('postfachBody').innerHTML;
-pruef('§5.1 drei Filter-Chips mit Anzahl; Start-Filter Kartenfreigaben (n > 0), gewählt mit „✓ “', hp.indexOf('data-f16filter="chats"')>=0 && hp.indexOf('data-f16filter="freigaben"')>=0 && hp.indexOf('data-f16filter="angelegt"')>=0 && hp.indexOf('class="chip an" data-f16filter="freigaben">✓ 📬 Kartenfreigaben <span class="n">2</span>')>=0 && hp.indexOf('💬 Chats <span class="n">2</span>')>=0, hp.slice(0, 700));
+pruef('§5.1 drei Filter-Chips mit Anzahl; Start-Filter Kartenfreigaben (n > 0), gewählt mit „✓ “', hp.indexOf('data-f16filter="chats"')>=0 && hp.indexOf('data-f16filter="freigaben"')>=0 && hp.indexOf('data-f16filter="angelegt"')>=0 && hp.indexOf('class="f16-chip an" data-f16filter="freigaben">✓ 📬 Kartenfreigaben <span class="n">2</span>')>=0 && hp.indexOf('💬 Chats <span class="n">2</span>')>=0, hp.slice(0, 700));
 pruef('§5.3 Kopfzeile je Gespräch („aus Chat“, Punkte) und eingerückte Karte mit Agent · Art · Runde · Sicherheit', hp.indexOf('📇 Daily')>=0 && hp.indexOf('aus Chat · ')>=0 && hp.indexOf('data-f15karte="pf1"')>=0 && hp.indexOf('Projekt-Agent HAWK · Plan · Runde 1 · 85 %')>=0 && hp.indexOf('Pipeline-Agent · „Agenten-Karten“')>=0 && hp.indexOf('data-f15karte="pf2"')>=0);
 pruef('§5.6 Gruppe „Agenten-Karten“ mit „n offene Karten in der Kette“ entfällt im Postfach', hp.indexOf('offene Karten in der Kette')<0 && hp.indexOf('data-f15kette')<0);
 pruef('§5.7 Badge = ungelesene Chats (2) + offene Kartenfreigaben (2)', num(S.meta.postfach.offen)===4 && num(S.meta.postfach.chats)===2 && num(S.meta.postfach.karten)===2, JSON.stringify(S.meta.postfach));
@@ -146,8 +147,8 @@ e1Schliessen();
 var hz=f12NachrichtHtml(KH, A4, {});
 pruef('§5.4 Antwort mit offener Postfach-Karte im Chat: Link „📬 Karten-Ansicht öffnen ›“ zurück zur Karte', hz.indexOf('data-f15karte="pf1"')>=0 && hz.indexOf('Karten-Ansicht öffnen')>=0);
 // Mehrere Agenten im selben Gespräch → eine Zeile; Chat-Antwort mit Postfach-Karte nur unter Kartenfreigaben
-F12.ungelesen={ 'k-pipe':[A1, A2], 'k-hawk':[A4] }; Z=f16PostfachDaten();
-pruef('§8.2 mehrere Agenten im selben Gespräch → eine Zeile; Antwort mit Postfach-Karte nur unter Kartenfreigaben', Z.chats.length===1 && Z.chats[0].zeilen.length===2 && Z.freigaben.gruppen.some(function(g){ return g.gespraech==='karte-t-dfm' && g.zeilen.length===1; }));
+F12.ungelesen={ 'k-pipe':[A1, A2], 'k-hawk':[A4] }; ZD=f16PostfachDaten();
+pruef('§8.2 mehrere Agenten im selben Gespräch → eine Zeile; Antwort mit Postfach-Karte nur unter Kartenfreigaben', ZD.chats.length===1 && ZD.chats[0].zeilen.length===2 && ZD.freigaben.gruppen.some(function(g){ return g.gespraech==='karte-t-dfm' && g.zeilen.length===1; }));
 
 // ══ Version ══
 pruef('App 4.1.5 · Build 2026-10-23-40', APP_VERSION==='4.1.5' && APP_BUILD==='2026-10-23-40', APP_VERSION+' / '+APP_BUILD);

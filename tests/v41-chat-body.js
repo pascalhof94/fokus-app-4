@@ -75,7 +75,7 @@ pruef('f12Mmss formatiert Minuten:Sekunden', f12Mmss(92000)==='1:32' && f12Mmss(
 var hn=f12NachrichtHtml(KT, { id:'a1', Von:'Trainer', Art:'Antwort', Text:'Zwei Wege:\n- A: direkt\n- B: Senke\nSchreib mir A oder B.', Zeitstempel:T, Postfach:[] });
 pruef('Antwort: Liste als <ul>, keine Knöpfe (f7-act2) und keine data-f7chatantwort', hn.indexOf('<ul><li>A: direkt</li><li>B: Senke</li></ul>')>=0 && hn.indexOf('f7-act2')<0 && hn.indexOf('data-f7chatantwort')<0 && hn.indexOf('Schreib mir A oder B.')>=0, hn);
 var hg=f12GespraechHtml(KT, 'g1');
-pruef('Gespräch: Kopf mit Titel und Agent · Raum, eigener Scroller #chatList mit Innenblock, Stand, textarea, ➤', hg.indexOf('Paket 34 angekommen?')>=0 && hg.indexOf('🏋️ Trainer · 🎯 Trainerstab')>=0 && hg.indexOf('id="chatList"')>=0 && hg.indexOf('class="f12-fluss"')>=0 && hg.indexOf('✓ beantwortet')>=0 && hg.indexOf('<textarea id="f12Text"')>=0 && hg.indexOf('data-f12senden="1"')>=0 && hg.indexOf('data-f12plus="1"')>=0);
+pruef('Gespräch: Kopf mit Titel und Agent · Raum, eigener Scroller #chatList mit Innenblock, Stand, textarea, ➤', hg.indexOf('Paket 34 angekommen?')>=0 && hg.indexOf('class="f16-teil"')>=0 && hg.indexOf('>Trainer</span>')>=0 && hg.indexOf('id="chatList"')>=0 && hg.indexOf('class="f12-fluss"')>=0 && hg.indexOf('✓ beantwortet')>=0 && hg.indexOf('<textarea id="f12Text"')>=0 && hg.indexOf('data-f12senden="1"')>=0 && hg.indexOf('data-f12plus="1"')>=0);
 
 // ══ §5.5 · Karten im Chat ══
 F12.pf['pf1']={ ts:Date.now(), r:{ id:'pf1', Titel:'Neu: Kalendertool-Dublette klären', Agent:'Trainer', Art:'Plan', Status:'offen', 'Output/Entwurf':'Aufgabe: Kalendertool-Dublette klären\n- Soll-Minuten: 20\n\nUnteraufgaben:\n- Dublette suchen\n- Löschen', geaendert_am:T } };
@@ -151,7 +151,8 @@ e1Schliessen(); toast=_toastAlt;
 
 // ══ §9 · Einstiege ══
 pruef('alte Chat-Funktionen entfernt (f7ChatSenden, f7ChatOeffnen, f7ChatLaden, f7ChatHtml, f3n*)', src.indexOf('f7ChatSenden(')<0 && src.indexOf('f7ChatOeffnen(')<0 && src.indexOf('f7ChatLaden(')<0 && src.indexOf('f7ChatHtml')<0 && !/f3n[A-Z]\w*\(/.test(src));
-['Pause','Kommentar','Schiebe-Grund','Feedback','Reflexion','Tagesplan'].forEach(function(a){ pruef('Einstieg mit Anlass '+a+' schreibt über f12TrainerSenden', new RegExp("f12TrainerSenden\\([^;]*anlass:'"+a+"'").test(src)); });
+['Pause','Feedback','Reflexion','Tagesplan'].forEach(function(a){ pruef('Einstieg mit Anlass '+a+' schreibt über f12TrainerSenden', new RegExp("f12TrainerSenden\\([^;]*anlass:'"+a+"'").test(src)); });
+['Kommentar','Schiebe-Grund'].forEach(function(a){ pruef('Einstieg mit Anlass '+a+' schreibt über f12KartenSenden ins Gespräch karte-<id> (Hotfix 16 §4.2)', new RegExp("f12KartenSenden\\(k, [^;]*anlass:'"+a+"'").test(src)); });
 pruef('Trainer-Knopf und „💬 Trainer" öffnen die Stufe Raum Trainerstab', /el\('trainerFab'\)\.addEventListener\('click', \(\)=>\{ haptik\(8\); f12Oeffnen\(\{ raum:'Trainerstab', kanal:null, gespraech:null \}\); \}\);/.test(src) && src.indexOf("else if(a==='chat') f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null });")>=0);
 _gesendet.length=0; delete F7.lager['chatV:k-tr|'+f12TagGespraech()];
 f12TrainerSenden('☕ Pause (20 Min.): kurz raus', { anlass:'Pause', karte:kd });

@@ -181,32 +181,32 @@ F15.karte.ausKette=false; _gesendet.length=0;
 f15Entscheiden('freigegeben'); drain(10);
 pruef('nicht aus der Kette: Ebene schließt', e1Art()===null && F15.karte===null);
 
-// ══ §7 · Postfach = ungelesene Nachrichten ══
+// ══ §7 · Postfach (seit Hotfix 16 §5 in drei Filtern) ══
 var N1={ id:'n1', 'Gespräch':'g-x', Von:'Pascal', Art:'Nachricht', Anlass:'Chat', Status:'offen', Zeitstempel:'2026-10-22T19:49:00.000Z', Text:'eigene Nachricht', Postfach:[] };
 F12.ungelesen={ 'k-erf':[H1], 'k-pipe':[A1, N1] }; F12.badge={ 'k-erf':1, 'k-pipe':1 }; H1.Status='offen'; S.meta.chatGesehen={};
 F7.lager.postfach={ ts:Date.now(), daten:[PF1, PF2, PF3], fehler:'' };
 var uz=f15UngelesenZeilen();
 pruef('§7.1 nur Antwort/Hinweis mit Status offen, neueste zuerst', uz.length===2 && uz[0].r.id==='h1' && uz[1].r.id==='a1' && uz[0].karte==='pf1' && uz[1].karte===null, JSON.stringify(uz.map(function(e){ return e.r.id; })));
-seiteZeigen('postfach'); var hp=el('postfachBody').innerHTML;
-pruef('§7.1 Gruppe „Ungelesen · aus deinen Chats“ mit zwei Zeilen', hp.indexOf('Ungelesen · aus deinen Chats')>=0 && (hp.match(/class="f15-msg( h)?"/g)||[]).length===2);
-pruef('§7.2 Zeile: Punkt, „Pipeline-Agent · „Mails morgen““, Text, Uhrzeit', hp.indexOf('Pipeline-Agent · „Mails morgen“')>=0 && hp.indexOf('Alles klar, ich lege mich nicht fest …')>=0 && hp.indexOf('<span class="p"></span>')>=0 && /class="z">\d\d:\d\d</.test(hp), hp.slice(0, 900));
-pruef('§7.2 Hinweis zu einer Agenten-Karte: Rand ORANGE (Klasse h), Kopf „Erfassungs-Agent · Neue Agenten-Karte“', hp.indexOf('class="f15-msg h" data-f15msg="k-erf|h1" data-f15msgkarte="pf1"')>=0 && hp.indexOf('Erfassungs-Agent · Neue Agenten-Karte')>=0);
-pruef('§7.4 Gruppe Agenten-Karten: „📬 3 offene Karten in der Kette“', hp.indexOf('📬 3 offene Karten in der Kette')>=0 && hp.indexOf('data-f15kette="1"')>=0);
-pruef('§7.1 keine Postfach-Karten mehr als Liste', hp.indexOf('data-f7pfent')<0 && hp.indexOf('Karten vom Trainer')<0);
-pruef('§7.5 Badge des Postfachs = 2 (ungelesene Zeilen), Karten getrennt gezählt', num(S.meta.postfach.offen)===2 && num(S.meta.postfach.karten)===3, JSON.stringify(S.meta.postfach));
+F16.pfFilter=null; seiteZeigen('postfach'); var hp=el('postfachBody').innerHTML;
+pruef('Hotfix 16 §5.1 drei Filter, Start Kartenfreigaben (3 offene Karten), Chats 1 Gespräch', hp.indexOf('class="f16-chip an" data-f16filter="freigaben">✓ 📬 Kartenfreigaben <span class="n">3</span>')>=0 && hp.indexOf('💬 Chats <span class="n">1</span>')>=0);
+pruef('Hotfix 16 §5.3 Hinweis-Zeile ordnet pf1 dem Gespräch „Erfassungs-Agent · „Agenten-Karten““ zu', hp.indexOf('Erfassungs-Agent · „Agenten-Karten“')>=0 && hp.indexOf('data-f15karte="pf1"')>=0);
+pruef('§7.1 keine Postfach-Karten mehr als Liste, keine Kette', hp.indexOf('data-f7pfent')<0 && hp.indexOf('Karten vom Trainer')<0 && hp.indexOf('offene Karten in der Kette')<0);
+pruef('Hotfix 16 §5.7 Badge des Postfachs = 1 Chat + 3 Kartenfreigaben', num(S.meta.postfach.offen)===4 && num(S.meta.postfach.karten)===3, JSON.stringify(S.meta.postfach));
+F16.pfFilter='chats'; renderPostfach(); hp=el('postfachBody').innerHTML;
+pruef('§7.2 Zeile: Punkt, „Mails morgen“, Absender und Text, Zeit (gestern)', hp.indexOf('Mails morgen')>=0 && hp.indexOf('Pipeline-Agent: Alles klar, ich lege mich nicht fest …')>=0 && hp.indexOf('<span class="p"></span>')>=0 && /<span>(gestern|\d\d:\d\d)<\/span>/.test(hp), hp.slice(0, 900));
 f15MsgOeffnen('k-pipe', 'a1', null); drain();
 pruef('§7.3 Tipp auf eine Antwort öffnet das Gespräch an dieser Nachricht', e1Art()==='chat' && f12Ui().kanal==='k-pipe' && f12Ui().gespraech==='g-x');
 e1Schliessen(); _gesendet.length=0;
 f15MsgOeffnen('k-erf', 'h1', 'pf1'); drain();
 pruef('§7.3 Tipp auf die Hinweis-Zeile öffnet die Karten-Ansicht und markiert gelesen', e1Art()==='agentenkarte' && F15.karte.id==='pf1' && gesendet('datensatz_aendern').some(function(g){ return g.args.id==='h1' && g.args.felder.Status==='erledigt'; }));
 e1Schliessen();
-F12.ungelesen={}; F12.badge={}; seiteZeigen('postfach'); hp=el('postfachBody').innerHTML;
-pruef('§7.6 leer: „Keine ungelesenen Nachrichten.“', hp.indexOf('Keine ungelesenen Nachrichten.')>=0);
+F12.ungelesen={}; F12.badge={}; F16.pfFilter='chats'; renderPostfach(); hp=el('postfachBody').innerHTML;
+pruef('§7.6 leer: „Keine ungelesenen Chats.“', hp.indexOf('Keine ungelesenen Chats.')>=0);
 f15KetteOeffnen();
-pruef('§7.4 Tipp setzt die Kette „Agenten-Karten“ und öffnet die Karten-Ebene', S.ui.tkWahl==='agentenkarten' && e1Art()==='plus' && seiteAktuell()==='fokus');
+pruef('§7.4 Kette „Agenten-Karten“ bleibt über die Karten-Ebene erreichbar', S.ui.tkWahl==='agentenkarten' && e1Art()==='plus' && seiteAktuell()==='fokus');
 e1Schliessen(); S.ui.tkWahl=null; saveUi();
 
 // ══ Version ══
-pruef('App 4.1.4 · Build 2026-10-22-39', APP_VERSION==='4.1.4' && APP_BUILD==='2026-10-22-39', APP_VERSION+' / '+APP_BUILD);
+pruef('App 4.1.5 · Build 2026-10-23-40 (seit Hotfix 16)', APP_VERSION==='4.1.5' && APP_BUILD==='2026-10-23-40', APP_VERSION+' / '+APP_BUILD);
 toast=_toastAlt;
 suiteEnde('Hotfix 15 · Postfach, Agenten-Karten, Erfassung (4.1.4)');

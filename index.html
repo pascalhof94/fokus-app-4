@@ -2895,8 +2895,8 @@ body[data-e1="agentenkarte"] #e1-agentenkarte{display:flex;flex-direction:column
 .f16-wartet{color:#FF9F0A;font-weight:800;margin-left:8px;font-size:12px}.f16-zk{margin:4px 0 0 2px}
 .sr-sub{font-size:11px;color:#9a9ca2;margin:-2px 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 /* Hotfix 16 §5 · Postfach in drei Filtern */
-.f16-filter{display:flex;gap:6px;margin:2px 0 10px}.f16-filter .chip{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:6px 2px;font-size:12px;white-space:nowrap;background:#1a1d22;color:#e8e9ec;cursor:pointer;min-height:44px;justify-content:center}
-.f16-filter .chip .n{font-size:11px;color:#9a9ca2}.f16-filter .chip.an{background:rgba(59,130,246,.22);border:2px solid #3b82f6;font-weight:700}.f16-filter .chip.an .n{color:#93c5fd}
+.f16-filter{display:flex;gap:6px;margin:2px 0 10px}.f16-filter .f16-chip{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:6px 3px;font-size:12px;line-height:1.15;text-align:center;overflow-wrap:anywhere;background:#1a1d22;color:#e8e9ec;cursor:pointer;min-height:44px;justify-content:center}
+.f16-filter .f16-chip .n{font-size:11px;color:#9a9ca2}.f16-filter .f16-chip.an{background:rgba(59,130,246,.22);border:2px solid #3b82f6;font-weight:700}.f16-filter .f16-chip.an .n{color:#93c5fd}
 .f15-msg.f16-gz .u{background:#3b82f6;color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:1px 7px;align-self:flex-start}.f15-msg.f16-gz.warte{border:1px solid #FF9F0A}.f15-msg.f16-gz.still{cursor:default}
 .f15-msg.f16-gz .z{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.f16-warten{color:#FF9F0A;font-size:12px;font-weight:700;margin:1px 0}
 .f15-kz.f16-kz{margin:-2px 0 8px 18px}.f15-kz.f16-kz.laeuft{border-style:dashed;border-color:#9a9ca2;cursor:default}
@@ -6280,7 +6280,7 @@ function renderPostfach(){
   if(!F7.pfSeit) F7.pfSeit=Date.now();
   const Z=f16PostfachDaten(), filter=f16PfFilter(Z);
   let h='<div class="f7-pkopf"><span>📥 Postfach</span><small>'+((Z.chats.length+Z.freigaben.karten) ? (Z.chats.length+Z.freigaben.karten)+' offen' : (f12Kanaele() ? '' : 'lädt aus FocusSystem …'))+'</small></div>';
-  h+='<div class="f16-filter">'+[['chats','💬 Chats', Z.chats.length],['freigaben','📬 Kartenfreigaben', Z.freigaben.karten],['angelegt','🗂️ Angelegte Karten', null]].map(f=>'<div class="chip'+(filter===f[0]?' an':'')+'" data-f16filter="'+f[0]+'">'+(filter===f[0]?'✓ ':'')+f[1]+(f[2]!=null ? ' <span class="n">'+f[2]+'</span>' : '')+'</div>').join('')+'</div>';
+  h+='<div class="f16-filter">'+[['chats','💬 Chats', Z.chats.length],['freigaben','📬 Kartenfreigaben', Z.freigaben.karten],['angelegt','🗂️ Angelegte Karten', null]].map(f=>'<div class="f16-chip'+(filter===f[0]?' an':'')+'" data-f16filter="'+f[0]+'">'+(filter===f[0]?'✓ ':'')+f[1]+(f[2]!=null ? ' <span class="n">'+f[2]+'</span>' : '')+'</div>').join('')+'</div>';
   if(filter==='chats') h+=f16ChatsHtml(Z);
   else if(filter==='freigaben') h+=f16FreigabenHtml(Z);
   else h+=f16AngelegtHtml();
@@ -6307,7 +6307,8 @@ function f16PostfachDaten(){
   const gruppen=[], je={}; const offeneGespraeche=new Set();
   karten.forEach(r=>{ const k=f12KanalVon(r.Agent); if(k) f16KartenZeilen(k);   // Lager anstoßen
     const g=f16KarteGespraech(r.id, kan); const key=g ? f16Schluessel(g.kanal.id, g.gespraech) : 'ohne|'+String(r.Agent||'');
-    if(!je[key]){ je[key]={ key, kanal:g ? g.kanal : k, gespraech:g ? g.gespraech : null, titel:g ? f15GespraechTitel(g.kanal, g.r) : (k ? f12Name(k)+' · „'+F16_AGENTENKARTEN+'“' : String(r.Agent||'')), karten:[], zeilen:[], ts:'' }; gruppen.push(je[key]); }
+    if(!je[key]){ const hinweis=!!(g && String(g.r.Art||'')==='Hinweis' && String(g.r.Anlass||'')==='Postfach');   // Gespräch „Agenten-Karten“ des Agenten → „<Agent> · „Agenten-Karten““
+      je[key]={ key, kanal:g ? g.kanal : k, gespraech:g ? g.gespraech : null, titel:g ? (hinweis ? f12Name(g.kanal)+' · „'+F16_AGENTENKARTEN+'“' : f15GespraechTitel(g.kanal, g.r)) : (k ? f12Name(k)+' · „'+F16_AGENTENKARTEN+'“' : String(r.Agent||'')), karten:[], zeilen:[], ts:'' }; gruppen.push(je[key]); }
     je[key].karten.push(r); if(g){ offeneGespraeche.add(key); if(String(g.r.Zeitstempel||'')>je[key].ts) je[key].ts=String(g.r.Zeitstempel||''); } });
   // Chats: ungelesene Zeilen (Antwort oder Hinweis, Status offen, Von ≠ Pascal) je Gespräch; Gespräche mit offener Karte stehen unter Kartenfreigaben
   const chats=[], cje={};
@@ -7575,10 +7576,10 @@ function f12KartenSenden(k, text, opt){ opt=opt||{}; if(!k) return Promise.resol
   return f12Senden(kanal, g, text, { anlass:opt.anlass||'Kommentar', karten:[{ id:k.id, titel:k.titel, airtableId:k.airtableId||null }], id:opt.id, titel:(kanal && f12GespraechHatZeilen(kanal, g)) ? null : f12KarteTitel(k) }); }
 /* Hotfix 16 §4.6 · Absender-Farben (Standard recwXUkjpph7FVr2y): führender Agent BLAU · Trainer GRUEN · jede weitere Abteilung in der Reihenfolge
    ihres ersten Auftretens ORANGE, LILA, GELB · Pascal rechts ohne Rand · Hinweise des Dienstes GRAU mittig */
-const F16_FARBEN=[FARBE.ORANGE, FARBE.LILA, FARBE.GELB];
+function f16Farben(){ return [FARBE.ORANGE, FARBE.LILA, FARBE.GELB]; }   // Funktion statt Konstante: FARBE wird erst weiter unten deklariert (Ladefehler in Build 40)
 function f16VonName(von){ const v=String(von||''); return /^Projekt-Agent /.test(v) ? v.slice('Projekt-Agent '.length) : v; }
 function f16Teilnehmer(kanal, rows, g){ const fuehrend=String((kanal && kanal.Agent)||''), out=[]; let i=0;
-  const dazu=(von, farbe)=>{ if(!von || von==='Pascal' || von==='Dienst' || out.some(t=>t.von===von)) return; out.push({ von, farbe: farbe || (von==='Trainer' ? FARBE.GRUEN : F16_FARBEN[(i++)%F16_FARBEN.length]) }); };
+  const dazu=(von, farbe)=>{ if(!von || von==='Pascal' || von==='Dienst' || out.some(t=>t.von===von)) return; out.push({ von, farbe: farbe || (von==='Trainer' ? FARBE.GRUEN : f16Farben()[(i++)%3]) }); };
   dazu(fuehrend, FARBE.BLAU); if(/^karte-/.test(String(g||''))) dazu('Trainer');   // §4.1.3: der Trainer ist in jedem Karten-Chat Teilnehmer
   (rows||[]).forEach(r=>dazu(String(r.Von||''))); return out; }
 function f16TeilVon(kanal, g){ const L=kanal ? F7.lager[f12VerlaufKey(kanal, g)] : null; return f16Teilnehmer(kanal, (L && Array.isArray(L.daten)) ? L.daten : [], g); }

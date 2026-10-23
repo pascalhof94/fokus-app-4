@@ -25,7 +25,7 @@ pruef('Stunden-Log heute: je zwei Eck-Zeilen Aufstehen und Übergang', eck.filte
 pruef('Protokoll: aufstehen ok, eckpunkte gebucht', S.meta.f11Protokoll.some(function(e){ return e.schritt==='aufstehen' && /ok/.test(e.info); }) && S.meta.f11Protokoll.some(function(e){ return e.schritt==='eckpunkte' && /gebucht/.test(e.info); }), JSON.stringify(S.meta.f11Protokoll).slice(0,300));
 warten();
 pruef('Tagesbilanz und Trainer-Nachricht sind gesendet (Kennungen bilanz-<Tag>, chat-uebergang-<Tag>)', _gesendet.some(function(g){ return g.id==='bilanz-'+gestern; }) && _gesendet.some(function(g){ return g.id==='chat-uebergang-'+gestern; }), _gesendet.map(function(g){ return g.id||g.werkzeug; }).join(','));
-pruef('Ausstehendes gemerkt (bilanz, chat)', !!(S.meta.f11Ausstehend && S.meta.f11Ausstehend.bilanz && S.meta.f11Ausstehend.chat));
+pruef('Ausstehendes gemerkt (bilanz); die sofort angenommene Chat-Nachricht gilt als bestätigt (Hotfix 16 §1.2)', !!(S.meta.f11Ausstehend && S.meta.f11Ausstehend.bilanz) && !S.meta.f11Ausstehend.chat && S.meta.f11Protokoll.some(function(e){ return e.info==='beim Dienst angenommen'; }), JSON.stringify(S.meta.f11Ausstehend));
 // Nachsenden: Dienst bestätigt → ausstehend leer
 FSLive.lesen=function(w,a){ if(a.tabelle==='Tagesbilanz') return Promise.resolve({ datensaetze:[{ id:'x', Tag:gestern, 'Tagesübergang':jetztIso() }] }); return Promise.resolve({ datensaetze:[{ id:'y' }] }); };
 _f11NachTs=0; var fertig=false; f11Nachsenden().then(function(){ fertig=true; }); warten(); warten();

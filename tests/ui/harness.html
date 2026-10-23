@@ -278,9 +278,11 @@ function bestandSchreiben(){
       fw.eval("F7.lager.chatKanaele={ ts:Date.now(), daten:[{ id:'k-tr', Kanal:'Trainer', Agent:'Trainer', Abteilung:[], Projekt:[], Bereich:'privat', Tabelle:'Privat_Chat · Trainer', Reihenfolge:1, Rolle:'Trainer' },{ id:'k-erf', Kanal:'Erfassungs-Agent', Agent:'Erfassungs-Agent', Abteilung:[], Projekt:[], Bereich:'dfm', Tabelle:'Chat · Erfassungs-Agent', Reihenfolge:1, Rolle:'Eingang' }], fehler:'' };"+
               "F12.ungelesen={ 'k-tr':[{ id:'u1', 'Gespräch':'g1', 'Gesprächstitel':'Plan morgen', Von:'Trainer', Art:'Antwort', Anlass:'Chat', Status:'offen', Zeitstempel:new Date().toISOString(), Text:'Freitag: Steuer zuerst, dann RiSe …', Postfach:[] }], 'k-erf':[{ id:'u2', 'Gespräch':'g2', Von:'Erfassungs-Agent', Art:'Hinweis', Anlass:'Postfach', Status:'offen', Zeitstempel:new Date().toISOString(), Text:'📬 Neue Agenten-Karte: Pruefkarte · Klärung', Postfach:[{ id:'pf-plan-1', anzeige:'Pruefkarte' }] }] }; F12.badge={ 'k-tr':1, 'k-erf':1 };");
       fw.seiteZeigen('postfach');
-      fw.eval("var n=document.querySelectorAll('#postfachBody .f15-msg').length; if(n!==2) throw new Error('Hotfix 15 §7: '+n+' statt 2 ungelesene Zeilen');"+
-              "if(!document.querySelector('#postfachBody .f15-msg.h[data-f15msgkarte]')) throw new Error('Hotfix 15 §7: Hinweis-Zeile zur Agenten-Karte ohne orangen Rand');"+
-              "if(!document.querySelector('#postfachBody [data-f15kette]')) throw new Error('Hotfix 15 §7: Zeile zur Kette Agenten-Karten fehlt');"+
+      /* Hotfix 16 §5: drei Filter; Start Kartenfreigaben (2 offene Karten), je Gespräch eine Kopfzeile, Karten eingerückt; keine Kette, keine Karten-Knöpfe */
+      fw.eval("var n=document.querySelectorAll('#postfachBody .f16-filter .f16-chip').length; if(n!==3) throw new Error('Hotfix 16 §5: '+n+' statt 3 Filter');"+
+              "if(!document.querySelector('#postfachBody .f16-chip.an[data-f16filter=\"freigaben\"]')) throw new Error('Hotfix 16 §5: Start-Filter Kartenfreigaben nicht gewaehlt');"+
+              "var k=document.querySelectorAll('#postfachBody [data-f15karte]').length; if(k!==2) throw new Error('Hotfix 16 §5: '+k+' statt 2 Karten unter Kartenfreigaben');"+
+              "if(document.querySelector('#postfachBody [data-f15kette]')) throw new Error('Hotfix 16 §5: Zeile zur Kette darf nicht mehr im Postfach stehen');"+
               "if(document.querySelector('#postfachBody [data-f7pfent]')) throw new Error('Hotfix 15 §7: Postfach zeigt noch Karten-Knoepfe');"); },
     /* Hotfix 9 · 8.6: alle Gruppen der Statistik offen, damit die Nachprüfung jedes Diagramm sieht */
     statistik:  function(fw){ tagSicher(fw); fw.eval("S.ui.statGruppeZu={1:false,2:false,3:false,4:false,5:false,6:false}; saveUi();"); fw.seiteZeigen('statistik'); },
