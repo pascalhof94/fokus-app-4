@@ -3161,6 +3161,7 @@ const FSLive = (()=>{
     ersteUebernahme: PREFIX+'fslive_ersteUebernahme',   // Hotfix 14 §7.2: erste Stand-Übernahme dieses Geräts erledigt
     fuehrtJetzt: PREFIX+'fslive_fuehrtJetzt',           // Hotfix 14 §10.4: Toast „Dieses Gerät führt jetzt“ nach dem Neuladen
     fuehrungZuletzt: PREFIX+'fslive_fuehrungZuletzt',   // Hotfix 17 §2.4: { fuehrend, ichFuehre, ts } — Krone und Tipp-Abfang stimmen ab der ersten Sekunde
+    standZeit: PREFIX+'fslive_standZeit',               // Hotfix 17 §4.2: ISO-Zeit des Stands (Übernahme, eigene Spiegelung) für die Pille „Stand HH:MM“
   };
   const ADRESSE_STANDARD='https://Mac-mini-von-Pascal.local:8443';
   const APP_KENNUNG='fokus-app-4';
@@ -3184,6 +3185,9 @@ const FSLive = (()=>{
   // pruefungLaeuft = Führungsprüfung vor einem Tipp läuft (ohne Sperre); tippLaeuft = ein abgefangener Tipp wird gerade nachgespielt (nicht erneut abfangen).
   let bestaetigtTs=0, pruefungLaeuft=false, tippLaeuft=false;
   const BESTAETIGT_MS=30000;
+  // Hotfix 17 §4 · krone = span#fsKrone (sichtbar: gekoppelt und führend); standZeit = Zeit des Stands (§4.2); letzteSpiegelung = letzte eigene erfolgreiche Spiegelung.
+  let krone=null, standZeit=null, letzteSpiegelung=null;
+  const STAND_ALT_MS=60*60000;
 
   function lies(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function schreib(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -3209,6 +3213,7 @@ const FSLive = (()=>{
   function anzeigen(){
     try{
       if(punkt) punkt.style.background=FARBE[zustand()];
+      if(krone) krone.style.display=(gekoppelt() && ichFuehre===true) ? 'block' : 'none';   // Hotfix 17 §4.1: 👑 genau dann, wenn gekoppelt und führend
       const t=document.getElementById('sheetTitel'), sh=document.getElementById('sheet');
       if(t && sh && sh.classList.contains('on') && t.textContent===TITEL) blattFuellen();
     }catch(e){}
@@ -3264,8 +3269,9 @@ const FSLive = (()=>{
         if(offen.get(schluessel)===stand){ offen.delete(schluessel); merken(); }   // inzwischen neu geschrieben: bleibt ausstehend
       }
       gescheitert=false; fehlerText='';
-      schreib(K.letzt, new Date().toISOString());
-      if(ichFuehre) bestaetigtTs=Date.now();   // Hotfix 17 §3.1
+      const zeitText=new Date().toISOString();
+      schreib(K.letzt, zeitText);
+      if(ichFuehre){ bestaetigtTs=Date.now(); letzteSpiegelung=zeitText; standZeitSetzen(zeitText); }   // Hotfix 17 §3.1, §4.2
     }catch(e){
       if(e && e.status===409) fuehrungVerloren(e.antwort);   // Hotfix 14 §8.2: ein anderes Gerät führt — kein Fehlerzustand
       else { gescheitert=true; fehlerText=String((e && e.message) || 'Fehler'); }
@@ -3283,7 +3289,9 @@ const FSLive = (()=>{
   }
   // Hotfix 17 §3.2/§3.4 · Führung an ein anderes Gerät abgeben: nicht führend, Krone weg (anzeigen), Führung merken; die Takte ruhen über nichtFuehrend().
   function fuehrungAbgeben(neu){
+    const warIch=ichFuehre;
     ichFuehre=false; fuehrend=neu||null; fuehrungBekannt=true;
+    if(warIch && letzteSpiegelung) standZeitSetzen(letzteSpiegelung);   // Hotfix 17 §4.2: beim Verlust zählt die letzte eigene Spiegelung, nicht „jetzt“
     fuehrungMerken(); hinweisAnzeigen(); anzeigen();
   }
   // Hotfix 17 §2.4 · Führung merken: bei jeder Änderung von ichFuehre/fuehrend in den Speicher; beim Start vor fuehrungLesen() geladen.
@@ -3402,22 +3410,30 @@ const FSLive = (()=>{
   async function fuehrungLesen(){
     if(!gekoppelt()) return null;   // §8.5: nicht gekoppelte Geräte wie bisher, kein Aufruf
     const d=await aufruf('GET', '/api/app/fuehrung', undefined, { zeitgrenze:15000 });
+    const warIch=ichFuehre;
     fuehrend=(d && d.fuehrend)||null; ichFuehre=(fuehrend===geraet()); fuehrungBekannt=true;
     if(ichFuehre) bestaetigtTs=Date.now();   // Hotfix 17 §3.1
+    else if(warIch && letzteSpiegelung) standZeitSetzen(letzteSpiegelung);   // Hotfix 17 §4.2: Führung verloren (§2.1 Ergebnis nicht führend)
     fuehrungMerken();   // Hotfix 17 §2.4
     anzeigen(); hinweisAnzeigen();
     return d;
   }
-  // §10.2 · Pille „Nur Anzeige · führend: <Name>“ auf nicht führenden Geräten; Name aus /api/app/geraete, sonst die ersten 8 Zeichen.
-  function geraetName(id){ const g=(geraeteCache||[]).find(x=>x && x.geraet_id===id); return (g && g.anzeigename) ? g.anzeigename : String(id||'').slice(0,8); }
+  // Hotfix 17 §4.2 · Pille #fsNurAnzeige (ersetzt „Nur Anzeige · führend: …“): sichtbar genau dann, wenn gekoppelt, nicht führend und der Stand
+  // 60 Minuten oder älter ist. Text „Stand HH:MM · tippen zum Übernehmen“, an einem anderen Kalendertag „Stand TT.MM. HH:MM · …“.
+  // Ruft keinen Dienst auf (kein geraeteLaden mehr); eigener lokaler Takt alle 60 s und bei visibilitychange visible.
+  function standZeitSetzen(iso){ standZeit=iso||null; if(standZeit) schreib(K.standZeit, standZeit); hinweisAnzeigen(); }
+  function standZeitText(){
+    const d=new Date(standZeit), j=new Date(), p=(n)=>String(n).padStart(2,'0');
+    const hm=p(d.getHours())+':'+p(d.getMinutes());
+    const gleicherTag=d.getFullYear()===j.getFullYear() && d.getMonth()===j.getMonth() && d.getDate()===j.getDate();
+    return gleicherTag ? hm : p(d.getDate())+'.'+p(d.getMonth()+1)+'. '+hm;
+  }
   function hinweisAnzeigen(){
     try{
       if(!pille) return;
-      const zeigen=gekoppelt() && !ichFuehre;
-      if(zeigen){
-        if(fuehrend && geraeteGeladenFuer!==fuehrend && !geraeteLaufen){ geraeteGeladenFuer=fuehrend; geraeteLaden().then(hinweisAnzeigen).catch(()=>{}); }
-        pille.textContent='Nur Anzeige · führend: '+(fuehrend ? geraetName(fuehrend) : '—');
-      }
+      const alter=standZeit ? Date.now()-Date.parse(standZeit) : NaN;
+      const zeigen=gekoppelt() && !ichFuehre && alter>=STAND_ALT_MS;
+      if(zeigen) pille.textContent='Stand '+standZeitText()+' · tippen zum Übernehmen';
       pille.style.display=zeigen ? 'block' : 'none';
     }catch(e){}
   }
@@ -3518,6 +3534,7 @@ const FSLive = (()=>{
         try{ localStorage.setItem(PREFIX+name, JSON.stringify(d.schluessel[name])); }catch(e){}
       }
       standNr=Number(d.stand_nr)||0; fuehrend=d.fuehrend||null;
+      standZeitSetzen(new Date().toISOString());   // Hotfix 17 §4.2: Stand übernommen
       if(!ersteUebernahmeErledigt){ ersteUebernahmeErledigt=true; schreib(K.ersteUebernahme,'1'); location.reload(); return true; }
       ladeAlles(); renderAlles();
       if(S.fokus && S.fokus.laeuft) starteTicker();   // wie init(): den Sekunden-Ticker der laufenden Uhr starten
@@ -3632,6 +3649,12 @@ const FSLive = (()=>{
       punkt.id='fsLivePunkt';
       punkt.style.cssText='width:14px;height:14px;box-sizing:border-box;border:2px solid #0d1420;border-radius:50%;pointer-events:none;background:'+FARBE.grau;
       flaeche.appendChild(punkt);
+      // Hotfix 17 §4.1 · Krone 👑 rechts neben dem Punkt (Zielbild 261023_Zielbild_Hotfix17): nur gekoppelt und führend, nachgeführt in anzeigen()
+      krone=document.createElement('span');
+      krone.id='fsKrone';
+      krone.textContent='👑';
+      krone.style.cssText='position:absolute;left:26px;top:50%;transform:translateY(-50%);font-size:11px;line-height:1;pointer-events:none;display:none';
+      flaeche.appendChild(krone);
       flaeche.addEventListener('click', e=>{ e.stopPropagation(); blattOeffnen(); });
       document.body.appendChild(flaeche);
       // Hotfix 14 §10.1 · Vollbild-Sperre mit Ladekreis (96 px, Rand 8 px #4ade80, oben transparent, rotate 0.9 s)
@@ -3682,7 +3705,9 @@ const FSLive = (()=>{
       alleBetriebsschluesselVormerken();
       // Hotfix 17 §2.1 · Start: Führung aus dem Speicher (§2.4), dann genau ein fuehrungLesen(). Führend → spiegeln, Schlange, Pakete, Uhr, Badge.
       // Nicht führend → sonst nichts (kein standHolen). Dienst nicht erreichbar → Zustand bleibt wie gespeichert.
+      standZeit=lies(K.standZeit)||null;   // Hotfix 17 §4.2
       fuehrungZuletztLaden(); anzeigen(); hinweisAnzeigen();
+      setInterval(hinweisAnzeigen, 60000);   // Hotfix 17 §4.2: Prüfung der 60 Minuten, rein lokal, kein Dienst
       const nachFuehrung=()=>{ if(!ichFuehre) return; spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true); try{ f12BadgeLaden(); }catch(e){} };
       fuehrungLesen().then(nachFuehrung).catch(()=>{});
       setInterval(()=>{ if(offen.size) spiegeln(); if(warteschlange.length) schlangeSenden(); }, WIEDERHOLEN_MS);
@@ -3700,7 +3725,8 @@ const FSLive = (()=>{
   return { vormerken, spiegeln, senden, lesen, hochladen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
     warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length, warteschlangeHat:(id)=>warteschlange.some(x=>x && x.id===id),
     geraeteLaden, geraetBenennen, fuehrungSetzen, ichFuehre:()=>ichFuehre, geraet, koennteSchreiben,   // Hotfix 14 §11 (geraet: Kennung für „dieses Gerät“ in den Einstellungen)
-    nichtFuehrend };   // Hotfix 17 §1: Takte außerhalb des Moduls (Chat-Badge, Nachsenden, Statusleiste, Ticker) ruhen auf nicht führenden Geräten
+    nichtFuehrend,   // Hotfix 17 §1: Takte außerhalb des Moduls (Chat-Badge, Nachsenden, Statusleiste, Ticker) ruhen auf nicht führenden Geräten
+    standZeit:()=>standZeit, hinweisAnzeigen };   // Hotfix 17 §4 (Prüfungen)
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
@@ -18862,7 +18888,7 @@ function fsGeraeteListeHtml(liste){
     const name=g.anzeigename ? esc(g.anzeigename) : esc(String(g.name||'').slice(0,30));
     let zs='—'; try{ if(g.zuletzt_gesehen_am) zs=new Date(g.zuletzt_gesehen_am).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' }); }catch(e){}
     x+='<div class="kv"><span>'+name+(g.geraet_id===ich ? ' · dieses Gerät' : '')+'<br><small>zuletzt gesehen '+zs+'</small></span><b>'+
-      (g.fuehrend ? '<span class="chip on gruen">führend</span>' : '<button class="btn sm" data-fsgeraet-fuehren="'+esc(g.geraet_id)+'">Führend setzen</button>')+'</b></div>';
+      (g.fuehrend ? '<span title="führend">👑</span>' : '<button class="btn sm" data-fsgeraet-fuehren="'+esc(g.geraet_id)+'">Führend setzen</button>')+'</b></div>';   // Hotfix 17 §4.4: 👑 statt der Pille „führend“, Textgröße der Zeile
   }
   const eigen=(liste||[]).find(g=>g.geraet_id===ich);
   x+='<div class="field" style="margin-top:10px"><label>Name dieses Geräts</label><input type="text" id="fsGeraetName" value="'+esc((eigen && eigen.anzeigename)||'')+'" maxlength="40" autocapitalize="off" autocorrect="off" spellcheck="false"></div>'+
