@@ -3160,6 +3160,7 @@ const FSLive = (()=>{
     letzt: PREFIX+'fslive_letzterErfolg', ausstehend: PREFIX+'fslive_ausstehend', warteschlange: PREFIX+'fslive_warteschlange',
     ersteUebernahme: PREFIX+'fslive_ersteUebernahme',   // Hotfix 14 §7.2: erste Stand-Übernahme dieses Geräts erledigt
     fuehrtJetzt: PREFIX+'fslive_fuehrtJetzt',           // Hotfix 14 §10.4: Toast „Dieses Gerät führt jetzt“ nach dem Neuladen
+    fuehrungZuletzt: PREFIX+'fslive_fuehrungZuletzt',   // Hotfix 17 §2.4: { fuehrend, ichFuehre, ts } — Krone und Tipp-Abfang stimmen ab der ersten Sekunde
   };
   const ADRESSE_STANDARD='https://Mac-mini-von-Pascal.local:8443';
   const APP_KENNUNG='fokus-app-4';
@@ -3273,8 +3274,13 @@ const FSLive = (()=>{
   function fuehrungVerloren(antwort){
     ichFuehre=false; fuehrend=(antwort && antwort.fuehrend)||null; fuehrungBekannt=true;
     for(const k of GEMEINSAM) offen.delete(k);
-    merken(); hinweisAnzeigen(); anzeigen();
+    merken(); fuehrungMerken(); hinweisAnzeigen(); anzeigen();
     standHolen(true);
+  }
+  // Hotfix 17 §2.4 · Führung merken: bei jeder Änderung von ichFuehre/fuehrend in den Speicher; beim Start vor fuehrungLesen() geladen.
+  function fuehrungMerken(){ schreib(K.fuehrungZuletzt, JSON.stringify({ fuehrend, ichFuehre, ts:new Date().toISOString() })); }
+  function fuehrungZuletztLaden(){
+    try{ const z=JSON.parse(lies(K.fuehrungZuletzt)||'null'); if(z && typeof z==='object'){ fuehrend=(typeof z.fuehrend==='string' && z.fuehrend) ? z.fuehrend : null; ichFuehre=(z.ichFuehre===true); } }catch(e){}
   }
   // Hotfix 14 §8.5 · Nicht gekoppelte Geräte verhalten sich wie bisher (kein Führungskonzept, keine Sperre).
   function koennteSchreiben(){ return !gekoppelt() || ichFuehre; }
@@ -3387,6 +3393,7 @@ const FSLive = (()=>{
     if(!gekoppelt()) return null;   // §8.5: nicht gekoppelte Geräte wie bisher, kein Aufruf
     const d=await aufruf('GET', '/api/app/fuehrung', undefined, { zeitgrenze:15000 });
     fuehrend=(d && d.fuehrend)||null; ichFuehre=(fuehrend===geraet()); fuehrungBekannt=true;
+    fuehrungMerken();   // Hotfix 17 §2.4
     anzeigen(); hinweisAnzeigen();
     return d;
   }
@@ -3411,7 +3418,7 @@ const FSLive = (()=>{
   async function fuehrungUebernehmen(x, y){
     if(uebernahmeLaeuft) return false;
     uebernahmeLaeuft=true; sperreZeigen(true);
-    const t0=Date.now(); let ok=false, neuGeladen=false;
+    const t0=Date.now(); let ok=false, neuGeladen=false, standGezeichnet=false;
     try{
       const rest=()=>Math.max(200, SPERRE_MAX_MS-(Date.now()-t0));
       const d=await aufruf('GET', '/api/app/stand?ab=0', undefined, { zeitgrenze:rest() });
@@ -3420,10 +3427,10 @@ const FSLive = (()=>{
       const vorher=ersteUebernahmeErledigt;
       if(d && d.fuehrend && d.fuehrend!==geraet() && d.schluessel){
         if(!vorher) schreib(K.fuehrtJetzt,'1');   // Toast nach dem Neuladen
-        standUebernehmen(d, true);
+        standGezeichnet=(standUebernehmen(d, true)===true);
         neuGeladen=(!vorher && ersteUebernahmeErledigt);
       }
-      ichFuehre=true; fuehrend=geraet(); fuehrungBekannt=true; hinweisAnzeigen(); anzeigen();
+      ichFuehre=true; fuehrend=geraet(); fuehrungBekannt=true; fuehrungMerken(); hinweisAnzeigen(); anzeigen();
       if(!neuGeladen){ alleBetriebsschluesselVormerken(); planen(); }
     }catch(e){
       ok=false;
@@ -3433,6 +3440,12 @@ const FSLive = (()=>{
     if(warte>0) await new Promise(r=>setTimeout(r, warte));
     sperreZeigen(false); uebernahmeLaeuft=false;
     if(!ok){ try{ toast('Mac mini nicht erreichbar — Gerät bleibt Anzeige'); }catch(e){} return false; }
+    // Hotfix 17 §2.3 · nach der Übernahme: ruhende Takte laufen wieder (sie prüfen nichtFuehrend() dynamisch; der Ticker wird bei laufender Karte neu gestartet),
+    // einmal renderAlles() (falls nicht schon durch den übernommenen Stand gezeichnet), dann Badge, Pakete und Uhr.
+    try{ if(!standGezeichnet) renderAlles(); }catch(e){}
+    try{ if(S.fokus && S.fokus.laeuft) starteTicker(); }catch(e){}
+    try{ f12BadgeLaden(); }catch(e){}
+    paketeHolen(); uhrMelden(true);
     if(x!=null && y!=null){
       klickVerschlucken=false;
       try{
@@ -3454,7 +3467,7 @@ const FSLive = (()=>{
       const d=await aufruf('GET', '/api/app/stand?ab='+encodeURIComponent(String(standNr)), undefined, { zeitgrenze:15000 });
       gescheitert=false;
       if(d && d.fuehrend && d.schluessel) standUebernehmen(d, sofort===true);
-      else if(d && d.fuehrend===null){ fuehrend=null; hinweisAnzeigen(); }   // führt kein Gerät: nichts zu übernehmen
+      else if(d && d.fuehrend===null){ fuehrend=null; fuehrungMerken(); hinweisAnzeigen(); }   // führt kein Gerät: nichts zu übernehmen
     }catch(e){ if(e && e.offline){ gescheitert=true; fehlerText=e.message; } }
     finally{ standLaeuft=false; anzeigen(); }
   }
@@ -3519,7 +3532,7 @@ const FSLive = (()=>{
     }
     try{
       const d=await aufruf('POST', '/api/app/fuehrung', JSON.stringify({ geraet_id:id }));
-      ichFuehre=false; fuehrend=(d && d.fuehrend)||id; fuehrungBekannt=true;
+      ichFuehre=false; fuehrend=(d && d.fuehrend)||id; fuehrungBekannt=true; fuehrungMerken();
       hinweisAnzeigen(); anzeigen();
       try{ await geraeteLaden(); fsGeraeteListeFuellen(geraeteCache); }catch(e){}
       standHolen(true);   // ab jetzt holt dieses Gerät den Stand
@@ -3634,16 +3647,20 @@ const FSLive = (()=>{
       try{ const alt=JSON.parse(lies(K.ausstehend)||'[]'); if(Array.isArray(alt)) alt.forEach(k=>{ if(BETRIEB.indexOf(String(k))>=0) offen.set(String(k), ++zaehler); }); }catch(e){}
       try{ const w=JSON.parse(lies(K.warteschlange)||'[]'); if(Array.isArray(w)) warteschlange=w.filter(x=>x && x.werkzeug); }catch(e){}
       alleBetriebsschluesselVormerken();
-      fuehrungLesen().then(()=>{ if(!ichFuehre) standHolen(true); }).catch(()=>{});   // Hotfix 14 §7.5
+      // Hotfix 17 §2.1 · Start: Führung aus dem Speicher (§2.4), dann genau ein fuehrungLesen(). Führend → spiegeln, Schlange, Pakete, Uhr, Badge.
+      // Nicht führend → sonst nichts (kein standHolen). Dienst nicht erreichbar → Zustand bleibt wie gespeichert.
+      fuehrungZuletztLaden(); anzeigen(); hinweisAnzeigen();
+      const nachFuehrung=()=>{ if(!ichFuehre) return; spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true); try{ f12BadgeLaden(); }catch(e){} };
+      fuehrungLesen().then(nachFuehrung).catch(()=>{});
       setInterval(()=>{ if(offen.size) spiegeln(); if(warteschlange.length) schlangeSenden(); }, WIEDERHOLEN_MS);
       setInterval(()=>paketeHolen(), PAKETE_MS);
       // Hotfix 17 §1.1: der 3-s-Takt standHolen(false) (Hotfix 14 §9.3) entfällt ersatzlos — nicht führende Geräte gleichen nur bei der Übernahme ab
       setInterval(()=>uhrMelden(true), UHR_MS);
-      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true);
-        fuehrungLesen().then(()=>{ if(!ichFuehre) standHolen(true); }).catch(()=>{}); }   // Hotfix 14 §7.6
+      // Hotfix 17 §2.1 · Vordergrund: genau ein fuehrungLesen(); spiegeln, Schlange, Pakete, Uhr, Badge erst danach und nur bei führend (kein standHolen)
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ hinweisAnzeigen(); fuehrungLesen().then(nachFuehrung).catch(()=>{}); }   // Hotfix 14 §7.6 · Hotfix 17 §2.1, §4.2
         else { uhrMelden(true); } });
-      addEventListener('online', ()=>{ spiegeln(); schlangeSenden(); paketeHolen(); });
-      setTimeout(()=>{ paketeHolen(); uhrMelden(true); }, 2500);
+      addEventListener('online', ()=>{ if(nichtFuehrend()) return; spiegeln(); schlangeSenden(); paketeHolen(); });   // Hotfix 17 §2.2: nur auf führenden Geräten
+      // Hotfix 17 §2.1 · der Start-Aufruf nach 2,5 s (paketeHolen, uhrMelden) entfällt; beides läuft nach fuehrungLesen() bei führend
       planen(); anzeigen();
     }catch(e){}
   }
