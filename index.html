@@ -3180,6 +3180,10 @@ const FSLive = (()=>{
   // standNr = zuletzt übernommene Stand-Nummer, uebernahmeLaeuft = Sperre liegt über der App, ersteUebernahmeErledigt = Marke im Speicher.
   let fuehrend=null, ichFuehre=false, standNr=0, uebernahmeLaeuft=false, ersteUebernahmeErledigt=(lies(PREFIX+'fslive_ersteUebernahme')==='1');
   let fuehrungBekannt=false, standLaeuft=false, klickVerschlucken=false, sperre=null, pille=null, geraeteCache=null, geraeteLaufen=false, geraeteGeladenFuer=null, sx=null, sy=null;
+  // Hotfix 17 §3.1 · bestaetigtTs = letzte Bestätigung „dieses Gerät führt“ (fuehrungLesen führend, Übernahme, erfolgreiches spiegeln/schlangeSenden).
+  // pruefungLaeuft = Führungsprüfung vor einem Tipp läuft (ohne Sperre); tippLaeuft = ein abgefangener Tipp wird gerade nachgespielt (nicht erneut abfangen).
+  let bestaetigtTs=0, pruefungLaeuft=false, tippLaeuft=false;
+  const BESTAETIGT_MS=30000;
 
   function lies(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function schreib(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -3261,6 +3265,7 @@ const FSLive = (()=>{
       }
       gescheitert=false; fehlerText='';
       schreib(K.letzt, new Date().toISOString());
+      if(ichFuehre) bestaetigtTs=Date.now();   // Hotfix 17 §3.1
     }catch(e){
       if(e && e.status===409) fuehrungVerloren(e.antwort);   // Hotfix 14 §8.2: ein anderes Gerät führt — kein Fehlerzustand
       else { gescheitert=true; fehlerText=String((e && e.message) || 'Fehler'); }
@@ -3271,11 +3276,15 @@ const FSLive = (()=>{
     }
   }
   // Hotfix 14 §8.2 · 409 vom Dienst: Führung verloren → gemeinsame Schlüssel nicht mehr ausstehend, Stand des führenden Geräts holen.
+  // Hotfix 17 §3.4 · kein standHolen mehr; die gemeinsamen Schlüssel bleiben vorgemerkt (gehen nach einer Übernahme raus, §2.3), Krone weg, Takte ruhen (§1), Toast.
   function fuehrungVerloren(antwort){
-    ichFuehre=false; fuehrend=(antwort && antwort.fuehrend)||null; fuehrungBekannt=true;
-    for(const k of GEMEINSAM) offen.delete(k);
-    merken(); fuehrungMerken(); hinweisAnzeigen(); anzeigen();
-    standHolen(true);
+    fuehrungAbgeben((antwort && antwort.fuehrend)||null);
+    try{ toast('Ein anderes Gerät führt — Änderungen hier nicht gesendet'); }catch(e){}
+  }
+  // Hotfix 17 §3.2/§3.4 · Führung an ein anderes Gerät abgeben: nicht führend, Krone weg (anzeigen), Führung merken; die Takte ruhen über nichtFuehrend().
+  function fuehrungAbgeben(neu){
+    ichFuehre=false; fuehrend=neu||null; fuehrungBekannt=true;
+    fuehrungMerken(); hinweisAnzeigen(); anzeigen();
   }
   // Hotfix 17 §2.4 · Führung merken: bei jeder Änderung von ichFuehre/fuehrend in den Speicher; beim Start vor fuehrungLesen() geladen.
   function fuehrungMerken(){ schreib(K.fuehrungZuletzt, JSON.stringify({ fuehrend, ichFuehre, ts:new Date().toISOString() })); }
@@ -3327,6 +3336,7 @@ const FSLive = (()=>{
           const antwort=await aufruf('POST', pfad, JSON.stringify(e.args));
           warteschlange.shift(); schlangeMerken(); letzte={ id:e.id, antwort }; gescheitert=false; fehlerText='';
           schreib(K.letzt, new Date().toISOString());
+          if(ichFuehre) bestaetigtTs=Date.now();   // Hotfix 17 §3.1
         }catch(x){
           if(x.offline || (x.status && x.status>=500) || x.status===408 || x.status===429){ gescheitert=true; fehlerText=x.message; break; }   // bleibt stehen, später nachschicken (Nachbesserung 2: auch bei Dienst-Fehlern 5xx)
           warteschlange.shift(); schlangeMerken();                             // abgelehnt (4xx): nicht wiederholen, Fehler merken
@@ -3393,6 +3403,7 @@ const FSLive = (()=>{
     if(!gekoppelt()) return null;   // §8.5: nicht gekoppelte Geräte wie bisher, kein Aufruf
     const d=await aufruf('GET', '/api/app/fuehrung', undefined, { zeitgrenze:15000 });
     fuehrend=(d && d.fuehrend)||null; ichFuehre=(fuehrend===geraet()); fuehrungBekannt=true;
+    if(ichFuehre) bestaetigtTs=Date.now();   // Hotfix 17 §3.1
     fuehrungMerken();   // Hotfix 17 §2.4
     anzeigen(); hinweisAnzeigen();
     return d;
@@ -3415,6 +3426,35 @@ const FSLive = (()=>{
   // danach den Tipp an derselben Stelle ausführen. Scheitert der Dienst: Sperre weg, Tipp verfällt, Gerät bleibt Anzeige.
   // Abweichung zum Auftrag (siehe Bericht): der Stand wird VOR dem Setzen der Führung geholt (nach dem Setzen liefert
   // /api/app/stand den eigenen, veralteten Spiegel), und nach der Übernahme werden alle Betriebsschlüssel gespiegelt.
+  // Hotfix 17 §3.2 · Tipp an derselben Stelle ausführen (aus fuehrungUebernehmen herausgelöst; auch nach der Führungsprüfung genutzt).
+  // Während des Nachspielens fängt der Tipp-Abfang nichts ab (tippLaeuft), sonst würde der nachgespielte pointerup erneut abgefangen.
+  function tippAusfuehren(x, y){
+    if(x==null || y==null) return;
+    klickVerschlucken=false; tippLaeuft=true;
+    try{
+      const ziel=document.elementFromPoint(x, y);
+      if(ziel){
+        try{ ziel.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, clientX:x, clientY:y })); ziel.dispatchEvent(new PointerEvent('pointerup', { bubbles:true, clientX:x, clientY:y })); }catch(e){}
+        ziel.click();
+        try{ if(ziel.matches && ziel.matches('input, textarea, [contenteditable]')) ziel.focus(); }catch(e){}
+      }
+    }catch(e){}
+    tippLaeuft=false;
+  }
+  // Hotfix 17 §3.2 · Führendes Gerät, Bestätigung älter als 30 s: vor dem Tipp GET /api/app/fuehrung (3 s, keine Sperre).
+  // führt weiterhin → bestaetigtTs, Tipp · anderes Gerät führt → nicht führend, dann fuehrungUebernehmen(x, y) · keine Antwort → Tipp sofort, Gerät bleibt führend.
+  async function fuehrungPruefen(x, y){
+    if(pruefungLaeuft) return false;
+    pruefungLaeuft=true;
+    let d=null;
+    try{ d=await aufruf('GET', '/api/app/fuehrung', undefined, { zeitgrenze:3000 }); }catch(e){ d=null; }
+    pruefungLaeuft=false;
+    if(!d || typeof d!=='object'){ tippAusfuehren(x, y); return true; }   // keine Antwort: Offline-Betrieb wie heute
+    const f=(d && d.fuehrend)||null;
+    if(f===geraet()){ bestaetigtTs=Date.now(); fuehrungBekannt=true; fuehrungMerken(); tippAusfuehren(x, y); return true; }
+    fuehrungAbgeben(f);
+    return fuehrungUebernehmen(x, y);
+  }
   async function fuehrungUebernehmen(x, y){
     if(uebernahmeLaeuft) return false;
     uebernahmeLaeuft=true; sperreZeigen(true);
@@ -3430,7 +3470,7 @@ const FSLive = (()=>{
         standGezeichnet=(standUebernehmen(d, true)===true);
         neuGeladen=(!vorher && ersteUebernahmeErledigt);
       }
-      ichFuehre=true; fuehrend=geraet(); fuehrungBekannt=true; fuehrungMerken(); hinweisAnzeigen(); anzeigen();
+      ichFuehre=true; fuehrend=geraet(); fuehrungBekannt=true; bestaetigtTs=Date.now(); fuehrungMerken(); hinweisAnzeigen(); anzeigen();   // Hotfix 17 §2.4, §3.1
       if(!neuGeladen){ alleBetriebsschluesselVormerken(); planen(); }
     }catch(e){
       ok=false;
@@ -3446,17 +3486,7 @@ const FSLive = (()=>{
     try{ if(S.fokus && S.fokus.laeuft) starteTicker(); }catch(e){}
     try{ f12BadgeLaden(); }catch(e){}
     paketeHolen(); uhrMelden(true);
-    if(x!=null && y!=null){
-      klickVerschlucken=false;
-      try{
-        const ziel=document.elementFromPoint(x, y);
-        if(ziel){
-          try{ ziel.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, clientX:x, clientY:y })); ziel.dispatchEvent(new PointerEvent('pointerup', { bubbles:true, clientX:x, clientY:y })); }catch(e){}
-          ziel.click();
-          try{ if(ziel.matches && ziel.matches('input, textarea, [contenteditable]')) ziel.focus(); }catch(e){}
-        }
-      }catch(e){}
-    }
+    tippAusfuehren(x, y);   // Hotfix 17 §3.2: herausgelöst
     return true;
   }
   // §9.1 · Stand holen: nur gekoppelt, nicht führend, keine Übernahme im Gang. 204 = nichts Neues; 200 = übernehmen.
@@ -3624,7 +3654,9 @@ const FSLive = (()=>{
       // Hotfix 14 §10.3 · Tipp-Abfang auf nicht führenden Geräten: pointerdown merkt den Startpunkt (verschluckt nichts, Scrollen bleibt),
       // pointerup ≤ 10 px = Tipp → übernehmen; der folgende click wird verschluckt. Ausgenommen: FSLive-Punkt und Elemente mit data-fsgeraet.
       const ausgenommen=(t)=>{ try{ return !!(t && t.closest && (t.closest('#fsLiveFlaeche') || t.closest('[data-fsgeraet]'))); }catch(e){ return false; } };
-      const abfangen=()=>gekoppelt() && !ichFuehre && !uebernahmeLaeuft;
+      // Hotfix 17 §3.2 · auch auf dem führenden Gerät wird ein Tipp abgefangen, wenn die letzte Bestätigung älter als 30 s ist (Prüfung ohne Sperre);
+      // nicht während einer Übernahme, einer laufenden Prüfung oder dem Nachspielen eines Tipps. Wischen und Scrollen (> 10 px) nie.
+      const abfangen=()=>gekoppelt() && !uebernahmeLaeuft && !pruefungLaeuft && !tippLaeuft && (!ichFuehre || Date.now()-bestaetigtTs>BESTAETIGT_MS);
       document.addEventListener('pointerdown', e=>{ if(!abfangen() || ausgenommen(e.target)) return; sx=e.clientX; sy=e.clientY; }, { capture:true });
       document.addEventListener('pointerup', e=>{
         if(!abfangen() || ausgenommen(e.target) || sx==null) return;
@@ -3632,7 +3664,8 @@ const FSLive = (()=>{
         if(Math.sqrt(dx*dx+dy*dy)>10) return;   // Wischen oder Scrollen: keine Übernahme
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         klickVerschlucken=true;
-        fuehrungUebernehmen(e.clientX, e.clientY);
+        if(ichFuehre) fuehrungPruefen(e.clientX, e.clientY);   // Hotfix 17 §3.2
+        else fuehrungUebernehmen(e.clientX, e.clientY);
       }, { capture:true });
       document.addEventListener('click', e=>{ if(!klickVerschlucken) return; e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); klickVerschlucken=false; }, { capture:true });
       if(lies(K.fuehrtJetzt)==='1'){ try{ localStorage.removeItem(K.fuehrtJetzt); }catch(e){} setTimeout(()=>{ try{ toast('Dieses Gerät führt jetzt'); }catch(e){} }, 1500); }
