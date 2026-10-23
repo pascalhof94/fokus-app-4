@@ -3164,7 +3164,7 @@ const FSLive = (()=>{
   const ADRESSE_STANDARD='https://Mac-mini-von-Pascal.local:8443';
   const APP_KENNUNG='fokus-app-4';
   const RUHE_MS=3000, SPAETESTENS_MS=10000, WIEDERHOLEN_MS=30000, ZEITGRENZE_MS=60000, PAKETE_MS=60000, UHR_MS=60000;
-  const STAND_MS=3000, SPERRE_MIN_MS=1000, SPERRE_MAX_MS=5000;   // Hotfix 14 §7.2: Stand-Takt, Sperre bei der Übernahme
+  const SPERRE_MIN_MS=1000, SPERRE_MAX_MS=5000;   // Hotfix 14 §7.2: Sperre bei der Übernahme · Hotfix 17 §1.1: der Stand-Takt (STAND_MS) entfällt ersatzlos
   const FARBE={ gruen:'#4ade80', gelb:'#facc15', rot:'#f87171', grau:'#9ca3af' };
   const TITEL='FocusSystem · Mac mini';
   const BETRIEB=['karten','unteraufgaben','stapel','ordner','gruppen','vorlagen','settings','tag','fokus','historie','intraday',
@@ -3245,6 +3245,7 @@ const FSLive = (()=>{
   async function spiegeln(){
     clearTimeout(uhr); uhr=null;
     if(laeuft || !gekoppelt() || !offen.size){ anzeigen(); return; }
+    if(nichtFuehrend()){ anzeigen(); return; }   // Hotfix 17 §1.2: nicht führend → kein Aufruf; vorgemerkte Schlüssel (auch ui) bleiben stehen bis zur Übernahme
     laeuft=true; ersterTs=0;
     try{
       for(const [schluessel, stand] of Array.from(offen.entries())){
@@ -3277,6 +3278,9 @@ const FSLive = (()=>{
   }
   // Hotfix 14 §8.5 · Nicht gekoppelte Geräte verhalten sich wie bisher (kein Führungskonzept, keine Sperre).
   function koennteSchreiben(){ return !gekoppelt() || ichFuehre; }
+  // Hotfix 17 · nicht führend = gekoppelt und ichFuehre===false. Auf solchen Geräten ruhen alle Takte, die den Dienst aufrufen (§1.2),
+  // und die lokalen Neuzeichnungs-Takte (§1.3); nicht gekoppelte Geräte verhalten sich exakt wie bisher.
+  function nichtFuehrend(){ return gekoppelt() && ichFuehre!==true; }
 
   // ── Lesen und Schreiben live ──────────────────────────────────────
   // lesen: wirft bei fehlender Verbindung (e.offline) oder Ablehnung (e.status, e.message).
@@ -3307,6 +3311,7 @@ const FSLive = (()=>{
   }
   async function schlangeSenden(){
     if(sendetSchlange || !gekoppelt() || !warteschlange.length) return null;
+    if(nichtFuehrend()){ anzeigen(); return null; }   // Hotfix 17 §1.2: nicht führend → die Warteschlange bleibt stehen bis zur Übernahme
     sendetSchlange=true; let letzte=null;
     try{
       while(warteschlange.length){
@@ -3364,6 +3369,7 @@ const FSLive = (()=>{
   function uhrMelden(erzwingen){
     try{
       if(!gekoppelt()) return;
+      if(nichtFuehrend()) return;   // Hotfix 17 §1.2: nicht führend → keine Uhr-Meldung (Takt UHR_MS und alle anderen Aufrufer)
       const f=S.fokus, k=f && f.karteId ? f.karteId : null;
       let kette=[]; try{ kette=ketteState().ids.slice(0,200); }catch(e){}
       const d={ karte:(f && f.laeuft) ? k : null, start:(f && f.laeuft && f.startMs) ? new Date(f.startMs).toISOString() : null,
@@ -3631,7 +3637,7 @@ const FSLive = (()=>{
       fuehrungLesen().then(()=>{ if(!ichFuehre) standHolen(true); }).catch(()=>{});   // Hotfix 14 §7.5
       setInterval(()=>{ if(offen.size) spiegeln(); if(warteschlange.length) schlangeSenden(); }, WIEDERHOLEN_MS);
       setInterval(()=>paketeHolen(), PAKETE_MS);
-      setInterval(()=>{ if(document.visibilityState==='visible') standHolen(false); }, STAND_MS);   // Hotfix 14 §9.3
+      // Hotfix 17 §1.1: der 3-s-Takt standHolen(false) (Hotfix 14 §9.3) entfällt ersatzlos — nicht führende Geräte gleichen nur bei der Übernahme ab
       setInterval(()=>uhrMelden(true), UHR_MS);
       document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true);
         fuehrungLesen().then(()=>{ if(!ichFuehre) standHolen(true); }).catch(()=>{}); }   // Hotfix 14 §7.6
@@ -3643,7 +3649,8 @@ const FSLive = (()=>{
   }
   return { vormerken, spiegeln, senden, lesen, hochladen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
     warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length, warteschlangeHat:(id)=>warteschlange.some(x=>x && x.id===id),
-    geraeteLaden, geraetBenennen, fuehrungSetzen, ichFuehre:()=>ichFuehre, geraet, koennteSchreiben };   // Hotfix 14 §11 (geraet: Kennung für „dieses Gerät“ in den Einstellungen)
+    geraeteLaden, geraetBenennen, fuehrungSetzen, ichFuehre:()=>ichFuehre, geraet, koennteSchreiben,   // Hotfix 14 §11 (geraet: Kennung für „dieses Gerät“ in den Einstellungen)
+    nichtFuehrend };   // Hotfix 17 §1: Takte außerhalb des Moduls (Chat-Badge, Nachsenden, Statusleiste, Ticker) ruhen auf nicht führenden Geräten
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
@@ -6953,6 +6960,7 @@ function f11BilanzSenden(tag, felder){
 let _f11NachTs=0;
 async function f11Nachsenden(){
   const A=S.meta.f11Ausstehend; if(!A || (!A.bilanz && !A.chat) || !FSLive.gekoppelt()) return;
+  if(FSLive.nichtFuehrend()) return;   // Hotfix 17 §1.2: nicht führend → kein Nachsenden (Takt 60 s, Start nach 6 s, Vordergrund)
   if(Date.now()-_f11NachTs<55000) return; _f11NachTs=Date.now();
   try{
     if(A.bilanz && !FSLive.warteschlangeHat('bilanz-'+A.bilanz.tag)){
@@ -7406,7 +7414,8 @@ function f12UhrTick(){ try{ if(typeof document==='undefined' || !document.queryS
 function f12UhrStarten(){ if(F12.uhr) return; F12.uhr=setInterval(()=>{ if(e1Art()!=='chat' && !(document.body && document.body.classList && document.body.classList.contains('breit'))){ clearInterval(F12.uhr); F12.uhr=null; return; } f12UhrTick(); }, 1000); }
 /* §1.4: solange das Gespräch offen ist, alle 15 s neu lesen; neue Zeilen werden angehängt */
 function f12NachladenStarten(kanal, g){ const key=f12VerlaufKey(kanal, g); if(F12.nachladen && F12.nachladenKey===key) return; f12NachladenStoppen(); F12.nachladenKey=key; F12.nachladenTick=0;
-  F12.nachladen=setInterval(()=>{ try{ if(e1Art()!=='chat'){ f12NachladenStoppen(); return; } const L=F7.lager[key]; if(L) L.ts=0; f12Verlauf(kanal, g); f12BadgeLaden(); F12.nachladenTick++; if(F12.nachladenTick%2===0) f12PfNachlesen(kanal, g); }catch(e){} }, 15000); }
+  F12.nachladen=setInterval(()=>{ try{ if(e1Art()!=='chat'){ f12NachladenStoppen(); return; } if(FSLive.nichtFuehrend()) return;   // Hotfix 17 §1.2: nicht führend → kein Nachladen (Verlauf, Badge, Postfach)
+    const L=F7.lager[key]; if(L) L.ts=0; f12Verlauf(kanal, g); f12BadgeLaden(); F12.nachladenTick++; if(F12.nachladenTick%2===0) f12PfNachlesen(kanal, g); }catch(e){} }, 15000); }
 /* Hotfix 13 §3.2: Postfach-Datensätze der sichtbaren Antworten neu lesen, deren Status offen war; Änderung → Zeile in place (f12PfLesen) */
 function f12PfNachlesen(kanal, g){ try{ const L=F7.lager[f12VerlaufKey(kanal, g)], rows=(L && L.daten)||[];
   rows.forEach(r=>{ if(String(r.Von||'')==='Pascal') return; f7Link(r.Postfach).forEach(x=>{ const id=String(x.id), P=F12.pf[id]; if(!P || String((P.r||{}).Status||'').toLowerCase()!=='erledigt'){ if(P) P.ts=0; f12PfLesen(id); } }); }); }catch(e){} }
@@ -7593,7 +7602,8 @@ function f12TrainerZeilenHeute(anlass){ const kanal=f12TrainerKanal(); const row
   return rows.filter(r=>String(r.Von||'')==='Trainer' && String(r.Anlass||'')===anlass && String(r.Zeitstempel||'').slice(0,10)===heute); }
 /* ── §10 · Badge und Benachrichtigung über alle Kanäle ── */
 function f12BadgeLaden(){
-  if(!FSLive.gekoppelt()) return; const kan=f12Kanaele(); if(!kan || !kan.length) return;
+  if(!FSLive.gekoppelt()) return; if(FSLive.nichtFuehrend()) return;   // Hotfix 17 §1.2: nicht führend → kein Badge-Abruf (Takt 60 s, Start nach 9 s, Nachladen im Chat)
+  const kan=f12Kanaele(); if(!kan || !kan.length) return;
   if(F12.badgeLaeuft) return; F12.badgeLaeuft=true; const sum={};
   const zeilen={};
   Promise.all(kan.map(k=>FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel','Art','Anlass','Status','Postfach'], filter:[{ feld:'Von', operator:'ungleich', wert:'Pascal' },{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Zeitstempel', richtung:'ab' }], limit:20 })   // Hotfix 15 §7: Art, Anlass, Postfach für die Postfach-Ansicht
@@ -13909,6 +13919,7 @@ function starteTicker(){
   if(tickerId) return;
   tickerId=setInterval(()=>{
     if(!(S.fokus && S.fokus.laeuft)){ clearInterval(tickerId); tickerId=null; return; }
+    try{ if(FSLive.nichtFuehrend()) return; }catch(e){}   // Hotfix 17 §1.3: nicht führend → der Ticker ruht (auch mit laufender Karte aus dem übernommenen Stand); nach der Übernahme läuft er wieder
     if(S.tag){ S.tag.letzteAktivitaetTs=jetztIso(); }   // Aktivitäts-Stempel (Kanten §6)
     renderFokusleiste();
     if(tagOffen()) renderStatusbar();                   // V1.1: Live-Punkte/-Minuten/-Pace in der Statusleiste sekündlich
@@ -25359,7 +25370,8 @@ function init(){
   // Statusleiste driftet mit der Zeit (Pace/Akku/Kauf-Hinweis) — auch ohne
   // laufenden Timer alle 20 s auffrischen, solange ein Tag offen ist.
   let _ruheTakt=0;
-  setInterval(()=>{ if(S.tag && !(S.fokus&&S.fokus.laeuft)){ renderStatusbar(); if(++_ruheTakt%3===0) diagrammeLive(); } }, 20000);   // §3 (v3.7.0): auch bei stehender Uhr jede Minute live (Matrixverlauf, Tagesdiagramme)
+  setInterval(()=>{ try{ if(FSLive.nichtFuehrend()) return; }catch(e){}   // Hotfix 17 §1.3: nicht führend → nichts neu zeichnen, der zuletzt gezeichnete Stand bleibt
+    if(S.tag && !(S.fokus&&S.fokus.laeuft)){ renderStatusbar(); if(++_ruheTakt%3===0) diagrammeLive(); } }, 20000);   // §3 (v3.7.0): auch bei stehender Uhr jede Minute live (Matrixverlauf, Tagesdiagramme)
   window.addEventListener('resize', layoutTopbar);
   // 4.0 · Paket 1: Interaktions-Stempel und Auto-Pause-Dialog entfernt.
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ saveMeta(); } });
