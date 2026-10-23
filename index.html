@@ -6793,9 +6793,9 @@ function f11VortagBuchen(){
   catch(e){ console.warn('Übergang: Aufstehen', e); f11Log('aufstehen', 'Fehler: '+((e&&e.message)||e)); }
   try{ const k=tagesuebergangKarte(); if(S.tag && tagOffen()){ S.tag.uebergang={ ts:jetztIso(), karte:k ? k.id : null, vortag:vortagDatum }; const imLog=(S.intraday||[]).some(e=>e && e.tagId===S.tag.tagId && e.eck==='uebergang'); const p=f11EckpunkteBuchen('uebergang'); f11Log('eckpunkte', p>0 ? p+' P gebucht (Stunden-Log)' : (imLog ? 'schon im Stunden-Log' : 'nichts gebucht: Tag nicht buchbar')); saveTag(); } }catch(e){ console.warn('Übergang: Eckpunkte', e); f11Log('eckpunkte', 'Fehler: '+((e&&e.message)||e)); }
   try{ const text='Tagesübergang: Vortag '+(vortagDatum ? f11Datum(vortagDatum) : '')+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.';
-    S.meta.f11Ausstehend=Object.assign({}, S.meta.f11Ausstehend, { chat:{ text, art:'Feedback', tag:vortagDatum, seit:jetztIso() } }); saveMeta();   // Nachbesserung 2
+    S.meta.f11Ausstehend=Object.assign({}, S.meta.f11Ausstehend, { chat:{ text, art:'Feedback', tag:vortagDatum, gespraech:f12TagGespraech(), versuche:0, seit:jetztIso() } }); saveMeta();   // Nachbesserung 2 · Hotfix 16 §1: Gespräch und Zähler
     const p=f12TrainerSenden(text, { anlass:'Feedback', id:'chat-uebergang-'+vortagDatum });   // 4.1 §9.2
-    if(p && p.then) p.then(r=>f11Log('chat', r && r.sofort ? 'gesendet' : (r && r.wartend ? 'wartend' : 'ohne Antwort'))).catch(e=>f11Log('chat', 'Fehler: '+((e&&e.message)||e))); }
+    if(p && p.then) p.then(r=>{ f11Log('chat', r && r.sofort ? 'gesendet' : (r && r.wartend ? 'wartend' : 'ohne Antwort')); f11ChatBestaetigt(r); }).catch(e=>f11Log('chat', 'Fehler: '+((e&&e.message)||e))); }
   catch(e){ f11Log('chat', 'Fehler: '+((e&&e.message)||e)); }
   F11.auf=null; renderAlles();
   if(m) toast('☀️ Vortag gebucht · Tag gestartet'+(a.akku!=null ? ' · Akku '+Math.round(num(a.akku))+' %' : ''));
@@ -6845,11 +6845,21 @@ async function f11Nachsenden(){
       if(z && z['Tagesübergang']){ delete A.bilanz; saveMeta(); f11Log('bilanz', 'beim Dienst bestätigt'); }
       else { f11Log('bilanz', 'nachsenden für '+A.bilanz.tag); await f11BilanzSenden(A.bilanz.tag, A.bilanz.felder); } }
     if(A.chat && !FSLive.warteschlangeHat('chat-uebergang-'+A.chat.tag)){
-      const d=await FSLive.lesen('datensaetze_auflisten', { tabelle:'Agenten-Aufträge', felder:['Text'], filter:[{ feld:'Text', operator:'gleich', wert:A.chat.text }], limit:1 });
+      // Hotfix 16 §1.1: die Ankunft gilt als bestätigt, wenn in der Chat-Tabelle des Trainer-Kanals eine Zeile Von Pascal, Art Nachricht,
+      // Gespräch = Tagesgespräch des Übergangstags und Text = A.chat.text steht (bis Hotfix 15 wurde in Agenten-Aufträge gesucht — dort kam seit 4.1.0 nichts mehr an)
+      const kanal=f12TrainerKanal(), tabelle=(kanal && kanal.Tabelle)||F12_TRAINER_TABELLE, g=A.chat.gespraech||f12TagGespraech(anVorTage(A.chat.tag, -1));
+      const d=await FSLive.lesen('datensaetze_auflisten', { tabelle, felder:['Text'], filter:[{ feld:'Von', operator:'gleich', wert:'Pascal' },{ feld:'Art', operator:'gleich', wert:'Nachricht' },{ feld:'Gespräch', operator:'gleich', wert:g },{ feld:'Text', operator:'gleich', wert:A.chat.text }], limit:1 });
       if(d && d.datensaetze && d.datensaetze.length){ delete A.chat; saveMeta(); f11Log('chat', 'beim Dienst bestätigt'); }
-      else { f11Log('chat', 'nachsenden'); f12TrainerSenden(A.chat.text, { anlass:A.chat.art||'Feedback', id:'chat-uebergang-'+A.chat.tag }); } }   // 4.1 §9.2
+      else if(num(A.chat.versuche)>=F11_NACHSENDEN_MAX){ delete A.chat; saveMeta(); f11Log('chat', 'aufgegeben nach '+F11_NACHSENDEN_MAX+' Versuchen'); toast('Feedback-Anfrage an den Trainer nicht bestätigt — bitte im Chat nachfragen'); }   // Hotfix 16 §1.3
+      else { A.chat.versuche=num(A.chat.versuche)+1; saveMeta(); f11Log('chat', 'nachsenden ('+A.chat.versuche+'/'+F11_NACHSENDEN_MAX+')');
+        const p=f12TrainerSenden(A.chat.text, { anlass:A.chat.art||'Feedback', id:'chat-uebergang-'+A.chat.tag }); if(p && p.then) p.then(r=>f11ChatBestaetigt(r)).catch(()=>{}); } }   // 4.1 §9.2
   }catch(e){ f11Log('nachsenden', 'Fehler: '+((e&&e.message)||e)); }
 }
+const F11_NACHSENDEN_MAX=3;   // Hotfix 16 §1.3: höchstens 3 Nachsendungen je ausstehender Übergangs-Nachricht
+/* Hotfix 16 §1.2: hat der Dienst die Zeile angenommen (sofort), gilt die Nachricht als bestätigt — kein Eintrag f11Ausstehend.chat bleibt stehen */
+function f11ChatBestaetigt(r){ try{ const A=S.meta.f11Ausstehend; if(r && r.sofort && A && A.chat){ delete A.chat; saveMeta(); f11Log('chat', 'beim Dienst angenommen'); } }catch(e){} }
+/* Hotfix 16 §1.5: einmalig beim Start — der Eintrag der Schleife vom 23.10.2026 (Tag 2026-10-22) wird ohne Senden gelöscht */
+try{ const A=S.meta.f11Ausstehend; if(A && A.chat && String(A.chat.tag||'')==='2026-10-22'){ delete A.chat; saveMeta(); f11Log('chat', 'Hotfix 16: Schleife beendet'); } }catch(e){}
 setInterval(()=>{ try{ f11Nachsenden(); }catch(e){} }, 60000);   // unabhängig vom Sekunden-Ticker, der nur mit laufender Uhr läuft
 setTimeout(()=>{ try{ f11Nachsenden(); }catch(e){} }, 6000);
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ _f11NachTs=0; try{ f11Nachsenden(); }catch(e){} } });
