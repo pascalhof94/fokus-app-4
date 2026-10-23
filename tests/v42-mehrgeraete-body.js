@@ -1,5 +1,7 @@
 /* Suite 4.2 · Mehrgeräte-Betrieb (Hotfix 14, Auftrag 22.10.2026, §13). Aufruf: jsc tests/v42-mehrgeraete.js
    Geschrieben, im Rahmen des Auftrags nicht ausgeführt. Läuft gegen einen fetch-Ersatz (Antworten je „METHODE /pfad“), FSLive sonst echt.
+   Hotfix 17 (23.10.2026): nicht führende Geräte rufen nichts mehr ab (kein standHolen beim Start, Spiegel und Schlange bleiben stehen), die Pille
+   „Nur Anzeige · führend“ ist ersetzt (Stand-Hinweis erst ab 60 Min.), 409 holt keinen Stand mehr, Geräte-Liste zeigt 👑 — Erwartungen angepasst.
    Netz: fetch/AbortController werden hier ersetzt (Funktionsdeklarationen gelten im ganzen eval); Zeit: Date.now mit Versatz;
    setTimeout sammelt Uhren in _timer, timerLaufen() führt sie aus und stellt die Uhr vor. */
 var _aufrufe, _antworten={}, _timer, _versatz=0, _angehaengt=[], _hoerer={};
@@ -43,12 +45,13 @@ ME=aufrufe('GET', '/api/app/fuehrung').length ? FSLive.geraet() : FSLive.geraet(
 
 // ══ nicht führend → kein PUT gemeinsamer Schlüssel, ui schon ══
 pruef('Führung gelesen: anderes Gerät führt → ichFuehre false', FSLive.ichFuehre()===false && aufrufe('GET', '/api/app/fuehrung').length>=1);
-pruef('Pille „Nur Anzeige · führend: …“ sichtbar (Kennung gekürzt auf 8 Zeichen, solange kein Name bekannt)', !!pille() && pille().style.display==='block' && pille().textContent==='Nur Anzeige · führend: GERAET-B'.slice(0, 'Nur Anzeige · führend: '.length+8), pille() && pille().textContent);
+pruef('Hotfix 17 §4.2: keine Pille „Nur Anzeige“ mehr — ohne Stand (standZeit leer) bleibt die Pille aus', !!pille() && pille().style.display==='none', pille() && pille().textContent);
+pruef('Hotfix 17 §2.1: beim Start kein /api/app/stand', aufrufe('GET', '/api/app/stand').length===0, JSON.stringify(_aufrufe));
 _antworten['PUT /api/spiegel/']={ json:{ version:1, empfangen_am:'x' } };
 localStorage.setItem(PREFIX+'karten', '[]'); localStorage.setItem(PREFIX+'ui', '{}');
 _aufrufe=[]; FSLive.vormerken('karten'); FSLive.vormerken('ui'); FSLive.spiegeln(); drain();
-pruef('nicht führend: ui wird gespiegelt, karten nicht', aufrufe('PUT', '/api/spiegel/fokus4_ui').length===1 && aufrufe('PUT', '/api/spiegel/fokus4_karten').length===0, JSON.stringify(_aufrufe));
-pruef('nicht führend: gemeinsame Schlüssel bleiben nicht ausstehend, Zustand nicht rot', FSLive.zustand()!=='rot' && JSON.parse(localStorage.getItem(PREFIX+'fslive_ausstehend')||'[]').indexOf('karten')<0, localStorage.getItem(PREFIX+'fslive_ausstehend'));
+pruef('Hotfix 17 §1.2: nicht führend: weder ui noch karten werden gespiegelt', aufrufe('PUT', '/api/spiegel/').length===0, JSON.stringify(_aufrufe));
+pruef('Hotfix 17 §1.2: nicht führend: vorgemerkte Schlüssel (karten, ui) bleiben ausstehend, Zustand nicht rot', FSLive.zustand()!=='rot' && JSON.parse(localStorage.getItem(PREFIX+'fslive_ausstehend')||'[]').indexOf('karten')>=0 && JSON.parse(localStorage.getItem(PREFIX+'fslive_ausstehend')||'[]').indexOf('ui')>=0, localStorage.getItem(PREFIX+'fslive_ausstehend'));
 pruef('koennteSchreiben: gekoppelt und nicht führend → false', FSLive.koennteSchreiben()===false);
 
 // ══ Paket-Abruf nur führend ══
@@ -62,25 +65,28 @@ var _reloads=0; window.location.reload=function(){ _reloads++; };
 var neueKarten=[Object.assign(neueKarte({ titel:'Vom führenden Gerät', domain:'dfm' }), { id:'t-stand', status:'offen', matrixFeld:'ziel', sollMin:10 })];
 localStorage.setItem(PREFIX+'karten', JSON.stringify([{ id:'lokal-alt' }]));
 neuStart({ 'GET /api/app/fuehrung':{ json:{ fuehrend:'GERAET-B', ich:'x', seit:null, stand_nr:8 } },
-  'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:8, schluessel:{ karten:neueKarten } } } });
+  'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:8, schluessel:{ karten:neueKarten } } }, 'POST /api/app/fuehrung':{ json:{ fuehrend:FSLive.geraet(), stand_nr:8 } } });
+feuern('pointerdown', ereignis(50, 50)); feuern('pointerup', ereignis(50, 50)); drain();   // Hotfix 17: der Stand kommt erst mit der Übernahme per Tipp
 var vorKeys=DB.list().filter(function(k){ return k.indexOf('vorUebernahme_')===0; });
-pruef('erste Übernahme: Sicherung vorUebernahme_<Zeit> mit dem alten Stand, Marke gesetzt, Seite lädt neu', vorKeys.length===1 && JSON.parse(JSON.parse(localStorage.getItem(PREFIX+vorKeys[0])).karten)[0].id==='lokal-alt' && localStorage.getItem(PREFIX+'fslive_ersteUebernahme')==='1' && _reloads===1, JSON.stringify([vorKeys, _reloads]));
+pruef('erste Übernahme (Hotfix 17: per Tipp): Sicherung vorUebernahme_<Zeit> mit dem alten Stand, Marke gesetzt, Seite lädt neu', vorKeys.length===1 && JSON.parse(JSON.parse(localStorage.getItem(PREFIX+vorKeys[0])).karten)[0].id==='lokal-alt' && localStorage.getItem(PREFIX+'fslive_ersteUebernahme')==='1' && _reloads===1, JSON.stringify([vorKeys, _reloads]));
 pruef('erste Übernahme: Schlüssel des führenden Geräts im Speicher, nicht über DB.set', JSON.parse(localStorage.getItem(PREFIX+'karten'))[0].id==='t-stand' && _dbset.indexOf('karten')<0);
 
 // ══ Stand-Übernahme (danach) schreibt nicht über DB.set und lädt nicht neu ══
 _reloads=0; _dbset.length=0; localStorage.setItem(PREFIX+'karten', '[]');
 neuStart({ 'GET /api/app/fuehrung':{ json:{ fuehrend:'GERAET-B', ich:'x', seit:null, stand_nr:9 } },
-  'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:9, schluessel:{ karten:neueKarten, fokus:{ laeuft:false } } } } });
-pruef('Stand geholt (GET /api/app/stand?ab=<letzte Nummer>) und direkt in den Speicher geschrieben, nicht über DB.set', aufrufe('GET', '/api/app/stand?ab=8').length===1 && JSON.parse(localStorage.getItem(PREFIX+'karten'))[0].id==='t-stand' && _dbset.indexOf('karten')<0, JSON.stringify([aufrufe('GET', '/api/app/stand'), _dbset]));
+  'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:9, schluessel:{ karten:neueKarten, fokus:{ laeuft:false } } } }, 'POST /api/app/fuehrung':{ json:{ fuehrend:FSLive.geraet(), stand_nr:9 } }, 'PUT /api/spiegel/':{ json:{ version:1 } } });
+pruef('Hotfix 17 §2.1: Start nicht führend holt keinen Stand', aufrufe('GET', '/api/app/stand').length===0, JSON.stringify(_aufrufe));
+_aufrufe=[]; feuern('pointerdown', ereignis(50, 50)); feuern('pointerup', ereignis(50, 50)); drain(); timerLaufen(); drain();
+pruef('Stand bei der Übernahme geholt (GET /api/app/stand?ab=0) und direkt in den Speicher geschrieben, nicht über DB.set', aufrufe('GET', '/api/app/stand?ab=0').length===1 && JSON.parse(localStorage.getItem(PREFIX+'karten'))[0].id==='t-stand' && _dbset.indexOf('karten')<0, JSON.stringify([aufrufe('GET', '/api/app/stand'), _dbset]));
 pruef('nach der Übernahme ist der Zustand neu geladen (S.karten aus dem Speicher), kein Neuladen der Seite', S.karten.length===1 && S.karten[0].id==='t-stand' && _reloads===0, JSON.stringify([S.karten.map(function(k){ return k.id; }), _reloads]));
-_aufrufe=[]; FSLive.spiegeln(); drain();
-pruef('übernommener Stand wird nicht zurückgespiegelt', aufrufe('PUT', '/api/spiegel/fokus4_karten').length===0);
+pruef('Hotfix 17 §2.3: nach der Übernahme führt dieses Gerät und spiegelt die Betriebsschlüssel', FSLive.ichFuehre()===true && aufrufe('PUT', '/api/spiegel/fokus4_karten').length>=1, JSON.stringify(aufrufe('PUT', '/api/spiegel/')));
 
 // ══ 204: gleicher Stand → nichts ══
 S.karten=[]; saveKarten();
 _antworten['GET /api/app/stand']={ status:204 };
 neuStart(_antworten);
-pruef('204 vom Dienst: Speicher unverändert', JSON.parse(localStorage.getItem(PREFIX+'karten')).length===0);
+feuern('pointerdown', ereignis(50, 50)); feuern('pointerup', ereignis(50, 50)); drain(); timerLaufen(); drain();   // Hotfix 17: Übernahme per Tipp
+pruef('204 vom Dienst bei der Übernahme: Speicher unverändert', JSON.parse(localStorage.getItem(PREFIX+'karten')).length===0);
 
 DB.set=_DBset;
 
@@ -91,8 +97,8 @@ pruef('dieses Gerät führt → ichFuehre true, Pille aus, koennteSchreiben true
 _aufrufe=[]; FSLive.paketeHolen(); drain();
 pruef('führend: Paket-Abruf läuft', aufrufe('GET', '/api/app/pakete').length===1);
 _aufrufe=[]; FSLive.vormerken('karten'); FSLive.spiegeln(); drain();
-pruef('409 beim Spiegeln: Führung verloren (ichFuehre false), kein Fehlerzustand, Stand wird geholt', FSLive.ichFuehre()===false && FSLive.zustand()!=='rot' && aufrufe('GET', '/api/app/stand').length===1 && JSON.parse(localStorage.getItem(PREFIX+'fslive_ausstehend')||'[]').indexOf('karten')<0, JSON.stringify([FSLive.zustand(), _aufrufe]));
-pruef('409: Pille zeigt das neue führende Gerät', pille().style.display==='block' && pille().textContent.indexOf('GERAET-C')>=0, pille().textContent);
+pruef('409 beim Spiegeln (Hotfix 17 §3.4): Führung verloren (ichFuehre false), kein Fehlerzustand, kein standHolen, karten bleibt vorgemerkt', FSLive.ichFuehre()===false && FSLive.zustand()!=='rot' && aufrufe('GET', '/api/app/stand').length===0 && JSON.parse(localStorage.getItem(PREFIX+'fslive_ausstehend')||'[]').indexOf('karten')>=0, JSON.stringify([FSLive.zustand(), _aufrufe]));
+pruef('409 (Hotfix 17 §4.2): keine Pille, solange der Stand jünger als 60 Min. ist', pille().style.display==='none', pille().textContent);
 
 // ══ Tipp nicht führend → Sperre ≥ 1000 ms, danach Klick am selben Punkt ══
 var geklickt=[], fokussiert=0;
@@ -133,7 +139,7 @@ pruef('offline: Sperre weg, nicht führend, Tipp verfällt', sperre().style.disp
 var LISTE=[{ geraet_id:FSLive.geraet(), anzeigename:'iPad', name:'Fokus 4.0 · x', app:'fokus-app-4', gekoppelt_am:'2026-10-22T10:00:00Z', zuletzt_gesehen_am:'2026-10-22T10:05:00Z', aktiv:true, fuehrend:false },
   { geraet_id:'GERAET-B', anzeigename:null, name:'Fokus 4.0 · Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X)', app:'fokus-app-4', gekoppelt_am:'2026-10-20T10:00:00Z', zuletzt_gesehen_am:null, aktiv:true, fuehrend:true }];
 var hl=fsGeraeteListeHtml(LISTE);
-pruef('Geräte-Liste: Anzeigename bzw. name gekürzt auf 30, „· dieses Gerät“, grüne Pille „führend“, Knopf „Führend setzen“, Namensfeld vorbefüllt', hl.indexOf('iPad · dieses Gerät')>=0 && hl.indexOf(esc('Fokus 4.0 · Mozilla/5.0 (iPhon'))>=0 && hl.indexOf('(iPhone;')<0 && hl.indexOf('<span class="chip on gruen">führend</span>')>=0 && hl.indexOf('data-fsgeraet-fuehren="'+FSLive.geraet()+'"')>=0 && hl.indexOf('id="fsGeraetName" value="iPad"')>=0 && hl.indexOf('data-fsgeraet-name="1"')>=0, hl);
+pruef('Geräte-Liste: Anzeigename bzw. name gekürzt auf 30, „· dieses Gerät“, 👑 beim führenden Gerät (Hotfix 17 §4.4), Knopf „Führend setzen“, Namensfeld vorbefüllt', hl.indexOf('iPad · dieses Gerät')>=0 && hl.indexOf(esc('Fokus 4.0 · Mozilla/5.0 (iPhon'))>=0 && hl.indexOf('(iPhone;')<0 && hl.indexOf('<span title="führend">👑</span>')>=0 && hl.indexOf('data-fsgeraet-fuehren="'+FSLive.geraet()+'"')>=0 && hl.indexOf('id="fsGeraetName" value="iPad"')>=0 && hl.indexOf('data-fsgeraet-name="1"')>=0, hl);
 pruef('Karte „📱 Geräte“ trägt data-fsgeraet="1" und steht vor der Karte „💾 Speicher“', (function(){ var s=readFile('index.html'); var a=s.indexOf('<div class="card" data-fsgeraet="1"><h3>📱 Geräte</h3>'), b=s.indexOf('<h3>💾 Speicher</h3>'); return a>0 && b>a; })());
 _aufrufe=[]; _antworten['POST /api/app/geraet']={ json:{ ok:true } }; _antworten['GET /api/app/geraete']={ json:{ geraete:LISTE } };
 FSLive.geraetBenennen('  Mein iPad  '); drain();
@@ -172,6 +178,6 @@ localStorage.setItem(PREFIX+'karten', '[]');
 _aufrufe=[]; FSLive.vormerken('karten'); FSLive.spiegeln(); drain();
 var u4=ereignis(100, 200); feuern('pointerdown', ereignis(100, 200)); feuern('pointerup', u4); drain();
 pruef('nicht gekoppelt: kein Aufruf, kein Abfangen, keine Pille, koennteSchreiben true', _aufrufe.length===0 && u4.pd===0 && sperre().style.display!=='flex' && pille().style.display!=='block' && FSLive.koennteSchreiben()===true && FSLive.zustand()==='grau', JSON.stringify([_aufrufe, u4.pd, sperre().style.display, pille().style.display, FSLive.zustand()]));
-pruef('Version 4.1.5 · Build 2026-10-23-40 (Hotfix 16 §8)', APP_VERSION==='4.1.5' && APP_BUILD==='2026-10-23-40');
+pruef('Version 4.1.6 · Build 2026-10-23-41 (Hotfix 17 §6)', APP_VERSION==='4.1.6' && APP_BUILD==='2026-10-23-41');
 
 suiteEnde('Mehrgeräte 4.2 · Hotfix 14');
