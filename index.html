@@ -6681,7 +6681,16 @@ function f9Rendern(){
   { const inp=el('slSuche'); if(inp && document.activeElement!==inp) inp.value=S.ui.suFrage||''; }
   try{ L.innerHTML=f7SucheStartHtml(); }catch(e){ L.innerHTML='<div class="leer">—</div>'; }
   const a=e1Art();
-  try{ C.innerHTML='<div class="sr-kopf">💬 '+esc(f12Name(f12KanalAktuell()||f12TrainerKanal()||{ Agent:'Trainer' }))+'<span>zur Ansicht: '+(F9_SEITE[seiteAktuell()]||'')+'</span></div>'+(a==='chat' ? '<div class="leer">Der Chat ist in der Mitte offen.</div>' : f12SeiteHtml()); f12UhrStarten(); }catch(e){ C.innerHTML='<div class="leer">—</div>'; }   // 4.1 §2.5: iPad zeigt das Gespräch
+  // Hotfix 16 §4.7: ist eine Karte im Fokus, zeigt die rechte Spalte ihr Gespräch karte-<id> im führenden Kanal; wechselt die Karte, wechselt das Gespräch.
+  // Der Entwurf bleibt je Gespräch (f12Entwurf). Ohne Karte im Fokus wie bisher (zuletzt offenes Gespräch bzw. Trainer). Ist der Chat in der Mitte offen, bleibt der Zustand unberührt.
+  let fk=null, fkKanal=null, fkG=null;
+  try{ fk=(a!=='chat' && typeof fokusKarte==='function') ? fokusKarte() : null; if(fk && (f12Kanaele()||[]).length){ fkKanal=f12KartenKanal(fk); if(fkKanal){ fkG=f12KarteGespraech(fk.id); const u=f12Ui();
+    if(u.kanal!==fkKanal.id || u.gespraech!==fkG){ u.raum=f12Raum(fkKanal)||u.raum; u.kanal=fkKanal.id; u.gespraech=fkG; saveUi(); }
+    const e=f12Entwurf(fkKanal.id, fkG); if(!f12GespraechHatZeilen(fkKanal, fkG) && !e.karten.some(x=>x.id===fk.id)) e.karten.push({ id:fk.id, titel:fk.titel, airtableId:fk.airtableId||null }); } } }catch(e){ fkKanal=null; }
+  try{ let kopf;
+    if(fkKanal){ const rows=f12Verlauf(fkKanal, fkG); kopf='<div class="sr-kopf">💬 '+esc(f12KarteTitel(fk))+'<span>zur Ansicht: '+(F9_SEITE[seiteAktuell()]||'')+'</span></div><div class="sr-sub">'+f16PunkteHtml(f16Teilnehmer(fkKanal, rows, fkG))+f16WartetHtml(rows)+'<span>· folgt der Karte im Fokus</span></div>'; }
+    else kopf='<div class="sr-kopf">💬 '+esc(f12Name(f12KanalAktuell()||f12TrainerKanal()||{ Agent:'Trainer' }))+'<span>zur Ansicht: '+(F9_SEITE[seiteAktuell()]||'')+'</span></div>';
+    C.innerHTML=kopf+(a==='chat' ? '<div class="leer">Der Chat ist in der Mitte offen.</div>' : f12SeiteHtml()); f12UhrStarten(); }catch(e){ C.innerHTML='<div class="leer">—</div>'; }   // 4.1 §2.5: iPad zeigt das Gespräch
   try{ E.innerHTML='<div class="sr-kopf">＋ Erfassen<span>'+(f7Erf().bezug==='karte' ? 'Bezug: Karte' : f7Erf().bezug==='agent' ? 'Agent entscheidet' : esc(f7Erf().bezugName||''))+'</span></div>'+(a==='erfassen' ? '<div class="leer">Erfassen ist in der Mitte offen.</div>' : f7ErfassenHtml()); }catch(e){ E.innerHTML='<div class="leer">—</div>'; }
 }
 { const _alt=ebeneRendern; ebeneRendern=function(){ _alt(); try{ f9Rendern(); }catch(e){} }; }
