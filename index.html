@@ -2888,6 +2888,12 @@ body[data-e1="agentenkarte"] #e1-agentenkarte{display:flex;flex-direction:column
 .f15-msg .p{width:8px;height:8px;border-radius:50%;background:#3b82f6;margin-top:6px;flex:none}.f15-msg .t{flex:1;min-width:0}.f15-msg .a{font-size:12px;color:#93c5fd;margin-bottom:2px}
 .f15-msg .x{font-size:14.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.f15-msg .z{font-size:12px;color:#9a9ca2;margin-top:3px}
 .f15-msg.h{border-left:3px solid #FF9F0A}
+/* Hotfix 16 §4.6 · Absender-Farben im Gruppenchat, Hinweise des Dienstes, Teilnehmer-Punkte */
+.f7-m.t.f16-a{border-left:3px solid var(--abs,#3b82f6)}.f16-w{font-size:12px;font-weight:800;color:var(--abs,#93c5fd);margin-bottom:2px}
+.f16-hw{text-align:center;color:#9a9ca2;font-size:12px;margin:8px 0 2px;width:100%}.f16-hw span{display:inline-block;background:#262a32;border-radius:999px;padding:4px 10px}.f16-hw.or span{color:#FF9F0A;border:1px solid #FF9F0A;background:rgba(255,159,10,.10);font-weight:700}
+.f16-teil{display:inline-flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:#9a9ca2}.f16-teil>span{display:inline-flex;gap:4px;align-items:center}.f16-teil i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.f16-wartet{color:#FF9F0A;font-weight:800;margin-left:8px;font-size:12px}.f16-zk{margin:4px 0 0 2px}
+.sr-sub{font-size:11px;color:#9a9ca2;margin:-2px 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .f15-kz{background:rgba(59,130,246,.18);border:1px solid #FF9F0A;border-radius:10px;padding:9px 11px;margin-bottom:6px;display:flex;gap:8px;align-items:center;cursor:pointer;min-height:52px}.f15-kz .t{flex:1;font-weight:700}.f15-kz small{display:block;color:#9a9ca2;font-size:12px;font-weight:500}.f15-kz .pf{color:#9a9ca2;font-size:18px}
 /* Hotfix 15 §4 · Kette „📬 Agenten-Karten“: Kartenzeile BLAU 18 % mit Rand ORANGE; laufende Überarbeitung gestrichelt GRAU mit Ladekreis */
 .f15-sort{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9a9ca2;margin:4px 2px 6px}
@@ -3773,6 +3779,7 @@ const DEFAULT_SETTINGS = {
   bruecke: { onramp:100, ziel:100, abzug:150, zielMin:10, fristMin:15 },   // 5.5 Onramp-Brücke
   abhakbonusAbSollMin: 15,     // 5.5: Abhakbonus nur ab 15 Min Soll
   abzugOhneGrund: 50,          // 5.6: Aufgabe oder Muss-Routine ohne Grund geschoben
+  chatAgentenMax: 5,           // Hotfix 16 §4.4: höchstens so viele Agenten-Antworten je Gespräch seit Pascals letzter Nachricht (liest der Dienst aus dem Spiegel)
   wochenserieBonus: 300,       // 5.7: DFM-Routinen werktags bzw. am Wochenende komplett
   positionStaffel: [30, 10, 0],   // 5.4: Position 1–5 je 30 · 6–8 je 10 · ab 9 0
   rangSchwellen: [0, 5700, 6200, 6700, 7250, 7800, 8450, 9100, 9850, 10600],   // 5.9: R1 bis 5.700 · R2 ab 5.700 … R10 ab 10.600 (Ø P/Tag, 28 Tage)
@@ -3959,7 +3966,7 @@ const EINST_SCHEMA={
   tagesform:{ werktag:{p:'sollFormWerktag', t:'fenster'} },
   // 4.0 · Paket 4: die Punkte-Engine nach Punkt 5 — der Scoring-Spezialist ändert sie nur über das Postfach und ein Paket
   engine4:{ leiter:{p:'leiter', t:'tabelle'}, tickAktivierung:Z('tickAktivierung',{min:0}), startBonus:Z('startBonus',{min:0}), bruecke:{p:'bruecke', t:'tabelle'},
-    abhakbonusAbSollMin:Z('abhakbonusAbSollMin',{min:0}), abzugOhneGrund:Z('abzugOhneGrund',{min:0}), wochenserieBonus:Z('wochenserieBonus',{min:0}),
+    abhakbonusAbSollMin:Z('abhakbonusAbSollMin',{min:0}), abzugOhneGrund:Z('abzugOhneGrund',{min:0}), wochenserieBonus:Z('wochenserieBonus',{min:0}), chatAgentenMax:Z('chatAgentenMax',{min:1, max:50}),   // Hotfix 16 §4.4
     positionStaffel:{p:'positionStaffel', t:'zahlen'}, rangSchwellen:{p:'rangSchwellen', t:'zahlen'}, rangTage:Z('rangTage',{min:7, max:120}), spitzenTage:Z('spitzenTage',{min:1, max:28}),
     rangAufstiegTage:Z('rangAufstiegTage',{min:1, max:60}), rangAbstiegTage:Z('rangAbstiegTage',{min:1, max:120}), outfitStufen:Z('outfitStufen',{min:3, max:20}),
     outfitPlus:Z('outfitPlus',{min:0, max:10}), outfitMinus:Z('outfitMinus',{min:0, max:10}), outfitLeistungPunkte:Z('outfitLeistungPunkte',{min:1}), outfitErholungPunkte:Z('outfitErholungPunkte',{min:1}), shopPreise:{p:'shopPreise', t:'zahlen'}, shopEuro:{p:'shopEuro', t:'tabelle'}, shopPreisMin:Z('shopPreisMin',{min:0}), shopFreiAb:{p:'shopFreiAb', t:'tabelle'},
@@ -6344,7 +6351,7 @@ renderAbhakDialog=function(){
     _alt();
     if(fertig && /^\d{2}:\d{2}$/.test(fertig) && k){ const d=new Date(); const [hh,mm]=fertig.split(':').map(Number); d.setHours(hh, mm, 0, 0);
       if(Math.abs(d.getTime()-Date.now())>90000){ const e=(S.intraday||[]).slice().reverse().find(x=>x && x.kartenId===k.id && x.typ==='abhaken'); if(e){ e.ts=d.toISOString(); DB.set('intraday', S.intraday); } } }
-    if(kom && k) f12TrainerSenden('✓ „'+k.titel+'“: '+kom, { anlass:'Kommentar', karte:k });   // 4.1 §9.2
+    if(kom && k) f12KartenSenden(k, '✓ „'+k.titel+'“: '+kom, { anlass:'Kommentar' });   // 4.1 §9.2 · Hotfix 16 §4.2: ins Gespräch karte-<id> des führenden Kanals
   }; }
 /* ── 7.6 · Schieben ── */
 function f7Sch(){ return F7.sch; }
@@ -6382,11 +6389,11 @@ function f7SchiebenGo(){
     if(k.rhythmus){ k.letzteErfuellung=heute; k.streak=num(k.streak)+1; if(S.tag) (S.tag.routinenBilanz=S.tag.routinenBilanz||[]).push({ id:k.id, titel:k.titel, verpasst:false, entschuldigt:true, anderer:person||'jemand' }); logIntraday(k, { punkte:0, typ:'anderer', quelle:'uhr' }); }
     else { overrideSetzen(k, 0); karteAbhaken(k.id, false); }
     k.schiebeGrund=grund||null; beruehre(k); saveKarten(); saveTag(); closeSheet(); F7.blattNeu=null; renderAlles(); toast('👥 Von '+(person||'jemand anderem')+' erledigt · 0 Punkte');
-    if(grund || person) f12TrainerSenden('👥 „'+k.titel+'“ von '+(person||'jemand anderem')+' erledigt'+(grund ? ': '+grund : ''), { anlass:'Schiebe-Grund', karte:k });   // 4.1 §9.2
+    if(grund || person) f12KartenSenden(k, '👥 „'+k.titel+'“ von '+(person||'jemand anderem')+' erledigt'+(grund ? ': '+grund : ''), { anlass:'Schiebe-Grund' });   // 4.1 §9.2 · Hotfix 16 §4.2
     return; }
   if(s.was==='archiv'){ k.status='archiviert'; k.schiebeGrund=grund||null; beruehre(k); saveKarten(); closeSheet(); F7.blattNeu=null; renderAlles(); toast('🗄️ Archiviert — nie gelöscht');
     if(k.airtableId) FSLive.senden('datensatz_aendern', { tabelle:'Aufgaben', id:k.airtableId, felder:{ Status:'Archiv' } }).catch(()=>{});
-    f12TrainerSenden('🗄️ „'+k.titel+'“ nicht mehr nötig'+(grund ? ': '+grund : ''), { anlass:'Schiebe-Grund', karte:k }); return; }   // 4.1 §9.2
+    f12KartenSenden(k, '🗄️ „'+k.titel+'“ nicht mehr nötig'+(grund ? ': '+grund : ''), { anlass:'Schiebe-Grund' }); return; }   // 4.1 §9.2 · Hotfix 16 §4.2
   let ziel=s.datum; if(s.was==='aussetzen'){ const b=el('f7schBis'); ziel=(b && /^\d{4}-\d{2}-\d{2}$/.test(b.value)) ? b.value : s.bis; }
   else if(s.frei){ const f=el('f7schFrei'); if(f && /^\d{4}-\d{2}-\d{2}$/.test(f.value)) ziel=f.value; }
   if(!(ziel>heute)) ziel=morgenIso();
@@ -6397,7 +6404,7 @@ function f7SchiebenGo(){
   ketteRausHeute(k); beruehre(k); saveKarten(); saveTag(); closeSheet(); F7.blattNeu=null; renderAlles();
   toast((s.was==='aussetzen' ? '⏸️ Ausgesetzt bis ' : '↷ Auf ')+fmtDatum(ziel)+' ('+wochentagLang(ziel)+')'+(ab>0 ? ' · −'+ab+' Münzen' : grund ? ' · mit Grund' : '')); haptik(15);
   if(k.airtableId) FSLive.senden('datensatz_aendern', { tabelle:'Aufgaben', id:k.airtableId, felder:{ Deadline:ziel, 'Schieben mit Grund':!!grund } }).catch(()=>{});
-  if(grund) f12TrainerSenden('↷ „'+k.titel+'“ → '+fmtDatum(ziel)+': '+grund, { anlass:'Schiebe-Grund', karte:k });   // 4.1 §9.2
+  if(grund) f12KartenSenden(k, '↷ „'+k.titel+'“ → '+fmtDatum(ziel)+': '+grund, { anlass:'Schiebe-Grund' });   // 4.1 §9.2 · Hotfix 16 §4.2
   matrixAbfrageNach(k.id, 'schieben');
 }
 function f7SchiebenChat(){ const s=f7Sch(), k=S.karten.find(x=>x.id===s.kid); if(!k) return;
@@ -7209,13 +7216,15 @@ function f12Knoepfe(text){ const lines=String(text||'').replace(/\r/g,'').split(
 function f12KnoepfeHtml(r, opt){ const wahl=(S.meta.chatWahl||{})[r.id], aktiv=!!opt.aktiv && !wahl;
   return '<div class="f7-act2 f12-act'+(aktiv ? '' : ' aus')+'" data-f12act="'+esc(r.id)+'">'+opt.optionen.map((o,j)=>'<div class="'+(j?'':'g')+(wahl===o ? ' on' : '')+'" data-f12antwort="'+esc(o)+'">'+esc(o)+'</div>').join('')+'</div>'; }
 function f12NachrichtHtml(kanal, r, opt){
-  opt=opt||{}; const vonPascal=String(r.Von||'')==='Pascal', art=String(r.Art||''), text=f12Text(kanal, r), agent=f12Name(kanal);
+  opt=opt||{}; const vonPascal=String(r.Von||'')==='Pascal', art=String(r.Art||''), text=f12Text(kanal, r), von=String(r.Von||'')||f12Name(kanal);
   let h='<div class="f12-n" data-mid="'+esc(r.id)+'">';
   if(vonPascal){ const s=f12Stand(kanal, r); h+='<div class="f7-m p">'+f12TextHtml(text)+f12KartenMarkenHtml(kanal, r)+'<em class="f12-st '+s.k+'" data-f12st="'+esc(r.id)+'">'+s.html+'</em></div>'; }
+  else if(von==='Dienst' && art==='Hinweis'){ h+='<div class="f16-hw'+(/^⏸/.test(text) ? ' or' : '')+'"><span>'+esc(text.replace(/\s+/g,' ').trim())+'</span></div>'; }   // Hotfix 16 §4.6: Hinweise des Dienstes grau, mittig; ⏸ in ORANGE
   else { const kn=f12Knoepfe(text), pfKarte=(art==='Hinweis' && String(r.Anlass||'')==='Postfach' && f7Link(r.Postfach).length) ? String(f7Link(r.Postfach)[0].id) : null;   // Hotfix 15 §5.1: Hinweis zu einer Agenten-Karte
-    h+='<div class="f7-m t'+(art==='Hinweis' ? ' hinweis' : '')+(pfKarte ? ' f15-hk' : '')+'"'+(pfKarte ? ' data-f15karte="'+esc(pfKarte)+'"' : '')+'>'+f12TextHtml(kn ? kn.body : text)+(pfKarte ? '<div class="f15-hko">Karte öffnen ›</div>' : '')+'<small>'+(art==='Hinweis' ? (pfKarte ? '📬 Agenten-Karte · ' : '⚠️ Hinweis · ') : esc(agent)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
+    const teil=opt.teil||f16TeilVon(kanal, String(r['Gespräch']||'')), farbe=f16Farbe(teil, von), name=f16VonName(von);   // Hotfix 16 §4.6: Rand links 3 px und Name in der Farbe des Absenders
+    h+='<div class="f7-m t f16-a'+(art==='Hinweis' ? ' hinweis' : '')+(pfKarte ? ' f15-hk' : '')+'" style="--abs:'+farbe+'"'+(pfKarte ? ' data-f15karte="'+esc(pfKarte)+'"' : '')+'><div class="f16-w">'+esc(name)+'</div>'+f12TextHtml(kn ? kn.body : text)+(pfKarte ? '<div class="f15-hko">Karte öffnen ›</div>' : '')+'<small>'+(art==='Hinweis' ? (pfKarte ? '📬 Agenten-Karte · ' : '⚠️ Hinweis · ') : esc(name)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
     if(kn) h+=f12KnoepfeHtml(r, { optionen:kn.optionen, aktiv:opt.letzte===undefined ? true : opt.letzte });
-    if(f7Link(r.Postfach).length && !pfKarte) h+=f12KartenBloeckeHtml(kanal, r); }
+    if(f7Link(r.Postfach).length && !pfKarte){ h+=f12KartenBloeckeHtml(kanal, r); const offen=f12PostfachOffen(); const o=f7Link(r.Postfach).map(x=>String(x.id)).filter(id=>offen.has(id)); if(o.length) h+='<div class="f15-hko f16-zk" data-f15karte="'+esc(o[0])+'">📬 Karten-Ansicht öffnen ›</div>'; } }   // Hotfix 16 §5.4: aus dem Chat zurück zur Karte
   return h+'</div>';
 }
 function f12LetzteAntwortId(rows){ for(let i=(rows||[]).length-1;i>=0;i--){ if(String(rows[i].Von||'')!=='Pascal' && !rows[i].lokal) return rows[i].id; } return null; }
@@ -7231,7 +7240,7 @@ function f12SchreibtHtml(kanal, rows){
   return '<div class="f12-schreibt" id="chatSchreibt">✍️ '+esc(agent)+' '+(vg ? 'denkt nach' : 'empfängt')+' · <b class="f12-uhr" data-von="'+esc(von)+'">'+f12Mmss(Date.now()-Date.parse(von))+'</b>'+(vg && o.Laufstart && o.Zeitstempel ? ' <span>(empfangen nach '+f12Mmss(Date.parse(o.Laufstart)-Date.parse(o.Zeitstempel))+')</span>' : '')+'</div>';
 }
 function f12ListeHtml(kanal, rows){
-  let h='', tag='', letzte=f12LetzteAntwortId(rows); (rows||[]).forEach(r=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; } h+=f12NachrichtHtml(kanal, r, { letzte:r.id===letzte }); });   // Hotfix 13 §6: Knöpfe nur an der jüngsten Antwort
+  let h='', tag='', letzte=f12LetzteAntwortId(rows); const teil=f16Teilnehmer(kanal, rows, (rows||[]).length ? String(rows[0]['Gespräch']||'') : ''); (rows||[]).forEach(r=>{ const d=String(r.Zeitstempel||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day" data-tag="'+esc(d)+'">'+(d===heuteApp() ? 'Heute' : esc(fmtDatum(d)))+'</div>'; } h+=f12NachrichtHtml(kanal, r, { letzte:r.id===letzte, teil }); });   // Hotfix 13 §6: Knöpfe nur an der jüngsten Antwort · Hotfix 16 §4.6: Farben je Absender
   if(!(rows||[]).length) h+='<div class="leer" data-leer="1">noch keine Nachricht · schreib '+esc(f12Name(kanal))+'</div>';
   return h;
 }
@@ -7244,7 +7253,7 @@ function f12EingabeHtml(kanal, e, breit){
 function f12GespraechHtml(kanal, g, opt){
   opt=opt||{}; const rows=f12Verlauf(kanal, g), raum=f12Raum(kanal), gs=f12Gespraeche(kanal), ge=(gs||[]).find(x=>x.gespraech===g);
   const titel=ge ? ge.titel : (rows && rows.length ? ((rows.find(r=>r['Gesprächstitel'])||{})['Gesprächstitel']||String(rows[0].Text||'').slice(0,40)) : (/^tag-/.test(g) ? f12TagTitel(g.slice(4)) : /^karte-/.test(g) ? f12KarteTitel(S.karten.find(x=>x.id===g.slice(6))||{ titel:g.slice(6) }) : 'Neues Gespräch'));
-  let h=opt.breit ? '' : f12KopfHtml({ titel:esc(titel), sub:f12Avatar(kanal)+' '+esc(f12Name(kanal))+' · '+f12RaumEmoji(raum)+' '+esc(raum) })+f12AndereHtml();   // Hotfix 13 §5.3
+  let h=opt.breit ? '' : f12KopfHtml({ titel:esc(titel), sub:f16PunkteHtml(f16Teilnehmer(kanal, rows, g))+f16WartetHtml(rows) })+f12AndereHtml();   // Hotfix 13 §5.3 · Hotfix 16 §4.6.2: farbige Punkte aller Beteiligten, ⏸ wartet auf dich
   h+='<div class="f12-verlauf" id="chatList" data-key="'+esc(kanal.id+'|'+g)+'"><div class="f12-fluss" id="chatFluss">'+(rows ? f12ListeHtml(kanal, rows) : '<div class="leer" data-leer="1">'+(f7LagerFehler(f12VerlaufKey(kanal, g)) ? 'FocusSystem: '+esc(f7LagerFehler(f12VerlaufKey(kanal, g))) : 'lädt …')+'</div>')+'</div></div>';
   h+='<button class="f12-pill" id="chatNeu" hidden data-f3nunten="1">↓ neue Nachricht</button>';
   h+=f12SchreibtHtml(kanal, rows)+f12EingabeHtml(kanal, f12Entwurf(kanal.id, g), opt.breit);
@@ -7452,6 +7461,24 @@ function f12KartenKanal(k){
 function f12KartenChat(karteId){ const k=S.karten.find(x=>x.id===karteId); if(!k) return; const kanal=f12KartenKanal(k); if(!kanal){ toast('Chat-Kanäle laden noch …'); f12Oeffnen({ raum:'Trainerstab' }); return; }
   const g=f12KarteGespraech(k.id), e=f12Entwurf(kanal.id, g); if(!f12GespraechHatZeilen(kanal, g) && !e.karten.some(x=>x.id===k.id)) e.karten.push({ id:k.id, titel:k.titel, airtableId:k.airtableId||null });
   f12Oeffnen({ raum:f12Raum(kanal), kanal:kanal.id, gespraech:g, fokus:true }); }
+/* Hotfix 16 §4.2 · interne Nachricht zu einer Karte (Kommentar beim Abhaken, Schiebe-Grund, „von jemand anderem erledigt“, „nicht mehr nötig“):
+   ins Gespräch karte-<id> des führenden Kanals (f12KartenKanal), nicht mehr ins Tagesgespräch des Trainers; der Anlass bleibt */
+function f12KartenSenden(k, text, opt){ opt=opt||{}; if(!k) return Promise.resolve(null); const kanal=f12KartenKanal(k), g=f12KarteGespraech(k.id);
+  return f12Senden(kanal, g, text, { anlass:opt.anlass||'Kommentar', karten:[{ id:k.id, titel:k.titel, airtableId:k.airtableId||null }], id:opt.id, titel:(kanal && f12GespraechHatZeilen(kanal, g)) ? null : f12KarteTitel(k) }); }
+/* Hotfix 16 §4.6 · Absender-Farben (Standard recwXUkjpph7FVr2y): führender Agent BLAU · Trainer GRUEN · jede weitere Abteilung in der Reihenfolge
+   ihres ersten Auftretens ORANGE, LILA, GELB · Pascal rechts ohne Rand · Hinweise des Dienstes GRAU mittig */
+const F16_FARBEN=[FARBE.ORANGE, FARBE.LILA, FARBE.GELB];
+function f16VonName(von){ const v=String(von||''); return /^Projekt-Agent /.test(v) ? v.slice('Projekt-Agent '.length) : v; }
+function f16Teilnehmer(kanal, rows, g){ const fuehrend=String((kanal && kanal.Agent)||''), out=[]; let i=0;
+  const dazu=(von, farbe)=>{ if(!von || von==='Pascal' || von==='Dienst' || out.some(t=>t.von===von)) return; out.push({ von, farbe: farbe || (von==='Trainer' ? FARBE.GRUEN : F16_FARBEN[(i++)%F16_FARBEN.length]) }); };
+  dazu(fuehrend, FARBE.BLAU); if(/^karte-/.test(String(g||''))) dazu('Trainer');   // §4.1.3: der Trainer ist in jedem Karten-Chat Teilnehmer
+  (rows||[]).forEach(r=>dazu(String(r.Von||''))); return out; }
+function f16TeilVon(kanal, g){ const L=kanal ? F7.lager[f12VerlaufKey(kanal, g)] : null; return f16Teilnehmer(kanal, (L && Array.isArray(L.daten)) ? L.daten : [], g); }
+function f16Farbe(teil, von){ const v=String(von||''); if(v==='Dienst') return FARBE.GRAU; const t=(teil||[]).find(x=>x.von===v); return t ? t.farbe : FARBE.BLAU; }
+function f16PunkteHtml(teil){ return '<span class="f16-teil">'+(teil||[]).map(t=>'<span><i style="background:'+t.farbe+'"></i>'+esc(f16VonName(t.von))+'</span>').join('')+'</span>'; }
+/* §4.6.3 · Grenze erreicht: nach Pascals letzter Nachricht steht ein Hinweis des Dienstes „⏸ …“ */
+function f16WartetAufDich(rows){ for(let i=(rows||[]).length-1;i>=0;i--){ const r=rows[i]; if(String(r.Von||'')==='Pascal') return false; if(String(r.Von||'')==='Dienst' && String(r.Art||'')==='Hinweis' && /^⏸/.test(String(r.Text||''))) return true; } return false; }
+function f16WartetHtml(rows){ return f16WartetAufDich(rows) ? '<b class="f16-wartet">⏸ wartet auf dich</b>' : ''; }
 /* Zeilen des Trainer-Kanals von heute (§9.5 Plan, §9.6 Tagesübergang) */
 function f12TrainerZeilenHeute(anlass){ const kanal=f12TrainerKanal(); const rows=kanal ? (f12Zeilen(kanal)||[]) : []; const heute=heuteApp();
   return rows.filter(r=>String(r.Von||'')==='Trainer' && String(r.Anlass||'')===anlass && String(r.Zeitstempel||'').slice(0,10)===heute); }
