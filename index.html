@@ -3305,6 +3305,32 @@ const FSLive = (()=>{
     }finally{ clearTimeout(stop); }
   }
 
+  // ── Hotfix 19 §B3 · Sicherung an den Dienst senden und geprüft zurücklesen ──
+  // Dienstschlüssel: PREFIX + k ohne fremde Zeichen (alles außer A–Z, a–z, 0–9, _ wird _), auf 80 Zeichen gekürzt. PUT (120 s), dann GET (60 s);
+  // true nur, wenn der zurückgelesene Inhalt gleich(JSON.parse(t)) ist. Direkt über aufruf(), nicht über offen/spiegeln(); keine Führungsprüfung.
+  async function sicherungSenden(k, t){
+    try{
+      const s=(PREFIX+String(k).replace(/[^A-Za-z0-9_]/g, '_')).slice(0, 80);
+      await aufruf('PUT', '/api/spiegel/'+encodeURIComponent(s), t, { zeitgrenze:120000 });
+      const antwort=await aufruf('GET', '/api/spiegel/'+encodeURIComponent(s), undefined, { zeitgrenze:60000 });
+      return !!(antwort && gleich(JSON.parse(t), antwort.inhalt));
+    }catch(e){ return false; }
+  }
+  // Tiefer Vergleich: Objekte unabhängig von der Reihenfolge der Schlüssel (jsonb sortiert sie um), Arrays in Reihenfolge, Zahlen und alles andere mit ===.
+  function gleich(a, b){
+    if(a===b) return true;
+    if(a===null || b===null || typeof a!=='object' || typeof b!=='object') return false;
+    if(Array.isArray(a) || Array.isArray(b)){
+      if(!Array.isArray(a) || !Array.isArray(b) || a.length!==b.length) return false;
+      for(let i=0;i<a.length;i++){ if(!gleich(a[i], b[i])) return false; }
+      return true;
+    }
+    const ka=Object.keys(a), kb=Object.keys(b);
+    if(ka.length!==kb.length) return false;
+    for(const k of ka){ if(!Object.prototype.hasOwnProperty.call(b, k) || !gleich(a[k], b[k])) return false; }
+    return true;
+  }
+
   // ── Spiegel ───────────────────────────────────────────────────────
   function planen(){
     try{
@@ -3817,7 +3843,8 @@ const FSLive = (()=>{
     geraeteLaden, geraetBenennen, fuehrungSetzen, ichFuehre:()=>ichFuehre, geraet, koennteSchreiben,   // Hotfix 14 §11 (geraet: Kennung für „dieses Gerät“ in den Einstellungen)
     nichtFuehrend,   // Hotfix 17 §1: Takte außerhalb des Moduls (Chat-Badge, Nachsenden, Statusleiste, Ticker) ruhen auf nicht führenden Geräten
     standZeit:()=>standZeit, hinweisAnzeigen,   // Hotfix 17 §4 (Prüfungen)
-    ungesichertMerken, speicherVollMelden, sperrlisteGroesse:()=>sperrliste.size, standNr:()=>standNr };   // Hotfix 19 §A (DB.set/del/nachholen, Prüfungen)
+    ungesichertMerken, speicherVollMelden, sperrlisteGroesse:()=>sperrliste.size, standNr:()=>standNr,   // Hotfix 19 §A (DB.set/del/nachholen, Prüfungen)
+    sicherungSenden, gleich, istBetrieb:(k)=>BETRIEB.indexOf(String(k))>=0 };   // Hotfix 19 §B1/§B3
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
@@ -3837,16 +3864,72 @@ function speicherBelegung(){
   rows.sort((a,b)=>b.kb-a.kb);
   return { rows, kb:sum/1024 };
 }
-/* Löschbare Sicherungen: fokus4_<art>_bak<nr> — je Art bleibt die höchste Nr. */
+/* Hotfix 19 §B1 · Was eine Sicherung ist (k ohne Präfix): vorUebernahme_<Zeit> oder ein Schlüssel, der auf _bak<Ziffern/Kleinbuchstaben> endet
+   (karten_bak1130, settings_bak200n, import_bak, shop360_bak, reset35_bak, feldkarten353_bak …). Nie: Betriebsschlüssel (BETRIEB) und fslive_*. */
+function istSicherung(k){
+  k=String(k);
+  if(/^fslive_/.test(k)) return false;
+  try{ if(FSLive.istBetrieb(k)) return false; }catch(e){}
+  return /^vorUebernahme_.+$/.test(k) || /_bak[0-9a-z]*$/.test(k);
+}
+/* Hotfix 19 §B1 · alle Sicherungen, auch die jeweils jüngste (bis Hotfix 19: nur die älteren je Art) */
 function speicherBaks(){
-  const re=/^(.+)_bak(\d+)$/, byArt={};
-  DB.list().forEach(k=>{ const m=re.exec(k); if(!m) return;
-    (byArt[m[1]]=byArt[m[1]]||[]).push({ key:k, nr:num(m[2]) }); });
-  const weg=[];
-  Object.keys(byArt).forEach(art=>{
-    byArt[art].sort((a,b)=>b.nr-a.nr).slice(1).forEach(x=>weg.push(x.key));
-  });
-  return weg;
+  return DB.list().filter(istSicherung);
+}
+/* Hotfix 19 §B3 · Sicherungen nach FocusSystem auslagern: senden, geprüft zurücklesen, erst dann hier entfernen. Läuft nie doppelt.
+   Nicht gekoppelt → nichts entfernt. Je Sicherung (nach Größe absteigend): sicherungSenden(); true → removeItem (direkt, nicht über DB.del),
+   sonst „nicht bestätigt“, bleibt hier. Danach DB.nachholen(), Protokoll in S.meta.sicherungAuslagerLog, Toast (auto nur, wenn etwas ausgelagert wurde). */
+let _auslagernLaeuft=false;
+async function sicherungenAuslagern(opt){
+  const auto=!!(opt && opt.auto);
+  if(_auslagernLaeuft) return null;
+  _auslagernLaeuft=true;
+  try{
+    if(!FSLive.gekoppelt()){ if(!auto){ try{ toast('Mac mini nicht erreichbar — nichts entfernt'); }catch(e){} } return null; }
+    const vorher=speicherBelegung().kb;
+    const liste=speicherBaks().map(k=>{ let n=0; try{ n=(localStorage.getItem(PREFIX+k)||'').length; }catch(e){} return { key:k, kb:n/1024 }; }).sort((a,b)=>b.kb-a.kb);
+    const ausgelagert=[], nichtBestaetigt=[];
+    for(const e of liste){
+      try{
+        let t=null; try{ t=localStorage.getItem(PREFIX+e.key); }catch(x){}
+        if(t===null) continue;
+        const ok=await FSLive.sicherungSenden(e.key, t);
+        if(ok){ localStorage.removeItem(PREFIX+e.key); ausgelagert.push({ key:e.key, kb:Math.round(e.kb*10)/10 }); }
+        else nichtBestaetigt.push(e.key);
+      }catch(x){ continue; }   // Fehler bei einem Schlüssel: überspringen, mit dem nächsten weiter
+    }
+    DB.nachholen();
+    const nachher=speicherBelegung().kb;
+    try{
+      if(S && S.meta){
+        S.meta.sicherungAuslagerLog={ ts:jetztIso(), vorherKb:Math.round(vorher), nachherKb:Math.round(nachher), ausgelagert, nichtBestaetigt };
+        saveMeta();
+      }
+    }catch(e){}
+    if(!auto || ausgelagert.length){
+      try{ toast('💾 '+Math.round(vorher)+' → '+Math.round(nachher)+' KB · '+ausgelagert.length+' Sicherungen in FocusSystem'+
+        (nichtBestaetigt.length ? ' · '+nichtBestaetigt.length+' nicht bestätigt, bleiben hier' : '')); }catch(e){}
+    }
+    return { vorher, nachher, ausgelagert, nichtBestaetigt };
+  }finally{ _auslagernLaeuft=false; }
+}
+/* Hotfix 19 §A4 · Tipp auf die rote Leiste: Einstellungen öffnen, Abschnitt „💾 Speicher“ aufklappen und dorthin scrollen (unter Kopf und Leiste). */
+function speicherKarteOeffnen(){
+  try{
+    seiteZeigen('einst');
+    if(!einstAbschnittOffen('speicher')){ einstAbschnittUmschalten('speicher'); renderEinst(); }
+    setTimeout(()=>{
+      try{
+        const k=document.querySelector('[data-einstabschnitt="speicher"]'), m=document.querySelector('main');
+        if(!k) return;
+        if(m && k.getBoundingClientRect){
+          const tb=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tbH'))||0;
+          const l=document.getElementById('speicherVoll'), lh=(l && l.style.display!=='none') ? l.offsetHeight : 0;
+          m.scrollTop+=k.getBoundingClientRect().top-m.getBoundingClientRect().top-tb-lh-8;
+        } else if(k.scrollIntoView) k.scrollIntoView();
+      }catch(e){}
+    }, 50);
+  }catch(e){}
 }
 const KETTENHIST_TAGE=7;        // §2: lokale Kettenhistorie-Tage (Export trägt nur heute; 7 Tage puffern eine Sync-Pause von einer Woche)
 const KETTENHIST_ENTPRELL_S=10; // §2: Umsortierungen derselben Kette binnen 10 s = EIN Eintrag (der Endstand zählt)
@@ -3857,13 +3940,10 @@ function kettenHistKappen(){
   while(keys.length>KETTENHIST_TAGE){ delete S.meta.kettenHistorie[keys.shift()]; weg++; }
   return weg;
 }
+/* Hotfix 19 §B4 · löscht keine Sicherungen mehr (die lagert sicherungenAuslagern nach FocusSystem aus): kappt nur die Kettenhistorie, geloescht bleibt leer. */
 function speicherAufraeumen(still){
   const vorher=speicherBelegung().kb;
   const geloescht=[];
-  speicherBaks().forEach(k=>{
-    let kb=0; try{ kb=(localStorage.getItem(PREFIX+k)||'').length/1024; }catch(e){}
-    DB.del(k); geloescht.push({ key:k, kb:Math.round(kb*10)/10 });
-  });
   const histWeg=kettenHistKappen();
   const nachher=speicherBelegung().kb;
   S.meta.speicherAufraeumLog={ ts:jetztIso(), geloescht, histTageWeg:histWeg,
@@ -19160,14 +19240,19 @@ function renderEinst(){
     const b=speicherBelegung(), baks=speicherBaks();
     const histTage=Object.keys((S.meta&&S.meta.kettenHistorie)||{}).length;
     let x='<div class="card"><h3>💾 Speicher</h3>'+
-      '<p class="d">iOS gibt ~5 MB. Aufräumen entfernt nur alte Migrations-Sicherungen (je Art bleibt die jüngste) und kappt die Kettenhistorie auf '+KETTENHIST_TAGE+' Tage — Zeit- und Punktehistorie bleiben vollständig.</p>'+
+      '<p class="d">iOS gibt ~5 MB. Aufräumen lagert alle Sicherungen nach FocusSystem aus (hier erst entfernt, wenn FocusSystem sie geprüft zurückgegeben hat) und kappt die Kettenhistorie auf '+KETTENHIST_TAGE+' Tage — Zeit- und Punktehistorie bleiben vollständig.</p>'+   // Hotfix 19 §B4
       '<div class="kv"><span>Belegung gesamt</span><b>'+Math.round(b.kb)+' KB</b></div>';
     b.rows.slice(0,8).forEach(r=>{
       x+='<div class="kv"><span style="font-family:ui-monospace,monospace;font-size:11px">'+esc(r.key)+'</span><b>'+(r.kb>=1?Math.round(r.kb)+' KB':'&lt;1')+'</b></div>'; });
-    if(baks.length) x+='<p class="d" style="color:var(--warn);margin-top:6px">'+baks.length+' alte Sicherung(en) löschbar.</p>';
+    if(baks.length) x+='<p class="d" style="color:var(--warn);margin-top:6px">'+baks.length+' Sicherung(en) auslagerbar.</p>';   // Hotfix 19 §B4
     x+='<div class="btnrow"><button class="btn sm" data-speicheraufraeumen="1">🧹 Aufräumen</button></div>';
     if(S.meta.speicherAufraeumLog){ const L=S.meta.speicherAufraeumLog;
       x+='<div class="kv" style="margin-top:6px"><span>Zuletzt aufgeräumt ('+esc(String(L.ts||'').slice(0,10))+')</span><b>'+num(L.vorherKb)+' → '+num(L.nachherKb)+' KB</b></div>'; }
+    if(S.meta.sicherungAuslagerLog){ const A=S.meta.sicherungAuslagerLog;   // Hotfix 19 §B4: Ausgelagert (TT.MM.) · Anzahl · vorher → nachher KB
+      let tm=''; try{ const d=new Date(A.ts); tm=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'; }catch(e){}
+      x+='<div class="kv"><span>Ausgelagert ('+esc(tm)+')</span><b>'+((A.ausgelagert||[]).length)+' · '+num(A.vorherKb)+' → '+num(A.nachherKb)+' KB</b></div>'; }
+    { const u=Object.keys(DB._ungesichert||{});   // Hotfix 19 §B4: ungesicherte Schlüssel (Speicher voll)
+      if(u.length) x+='<p class="d" style="color:#f87171;margin-top:6px">Nicht gespeichert: '+esc(u.join(', '))+'</p>'; }
     x+='<div class="kv"><span>Kettenhistorie lokal</span><b>'+histTage+' Tag(e)</b></div>';
     return x+'</div>'; })();
   // §5 (v1.8.1): Urlaubsmodus — an/aus, kein Zeitraum, keine Automatik
@@ -24293,17 +24378,14 @@ el('einstBody').addEventListener('click', e=>{
   if(e.target.closest('[data-shopreset]')){ oeffneShopReset(); return; }
   // (v1.13.4): Speicher aufräumen — die zu löschenden Sicherungen werden
   // VOR dem Entfernen mit Größe benannt.
+  // Hotfix 19 §B4 · Bestätigung listet jede Sicherung mit KB; bestätigt → auslagern (§B3), Kettenhistorie kappen, saveMeta, nachholen, neu zeichnen.
   if(e.target.closest('[data-speicheraufraeumen]')){
     const baks=speicherBaks();
     const det=baks.map(k=>{ let kb=0; try{ kb=(localStorage.getItem(PREFIX+k)||'').length/1024; }catch(err){}
       return '· '+k+' ('+Math.round(kb)+' KB)'; }).join('\n');
-    if(!confirm('Speicher aufräumen?\n\n'+(baks.length
-        ? 'Entfernt '+baks.length+' alte Migrations-Sicherung(en) — je Art bleibt die jüngste:\n'+det+'\n\n'
-        : 'Keine alten Sicherungen vorhanden.\n\n')+
-      'Die Kettenhistorie wird auf '+KETTENHIST_TAGE+' Tage gekappt.\nZeit- und Punktehistorie bleiben vollständig erhalten.')) return;
-    speicherAufraeumen(false);
-    DB._quotaCleanup=false;   // §3: nach MANUELLEM Aufräumen darf der Auto-Schutz wieder greifen
-    renderEinst();
+    if(!confirm('Speicher aufräumen?\n\n'+baks.length+' Sicherung(en) werden nach FocusSystem ausgelagert und hier erst entfernt, wenn FocusSystem sie geprüft zurückgegeben hat:\n'+det+
+      '\n\nDie Kettenhistorie wird auf '+KETTENHIST_TAGE+' Tage gekappt.\nZeit- und Punktehistorie bleiben vollständig erhalten.')) return;
+    sicherungenAuslagern({ auto:false }).catch(()=>null).then(()=>{ try{ kettenHistKappen(); saveMeta(); DB.nachholen(); renderEinst(); }catch(err){} });
     return; }
   // §4 (v1.11.0): Sternschwellen neu kalibrieren (nur auf ausdrücklichen Tap)
   // §3 (v1.12.0): Tagesprofil von Hand setzen / gemessenes übernehmen —
