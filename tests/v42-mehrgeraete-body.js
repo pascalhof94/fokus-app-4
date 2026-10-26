@@ -13,6 +13,7 @@ function fetch(url, opt){
   _aufrufe.push({ methode:opt.method, pfad:pfad, body:opt.body });
   var a=null, k;
   for(k in _antworten){ if((opt.method+' '+pfad).indexOf(k)===0){ a=_antworten[k]; break; } }
+  if(typeof a==='function') a=a(opt, pfad);   // Hotfix 19: Antwort aus dem zuletzt Gesendeten (GET /api/spiegel/<s>)
   if(!a) a={ status:404, json:{ fehler:'unbekannt' } };
   if(a.offline) return Promise.reject(new TypeError('Load failed'));
   var st=a.status||200, j=a.json;
@@ -59,16 +60,20 @@ _antworten['GET /api/app/pakete']={ json:{ pakete:[] } };
 _aufrufe=[]; FSLive.paketeHolen(); drain();
 pruef('nicht führend: kein Paket-Abruf', aufrufe('GET', '/api/app/pakete').length===0);
 
-// ══ erste Übernahme sichert vorUebernahme_* und lädt neu ══
+// ══ erste Übernahme sichert vorUebernahme_* über den Dienst (Hotfix 19 §A6.2: PUT + geprüftes GET statt localStorage) und lädt neu ══
+function letzterPut(pfadAnfang){ var i; for(i=_aufrufe.length-1;i>=0;i--){ if(_aufrufe[i].methode==='PUT' && _aufrufe[i].pfad.indexOf(pfadAnfang)===0) return _aufrufe[i]; } return null; }
+function spiegelGet(opt, pfad){ var p=letzterPut(pfad); return p ? { json:{ inhalt:JSON.parse(p.body), version:1 } } : { status:404, json:{ fehler:'Nicht vorhanden' } }; }
 var _dbset=[], _DBset=DB.set; DB.set=function(k, v){ _dbset.push(k); return _DBset(k, v); };
 var _reloads=0; window.location.reload=function(){ _reloads++; };
 var neueKarten=[Object.assign(neueKarte({ titel:'Vom führenden Gerät', domain:'dfm' }), { id:'t-stand', status:'offen', matrixFeld:'ziel', sollMin:10 })];
 localStorage.setItem(PREFIX+'karten', JSON.stringify([{ id:'lokal-alt' }]));
 neuStart({ 'GET /api/app/fuehrung':{ json:{ fuehrend:'GERAET-B', ich:'x', seit:null, stand_nr:8 } },
-  'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:8, schluessel:{ karten:neueKarten } } }, 'POST /api/app/fuehrung':{ json:{ fuehrend:FSLive.geraet(), stand_nr:8 } } });
-feuern('pointerdown', ereignis(50, 50)); feuern('pointerup', ereignis(50, 50)); drain();   // Hotfix 17: der Stand kommt erst mit der Übernahme per Tipp
+  'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:8, schluessel:{ karten:neueKarten } } }, 'POST /api/app/fuehrung':{ json:{ fuehrend:FSLive.geraet(), stand_nr:8 } },
+  'PUT /api/spiegel/':{ json:{ version:1 } }, 'GET /api/spiegel/':spiegelGet });
+feuern('pointerdown', ereignis(50, 50)); feuern('pointerup', ereignis(50, 50)); drain(80);   // Hotfix 17: der Stand kommt erst mit der Übernahme per Tipp · Hotfix 19: Kopie an den Dienst (PUT, GET) davor
 var vorKeys=DB.list().filter(function(k){ return k.indexOf('vorUebernahme_')===0; });
-pruef('erste Übernahme (Hotfix 17: per Tipp): Sicherung vorUebernahme_<Zeit> mit dem alten Stand, Marke gesetzt, Seite lädt neu', vorKeys.length===1 && JSON.parse(JSON.parse(localStorage.getItem(PREFIX+vorKeys[0])).karten)[0].id==='lokal-alt' && localStorage.getItem(PREFIX+'fslive_ersteUebernahme')==='1' && _reloads===1, JSON.stringify([vorKeys, _reloads]));
+var vorPut=aufrufe('PUT', '/api/spiegel/fokus4_vorUebernahme_');
+pruef('erste Übernahme (Hotfix 19 §A6.2): Kopie vorUebernahme_<Zeit> mit dem alten Stand geht an den Dienst (PUT, geprüftes GET), nicht in localStorage; Marke gesetzt, Seite lädt neu', vorPut.length===1 && /^\/api\/spiegel\/fokus4_vorUebernahme_\d{4}_\d{2}_\d{2}T\d{6}_\d{3}Z$/.test(vorPut[0].pfad) && JSON.parse(JSON.parse(vorPut[0].body).karten)[0].id==='lokal-alt' && aufrufe('GET', '/api/spiegel/fokus4_vorUebernahme_').length===1 && vorKeys.length===0 && localStorage.getItem(PREFIX+'fslive_ersteUebernahme')==='1' && _reloads===1, JSON.stringify([vorPut.map(function(a){ return a.pfad; }), vorKeys, _reloads]));
 pruef('erste Übernahme: Schlüssel des führenden Geräts im Speicher, nicht über DB.set', JSON.parse(localStorage.getItem(PREFIX+'karten'))[0].id==='t-stand' && _dbset.indexOf('karten')<0);
 
 // ══ Stand-Übernahme (danach) schreibt nicht über DB.set und lädt nicht neu ══
@@ -178,6 +183,6 @@ localStorage.setItem(PREFIX+'karten', '[]');
 _aufrufe=[]; FSLive.vormerken('karten'); FSLive.spiegeln(); drain();
 var u4=ereignis(100, 200); feuern('pointerdown', ereignis(100, 200)); feuern('pointerup', u4); drain();
 pruef('nicht gekoppelt: kein Aufruf, kein Abfangen, keine Pille, koennteSchreiben true', _aufrufe.length===0 && u4.pd===0 && sperre().style.display!=='flex' && pille().style.display!=='block' && FSLive.koennteSchreiben()===true && FSLive.zustand()==='grau', JSON.stringify([_aufrufe, u4.pd, sperre().style.display, pille().style.display, FSLive.zustand()]));
-pruef('Version 4.1.6 · Build 2026-10-23-41 (Hotfix 17 §6)', APP_VERSION==='4.1.6' && APP_BUILD==='2026-10-23-41');
+pruef('Version 4.1.7 · Build 2026-10-26-42 (seit Hotfix 19)', APP_VERSION==='4.1.7' && APP_BUILD==='2026-10-26-42');
 
 suiteEnde('Mehrgeräte 4.2 · Hotfix 14');
