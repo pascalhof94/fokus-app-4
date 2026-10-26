@@ -3197,6 +3197,7 @@ const FSLive = (()=>{
   // (localStorage hält dort den alten Stand, der Spiegel den neuen): spiegeln() sendet sie nicht, bis der Stand vom Mac mini geholt ist.
   let leiste=null, sperrlisteLaeuft=false;
   const sperrliste=new Set();
+  let speicherZuKlein=false;   // Hotfix 19.1 §1: Übernahme gescheitert (Kopie nicht bestätigt oder Stand passt nicht), Führung zurückgegeben; Leiste §2.1
 
   function lies(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function schreib(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -3579,6 +3580,20 @@ const FSLive = (()=>{
         if(!vorher) schreib(K.fuehrtJetzt,'1');   // Toast nach dem Neuladen
         standGezeichnet=((await standUebernehmen(d, true))===true);   // Hotfix 19 §A6: asynchron (Sicherung geht an den Dienst)
         neuGeladen=(!vorher && ersteUebernahmeErledigt);
+        if(!standGezeichnet){
+          // Hotfix 19.1 §1 · Übernahme gescheitert: Führung an das vorige Gerät zurück (POST, 5 s), lokal in jedem Fall nicht führend, gemeinsame Schlüssel
+          // nicht vorgemerkt (kein alter Stand wird gespiegelt), Leiste „Stand passt nicht“, Sperre weg, Tipp verfällt.
+          const vorigesGeraet=d.fuehrend;
+          let zurueck=false;
+          try{ await aufruf('POST', '/api/app/fuehrung', JSON.stringify({ geraet_id:vorigesGeraet }), { zeitgrenze:5000 }); zurueck=true; }catch(e){ zurueck=false; }
+          ichFuehre=false; fuehrend=vorigesGeraet; fuehrungBekannt=true; fuehrungMerken(); hinweisAnzeigen(); anzeigen();
+          for(const k of GEMEINSAM) offen.delete(k);
+          merken();
+          speicherZuKlein=true; speicherVollMelden();
+          try{ toast(zurueck ? 'Stand passt nicht in den Speicher — Gerät bleibt Anzeige' : 'Führung nicht zurückgegeben — in Einstellungen › 📱 Geräte das führende Gerät setzen'); }catch(e){}
+          sperreZeigen(false); uebernahmeLaeuft=false;
+          return false;
+        }
       }
       ichFuehre=true; fuehrend=geraet(); fuehrungBekannt=true; bestaetigtTs=Date.now(); fuehrungMerken(); hinweisAnzeigen(); anzeigen();   // Hotfix 17 §2.4, §3.1
       if(!neuGeladen){ alleBetriebsschluesselVormerken(); planen(); }
@@ -3606,7 +3621,10 @@ const FSLive = (()=>{
     try{
       const d=await aufruf('GET', '/api/app/stand?ab='+encodeURIComponent(String(standNr)), undefined, { zeitgrenze:15000 });
       gescheitert=false;
-      if(d && d.fuehrend && d.schluessel) await standUebernehmen(d, sofort===true);   // Hotfix 19 §A6: asynchron
+      if(d && d.fuehrend && d.schluessel){
+        const ok=await standUebernehmen(d, sofort===true);   // Hotfix 19 §A6: asynchron
+        if(ok===true && speicherZuKlein){ speicherZuKlein=false; speicherVollMelden(); }   // Hotfix 19.1 §1: Stand passt jetzt (nach dem Auslagern)
+      }
       else if(d && d.fuehrend===null){ fuehrend=null; fuehrungMerken(); hinweisAnzeigen(); }   // führt kein Gerät: nichts zu übernehmen
     }catch(e){ if(e && e.offline){ gescheitert=true; fehlerText=e.message; } }
     finally{ standLaeuft=false; anzeigen(); }
