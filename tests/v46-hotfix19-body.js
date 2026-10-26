@@ -1,4 +1,4 @@
-/* Suite 4.6 · Hotfix 19 (Auftrag 26.10.2026, §C.3): §A1 DB bei vollem Speicher · §A2 spiegeln() aus dem Arbeitsspeicher · §A3/§A5 Sperrliste ·
+/* Suite 4.6 · Hotfix 19 (Auftrag 26.10.2026, §C.3) und Hotfix 19.1 (§4.2: Führung zurück bei gescheiterter Übernahme, Leiste „Stand passt nicht“, Ausnahmen vom Tipp-Abfang, istSicherung mit Unterstrich): §A1 DB bei vollem Speicher · §A2 spiegeln() aus dem Arbeitsspeicher · §A3/§A5 Sperrliste ·
    §A4 rote Leiste (drei Varianten) · §A6 Übernahme ganz oder gar nicht, Kopie an den Dienst · §B1 istSicherung · §B3 sicherungenAuslagern und gleich() ·
    §B4 Aufräumen ohne Löschen · §C Version 4.1.7, Build 42.
    Aufruf: jsc tests/v46-hotfix19.js · Geschrieben, im Rahmen des Auftrags nicht ausgeführt.
@@ -36,6 +36,10 @@ function letzterPut(pfadAnfang){ var i; for(i=_aufrufe.length-1;i>=0;i--){ if(_a
 function spiegelGet(opt, pfad){ var p=letzterPut(pfad); return p ? { json:{ schluessel:pfad.slice('/api/spiegel/'.length), inhalt:JSON.parse(p.body), groesse:p.body.length, version:1, empfangen_am:jetztIso() } } : { status:404, json:{ fehler:'Nicht vorhanden' } }; }
 toast=function(m){ _toasts.push(String(m)); };
 window.location.reload=function(){ _reloads++; };
+var geklickt=[];
+var knopf={ closest:function(){ return null; }, matches:function(){ return false; }, click:function(){ geklickt.push('knopf'); }, dispatchEvent:function(){}, focus:function(){} };
+function knopfBei(x, y){ return (Math.abs(x-100)<=10 && Math.abs(y-200)<=10) ? knopf : null; }
+function ausgenommenZiel(sel){ return { closest:function(s){ return s===sel ? {} : null; }, matches:function(){ return false; } }; }
 // voller Speicher
 var _voll=false, _vollSchluessel=null, _setItemEcht=localStorage.setItem;
 localStorage.setItem=function(k, v){ if((_voll && !/fslive_/.test(k)) || (_vollSchluessel && k===_vollSchluessel)) throw new Error('QuotaExceededError'); return _setItemEcht.call(localStorage, k, v); };
@@ -133,7 +137,10 @@ var nr0=FSLive.standNr();
 tippen(100, 200); drain(); timerLaufen(); drain(200); timerLaufen(); drain(200);
 pruef('§A6.3 meta passt nicht: karten wieder auf alt, stapel (war null) wieder entfernt, standNr unverändert, Toast', localStorage.getItem(PREFIX+'karten')===altKarten && localStorage.getItem(PREFIX+'stapel')===null && FSLive.standNr()===nr0 && _toasts.indexOf('Übernahme passt nicht in den Speicher — Sicherungen werden ausgelagert')>=0, JSON.stringify([localStorage.getItem(PREFIX+'karten'), localStorage.getItem(PREFIX+'stapel'), nr0, FSLive.standNr(), _toasts]));
 pruef('§A6.3 Sicherungen werden ausgelagert (PUT und geprüftes GET der Sicherung, danach lokal entfernt)', aufrufe('PUT', '/api/spiegel/fokus4_karten_bak1130').length===1 && aufrufe('GET', '/api/spiegel/fokus4_karten_bak1130').length===1 && localStorage.getItem(PREFIX+'karten_bak1130')===null, JSON.stringify(_aufrufe.map(function(a){ return a.methode+' '+a.pfad; })));
+pruef('§A6.3 seit Hotfix 19.1 §1: Führung zurück an GERAET-B, nicht führend, speicherZuKlein', FSLive.ichFuehre()===false && FSLive.speicherZuKlein()===true && aufrufe('POST', '/api/app/fuehrung').some(function(a){ return !!a.body && JSON.parse(a.body).geraet_id==='GERAET-B'; }), JSON.stringify([FSLive.ichFuehre(), FSLive.speicherZuKlein()]));
 _vollSchluessel=null; DB.nachholen();
+_aufrufe=[]; sicherungenAuslagern({ auto:true }); drain(200);   // Hotfix 19.1 §2.5: Stand passt jetzt → standHolen übernimmt, speicherZuKlein zurück
+pruef('§A6.3 danach (19.1 §2.5): Stand übernommen, speicherZuKlein false, weiter nicht führend', JSON.parse(localStorage.getItem(PREFIX+'karten'))[0].id==='neu-uebernahme' && FSLive.speicherZuKlein()===false && FSLive.ichFuehre()===false, JSON.stringify([_aufrufe.map(function(a){ return a.methode+' '+a.pfad; }), FSLive.speicherZuKlein()]));
 
 // ══ §A6.2 · erste Übernahme: Kopie vorUebernahme_<Zeit> geht an den Dienst — scheitert die Prüfung, Abbruch ══
 // Die Modulvariable ersteUebernahmeErledigt liest die App nur beim Laden; der Ablauf der ersten Übernahme (Kopie an den Dienst, Neuladen) wird in Suite v42 geprüft.
@@ -209,5 +216,50 @@ delete DB._ungesichert.karten; FSLive.speicherVollMelden();
 pruef('§A4 Leiste weg, ohne Toast', leiste().style.display==='none' && _toasts.length===0);
 pruef('§A4 Tipp: Einstellungen und Abschnitt „💾 Speicher“ (Quelltext)', (function(){ var s=readFile('index.html'); return s.indexOf("leiste.addEventListener('click'")>=0 && s.indexOf("seiteZeigen('einst');")>=0 && s.indexOf('[data-einstabschnitt="speicher"]')>=0; })());
 
-pruef('§C.1 App 4.1.7 · Build 2026-10-26-42 · sw.js Cache hochgezählt', APP_VERSION==='4.1.7' && APP_BUILD==='2026-10-26-42' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-3'")>=0, APP_VERSION+' / '+APP_BUILD);
-suiteEnde('Hotfix 19 · Speicher voll: Verlustschutz, Sicherungen nach FocusSystem (4.1.7)');
+// ══ Hotfix 19.1 §1 · Übernahme scheitert (meta passt nicht) → Führung an das vorige Gerät zurück ══
+localStorage.setItem(PREFIX+'fslive_ersteUebernahme', '1');
+speicherBaks().forEach(function(k){ localStorage.removeItem(PREFIX+k); });
+var altK=JSON.stringify([{ id:'alt-191' }]);
+localStorage.setItem(PREFIX+'karten', altK);
+var STAND191={ json:{ fuehrend:'GERAET-B', stand_nr:80, schluessel:{ karten:[{ id:'neu-191' }], meta:{ x:1 } } } };
+function postFuehrung(opt){ return opt.body ? { json:{ fuehrend:JSON.parse(opt.body).geraet_id, stand_nr:80 } } : fuehrungIch(); }
+_vollSchluessel=PREFIX+'meta'; _toasts.length=0; geklickt.length=0;
+neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':STAND191, 'POST /api/app/fuehrung':postFuehrung, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+document.elementFromPoint=knopfBei;
+_aufrufe=[]; tippen(100, 200); drain(); timerLaufen(); drain(200); timerLaufen(); drain(200);
+var posts=aufrufe('POST', '/api/app/fuehrung');
+pruef('19.1 §1 Übernahme scheitert: erst POST fuehrung ohne Körper, dann POST mit geraet_id des vorigen Geräts (GERAET-B)', posts.length===2 && posts[0].body===undefined && JSON.parse(posts[1].body).geraet_id==='GERAET-B', JSON.stringify(posts));
+pruef('19.1 §1 danach: nicht führend, fuehrend = voriges Gerät, im Speicher gemerkt, Krone aus', FSLive.ichFuehre()===false && (function(){ var z=JSON.parse(localStorage.getItem(PREFIX+'fslive_fuehrungZuletzt')||'null'); return !!z && z.fuehrend==='GERAET-B' && z.ichFuehre===false; })() && element('fsKrone').style.display==='none', localStorage.getItem(PREFIX+'fslive_fuehrungZuletzt'));
+pruef('19.1 §1 kein gemeinsamer Schlüssel in offen, kein PUT eines Betriebsschlüssels, karten lokal unverändert (alt)', ausstehend().every(function(k){ return k==='ui' || !FSLive.istBetrieb(k); }) && aufrufe('PUT', '/api/spiegel/fokus4_karten').length===0 && aufrufe('PUT', '/api/spiegel/fokus4_tag').length===0 && localStorage.getItem(PREFIX+'karten')===altK, JSON.stringify([ausstehend(), aufrufe('PUT', '/api/spiegel/').map(function(a){ return a.pfad; })]));
+pruef('19.1 §1/§2.1 speicherZuKlein, Leiste „Stand passt nicht · hier tippen zum Aufräumen“, Tipp nicht ausgeführt, Sperre weg, Toast „Gerät bleibt Anzeige“', FSLive.speicherZuKlein()===true && leiste().style.display==='block' && leiste().textContent==='⚠️ Speicher voll · Stand passt nicht · hier tippen zum Aufräumen' && geklickt.length===0 && element('fsSperre').style.display==='none' && _toasts.indexOf('Stand passt nicht in den Speicher — Gerät bleibt Anzeige')>=0, JSON.stringify([FSLive.speicherZuKlein(), leiste().textContent, geklickt, element('fsSperre').style.display, _toasts]));
+// ══ Hotfix 19.1 §1/§2.5 · nach dem Auslagern: standHolen(true) übernimmt den Stand, Leiste weg, Gerät bleibt Anzeige ══
+_vollSchluessel=null; _aufrufe=[];
+sicherungenAuslagern({ auto:true }); drain(200);
+pruef('19.1 §2.5 nach dem Auslagern (nicht führend, gekoppelt): GET stand, Stand übernommen, speicherZuKlein false, Leiste weg, nicht führend', aufrufe('GET', '/api/app/stand').length===1 && JSON.parse(localStorage.getItem(PREFIX+'karten'))[0].id==='neu-191' && FSLive.speicherZuKlein()===false && leiste().style.display==='none' && FSLive.ichFuehre()===false && aufrufe('POST', '/api/app/fuehrung').length===0, JSON.stringify([_aufrufe.map(function(a){ return a.methode+' '+a.pfad; }), localStorage.getItem(PREFIX+'karten'), FSLive.speicherZuKlein(), leiste().style.display]));
+// ══ Hotfix 19.1 §1 · POST scheitert: lokal trotzdem nicht führend, Toast „Führung nicht zurückgegeben …“ ══
+localStorage.setItem(PREFIX+'karten', altK);
+_vollSchluessel=PREFIX+'meta'; _toasts.length=0; geklickt.length=0;
+neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':STAND191, 'POST /api/app/fuehrung':function(opt){ return opt.body ? { offline:true } : fuehrungIch(); }, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+document.elementFromPoint=knopfBei;
+_aufrufe=[]; tippen(100, 200); drain(); timerLaufen(); drain(200); timerLaufen(); drain(200);
+pruef('19.1 §1 POST scheitert: lokal nicht führend, fuehrend = voriges Gerät, Tipp nicht ausgeführt, Toast „Führung nicht zurückgegeben — in Einstellungen › 📱 Geräte das führende Gerät setzen“', FSLive.ichFuehre()===false && JSON.parse(localStorage.getItem(PREFIX+'fslive_fuehrungZuletzt')).fuehrend==='GERAET-B' && geklickt.length===0 && FSLive.speicherZuKlein()===true && _toasts.indexOf('Führung nicht zurückgegeben — in Einstellungen › 📱 Geräte das führende Gerät setzen')>=0 && localStorage.getItem(PREFIX+'karten')===altK, JSON.stringify([FSLive.ichFuehre(), geklickt, _toasts]));
+// ══ Hotfix 19.1 §2.2 · Tipp auf #speicherVoll und in [data-speicherkarte]: keine Übernahme ══
+_antworten['POST /api/app/fuehrung']=postFuehrung;
+_aufrufe=[]; feuern('pointerdown', ereignis(5, 5, ausgenommenZiel('#speicherVoll'))); var uL=ereignis(5, 5, ausgenommenZiel('#speicherVoll')); feuern('pointerup', uL); drain(); timerLaufen(); drain();
+var uK=ereignis(5, 5, ausgenommenZiel('[data-speicherkarte]')); feuern('pointerdown', ereignis(5, 5, ausgenommenZiel('[data-speicherkarte]'))); feuern('pointerup', uK); drain(); timerLaufen(); drain();
+pruef('19.1 §2.2 Tipp auf die Leiste und in die Karte „💾 Speicher“ (nicht führend): nichts abgefangen, kein /api/app/fuehrung, kein stand', uL.pd===0 && uK.pd===0 && aufrufe('POST', '/api/app/fuehrung').length===0 && aufrufe('GET', '/api/app/stand').length===0 && FSLive.ichFuehre()===false, JSON.stringify([uL.pd, uK.pd, _aufrufe.map(function(a){ return a.methode+' '+a.pfad; })]));
+pruef('19.1 §2.3 Karte „💾 Speicher“ trägt data-speicherkarte="1"; Ausnahmen im Quelltext', (function(){ var s=readFile('index.html'); return s.indexOf('<div class="card" data-speicherkarte="1"><h3>💾 Speicher</h3>')>=0 && s.indexOf("t.closest('#speicherVoll') || t.closest('[data-speicherkarte]')")>=0; })());
+// zurück in den Normalzustand: Auslagern → standHolen → Stand passt
+_vollSchluessel=null; _aufrufe=[]; sicherungenAuslagern({ auto:true }); drain(200);
+pruef('19.1 §2.5 zweiter Fall: nach dem Auslagern Stand übernommen, speicherZuKlein false, nicht führend', FSLive.speicherZuKlein()===false && FSLive.ichFuehre()===false && JSON.parse(localStorage.getItem(PREFIX+'karten'))[0].id==='neu-191', JSON.stringify(_aufrufe.map(function(a){ return a.methode+' '+a.pfad; })));
+// ══ Hotfix 19.1 §1.2 · Übernahme gelingt: unverändert führend, Tipp ausgeführt ══
+_toasts.length=0; geklickt.length=0;
+neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:81, schluessel:{ karten:[{ id:'ok-191' }], fokus:{ laeuft:false } } } }, 'POST /api/app/fuehrung':postFuehrung, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+document.elementFromPoint=knopfBei;
+_aufrufe=[]; tippen(100, 200); drain(); timerLaufen(); drain(200); timerLaufen(); drain(200);
+pruef('19.1 §1.2 Übernahme gelingt: führend, Stand übernommen, Tipp ausgeführt, kein POST mit geraet_id, speicherZuKlein false, Leiste weg', FSLive.ichFuehre()===true && S.karten.length===1 && S.karten[0].id==='ok-191' && geklickt.length===1 && aufrufe('POST', '/api/app/fuehrung').length===1 && aufrufe('POST', '/api/app/fuehrung')[0].body===undefined && FSLive.speicherZuKlein()===false && leiste().style.display==='none', JSON.stringify([FSLive.ichFuehre(), S.karten.map(function(k){ return k.id; }), geklickt, aufrufe('POST', '/api/app/fuehrung')]));
+// ══ Hotfix 19.1 §3 · istSicherung mit Unterstrich nach _bak ══
+pruef('19.1 §3 istSicherung true: settings_bak_ziele400, settings_bak_shopfrei400, settings_bak_ranglast400', ['settings_bak_ziele400','settings_bak_shopfrei400','settings_bak_ranglast400','karten_bak1130','import_bak'].every(istSicherung) && !istSicherung('karten') && !istSicherung('fslive_warteschlange') && !istSicherung('karten_vomGeraet'));
+
+pruef('§C.1 App 4.1.8 · Build 2026-10-26-43 · sw.js Cache hochgezählt (seit Hotfix 19.1)', APP_VERSION==='4.1.8' && APP_BUILD==='2026-10-26-43' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-4'")>=0, APP_VERSION+' / '+APP_BUILD);
+suiteEnde('Hotfix 19 und 19.1 · Speicher voll: Verlustschutz, Sicherungen nach FocusSystem, Führung zurück (4.1.8)');

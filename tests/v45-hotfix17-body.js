@@ -47,7 +47,7 @@ var knopf={ closest:function(){ return null; }, matches:function(){ return false
 var ME=null;
 testTag();
 localStorage.setItem(PREFIX+'fslive_token', 'test-token');   // gekoppelt
-localStorage.setItem(PREFIX+'fslive_ersteUebernahme', '1');  // die erste Übernahme (Neuladen) ist nicht Gegenstand dieser Suite — Modulvariable wird unten mit einer Übernahme gesetzt
+// Hotfix 19.1 §4.3: die Marke „erste Übernahme erledigt“ setzt der Aufrufer (tests/v45-hotfix17.js) vor dem Laden der App; die erste Übernahme (Neuladen) ist nicht Gegenstand dieser Suite
 var FUEHRUNG_B={ json:{ fuehrend:'GERAET-B', ich:'x', seit:null, stand_nr:5 } };
 function fuehrungIch(){ return { json:{ fuehrend:FSLive.geraet(), ich:FSLive.geraet(), seit:null, stand_nr:5 } }; }
 var ANTWORT_DB={ json:{ datensaetze:[], gesamt:0 } };
@@ -74,7 +74,7 @@ pruef('§1.2 vorgemerkte Schlüssel bleiben stehen (karten und ui), Zustand gelb
 var _sendErg=null; FSLive.senden('datensatz_anlegen', { tabelle:'Inbox', felder:{} }, { id:'s-1' }).then(function(r){ _sendErg=r; }); drain();
 pruef('§1.2 Warteschlange bleibt stehen (wartend, kein POST)', _sendErg && _sendErg.wartend===true && aufrufe('POST', '/api/db/').length===0 && FSLive.warteschlangeAnzahl()===1, JSON.stringify([_sendErg, _aufrufe]));
 S.fokus={ laeuft:false }; saveFokus(); S.meta.f11Ausstehend={}; saveMeta();
-pruef('§1.1 STAND_MS und der 3-s-Takt standHolen(false) sind aus dem Quelltext entfernt', (function(){ var s=readFile('index.html'); return s.indexOf('STAND_MS=')<0 && s.indexOf('standHolen(false)')<0; })());
+pruef('§1.1 STAND_MS und der 3-s-Takt standHolen(false) sind aus dem Quelltext entfernt (Kommentare ausgenommen)', (function(){ var s=readFile('index.html').replace(/\/\/[^\n]*/g, ''); return s.indexOf('STAND_MS=')<0 && s.indexOf('standHolen(false)')<0; })());   // Hotfix 19.1 §4.3: der Kommentar zu Hotfix 17 §1.1 nennt standHolen(false)
 pruef('§1.3 Ticker und 20-s-Takt prüfen FSLive.nichtFuehrend()', (function(){ var s=readFile('index.html'); return (s.match(/if\(FSLive\.nichtFuehrend\(\)\) return;/g)||[]).length>=4; })());
 
 // ══ §4 · Krone und Pille auf dem nicht führenden Gerät ══
@@ -97,6 +97,7 @@ pruef('§4.2 standZeit nach der Übernahme gesetzt und gespeichert', !!FSLive.st
 pruef('§2.4 Führung im Speicher: { fuehrend, ichFuehre, ts }', (function(){ var z=JSON.parse(localStorage.getItem(PREFIX+'fslive_fuehrungZuletzt')||'null'); return !!z && z.ichFuehre===true && z.fuehrend===ME && typeof z.ts==='string'; })(), localStorage.getItem(PREFIX+'fslive_fuehrungZuletzt'));
 
 // ══ §2.1 · Vordergrund führend: fuehrung zuerst, dann Spiegel/Schlange/Pakete/Uhr/Badge ══
+_antworten['GET /api/app/fuehrung']=fuehrungIch;   // Hotfix 19.1 §4.3: nach POST fuehrung antwortet der Dienst mit diesem Gerät (der fetch-Ersatz stand noch auf GERAET-B)
 localStorage.setItem(PREFIX+'karten', '[]');
 _aufrufe=[]; FSLive.vormerken('karten'); feuern('visibilitychange', {}); drain(); timerLaufen(); drain();
 var iF=_aufrufe.findIndex(function(a){ return a.methode==='GET' && a.pfad==='/api/app/fuehrung'; });
@@ -120,6 +121,7 @@ pruef('§2.4 Start, Dienst nicht erreichbar: Zustand wie gespeichert (führend),
 
 // ══ §3 · Tipp auf dem führenden Gerät ══
 neuStart({ 'GET /api/app/fuehrung':fuehrungIch, 'GET /api/app/stand':{ status:204 }, 'POST /api/app/fuehrung':fuehrungIch, 'PUT /api/spiegel/':{ json:{ version:3 } }, 'GET /api/app/pakete':{ json:{ pakete:[] } }, 'PUT /api/app/uhr':{ json:{ ok:true } }, 'POST /api/db/':ANTWORT_DB });
+document.elementFromPoint=function(x, y){ return (Math.abs(x-100)<=10 && Math.abs(y-200)<=10) ? knopf : null; };   // Hotfix 19.1 §4.3: neuStart setzt elementFromPoint auf null zurück — der Knopf muss wieder unter dem Tipp liegen
 pruef('§3 Ausgang: dieses Gerät führt (Bestätigung gerade eben)', FSLive.ichFuehre()===true);
 // jünger als 30 s → kein Aufruf, Tipp sofort (nichts abgefangen)
 _aufrufe=[]; geklickt.length=0; var t2=tippen(100, 200); drain();
@@ -170,7 +172,7 @@ var gestern=new Date(Date.now()-2*24*60*60000); gestern.setHours(19, 12, 0, 0);
 localStorage.setItem(PREFIX+'fslive_standZeit', gestern.toISOString());
 neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B });
 pruef('§4.2 Stand an einem anderen Kalendertag: „Stand TT.MM. HH:MM · tippen zum Übernehmen“', pille().style.display==='block' && pille().textContent==='Stand '+p2(gestern.getDate())+'.'+p2(gestern.getMonth()+1)+'. 19:12 · tippen zum Übernehmen', pille().textContent);
-pruef('§4.2 eigener 60-s-Takt und Prüfung bei visibilitychange im Quelltext', readFile('index.html').indexOf('setInterval(hinweisAnzeigen, 60000)')>=0 && readFile('index.html').indexOf("if(document.visibilityState==='visible'){ hinweisAnzeigen(); fuehrungLesen()")>=0);
+pruef('§4.2 eigener 60-s-Takt und Prüfung bei visibilitychange im Quelltext', readFile('index.html').indexOf('setInterval(hinweisAnzeigen, 60000)')>=0 && /if\(document\.visibilityState==='visible'\)\{ hinweisAnzeigen\(\); (if\(sperrliste\.size\) sperrlisteAufloesen\(\); )?fuehrungLesen\(\)/.test(readFile('index.html')));   // Hotfix 19 §A5.4 steht dazwischen
 
 // ══ §4.1 · Krone: Element, Stil, Stelle ══
 pruef('§4.1 span#fsKrone: Inhalt 👑, Stil nach Auftrag', !!krone() && krone().textContent==='👑' && String(krone().style.cssText||'').indexOf('left:26px')>=0 && String(krone().style.cssText||'').indexOf('font-size:11px')>=0 && String(krone().style.cssText||'').indexOf('pointer-events:none')>=0, krone() && krone().style.cssText);
@@ -185,5 +187,5 @@ neuStart({});
 _aufrufe=[]; var u4=ereignis(100, 200); feuern('pointerdown', ereignis(100, 200)); feuern('pointerup', u4); drain();
 pruef('§4.3 nicht gekoppelt: keine Krone, keine Pille, kein Abfangen, kein Aufruf, nichtFuehrend false', krone().style.display==='none' && pille().style.display==='none' && u4.pd===0 && _aufrufe.length===0 && FSLive.nichtFuehrend()===false && FSLive.zustand()==='grau');
 
-pruef('§6.1 App 4.1.7 · Build 2026-10-26-42 (seit Hotfix 19)', APP_VERSION==='4.1.7' && APP_BUILD==='2026-10-26-42', APP_VERSION+' / '+APP_BUILD);
+pruef('§6.1 App 4.1.8 · Build 2026-10-26-43 (seit Hotfix 19.1)', APP_VERSION==='4.1.8' && APP_BUILD==='2026-10-26-43', APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 17 · Führung ohne Dauerabruf, Krone, Stand-Hinweis (4.1.6)');
