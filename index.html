@@ -3096,30 +3096,26 @@ const CACHE_NAME_PREFIX = 'fokus4-';       // 4.0 · Paket 0: eigener Cache-Name
    1 · Speicher-Wrapper (§1: dünner get/set/list, DB später austauschbar)
    ══════════════════════════════════════════════════════════════════════ */
 const DB = {
+  _ungesichert:{},   // Hotfix 19 §A1: Schlüssel (ohne Präfix) → JSON-Text, der bei vollem Speicher nicht in localStorage passte
   get(key, fallback){
-    try{ const r = localStorage.getItem(PREFIX+key); return r ? JSON.parse(r) : fallback; }
+    try{
+      if(DB._ungesichert[key]!==undefined) return JSON.parse(DB._ungesichert[key]);   // Hotfix 19 §A1: ungesicherter Wert aus dem Arbeitsspeicher
+      const r = localStorage.getItem(PREFIX+key); return r ? JSON.parse(r) : fallback; }
     catch(e){ console.warn('DB.get', key, e); return fallback; }
   },
+  // Hotfix 19 §A1 · Speicher voll: der Wert bleibt in _ungesichert (DB.get liefert ihn, spiegeln() sendet ihn — §A2), die Liste der Schlüssel wird
+  // gemerkt (§A3), die rote Leiste erscheint (§A4), einmal je Sitzung werden die Sicherungen nach FocusSystem ausgelagert (§B3).
+  // Das stille Aufräumen (speicherAufraeumen(true), _quotaCleanup) und die beiden Toasts entfallen ersatzlos.
   set(key, wert){
-    try{ localStorage.setItem(PREFIX+key, JSON.stringify(wert)); try{ FSLive.vormerken(key); }catch(eS){} return true; }   // 4.0 · Paket 3: Spiegel vormerken
-    catch(e){
-      // §3 (v1.13.4): Quota — EINMAL still aufräumen und erneut versuchen,
-      // statt den Nutzer mit einem Popup je Schreibversuch zu bombardieren.
-      try{
-        if(!DB._quotaCleanup){
-          DB._quotaCleanup=true;
-          try{ speicherAufraeumen(true); }catch(e2){}
-          try{ localStorage.setItem(PREFIX+key, JSON.stringify(wert)); try{ FSLive.vormerken(key); }catch(eS){}   // 4.0 · Paket 3
-            toast('💾 Speicher war voll — automatisch aufgeräumt'); return true; }catch(e3){}
-        }
-        const now=Date.now();
-        if(!(DB._quotaWarnTs && DB._quotaWarnTs>now-60000)){
-          DB._quotaWarnTs=now;
-          toast('⚠️ Speicher voll — Einstellungen → 💾 Speicher → Aufräumen');
-        }
-      }catch(e4){}
-      console.warn('DB.set', key, e); return false;
-    }
+    let t; try{ t=JSON.stringify(wert); }catch(e){ console.warn('DB.set', key, e); return false; }
+    let ok=false;
+    try{ localStorage.setItem(PREFIX+key, t); ok=true; }catch(e){ console.warn('DB.set', key, e); }
+    if(ok) delete DB._ungesichert[key]; else DB._ungesichert[key]=t;
+    try{ FSLive.vormerken(key); }catch(eS){}   // 4.0 · Paket 3: Spiegel vormerken
+    try{ FSLive.ungesichertMerken(); }catch(eS){}
+    try{ FSLive.speicherVollMelden(); }catch(eS){}
+    if(!ok && !DB._auslagernGestartet){ DB._auslagernGestartet=true; try{ sicherungenAuslagern({ auto:true }).catch(()=>{}); }catch(eS){} }
+    return ok;
   },
   list(){
     const out=[];
@@ -3127,7 +3123,15 @@ const DB = {
     catch(e){}
     return out;
   },
-  del(key){ try{ localStorage.removeItem(PREFIX+key); }catch(e){} try{ FSLive.vormerken(key); }catch(eS){} }   // 4.0 · Paket 3: Spiegel vormerken
+  del(key){ try{ localStorage.removeItem(PREFIX+key); }catch(e){} delete DB._ungesichert[key]; try{ FSLive.vormerken(key); }catch(eS){} try{ FSLive.ungesichertMerken(); }catch(eS){} },   // 4.0 · Paket 3: Spiegel vormerken · Hotfix 19 §A1
+  // Hotfix 19 §A1 · ungesicherte Werte nachholen: je Schlüssel setItem versuchen; Erfolg → raus aus _ungesichert. Nach jedem Lauf von sicherungenAuslagern (§B3).
+  nachholen(){
+    for(const key of Object.keys(DB._ungesichert)){
+      try{ localStorage.setItem(PREFIX+key, DB._ungesichert[key]); delete DB._ungesichert[key]; }catch(e){}
+    }
+    try{ FSLive.ungesichertMerken(); }catch(eS){}
+    try{ FSLive.speicherVollMelden(); }catch(eS){}
+  }
 };
 /* ══════════════════════════════════════════════════════════════════════
    4.0 · Paket 3 · FSLive — Live-Verbindung zu FocusSystem (Punkt 6.9).
@@ -3162,6 +3166,7 @@ const FSLive = (()=>{
     fuehrtJetzt: PREFIX+'fslive_fuehrtJetzt',           // Hotfix 14 §10.4: Toast „Dieses Gerät führt jetzt“ nach dem Neuladen
     fuehrungZuletzt: PREFIX+'fslive_fuehrungZuletzt',   // Hotfix 17 §2.4: { fuehrend, ichFuehre, ts } — Krone und Tipp-Abfang stimmen ab der ersten Sekunde
     standZeit: PREFIX+'fslive_standZeit',               // Hotfix 17 §4.2: ISO-Zeit des Stands (Übernahme, eigene Spiegelung) für die Pille „Stand HH:MM“
+    ungesichert: PREFIX+'fslive_ungesichert',           // Hotfix 19 §A3: JSON-Array der Schlüsselnamen aus DB._ungesichert (Speicher voll)
   };
   const ADRESSE_STANDARD='https://Mac-mini-von-Pascal.local:8443';
   const APP_KENNUNG='fokus-app-4';
@@ -3188,6 +3193,10 @@ const FSLive = (()=>{
   // Hotfix 17 §4 · krone = span#fsKrone (sichtbar: gekoppelt und führend); standZeit = Zeit des Stands (§4.2); letzteSpiegelung = letzte eigene erfolgreiche Spiegelung.
   let krone=null, standZeit=null, letzteSpiegelung=null;
   const STAND_ALT_MS=60*60000;
+  // Hotfix 19 §A4/§A5 · leiste = div#speicherVoll (rote Dauerleiste); sperrliste = Schlüssel, die beim Start als ungesichert gemerkt waren
+  // (localStorage hält dort den alten Stand, der Spiegel den neuen): spiegeln() sendet sie nicht, bis der Stand vom Mac mini geholt ist.
+  let leiste=null, sperrlisteLaeuft=false;
+  const sperrliste=new Set();
 
   function lies(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function schreib(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -3214,9 +3223,67 @@ const FSLive = (()=>{
     try{
       if(punkt) punkt.style.background=FARBE[zustand()];
       if(krone) krone.style.display=(gekoppelt() && ichFuehre===true) ? 'block' : 'none';   // Hotfix 17 §4.1: 👑 genau dann, wenn gekoppelt und führend
+      speicherVollMelden();   // Hotfix 19 §A4
       const t=document.getElementById('sheetTitel'), sh=document.getElementById('sheet');
       if(t && sh && sh.classList.contains('on') && t.textContent===TITEL) blattFuellen();
     }catch(e){}
+  }
+
+  // ── Hotfix 19 · Speicher voll ─────────────────────────────────────
+  // §A3 · Liste der ungesicherten Schlüssel merken: leer → removeItem, sonst JSON-Array; scheitert das Schreiben, still weiter.
+  function ungesichertMerken(){
+    try{ const l=Object.keys(DB._ungesichert); if(!l.length) localStorage.removeItem(K.ungesichert); else localStorage.setItem(K.ungesichert, JSON.stringify(l)); }catch(e){}
+  }
+  // §A4 · Rote Dauerleiste div#speicherVoll: sichtbar, solange DB._ungesichert nicht leer ist oder eine Sperrliste besteht; sonst weg, ohne Toast.
+  function speicherVollMelden(){
+    try{
+      if(!leiste) return;
+      const n=Object.keys(DB._ungesichert).length;
+      if(!n && !sperrliste.size){ leiste.style.display='none'; return; }
+      let text;
+      if(sperrliste.size) text='⚠️ Stand vom Mac mini noch nicht geholt · bitte verbinden';
+      else if(gekoppelt() && ichFuehre===true && (zustand()==='gruen' || zustand()==='gelb')) text='⚠️ Speicher voll · Änderungen gehen an FocusSystem · App nicht schließen';
+      else text='⚠️ Speicher voll · Änderungen NICHT gesichert · App offen lassen, Mac mini verbinden';
+      leiste.textContent=text; leiste.style.display='block';
+    }catch(e){}
+  }
+  // §A5 · Start mit ungesicherten Schlüsseln: K.ungesichert lesen; nicht leer → Sperrliste (spiegeln() sendet sie nicht, §A2), dann den Stand holen.
+  function ungesichertStart(){
+    try{
+      const l=JSON.parse(lies(K.ungesichert)||'[]');
+      if(!Array.isArray(l) || !l.length) return;
+      l.forEach(k=>sperrliste.add(String(k)));
+      speicherVollMelden();
+      sperrlisteAufloesen();
+    }catch(e){}
+  }
+  // §A5.3 · Gekoppelt: GET /api/app/stand?ab=0 (15 s); jeden Schlüssel der Sperrliste, der in d.schluessel vorkommt, in den Speicher schreiben
+  // (auch wenn d.fuehrend ein anderes Gerät ist — es ist der jüngste gemeinsame Stand). Alle geschrieben → Marke weg, Sperrliste leer, Neuladen.
+  // Passt mindestens einer nicht → Sicherungen auslagern (§B3), genau eine Wiederholung; danach Werte in DB._ungesichert, Sperrliste leer, ladeAlles/renderAlles.
+  // §A5.4 · Nicht gekoppelt, Dienst nicht erreichbar oder Antwort ohne schluessel: Sperrliste bleibt (Leiste Variante 1), beim nächsten Sichtbarwerden erneut.
+  async function sperrlisteAufloesen(){
+    if(!sperrliste.size || sperrlisteLaeuft) return false;
+    if(!gekoppelt()){ speicherVollMelden(); return false; }
+    sperrlisteLaeuft=true;
+    try{
+      for(let versuch=0; versuch<2; versuch++){
+        let d=null;
+        try{ d=await aufruf('GET', '/api/app/stand?ab=0', undefined, { zeitgrenze:15000 }); }catch(e){ d=null; }
+        if(!d || !d.schluessel || typeof d.schluessel!=='object') return false;
+        const fehlt=[];
+        for(const name of Array.from(sperrliste)){
+          if(!Object.prototype.hasOwnProperty.call(d.schluessel, name)){ sperrliste.delete(name); continue; }   // kein Stand dazu im Spiegel (z. B. ui): nichts zu schreiben, lokaler Wert bleibt
+          try{ localStorage.setItem(PREFIX+name, JSON.stringify(d.schluessel[name])); sperrliste.delete(name); }catch(e){ fehlt.push(name); }
+        }
+        if(!fehlt.length){ try{ localStorage.removeItem(K.ungesichert); }catch(e){} sperrliste.clear(); location.reload(); return true; }
+        if(versuch===0){ try{ await sicherungenAuslagern({ auto:true }); }catch(e){} continue; }
+        for(const name of fehlt){ try{ DB._ungesichert[name]=JSON.stringify(d.schluessel[name]); }catch(e){} }
+        sperrliste.clear(); ungesichertMerken();
+        try{ ladeAlles(); renderAlles(); }catch(e){}
+        return false;
+      }
+      return false;
+    }finally{ sperrlisteLaeuft=false; speicherVollMelden(); }
   }
 
   // ── Aufrufe ───────────────────────────────────────────────────────
@@ -3263,7 +3330,8 @@ const FSLive = (()=>{
           if(fuehrungBekannt){ offen.delete(schluessel); merken(); }   // nicht führend: nicht senden, nicht vorgemerkt lassen
           continue;                                                  // Führung noch nicht gelesen: bleibt vorgemerkt bis zur Antwort
         }
-        const wert=lies(PREFIX+schluessel);
+        if(sperrliste.has(schluessel)) continue;   // Hotfix 19 §A5: localStorage hält dort den alten Stand — nicht senden, bleibt in offen bis zur Auflösung
+        const wert = (DB._ungesichert[schluessel] !== undefined) ? DB._ungesichert[schluessel] : lies(PREFIX+schluessel);   // Hotfix 19 §A2: Stand aus dem Arbeitsspeicher
         if(wert===null) await aufruf('DELETE', '/api/spiegel/'+encodeURIComponent(PREFIX+schluessel));
         else await aufruf('PUT', '/api/spiegel/'+encodeURIComponent(PREFIX+schluessel), wert);
         if(offen.get(schluessel)===stand){ offen.delete(schluessel); merken(); }   // inzwischen neu geschrieben: bleibt ausstehend
@@ -3483,7 +3551,7 @@ const FSLive = (()=>{
       const vorher=ersteUebernahmeErledigt;
       if(d && d.fuehrend && d.fuehrend!==geraet() && d.schluessel){
         if(!vorher) schreib(K.fuehrtJetzt,'1');   // Toast nach dem Neuladen
-        standGezeichnet=(standUebernehmen(d, true)===true);
+        standGezeichnet=((await standUebernehmen(d, true))===true);   // Hotfix 19 §A6: asynchron (Sicherung geht an den Dienst)
         neuGeladen=(!vorher && ersteUebernahmeErledigt);
       }
       ichFuehre=true; fuehrend=geraet(); fuehrungBekannt=true; bestaetigtTs=Date.now(); fuehrungMerken(); hinweisAnzeigen(); anzeigen();   // Hotfix 17 §2.4, §3.1
@@ -3512,7 +3580,7 @@ const FSLive = (()=>{
     try{
       const d=await aufruf('GET', '/api/app/stand?ab='+encodeURIComponent(String(standNr)), undefined, { zeitgrenze:15000 });
       gescheitert=false;
-      if(d && d.fuehrend && d.schluessel) standUebernehmen(d, sofort===true);
+      if(d && d.fuehrend && d.schluessel) await standUebernehmen(d, sofort===true);   // Hotfix 19 §A6: asynchron
       else if(d && d.fuehrend===null){ fuehrend=null; fuehrungMerken(); hinweisAnzeigen(); }   // führt kein Gerät: nichts zu übernehmen
     }catch(e){ if(e && e.offline){ gescheitert=true; fehlerText=e.message; } }
     finally{ standLaeuft=false; anzeigen(); }
@@ -3520,18 +3588,32 @@ const FSLive = (()=>{
   // §9.2 · Stand übernehmen: Schlüssel direkt in den Speicher (nicht über DB.set, damit nichts zurückgespiegelt wird).
   // Erste Übernahme dieses Geräts: vorher den eigenen Stand sichern, danach neu laden (Migrationsmarken aus meta).
   // Ein offenes Blatt verschiebt die Übernahme auf den nächsten Takt, außer sofort===true.
-  function standUebernehmen(d, sofort){
+  // Hotfix 19 §A6 · Übernahme ganz oder gar nicht: (1) bisherige Werte in alt; (2) erste Übernahme: die Kopie vorUebernahme_<Zeit> geht mit
+  // sicherungSenden() an den Dienst (§B3), nicht mehr in localStorage — scheitert das, Abbruch; (3) alle Schlüssel schreiben, scheitert einer:
+  // alle geschriebenen auf alt zurück, standNr unverändert, Sicherungen auslagern, danach genau einmal standHolen(true); (4) sonst wie bisher.
+  async function standUebernehmen(d, sofort){
     try{
       if(!d || !d.schluessel || typeof d.schluessel!=='object') return false;
       if(sofort!==true){ try{ if(sheetOffen()) return false; }catch(e){} }
+      const namen=Object.keys(d.schluessel).filter(n=>GEMEINSAM.indexOf(n)>=0);
+      const alt={};
+      for(const name of namen) alt[name]=lies(PREFIX+name);
       if(!ersteUebernahmeErledigt){
         const vorher={};
         for(const k of GEMEINSAM){ const v=lies(PREFIX+k); if(v!==null) vorher[k]=v; }
-        try{ localStorage.setItem(PREFIX+'vorUebernahme_'+new Date().toISOString().replace(/:/g,''), JSON.stringify(vorher)); }catch(e){}
+        const ok=await sicherungSenden('vorUebernahme_'+new Date().toISOString().replace(/:/g,''), JSON.stringify(vorher));
+        if(!ok){ try{ toast('Übernahme abgebrochen — Sicherung nicht in FocusSystem'); }catch(e){} return false; }
       }
-      for(const name of Object.keys(d.schluessel)){
-        if(GEMEINSAM.indexOf(name)<0) continue;
-        try{ localStorage.setItem(PREFIX+name, JSON.stringify(d.schluessel[name])); }catch(e){}
+      const geschrieben=[]; let passtNicht=false;
+      for(const name of namen){
+        try{ localStorage.setItem(PREFIX+name, JSON.stringify(d.schluessel[name])); geschrieben.push(name); }catch(e){ passtNicht=true; break; }
+      }
+      if(passtNicht){
+        for(const name of geschrieben){ try{ localStorage.removeItem(PREFIX+name); }catch(e){} }
+        for(const name of geschrieben){ if(alt[name]!==null){ try{ localStorage.setItem(PREFIX+name, alt[name]); }catch(e){} } }
+        try{ toast('Übernahme passt nicht in den Speicher — Sicherungen werden ausgelagert'); }catch(e){}
+        try{ sicherungenAuslagern({ auto:true }).then(()=>standHolen(true)).catch(()=>{}); }catch(e){}
+        return false;
       }
       standNr=Number(d.stand_nr)||0; fuehrend=d.fuehrend||null;
       standZeitSetzen(new Date().toISOString());   // Hotfix 17 §4.2: Stand übernommen
@@ -3674,6 +3756,13 @@ const FSLive = (()=>{
       pille.id='fsNurAnzeige';
       pille.style.cssText='position:fixed;top:calc(env(safe-area-inset-top) + 34px);left:50%;transform:translateX(-50%);z-index:2147482990;padding:4px 10px;border-radius:999px;background:#1f2937;color:#facc15;font-size:12px;pointer-events:none;display:none';
       document.body.appendChild(pille);
+      // Hotfix 19 §A4 · Rote Dauerleiste: fest oben, volle Breite, direkt unter der Statusleiste (#topbar, Höhe --tbH), über #toast (z-index 330).
+      // Tipp darauf öffnet die Einstellungen und scrollt zur Karte „💾 Speicher“. Text und Sichtbarkeit setzt speicherVollMelden().
+      leiste=document.createElement('div');
+      leiste.id='speicherVoll';
+      leiste.style.cssText='position:fixed;top:var(--tbH, 0px);left:0;right:0;z-index:330;background:#f87171;color:#111;font-size:13px;font-weight:700;padding:8px 16px;display:none;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent';
+      leiste.addEventListener('click', e=>{ e.stopPropagation(); try{ speicherKarteOeffnen(); }catch(x){} });
+      document.body.appendChild(leiste);
       // Hotfix 14 §10.3 · Tipp-Abfang auf nicht führenden Geräten: pointerdown merkt den Startpunkt (verschluckt nichts, Scrollen bleibt),
       // pointerup ≤ 10 px = Tipp → übernehmen; der folgende click wird verschluckt. Ausgenommen: FSLive-Punkt und Elemente mit data-fsgeraet.
       const ausgenommen=(t)=>{ try{ return !!(t && t.closest && (t.closest('#fsLiveFlaeche') || t.closest('[data-fsgeraet]'))); }catch(e){ return false; } };
@@ -3707,6 +3796,7 @@ const FSLive = (()=>{
       // Nicht führend → sonst nichts (kein standHolen). Dienst nicht erreichbar → Zustand bleibt wie gespeichert.
       standZeit=lies(K.standZeit)||null;   // Hotfix 17 §4.2
       fuehrungZuletztLaden(); anzeigen(); hinweisAnzeigen();
+      ungesichertStart();   // Hotfix 19 §A5: ungesicherte Schlüssel aus der letzten Sitzung → Sperrliste, Stand vom Mac mini holen
       setInterval(hinweisAnzeigen, 60000);   // Hotfix 17 §4.2: Prüfung der 60 Minuten, rein lokal, kein Dienst
       const nachFuehrung=()=>{ if(!ichFuehre) return; spiegeln(); schlangeSenden(); paketeHolen(); uhrMelden(true); try{ f12BadgeLaden(); }catch(e){} };
       fuehrungLesen().then(nachFuehrung).catch(()=>{});
@@ -3715,7 +3805,7 @@ const FSLive = (()=>{
       // Hotfix 17 §1.1: der 3-s-Takt standHolen(false) (Hotfix 14 §9.3) entfällt ersatzlos — nicht führende Geräte gleichen nur bei der Übernahme ab
       setInterval(()=>uhrMelden(true), UHR_MS);
       // Hotfix 17 §2.1 · Vordergrund: genau ein fuehrungLesen(); spiegeln, Schlange, Pakete, Uhr, Badge erst danach und nur bei führend (kein standHolen)
-      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ hinweisAnzeigen(); fuehrungLesen().then(nachFuehrung).catch(()=>{}); }   // Hotfix 14 §7.6 · Hotfix 17 §2.1, §4.2
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ hinweisAnzeigen(); if(sperrliste.size) sperrlisteAufloesen(); fuehrungLesen().then(nachFuehrung).catch(()=>{}); }   // Hotfix 14 §7.6 · Hotfix 17 §2.1, §4.2 · Hotfix 19 §A5.4
         else { uhrMelden(true); } });
       addEventListener('online', ()=>{ if(nichtFuehrend()) return; spiegeln(); schlangeSenden(); paketeHolen(); });   // Hotfix 17 §2.2: nur auf führenden Geräten
       // Hotfix 17 §2.1 · der Start-Aufruf nach 2,5 s (paketeHolen, uhrMelden) entfällt; beides läuft nach fuehrungLesen() bei führend
@@ -3726,7 +3816,8 @@ const FSLive = (()=>{
     warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length, warteschlangeHat:(id)=>warteschlange.some(x=>x && x.id===id),
     geraeteLaden, geraetBenennen, fuehrungSetzen, ichFuehre:()=>ichFuehre, geraet, koennteSchreiben,   // Hotfix 14 §11 (geraet: Kennung für „dieses Gerät“ in den Einstellungen)
     nichtFuehrend,   // Hotfix 17 §1: Takte außerhalb des Moduls (Chat-Badge, Nachsenden, Statusleiste, Ticker) ruhen auf nicht führenden Geräten
-    standZeit:()=>standZeit, hinweisAnzeigen };   // Hotfix 17 §4 (Prüfungen)
+    standZeit:()=>standZeit, hinweisAnzeigen,   // Hotfix 17 §4 (Prüfungen)
+    ungesichertMerken, speicherVollMelden, sperrlisteGroesse:()=>sperrliste.size, standNr:()=>standNr };   // Hotfix 19 §A (DB.set/del/nachholen, Prüfungen)
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
