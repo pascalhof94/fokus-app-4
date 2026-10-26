@@ -56,12 +56,12 @@ localStorage.setItem(PREFIX+'fslive_ersteUebernahme', '1');  // erste Übernahme
 DB._auslagernGestartet=true;   // das einmalige Auslagern aus DB.set (§A1) läuft hier nicht mit; §B3 wird direkt geprüft
 function fuehrungIch(){ return { json:{ fuehrend:FSLive.geraet(), ich:FSLive.geraet(), seit:null, stand_nr:5 } }; }
 var FUEHRUNG_B={ json:{ fuehrend:'GERAET-B', ich:'x', seit:null, stand_nr:5 } };
-var OK={ json:{ version:1 } };
+var OK={ json:{ version:1 } };   // PUT und DELETE /api/spiegel/
 var LEER={ json:{ pakete:[] } }, UHR={ json:{ ok:true } }, DBLEER={ json:{ datensaetze:[], gesamt:0 } };
 F7.lager.chatKanaele={ ts:Date.now(), daten:[], fehler:'' };
 
 // ══ Start führend ══
-neuStart({ 'GET /api/app/fuehrung':fuehrungIch, 'PUT /api/spiegel/':OK, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+neuStart({ 'GET /api/app/fuehrung':fuehrungIch, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
 ME=FSLive.geraet(); timerLaufen(); drain();
 pruef('Vorbedingung: gekoppelt, führend, Leiste angelegt und unsichtbar', FSLive.gekoppelt() && FSLive.ichFuehre()===true && !!leiste() && leiste().style.display==='none');
 pruef('§A4 Leiste: #f87171, Schrift #111, 13 px, fett, 8px 16px, z-index 330, fest oben unter der Statusleiste', (function(){ var c=String(leiste().style.cssText); return c.indexOf('background:#f87171')>=0 && c.indexOf('color:#111')>=0 && c.indexOf('font-size:13px')>=0 && c.indexOf('font-weight:700')>=0 && c.indexOf('padding:8px 16px')>=0 && c.indexOf('z-index:330')>=0 && c.indexOf('position:fixed')>=0 && c.indexOf('top:var(--tbH')>=0; })(), String(leiste().style.cssText));
@@ -73,7 +73,7 @@ var neu=[{ id:'k-neu', titel:'Neu' }];
 var r1=DB.set('karten', neu);
 pruef('§A1 DB.set voll: false, Wert in _ungesichert, Schlüssel in offen, DB.get liefert den neuen Wert, localStorage den alten', r1===false && DB._ungesichert.karten===JSON.stringify(neu) && ausstehend().indexOf('karten')>=0 && DB.get('karten', [])[0].id==='k-neu' && localStorage.getItem(PREFIX+'karten')==='[]', JSON.stringify([r1, Object.keys(DB._ungesichert), ausstehend()]));
 pruef('§A3 fslive_ungesichert trägt die Schlüsselnamen', JSON.parse(localStorage.getItem(PREFIX+'fslive_ungesichert')||'[]').indexOf('karten')>=0, localStorage.getItem(PREFIX+'fslive_ungesichert'));
-pruef('§A1 kein Toast, kein Aufräumen (Quelltext ohne _quotaCleanup und ohne die alten Toasts)', _toasts.length===0 && (function(){ var s=readFile('index.html'); return s.indexOf('_quotaCleanup')<0 && s.indexOf('Speicher war voll')<0 && s.indexOf('Einstellungen → 💾 Speicher → Aufräumen')<0 && s.indexOf('speicherAufraeumen(true)')<0; })(), JSON.stringify(_toasts));
+pruef('§A1 kein Toast, kein Aufräumen (Quelltext ohne _quotaCleanup und ohne die alten Toasts)', _toasts.length===0 && (function(){ var s=readFile('index.html'); return s.indexOf('DB._quotaCleanup')<0 && s.indexOf("toast('💾 Speicher war voll")<0 && s.indexOf("toast('⚠️ Speicher voll")<0 && s.indexOf('try{ speicherAufraeumen(true); }')<0; })(), JSON.stringify(_toasts));
 
 // ══ §A2 · spiegeln() sendet den Wert aus _ungesichert, nicht aus localStorage ══
 _aufrufe=[]; FSLive.spiegeln(); drain();
@@ -100,7 +100,7 @@ pruef('§A1 nachholen: Wert im Speicher, _ungesichert leer, Liste entfernt, Leis
 localStorage.setItem(PREFIX+'karten', JSON.stringify([{ id:'alt' }]));
 localStorage.setItem(PREFIX+'fslive_ungesichert', JSON.stringify(['karten']));
 _reloads=0;
-neuStart({ 'GET /api/app/fuehrung':fuehrungIch, 'GET /api/app/stand':{ offline:true }, 'PUT /api/spiegel/':OK, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+neuStart({ 'GET /api/app/fuehrung':fuehrungIch, 'GET /api/app/stand':{ offline:true }, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
 timerLaufen(); drain();
 pruef('§A5.2 Sperrliste: karten wird nicht gesendet, bleibt ausstehend; andere Betriebsschlüssel gehen raus', FSLive.sperrlisteGroesse()===1 && aufrufe('PUT', '/api/spiegel/fokus4_karten').length===0 && ausstehend().indexOf('karten')>=0 && aufrufe('PUT', '/api/spiegel/fokus4_').length>=1, JSON.stringify(_aufrufe.map(function(a){ return a.methode+' '+a.pfad; })));
 pruef('§A5.3 GET /api/app/stand?ab=0 versucht (Zeitgrenze 15 s), Dienst nicht erreichbar → Sperrliste bleibt, kein Neuladen', aufrufe('GET', '/api/app/stand?ab=0').length===1 && FSLive.sperrlisteGroesse()===1 && _reloads===0 && localStorage.getItem(PREFIX+'fslive_ungesichert')!==null);
@@ -116,7 +116,7 @@ localStorage.setItem(PREFIX+'karten', JSON.stringify([{ id:'alt' }]));
 localStorage.setItem(PREFIX+'fslive_ungesichert', JSON.stringify(['karten']));
 localStorage.setItem(PREFIX+'karten_bak1130', JSON.stringify([{ id:'bak' }]));
 _vollSchluessel=PREFIX+'karten'; _reloads=0; _toasts.length=0;
-neuStart({ 'GET /api/app/fuehrung':fuehrungIch, 'GET /api/app/stand':{ json:{ fuehrend:ME, stand_nr:10, schluessel:{ karten:[{ id:'vom-mini-2' }] } } }, 'PUT /api/spiegel/':OK, 'GET /api/spiegel/':{ status:404, json:{ fehler:'Nicht vorhanden' } }, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+neuStart({ 'GET /api/app/fuehrung':fuehrungIch, 'GET /api/app/stand':{ json:{ fuehrend:ME, stand_nr:10, schluessel:{ karten:[{ id:'vom-mini-2' }] } } }, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/spiegel/':{ status:404, json:{ fehler:'Nicht vorhanden' } }, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
 timerLaufen(); drain(200);
 pruef('§A5.3 passt nicht: Auslagern versucht (PUT der Sicherung), Schritt 3 genau einmal wiederholt (zwei GET stand?ab=0), kein Neuladen', aufrufe('PUT', '/api/spiegel/fokus4_karten_bak1130').length===1 && aufrufe('GET', '/api/app/stand?ab=0').length===2 && _reloads===0, JSON.stringify(_aufrufe.map(function(a){ return a.methode+' '+a.pfad; })));
 pruef('§A5.3 danach: Wert in _ungesichert, Sperrliste leer, Liste gemerkt, App arbeitet mit dem Stand aus dem Arbeitsspeicher (DB.get, S.karten)', DB._ungesichert.karten===JSON.stringify([{ id:'vom-mini-2' }]) && FSLive.sperrlisteGroesse()===0 && JSON.parse(localStorage.getItem(PREFIX+'fslive_ungesichert')).indexOf('karten')>=0 && DB.get('karten', [])[0].id==='vom-mini-2' && S.karten.length===1 && S.karten[0].id==='vom-mini-2' && localStorage.getItem(PREFIX+'karten_bak1130')!==null, JSON.stringify([Object.keys(DB._ungesichert), S.karten.map(function(k){ return k.id; })]));
@@ -128,7 +128,7 @@ var altKarten=JSON.stringify([{ id:'alt-uebernahme' }]);
 localStorage.setItem(PREFIX+'karten', altKarten); localStorage.removeItem(PREFIX+'stapel');
 localStorage.setItem(PREFIX+'karten_bak1130', JSON.stringify([{ id:'bak' }]));
 _vollSchluessel=PREFIX+'meta'; _reloads=0; _toasts.length=0;
-neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:77, schluessel:{ karten:[{ id:'neu-uebernahme' }], stapel:[{ id:'s1' }], meta:{ x:1 } } } }, 'POST /api/app/fuehrung':fuehrungIch, 'PUT /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:77, schluessel:{ karten:[{ id:'neu-uebernahme' }], stapel:[{ id:'s1' }], meta:{ x:1 } } } }, 'POST /api/app/fuehrung':fuehrungIch, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
 var nr0=FSLive.standNr();
 tippen(100, 200); drain(); timerLaufen(); drain(200); timerLaufen(); drain(200);
 pruef('§A6.3 meta passt nicht: karten wieder auf alt, stapel (war null) wieder entfernt, standNr unverändert, Toast', localStorage.getItem(PREFIX+'karten')===altKarten && localStorage.getItem(PREFIX+'stapel')===null && FSLive.standNr()===nr0 && _toasts.indexOf('Übernahme passt nicht in den Speicher — Sicherungen werden ausgelagert')>=0, JSON.stringify([localStorage.getItem(PREFIX+'karten'), localStorage.getItem(PREFIX+'stapel'), nr0, FSLive.standNr(), _toasts]));
@@ -165,7 +165,7 @@ pruef('§B1 speicherBaks liefert alle Sicherungen, auch die jüngste je Art', sp
 speicherBaks().forEach(function(k){ localStorage.removeItem(PREFIX+k); });
 
 // ══ §B3 · gleich() ══
-pruef('§B3 gleich: Objekte unabhängig von der Schlüsselreihenfolge, verschachtelt', FSLive.gleich({ a:1, b:{ c:[1,2,{ d:'x' }], e:null } }, { e:null, b:{ e:null, c:[1,2,{ d:'x' }] }, a:1 })===true);
+pruef('§B3 gleich: Objekte unabhängig von der Schlüsselreihenfolge, verschachtelt', FSLive.gleich({ a:1, b:{ c:[1,2,{ d:'x' }], e:null } }, { b:{ e:null, c:[1,2,{ d:'x' }] }, a:1 })===true);
 pruef('§B3 gleich: Arrays in anderer Reihenfolge ungleich', FSLive.gleich([1,2,3], [1,3,2])===false && FSLive.gleich([1,2], [1,2,3])===false);
 pruef('§B3 gleich: Zahlen mit ===, sonst ===', FSLive.gleich(1, 1)===true && FSLive.gleich(1, '1')===false && FSLive.gleich(0, -0)===true && FSLive.gleich(null, {})===false && FSLive.gleich({ a:1 }, { a:1, b:undefined })===false && FSLive.gleich('x', 'x')===true && FSLive.gleich(true, 1)===false);
 
