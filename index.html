@@ -3240,9 +3240,10 @@ const FSLive = (()=>{
     try{
       if(!leiste) return;
       const n=Object.keys(DB._ungesichert).length;
-      if(!n && !sperrliste.size){ leiste.style.display='none'; return; }
+      if(!n && !sperrliste.size && !speicherZuKlein){ leiste.style.display='none'; return; }
       let text;
-      if(sperrliste.size) text='⚠️ Stand vom Mac mini noch nicht geholt · bitte verbinden';
+      if(speicherZuKlein) text='⚠️ Speicher voll · Stand passt nicht · hier tippen zum Aufräumen';   // Hotfix 19.1 §2.1: vor allen anderen
+      else if(sperrliste.size) text='⚠️ Stand vom Mac mini noch nicht geholt · bitte verbinden';
       else if(gekoppelt() && ichFuehre===true && (zustand()==='gruen' || zustand()==='gelb')) text='⚠️ Speicher voll · Änderungen gehen an FocusSystem · App nicht schließen';
       else text='⚠️ Speicher voll · Änderungen NICHT gesichert · App offen lassen, Mac mini verbinden';
       leiste.textContent=text; leiste.style.display='block';
@@ -3809,7 +3810,7 @@ const FSLive = (()=>{
       document.body.appendChild(leiste);
       // Hotfix 14 §10.3 · Tipp-Abfang auf nicht führenden Geräten: pointerdown merkt den Startpunkt (verschluckt nichts, Scrollen bleibt),
       // pointerup ≤ 10 px = Tipp → übernehmen; der folgende click wird verschluckt. Ausgenommen: FSLive-Punkt und Elemente mit data-fsgeraet.
-      const ausgenommen=(t)=>{ try{ return !!(t && t.closest && (t.closest('#fsLiveFlaeche') || t.closest('[data-fsgeraet]'))); }catch(e){ return false; } };
+      const ausgenommen=(t)=>{ try{ return !!(t && t.closest && (t.closest('#fsLiveFlaeche') || t.closest('[data-fsgeraet]') || t.closest('#speicherVoll') || t.closest('[data-speicherkarte]'))); }catch(e){ return false; } };   // Hotfix 19.1 §2.2: Leiste und Karte „💾 Speicher“ lösen keine Übernahme aus
       // Hotfix 17 §3.2 · auch auf dem führenden Gerät wird ein Tipp abgefangen, wenn die letzte Bestätigung älter als 30 s ist (Prüfung ohne Sperre);
       // nicht während einer Übernahme, einer laufenden Prüfung oder dem Nachspielen eines Tipps. Wischen und Scrollen (> 10 px) nie.
       const abfangen=()=>gekoppelt() && !uebernahmeLaeuft && !pruefungLaeuft && !tippLaeuft && (!ichFuehre || Date.now()-bestaetigtTs>BESTAETIGT_MS);
@@ -3862,7 +3863,8 @@ const FSLive = (()=>{
     nichtFuehrend,   // Hotfix 17 §1: Takte außerhalb des Moduls (Chat-Badge, Nachsenden, Statusleiste, Ticker) ruhen auf nicht führenden Geräten
     standZeit:()=>standZeit, hinweisAnzeigen,   // Hotfix 17 §4 (Prüfungen)
     ungesichertMerken, speicherVollMelden, sperrlisteGroesse:()=>sperrliste.size, standNr:()=>standNr,   // Hotfix 19 §A (DB.set/del/nachholen, Prüfungen)
-    sicherungSenden, gleich, istBetrieb:(k)=>BETRIEB.indexOf(String(k))>=0 };   // Hotfix 19 §B1/§B3
+    sicherungSenden, gleich, istBetrieb:(k)=>BETRIEB.indexOf(String(k))>=0,   // Hotfix 19 §B1/§B3
+    speicherZuKlein:()=>speicherZuKlein, standHolen };   // Hotfix 19.1 §2.5 (sicherungenAuslagern), Prüfungen
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
@@ -3928,6 +3930,7 @@ async function sicherungenAuslagern(opt){
       try{ toast('💾 '+Math.round(vorher)+' → '+Math.round(nachher)+' KB · '+ausgelagert.length+' Sicherungen in FocusSystem'+
         (nichtBestaetigt.length ? ' · '+nichtBestaetigt.length+' nicht bestätigt, bleiben hier' : '')); }catch(e){}
     }
+    try{ if(FSLive.gekoppelt() && !FSLive.ichFuehre() && FSLive.speicherZuKlein()) FSLive.standHolen(true); }catch(e){}   // Hotfix 19.1 §2.5: Stand nach dem Auslagern holen
     return { vorher, nachher, ausgelagert, nichtBestaetigt };
   }finally{ _auslagernLaeuft=false; }
 }
@@ -19257,7 +19260,7 @@ function renderEinst(){
   h+=(function(){
     const b=speicherBelegung(), baks=speicherBaks();
     const histTage=Object.keys((S.meta&&S.meta.kettenHistorie)||{}).length;
-    let x='<div class="card"><h3>💾 Speicher</h3>'+
+    let x='<div class="card" data-speicherkarte="1"><h3>💾 Speicher</h3>'+   // Hotfix 19.1 §2.3: Tipps hier lösen keine Übernahme aus
       '<p class="d">iOS gibt ~5 MB. Aufräumen lagert alle Sicherungen nach FocusSystem aus (hier erst entfernt, wenn FocusSystem sie geprüft zurückgegeben hat) und kappt die Kettenhistorie auf '+KETTENHIST_TAGE+' Tage — Zeit- und Punktehistorie bleiben vollständig.</p>'+   // Hotfix 19 §B4
       '<div class="kv"><span>Belegung gesamt</span><b>'+Math.round(b.kb)+' KB</b></div>';
     b.rows.slice(0,8).forEach(r=>{
