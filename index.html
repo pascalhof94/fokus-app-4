@@ -4003,14 +4003,17 @@ const FSLive = (()=>{
    die jüngste (die älteren sind Vollkopien, die nie jemand liest);
    (b) Kettenhistorie auf die letzten Tage kappen (der Export trägt ohnehin
    nur den aktuellen Tag). Zeit- und Punktehistorie werden NIE angefasst. */
+/* Hotfix 20 §4.1 · Größe aus DB.roh(k); idb = Schlüssel liegt in der Browser-Datenbank (🗄). kb = gesamt, kbLokal = Browser-Speicher, kbIdb = Browser-Datenbank. */
 function speicherBelegung(){
-  const rows=[]; let sum=0;
+  const rows=[]; let lokal=0, idb=0;
   DB.list().forEach(k=>{
-    let n=0; try{ n=(localStorage.getItem(PREFIX+k)||'').length; }catch(e){}
-    sum+=n; rows.push({ key:k, kb:n/1024 });
+    let n=0; try{ n=(DB.roh(k)||'').length; }catch(e){}
+    const inIdb=DB._inIdb.has(k);
+    if(inIdb) idb+=n; else lokal+=n;
+    rows.push({ key:k, kb:n/1024, idb:inIdb });
   });
   rows.sort((a,b)=>b.kb-a.kb);
-  return { rows, kb:sum/1024 };
+  return { rows, kb:(lokal+idb)/1024, kbLokal:lokal/1024, kbIdb:idb/1024 };
 }
 /* Hotfix 19 §B1 · Was eine Sicherung ist (k ohne Präfix): vorUebernahme_<Zeit> oder ein Schlüssel, der auf _bak<Ziffern/Kleinbuchstaben> endet
    (karten_bak1130, settings_bak200n, import_bak, shop360_bak, reset35_bak, feldkarten353_bak, settings_bak_ziele400 …). Nie: Betriebsschlüssel (BETRIEB) und fslive_*. */
@@ -19399,10 +19402,12 @@ function renderEinst(){
     const b=speicherBelegung(), baks=speicherBaks();
     const histTage=Object.keys((S.meta&&S.meta.kettenHistorie)||{}).length;
     let x='<div class="card" data-speicherkarte="1"><h3>💾 Speicher</h3>'+   // Hotfix 19.1 §2.3: Tipps hier lösen keine Übernahme aus
-      '<p class="d">iOS gibt ~5 MB. Aufräumen lagert alle Sicherungen nach FocusSystem aus (hier erst entfernt, wenn FocusSystem sie geprüft zurückgegeben hat) und kappt die Kettenhistorie auf '+KETTENHIST_TAGE+' Tage — Zeit- und Punktehistorie bleiben vollständig.</p>'+   // Hotfix 19 §B4
-      '<div class="kv"><span>Belegung gesamt</span><b>'+Math.round(b.kb)+' KB</b></div>';
+      '<p class="d">Mit 🗄 markierte Daten liegen in der Browser-Datenbank (viel Platz), der Rest im Browser-Speicher (~5 MB). Welche Daten umziehen, steht in der Einstellung Speicher-Umzug. Aufräumen lagert Sicherungen nach FocusSystem aus und kappt die Kettenhistorie auf '+KETTENHIST_TAGE+' Tage.</p>'+   // Hotfix 20 §4.4
+      '<div class="kv"><span>Browser-Speicher (~5 MB)</span><b>'+Math.round(b.kbLokal)+' KB</b></div>'+   // Hotfix 20 §4.2
+      '<div class="kv"><span>Browser-Datenbank 🗄</span><b>'+Math.round(b.kbIdb)+' KB</b></div>'+
+      '<div class="kv"><span>Umgezogen</span><b>'+(DB._inIdb.size ? esc(Array.from(DB._inIdb).join(', ')) : '–')+'</b></div>';   // Hotfix 20 §4.3
     b.rows.slice(0,8).forEach(r=>{
-      x+='<div class="kv"><span style="font-family:ui-monospace,monospace;font-size:11px">'+esc(r.key)+'</span><b>'+(r.kb>=1?Math.round(r.kb)+' KB':'&lt;1')+'</b></div>'; });
+      x+='<div class="kv"><span style="font-family:ui-monospace,monospace;font-size:11px">'+(r.idb?'🗄 ':'')+esc(r.key)+'</span><b>'+(r.kb>=1?Math.round(r.kb)+' KB':'&lt;1')+'</b></div>'; });   // Hotfix 20 §4.1
     if(baks.length) x+='<p class="d" style="color:var(--warn);margin-top:6px">'+baks.length+' Sicherung(en) auslagerbar.</p>';   // Hotfix 19 §B4
     x+='<div class="btnrow"><button class="btn sm" data-speicheraufraeumen="1">🧹 Aufräumen</button></div>';
     if(S.meta.speicherAufraeumLog){ const L=S.meta.speicherAufraeumLog;
