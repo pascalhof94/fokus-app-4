@@ -3097,17 +3097,64 @@ const CACHE_NAME_PREFIX = 'fokus4-';       // 4.0 · Paket 0: eigener Cache-Name
    ══════════════════════════════════════════════════════════════════════ */
 const DB = {
   _ungesichert:{},   // Hotfix 19 §A1: Schlüssel (ohne Präfix) → JSON-Text, der bei vollem Speicher nicht in localStorage passte
+  // Hotfix 20 §1 · Browser-Datenbank (IndexedDB IDB_NAME, Version 1, Store „schluessel“ ohne keyPath; Schlüssel = Name ohne Präfix, Wert = JSON-Text):
+  // _cache = Name → Text der IDB-Schlüssel (Arbeitsspeicher), _inIdb = Namen, die umgezogen sind, _idb = offene Datenbank, _kette = Schreibvorgänge strikt nacheinander.
+  _cache:new Map(), _inIdb:new Set(), _idb:null, _kette:Promise.resolve(), _umzugLog:null,
+  UMZUG_STANDARD:['intraday','historie'],   // Hotfix 20 §2: Umzugsliste, Standard (Stufe 1)
+  umzugErlaubt(k){ try{ k=String(k); return k!=='settings' && FSLive.gemeinsam().indexOf(k)>=0; }catch(e){ return false; } },   // Hotfix 20: GEMEINSAM außer settings
   get(key, fallback){
     try{
       if(DB._ungesichert[key]!==undefined) return JSON.parse(DB._ungesichert[key]);   // Hotfix 19 §A1: ungesicherter Wert aus dem Arbeitsspeicher
+      if(DB._inIdb.has(key)){ const c=DB._cache.get(key); return c ? JSON.parse(c) : fallback; }   // Hotfix 20 §1.2: IDB-Schlüssel aus dem Arbeitsspeicher
       const r = localStorage.getItem(PREFIX+key); return r ? JSON.parse(r) : fallback; }
     catch(e){ console.warn('DB.get', key, e); return fallback; }
+  },
+  // Hotfix 20 §1.6 · Text ohne Parsen, Reihenfolge wie get; sonst null
+  roh(key){
+    try{
+      if(DB._ungesichert[key]!==undefined) return DB._ungesichert[key];
+      if(DB._inIdb.has(key)){ const c=DB._cache.get(key); return c===undefined ? null : c; }
+      const r=localStorage.getItem(PREFIX+key); return r===null ? null : r;
+    }catch(e){ return null; }
+  },
+  // Hotfix 20 §1.6 · wie set mit fertigem Text, ohne vormerken; bei localStorage-Fehler wirft es (wie localStorage.setItem bisher)
+  rohSetzen(key, t){
+    if(DB._inIdb.has(key)){ DB._cache.set(key, t); delete DB._ungesichert[key]; DB._idbSchreiben(key, t); return; }
+    localStorage.setItem(PREFIX+key, t);
+    delete DB._ungesichert[key];
+  },
+  rohEntfernen(key){
+    if(DB._inIdb.has(key)){ DB._cache.delete(key); delete DB._ungesichert[key]; DB._idbSchreiben(key, null); return; }
+    try{ localStorage.removeItem(PREFIX+key); }catch(e){}
+    delete DB._ungesichert[key];
+  },
+  // Hotfix 20 §1.5 · readwrite-Transaktion an die Kette hängen (t===null löscht). Scheitert sie: Wert nach _ungesichert, Liste merken, Leiste; die Kette läuft weiter.
+  _idbSchreiben(key, t){
+    const melden=()=>{ try{ FSLive.ungesichertMerken(); }catch(e){} try{ FSLive.speicherVollMelden(); }catch(e){} };
+    const fehl=()=>{ if(t!==null){ DB._ungesichert[key]=t; melden(); } };
+    DB._kette=DB._kette.then(()=>new Promise(res=>{
+      try{
+        if(!DB._idb) throw new Error('keine Datenbank');
+        const tx=DB._idb.transaction('schluessel', 'readwrite'), st=tx.objectStore('schluessel');
+        if(t===null) st.delete(key); else st.put(t, key);
+        tx.oncomplete=()=>{ if(t!==null && DB._ungesichert[key]===t){ delete DB._ungesichert[key]; melden(); } res(true); };
+        tx.onerror=()=>{ fehl(); res(false); };
+        tx.onabort=()=>{ fehl(); res(false); };
+      }catch(e){ fehl(); res(false); }
+    })).catch(()=>false);
+    return DB._kette;
   },
   // Hotfix 19 §A1 · Speicher voll: der Wert bleibt in _ungesichert (DB.get liefert ihn, spiegeln() sendet ihn — §A2), die Liste der Schlüssel wird
   // gemerkt (§A3), die rote Leiste erscheint (§A4), einmal je Sitzung werden die Sicherungen nach FocusSystem ausgelagert (§B3).
   // Das stille Aufräumen (speicherAufraeumen(true), _quotaCleanup) und die beiden Toasts entfallen ersatzlos.
   set(key, wert){
     let t; try{ t=JSON.stringify(wert); }catch(e){ console.warn('DB.set', key, e); return false; }
+    if(DB._inIdb.has(key)){   // Hotfix 20 §1.3: IDB-Schlüssel — Arbeitsspeicher, Spiegel vormerken, Datenbank über die Kette; localStorage bleibt unberührt
+      DB._cache.set(key, t);
+      try{ FSLive.vormerken(key); }catch(eS){}
+      DB._idbSchreiben(key, t);
+      return true;
+    }
     let ok=false;
     try{ localStorage.setItem(PREFIX+key, t); ok=true; }catch(e){ console.warn('DB.set', key, e); }
     if(ok) delete DB._ungesichert[key]; else DB._ungesichert[key]=t;
@@ -3117,16 +3164,21 @@ const DB = {
     if(!ok && !DB._auslagernGestartet){ DB._auslagernGestartet=true; try{ sicherungenAuslagern({ auto:true }).catch(()=>{}); }catch(eS){} }
     return ok;
   },
-  list(){
+  list(){   // Hotfix 20 §1.7: localStorage-Schlüssel mit Präfix plus die IDB-Schlüssel, ohne Doppelte
     const out=[];
-    try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf(PREFIX)===0) out.push(k.slice(PREFIX.length)); } }
+    try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf(PREFIX)===0){ const n=k.slice(PREFIX.length); if(out.indexOf(n)<0) out.push(n); } } }
     catch(e){}
+    DB._inIdb.forEach(n=>{ if(out.indexOf(n)<0) out.push(n); });
     return out;
   },
-  del(key){ try{ localStorage.removeItem(PREFIX+key); }catch(e){} delete DB._ungesichert[key]; try{ FSLive.vormerken(key); }catch(eS){} try{ FSLive.ungesichertMerken(); }catch(eS){} },   // 4.0 · Paket 3: Spiegel vormerken · Hotfix 19 §A1
+  del(key){
+    if(DB._inIdb.has(key)){ DB._cache.delete(key); delete DB._ungesichert[key]; DB._idbSchreiben(key, null); try{ FSLive.vormerken(key); }catch(eS){} try{ FSLive.ungesichertMerken(); }catch(eS){} return; }   // Hotfix 20 §1.4
+    try{ localStorage.removeItem(PREFIX+key); }catch(e){} delete DB._ungesichert[key]; try{ FSLive.vormerken(key); }catch(eS){} try{ FSLive.ungesichertMerken(); }catch(eS){} },   // 4.0 · Paket 3: Spiegel vormerken · Hotfix 19 §A1
   // Hotfix 19 §A1 · ungesicherte Werte nachholen: je Schlüssel setItem versuchen; Erfolg → raus aus _ungesichert. Nach jedem Lauf von sicherungenAuslagern (§B3).
+  // Hotfix 20 §1.8 · IDB-Schlüssel: in den Arbeitsspeicher und über die Kette in die Datenbank (scheitert das, kommt der Wert zurück nach _ungesichert).
   nachholen(){
     for(const key of Object.keys(DB._ungesichert)){
+      if(DB._inIdb.has(key)){ const t=DB._ungesichert[key]; DB._cache.set(key, t); delete DB._ungesichert[key]; DB._idbSchreiben(key, t); continue; }
       try{ localStorage.setItem(PREFIX+key, DB._ungesichert[key]); delete DB._ungesichert[key]; }catch(e){}
     }
     try{ FSLive.ungesichertMerken(); }catch(eS){}
@@ -3864,7 +3916,8 @@ const FSLive = (()=>{
     standZeit:()=>standZeit, hinweisAnzeigen,   // Hotfix 17 §4 (Prüfungen)
     ungesichertMerken, speicherVollMelden, sperrlisteGroesse:()=>sperrliste.size, standNr:()=>standNr,   // Hotfix 19 §A (DB.set/del/nachholen, Prüfungen)
     sicherungSenden, gleich, istBetrieb:(k)=>BETRIEB.indexOf(String(k))>=0,   // Hotfix 19 §B1/§B3
-    speicherZuKlein:()=>speicherZuKlein, standHolen };   // Hotfix 19.1 §2.5 (sicherungenAuslagern), Prüfungen
+    speicherZuKlein:()=>speicherZuKlein, standHolen,   // Hotfix 19.1 §2.5 (sicherungenAuslagern), Prüfungen
+    gemeinsam:()=>GEMEINSAM.slice() };   // Hotfix 20: erlaubte Namen der Umzugsliste (GEMEINSAM außer settings)
 })();
 try{ FSLive.start(); }catch(e){}
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
