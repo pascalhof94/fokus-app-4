@@ -90,7 +90,17 @@ for eintrag in $VIEWS; do
   chrome_lauf "$basis&w=375&h=$hoehe" 375 "$hoehe" "$SCREENS/${view}-375.png" >/dev/null; SHOTS=$((SHOTS+1))
   chrome_lauf "$basis&w=430&h=$hoehe" 430 "$hoehe" "$SCREENS/${view}-430.png" >/dev/null; SHOTS=$((SHOTS+1))
   # Pruefungen (bei 375) via dump-dom
+  # Hotfix 21: bleibt die App im Headless-Start haengen (Browser-Datenbank gegen virtuelle Zeit, unter Last des Gesamtlaufs),
+  # wird die Ansicht bis zu dreimal wiederholt; einzeln laeuft sie zuverlaessig. Jede Wiederholung steht im Log.
+  versuch=0
+  while :; do
+  versuch=$((versuch+1))
   dom="$(chrome_lauf "$basis&w=375&h=$hoehe" 375 "$hoehe" "")"
+  if [ $versuch -lt 4 ] && { ! printf '%s' "$dom" | grep -q 'UIRESULT:{' || printf '%s' "$dom" | grep -q 'nicht initialisiert nach 12 s: {'; }; then   # kein Ergebnis oder Notausstieg (nicht der Quelltext der Meldung)
+    echo "HINWEIS: $view im Start haengen geblieben (Versuch $versuch), wiederhole" | tee -a "$LOG" >&2; sleep 2; continue
+  fi
+  break
+  done
   json="$(printf '%s' "$dom" | python3 -c "
 import sys,html,re
 d=sys.stdin.read()
