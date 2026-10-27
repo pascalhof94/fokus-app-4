@@ -3730,6 +3730,7 @@ const FSLive = (()=>{
           // Hotfix 19.1 §1 · Übernahme gescheitert: Führung an das vorige Gerät zurück (POST, 5 s), lokal in jedem Fall nicht führend, gemeinsame Schlüssel
           // nicht vorgemerkt (kein alter Stand wird gespiegelt), Leiste „Stand passt nicht“, Sperre weg, Tipp verfällt.
           const vorigesGeraet=d.fuehrend;
+          try{ localStorage.removeItem(K.fuehrtJetzt); }catch(e){}   // Hotfix 21 §E.2: kein Toast „Dieses Gerät führt jetzt“ nach dem Rückweg (Bericht 19.1 ❓1)
           let zurueck=false;
           try{ await aufruf('POST', '/api/app/fuehrung', JSON.stringify({ geraet_id:vorigesGeraet }), { zeitgrenze:5000 }); zurueck=true; }catch(e){ zurueck=false; }
           ichFuehre=false; fuehrend=vorigesGeraet; fuehrungBekannt=true; fuehrungMerken(); hinweisAnzeigen(); anzeigen();
@@ -19509,8 +19510,8 @@ function renderEinst(){
     const b=speicherBelegung(), baks=speicherBaks();
     const histTage=Object.keys((S.meta&&S.meta.kettenHistorie)||{}).length;
     let x='<div class="card" data-speicherkarte="1"><h3>💾 Speicher</h3>'+   // Hotfix 19.1 §2.3: Tipps hier lösen keine Übernahme aus
-      '<p class="d">Mit 🗄 markierte Daten liegen in der Browser-Datenbank (viel Platz), der Rest im Browser-Speicher (~5 MB). Welche Daten umziehen, steht in der Einstellung Speicher-Umzug. Aufräumen lagert Sicherungen nach FocusSystem aus und kappt die Kettenhistorie auf '+KETTENHIST_TAGE+' Tage.</p>'+   // Hotfix 20 §4.4
-      '<div class="kv"><span>Browser-Speicher (~5 MB)</span><b>'+Math.round(b.kbLokal)+' KB</b></div>'+   // Hotfix 20 §4.2
+      '<p class="d">Mit 🗄 markierte Daten liegen in der Browser-Datenbank (viel Platz), der Rest im Browser-Speicher (~2,5 MB, mit der alten App geteilt). Welche Daten umziehen, steht in der Einstellung Speicher-Umzug. Aufräumen lagert Sicherungen nach FocusSystem aus und kappt die Kettenhistorie auf '+KETTENHIST_TAGE+' Tage.</p>'+   // Hotfix 20 §4.4
+      '<div class="kv"><span>Browser-Speicher (~2,5 MB, mit der alten App geteilt)</span><b>'+Math.round(b.kbLokal)+' KB</b></div>'+   // Hotfix 20 §4.2
       '<div class="kv"><span>Browser-Datenbank 🗄</span><b>'+Math.round(b.kbIdb)+' KB</b></div>'+
       '<div class="kv"><span>Umgezogen</span><b>'+(DB._inIdb.size ? esc(Array.from(DB._inIdb).join(', ')) : '–')+'</b></div>'+   // Hotfix 20 §4.3
       (b.fremd ? '<div class="kv"><span>Andere Daten auf dieser Adresse</span><b>'+b.fremd+' Schlüssel · '+Math.round(b.kbFremd)+' KB</b></div>' : '');   // Hotfix 20.2 §2
