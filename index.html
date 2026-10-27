@@ -5346,11 +5346,14 @@ function f4TempoVergleich(T){
   const typTage=f4Tage(typ.pred, 4);
   return { wt:mittel(wtTage), wtN:wtTage.length, wtName:AN_WT_LANG[wt], typ:mittel(typTage), typN:typTage.length, typName:typ.name };
 }
+/* Hotfix 22 §1.5 · Sitzung „manuell gesetzt“ (fester Punktesatz aus einer Korrektur): ✍︎ am Block, Vermerk als Tooltip (<title>) */
+function manuellTitelSvg(b){ return (b && b.manuell) ? '<title>✍︎ '+esc(String(b.vermerk||'manuell gesetzt'))+'</title>' : ''; }
+function manuellMarkeSvg(b, x, y, h){ return (b && b.manuell) ? '<text x="'+(num(x)+2).toFixed(1)+'" y="'+(num(y)+Math.max(8, num(h)-2)).toFixed(1)+'" font-size="9" fill="#fff" style="paint-order:stroke" stroke="#000" stroke-width="2">✍︎</text>' : ''; }
 /* Ist-Sitzungen mit 🌿 (Erholung) für den Ist-Streifen */
 function f4BloeckeStrahl(){
   const b=tagesBloeckeStrahl(), heute=belFensterDatum(jetztIso()), kVon=new Map(S.karten.map(k=>[k.id,k]));
   const ist=[]; (S.intraday||[]).forEach(e=>{ if(!e || !e.ts || SITZUNG_TYPEN.indexOf(e.typ)<0 || num(e.minuten)<1 || belFensterDatum(e.ts)!==heute) return;
-    const x=belX(e.ts), k=kVon.get(e.kartenId); ist.push({ von:x-num(e.minuten)/60, bis:x, typ:(k && leiterArt(k)==='erholung') ? 'erholung' : (e.domaene==='privat'?'privat':'dfm') }); });
+    const x=belX(e.ts), k=kVon.get(e.kartenId); ist.push({ von:x-num(e.minuten)/60, bis:x, typ:(k && leiterArt(k)==='erholung') ? 'erholung' : (e.domaene==='privat'?'privat':'dfm'), manuell:!!e.manuell, vermerk:e.manuell ? String(e.vermerk||'') : '' }); });   // Hotfix 22 §1.5
   if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs)){ const k=S.karten.find(x=>x.id===S.fokus.karteId);
     ist.push({ von:belX(new Date(S.fokus.startMs).toISOString()), bis:belX(jetztIso()), typ:(k && leiterArt(k)==='erholung') ? 'erholung' : ((k && k.domain==='privat')?'privat':'dfm'), laeuft:true }); }
   return { plan:b.plan, ist };
@@ -5415,7 +5418,7 @@ function f4TempoZeichnen(sc, D){
     D.bl.plan.forEach(b=>{ const xa=X(b.von)+1, w=Math.max(2, X(b.bis)-X(b.von)-2), n=Math.floor((w-6)/5.4);
       g+='<rect x="'+xa.toFixed(1)+'" y="'+yPl+'" width="'+w.toFixed(1)+'" height="'+hB+'" rx="3" fill="none" stroke="'+famH(b.typ)+'" stroke-width="1" stroke-dasharray="3 2"/>'+
          (n>=3 ? '<text x="'+(xa+w/2).toFixed(1)+'" y="'+(yPl+9.5)+'" text-anchor="middle" font-size="9" fill="'+FARBE.WEISS+'">'+esc(String(b.name).slice(0,n))+'</text>' : ''); });
-    D.bl.ist.forEach(b=>{ const xa=X(b.von), w=Math.max(1.5, X(b.bis)-xa); g+='<rect x="'+xa.toFixed(1)+'" y="'+yIs+'" width="'+w.toFixed(1)+'" height="'+hB+'" rx="2" fill="'+fam(b.typ)+'"/>'; }); }
+    D.bl.ist.forEach(b=>{ const xa=X(b.von), w=Math.max(1.5, X(b.bis)-xa); g+='<rect x="'+xa.toFixed(1)+'" y="'+yIs+'" width="'+w.toFixed(1)+'" height="'+hB+'" rx="2" fill="'+fam(b.typ)+'">'+manuellTitelSvg(b)+'</rect>'+manuellMarkeSvg(b, xa, yIs, hB); }); }   // Hotfix 22 §1.5
   const x0=T.von+sc.scrollLeft/Wpx*span, x1=x0+sc.clientWidth/Wpx*span, schritt=(x1-x0)>8 ? 2 : 1;
   for(let hh=Math.ceil(T.von); hh<=T.bis+1e-9; hh+=schritt) g+='<text x="'+X(hh).toFixed(1)+'" y="'+(H-3)+'" text-anchor="middle" font-size="9.5" fill="'+FARBE.GRAU+'">'+(hh%24)+'</text>';
   const jx=X(T.jetztX), e=pH.length ? pH[pH.length-1] : null;
@@ -11402,7 +11405,7 @@ function tagesBloeckeStrahl(){
   const heute=belFensterDatum(jetztIso()), hx=v=>num(v)<5 ? num(v)+24 : num(v);
   const plan=(tagesBloecke()||[]).filter(b=>!b.parent).map(b=>({ von:hx(b.von), bis:hx(b.bis), typ:b.typ, name:b.name||BLOCK_TYP_NAME[b.typ]||'' }));
   const ist=[]; (S.intraday||[]).forEach(e=>{ if(!e || !e.ts || SITZUNG_TYPEN.indexOf(e.typ)<0 || num(e.minuten)<1 || belFensterDatum(e.ts)!==heute) return;
-    const b=belX(e.ts); ist.push({ von:b-num(e.minuten)/60, bis:b, typ:e.domaene==='privat'?'privat':'dfm' }); });
+    const b=belX(e.ts); ist.push({ von:b-num(e.minuten)/60, bis:b, typ:e.domaene==='privat'?'privat':'dfm', manuell:!!e.manuell, vermerk:e.manuell ? String(e.vermerk||'') : '' }); });   // Hotfix 22 §1.5
   if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs)){ const k=S.karten.find(x=>x.id===S.fokus.karteId);
     ist.push({ von:belX(new Date(S.fokus.startMs).toISOString()), bis:belX(jetztIso()), typ:(k && k.domain==='privat')?'privat':'dfm', laeuft:true }); }
   return { plan, ist };
@@ -11476,7 +11479,7 @@ function tempoBloeckeZeichnen(sc, D){
     D.bl.plan.forEach(b=>{ const xa=X(b.von)+1, w=Math.max(2, X(b.bis)-X(b.von)-2);
       g+='<rect x="'+xa.toFixed(1)+'" y="'+yB+'" width="'+w.toFixed(1)+'" height="'+hB+'" rx="4" fill="url(#'+sid+')" stroke="'+fam(b.typ)+'" stroke-width="1.5" stroke-dasharray="4 3"/>'; });
     D.bl.ist.forEach(b=>{ const xa=X(b.von), w=Math.max(1.5, X(b.bis)-xa);
-      g+='<rect x="'+xa.toFixed(1)+'" y="'+yB+'" width="'+w.toFixed(1)+'" height="'+hB+'" rx="4" fill="'+fam(b.typ)+'"/>'; });
+      g+='<rect x="'+xa.toFixed(1)+'" y="'+yB+'" width="'+w.toFixed(1)+'" height="'+hB+'" rx="4" fill="'+fam(b.typ)+'">'+manuellTitelSvg(b)+'</rect>'+manuellMarkeSvg(b, xa, yB, hB); });   // Hotfix 22 §1.5
     D.bl.plan.forEach(b=>{ const xa=X(b.von)+1, w=Math.max(2, X(b.bis)-X(b.von)-2), n=Math.floor((w-8)/5.6); if(n<3) return;
       g+='<text x="'+(xa+4).toFixed(1)+'" y="'+(yB+11.5)+'" font-size="9.5" font-weight="700" fill="'+(b.von<T.jetztX ? '#fff' : fam(b.typ))+'" stroke="#000" stroke-opacity=".55" stroke-width="2" style="paint-order:stroke">'+esc(String(b.name).slice(0,n))+'</text>'; }); }
   // Uhrzeitleiste 4 px unter den Bloecken, die laufende Stunde in Weiss
@@ -11532,7 +11535,7 @@ function ttZeichnen(sc, D){
       g+='<rect x="'+xa.toFixed(1)+'" y="'+yP+'" width="'+w.toFixed(1)+'" height="'+hP+'" rx="4" fill="none" stroke="'+fam(b.typ)+'" stroke-width="1" stroke-dasharray="4 3"/>'+
          '<text x="'+(xa+3).toFixed(1)+'" y="'+yN+'" font-size="9" fill="'+fam(b.typ)+'">'+esc(String(b.name).slice(0,22))+'</text>'; });
     D.bl.ist.forEach(b=>{ const xa=X(b.von), w=Math.max(1.5, X(b.bis)-xa);
-      g+='<rect x="'+xa.toFixed(1)+'" y="'+yI+'" width="'+w.toFixed(1)+'" height="'+hI+'" rx="3" fill="'+fam(b.typ)+'" fill-opacity=".9"/>'; }); }
+      g+='<rect x="'+xa.toFixed(1)+'" y="'+yI+'" width="'+w.toFixed(1)+'" height="'+hI+'" rx="3" fill="'+fam(b.typ)+'" fill-opacity=".9">'+manuellTitelSvg(b)+'</rect>'+manuellMarkeSvg(b, xa, yI, hI); }); }   // Hotfix 22 §1.5
   const jx=X(T.jetztX);
   g+=diaJetztSvg(jx, pT, D.mitBl ? H-12 : yC, e ? e.y : null)+
      '<text x="'+jx.toFixed(1)+'" y="'+(H-4)+'" text-anchor="'+(jx<16?'start':'middle')+'" font-size="8" fill="#fff" style="paint-order:stroke" stroke="#000" stroke-width="3">jetzt</text>';
@@ -17005,7 +17008,7 @@ function nachtragMarkdown(n){
   const kopf=jetzt.getFullYear()+'-'+p2(jetzt.getMonth()+1)+'-'+p2(jetzt.getDate())+' '+p2(jetzt.getHours())+':'+p2(jetzt.getMinutes());
   const z=[kopf, '', '# Nachtrag zum Tagesabschluss '+(S.tag?S.tag.datum:''), '',
     '- Seit dem Tagesabschluss ('+(n.seit?belUhr(kalStunde(n.seit)):'–')+'): '+n.anzahl+' Buchungen · '+(n.punkte>=0?'+':'−')+fmtP(Math.abs(n.punkte))+' P · Bilanz '+fmtP(n.bilanzVorher)+' → '+fmtP(n.bilanzNachher)];
-  n.eintraege.forEach(e=>z.push('- '+belUhr(kalStunde(e.ts))+' '+(e.titel||e.typ)+' · '+e.quelle+' · '+(e.punkte>=0?'+':'−')+fmtP(Math.abs(e.punkte))+' P'+(e.minuten?' · '+e.minuten+' Min':'')));
+  n.eintraege.forEach(e=>z.push('- '+belUhr(kalStunde(e.ts))+' '+(e.manuell?'✍︎ ':'')+(e.titel||e.typ)+' · '+e.quelle+' · '+(e.punkte>=0?'+':'−')+fmtP(Math.abs(e.punkte))+' P'+(e.minuten?' · '+e.minuten+' Min':'')));
   z.push('', '## Export (Delta)', '', '```json', JSON.stringify(syncExport('delta'), null, 2), '```', '');
   return z.join('\n');
 }
@@ -18129,8 +18132,31 @@ function korrekturAnwenden(kx, abgewiesen){
     const v=korrZeit(sz.von, datum), b=korrZeit(sz.bis, datum);
     return iv.find(x=>x.kartenId===k.id && SITZUNG_TYPEN.indexOf(x.typ)>=0 && Math.abs(Date.parse(x.ts)-b)<30000 && Math.abs(sitzungVonMs(x)-v)<30000) || null;
   };
-  const sitzungEntfernen=(e, k)=>{
-    const min=num(e.minuten), dP=(e.typ==='korrektur') ? num(e.punkte) : sitzungPunkteFuer(k, min, datum);
+  // Hotfix 22 §1 · Überlappung mit einer anderen Uhr-Sitzung (timer, autopause, nachtrag, korrektur) desselben Tages; ausserId = die geänderte Sitzung selbst
+  const ueberlappt=(v, b, ausserId)=>{
+    const iv=S.intraday||[];
+    for(const x of iv){
+      if(!x || !x.ts || SITZUNG_TYPEN.indexOf(x.typ)<0 || num(x.minuten)<0.5) continue;
+      if(ausserId && sitzungIdVon(x)===String(ausserId)) continue;
+      const xv=sitzungVonMs(x), xb=Date.parse(x.ts);
+      if(!Number.isFinite(xv) || !Number.isFinite(xb)) continue;
+      if(belFensterDatum(new Date(xv).toISOString())!==datum && belFensterDatum(x.ts)!==datum) continue;
+      if(xv<b && xb>v){ const kx=korrKarte(x.kartenId); return 'überlappt '+String((kx && kx.titel)||x.kartenId||'?').slice(0,30)+' '+korrUhr(new Date(xv).toISOString())+'–'+korrUhr(x.ts); }
+    }
+    return null;
+  };
+  // Hotfix 22 §1.1 · fester Satz: { punkteJeStd (0 … 5.000), vermerk (Pflicht) } oder null; Fehler als Text
+  const festerSatz=(sz)=>{
+    if(sz.punkteJeStd===undefined || sz.punkteJeStd===null || sz.punkteJeStd==='') return { fest:null };
+    const satz=Number(sz.punkteJeStd);
+    if(!Number.isFinite(satz) || satz<0 || satz>5000) return { fehler:'punkteJeStd muss eine Zahl 0 … 5.000 sein' };
+    const vermerk=(sz.vermerk==null) ? '' : String(sz.vermerk).trim();
+    if(!vermerk) return { fehler:'vermerk fehlt' };
+    return { fest:{ punkteJeStd:satz, vermerk } };
+  };
+  const sitzungEntfernen=(e, k, opt)=>{
+    // Hotfix 22 §1.2: bei festem Satz zählt als „vorher“ das, was die Sitzung tatsächlich gebucht hat (e.punkte), nicht die Stundenleiter
+    const min=num(e.minuten), dP=(e.typ==='korrektur' || (opt && opt.wieGebucht)) ? num(e.punkte) : sitzungPunkteFuer(k, min, datum);
     S.intraday=S.intraday.filter(x=>x!==e);
     // §4 (v2.9.1): mit der Sitzung verlaesst ihr Log-Wert das Log, die Bilanz
     // aendert sich um −dP — die Differenz steht als Ausgleich zur Zeit der Sitzung
@@ -18140,11 +18166,15 @@ function korrekturAnwenden(kx, abgewiesen){
     wirkung(k, -dP, -min, sitzungIdVon(e));
     return {min, dP};
   };
-  const sitzungHinzu=(k, v, b, id)=>{
-    const min=Math.round((b-v)/6000)/10, dP=sitzungPunkteFuer(k, min, datum);
-    (S.intraday=S.intraday||[]).push({ id, ts:new Date(b).toISOString(), von:new Date(v).toISOString(), kartenId:k.id, domaene:k.domain,
+  const sitzungHinzu=(k, v, b, id, fest)=>{
+    const min=Math.round((b-v)/6000)/10;
+    // Hotfix 22 §1.2: mit festem Satz Punkte = Minuten / 60 × punkteJeStd statt sitzungPunkteFuer; der Eintrag trägt manuell, punkteJeStd, vermerk (und vorher bei aendern)
+    const dP=fest ? Math.round(min/60*fest.punkteJeStd*10)/10 : sitzungPunkteFuer(k, min, datum);
+    const e={ id, ts:new Date(b).toISOString(), von:new Date(v).toISOString(), kartenId:k.id, domaene:k.domain,
       punkte:Math.round(dP*10)/10, minuten:min, typ:'korrektur', datum, grund:String(kx.grund), offen:k.status==='offen',
-      tagId:(heute ? S.tag.tagId : (tagSn()||{}).tagId) || undefined });   // §4 (v2.9.1)
+      tagId:(heute ? S.tag.tagId : (tagSn()||{}).tagId) || undefined };   // §4 (v2.9.1)
+    if(fest){ e.manuell=true; e.punkteJeStd=fest.punkteJeStd; e.vermerk=fest.vermerk; if(fest.vorher) e.vorher=fest.vorher; }
+    (S.intraday=S.intraday||[]).push(e);
     wirkung(k, dP, min, id);
     return {min, dP};
   };
@@ -18199,18 +18229,25 @@ function korrekturAnwenden(kx, abgewiesen){
     if(!Number.isFinite(v) || !Number.isFinite(b)){ abgewiesen.push({was, grund:'von/bis nicht lesbar'}); return; }
     if(!(b>v)){ abgewiesen.push({was, grund:'bis liegt vor von'}); return; }
     if(b>Date.now()+60000){ abgewiesen.push({was, grund:'Sitzung liegt in der Zukunft'}); return; }
+    const fs=festerSatz(sz); if(fs.fehler){ abgewiesen.push({was, grund:fs.fehler}); return; }   // Hotfix 22 §1.1
+    const fest=fs.fest, satzText=fest ? ' · ✍︎ '+fmtP(fest.punkteJeStd)+' P/h' : '';
     if(akt==='aendern'){
       const e=findeSitzung({id:sz.id}, null) || null;
       if(!e){ abgewiesen.push({was, grund:'Sitzung „'+(sz.id||'?')+'" nicht gefunden'}); return; }
-      if(e.kartenId===k.id && Math.abs(Date.parse(e.ts)-b)<30000 && Math.abs(sitzungVonMs(e)-v)<30000) return;   // schon so
-      const ke=korrKarte(e.kartenId)||k, alt=sitzungEntfernen(e, ke), neu=sitzungHinzu(k, v, b, sitzungIdVon(e));
-      zeilen.push('Sitzung geändert: „'+String(k.titel||'').slice(0,30)+'" '+Math.round(alt.min)+' → '+Math.round(neu.min)+' Min · '+(neu.dP-alt.dP>=0?'+':'')+fmtP(neu.dP-alt.dP)+' P');
+      const gleicheZeit=e.kartenId===k.id && Math.abs(Date.parse(e.ts)-b)<30000 && Math.abs(sitzungVonMs(e)-v)<30000;
+      if(gleicheZeit && (!fest || (e.manuell && num(e.punkteJeStd)===fest.punkteJeStd))) return;   // schon so (Hotfix 22: auch derselbe feste Satz)
+      const ue=ueberlappt(v, b, sitzungIdVon(e)); if(ue){ abgewiesen.push({was, grund:ue}); return; }   // Hotfix 22 §1.4
+      const ke=korrKarte(e.kartenId)||k;
+      const vorher={ von:new Date(sitzungVonMs(e)).toISOString(), bis:e.ts, minuten:num(e.minuten), punkte:num(e.punkte) };   // Hotfix 22 §1.2
+      const alt=sitzungEntfernen(e, ke, { wieGebucht:!!fest }), neu=sitzungHinzu(k, v, b, sitzungIdVon(e), fest ? Object.assign({ vorher }, fest) : null);
+      zeilen.push('Sitzung geändert: „'+String(k.titel||'').slice(0,30)+'" '+Math.round(alt.min)+' → '+Math.round(neu.min)+' Min · '+(neu.dP-alt.dP>=0?'+':'')+fmtP(neu.dP-alt.dP)+' P'+satzText);
       return;
     }
     const id=(sz.id!=null && sz.id!=='') ? String(sz.id) : ('s-korr-'+k.id+'-'+new Date(v).toISOString()+'-'+new Date(b).toISOString());
     if(findeSitzung({id, von:sz.von, bis:sz.bis}, k)) return;                 // schon da — zweites Einspielen
-    const r=sitzungHinzu(k, v, b, id);
-    zeilen.push('Sitzung hinzu: „'+String(k.titel||'').slice(0,30)+'" '+belUhr(kalStunde(new Date(v).toISOString()))+'–'+belUhr(kalStunde(new Date(b).toISOString()))+' · '+Math.round(r.min)+' Min · +'+fmtP(r.dP)+' P');
+    { const ue=ueberlappt(v, b, null); if(ue){ abgewiesen.push({was, grund:ue}); return; } }   // Hotfix 22 §1.4
+    const r=sitzungHinzu(k, v, b, id, fest);
+    zeilen.push('Sitzung hinzu: „'+String(k.titel||'').slice(0,30)+'" '+belUhr(kalStunde(new Date(v).toISOString()))+'–'+belUhr(kalStunde(new Date(b).toISOString()))+' · '+Math.round(r.min)+' Min · +'+fmtP(r.dP)+' P'+satzText);
   });
   // ── §3 (v3.2.0): Schlafschuld direkt setzen (mit grund) ──
   if(kx.schlaf && typeof kx.schlaf==='object' && kx.schlaf.schuldStd!==undefined && kx.schlaf.schuldStd!==null && kx.schlaf.schuldStd!==''){
@@ -18328,6 +18365,7 @@ function kartenSitzungenHeute(kid){
     const s={ id:sitzungIdVon(e), von:(e.von||new Date(bis.getTime()-m*60000).toISOString()), bis:bis.toISOString(), min:Math.round(m) };
     if(e.typ==='nachtrag') s.nachtrag=true;
     if(e.typ==='korrektur') s.korrektur=true;
+    if(e.manuell){ s.manuell=true; s.punkteJeStd=num(e.punkteJeStd); s.vermerk=String(e.vermerk||''); }   // Hotfix 22 §1.5
     out.push(s);
   });
   if(S.fokus && S.fokus.karteId===kid && S.fokus.laeuft && S.fokus.startMs){
