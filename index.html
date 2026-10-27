@@ -3486,7 +3486,7 @@ const FSLive = (()=>{
           continue;                                                  // Führung noch nicht gelesen: bleibt vorgemerkt bis zur Antwort
         }
         if(sperrliste.has(schluessel)) continue;   // Hotfix 19 §A5: localStorage hält dort den alten Stand — nicht senden, bleibt in offen bis zur Auflösung
-        const wert = (DB._ungesichert[schluessel] !== undefined) ? DB._ungesichert[schluessel] : lies(PREFIX+schluessel);   // Hotfix 19 §A2: Stand aus dem Arbeitsspeicher
+        const wert = (DB._ungesichert[schluessel] !== undefined) ? DB._ungesichert[schluessel] : DB.roh(schluessel);   // Hotfix 19 §A2: Stand aus dem Arbeitsspeicher · Hotfix 20 §3.1: über die Speicherschicht
         if(wert===null) await aufruf('DELETE', '/api/spiegel/'+encodeURIComponent(PREFIX+schluessel));
         else await aufruf('PUT', '/api/spiegel/'+encodeURIComponent(PREFIX+schluessel), wert);
         if(offen.get(schluessel)===stand){ offen.delete(schluessel); merken(); }   // inzwischen neu geschrieben: bleibt ausstehend
@@ -3769,20 +3769,20 @@ const FSLive = (()=>{
       if(sofort!==true){ try{ if(sheetOffen()) return false; }catch(e){} }
       const namen=Object.keys(d.schluessel).filter(n=>GEMEINSAM.indexOf(n)>=0);
       const alt={};
-      for(const name of namen) alt[name]=lies(PREFIX+name);
+      for(const name of namen) alt[name]=DB.roh(name);   // Hotfix 20 §3.2
       if(!ersteUebernahmeErledigt){
         const vorher={};
-        for(const k of GEMEINSAM){ const v=lies(PREFIX+k); if(v!==null) vorher[k]=v; }
+        for(const k of GEMEINSAM){ const v=DB.roh(k); if(v!==null) vorher[k]=v; }   // Hotfix 20 §3.2
         const ok=await sicherungSenden('vorUebernahme_'+new Date().toISOString().replace(/:/g,''), JSON.stringify(vorher));
         if(!ok){ try{ toast('Übernahme abgebrochen — Sicherung nicht in FocusSystem'); }catch(e){} return false; }
       }
       const geschrieben=[]; let passtNicht=false;
       for(const name of namen){
-        try{ localStorage.setItem(PREFIX+name, JSON.stringify(d.schluessel[name])); geschrieben.push(name); }catch(e){ passtNicht=true; break; }
+        try{ DB.rohSetzen(name, JSON.stringify(d.schluessel[name])); geschrieben.push(name); }catch(e){ passtNicht=true; break; }   // Hotfix 20 §3.2
       }
       if(passtNicht){
-        for(const name of geschrieben){ try{ localStorage.removeItem(PREFIX+name); }catch(e){} }
-        for(const name of geschrieben){ if(alt[name]!==null){ try{ localStorage.setItem(PREFIX+name, alt[name]); }catch(e){} } }
+        for(const name of geschrieben){ try{ DB.rohEntfernen(name); }catch(e){} }   // Hotfix 20 §3.2
+        for(const name of geschrieben){ if(alt[name]!==null){ try{ DB.rohSetzen(name, alt[name]); }catch(e){} } }
         try{ toast('Übernahme passt nicht in den Speicher — Sicherungen werden ausgelagert'); }catch(e){}
         try{ sicherungenAuslagern({ auto:true }).then(()=>standHolen(true)).catch(()=>{}); }catch(e){}
         return false;
@@ -3862,7 +3862,7 @@ const FSLive = (()=>{
     anzeigen();
   }
   function alleBetriebsschluesselVormerken(){
-    try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf(PREFIX)===0 && BETRIEB.indexOf(k.slice(PREFIX.length))>=0) offen.set(k.slice(PREFIX.length), ++zaehler); } merken(); }catch(e){}
+    try{ DB.list().forEach(n=>{ if(BETRIEB.indexOf(n)>=0) offen.set(n, ++zaehler); }); merken(); }catch(e){}   // Hotfix 20 §3.3: über die Speicherschicht (localStorage und Browser-Datenbank)
   }
 
   // ── Blatt ─────────────────────────────────────────────────────────
