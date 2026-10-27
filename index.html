@@ -3795,8 +3795,13 @@ const FSLive = (()=>{
         try{ DB.rohSetzen(name, JSON.stringify(d.schluessel[name])); geschrieben.push(name); }catch(e){ passtNicht=true; break; }   // Hotfix 20 §3.2
       }
       if(passtNicht){
-        for(const name of geschrieben){ try{ DB.rohEntfernen(name); }catch(e){} }   // Hotfix 20 §3.2
-        for(const name of geschrieben){ if(alt[name]!==null){ try{ DB.rohSetzen(name, alt[name]); }catch(e){} } }
+        // Hotfix 21 §B · Rückroll ohne Datenverlust: alten Wert nur überschreiben (kein rohEntfernen davor); gab es keinen → entfernen;
+        // scheitert das Überschreiben → Wert in DB._ungesichert, Liste merken, Leiste (nachholen() schreibt ihn später).
+        for(const name of geschrieben){
+          if(alt[name]===null){ try{ DB.rohEntfernen(name); }catch(e){} continue; }
+          try{ DB.rohSetzen(name, alt[name]); }
+          catch(e){ DB._ungesichert[name]=alt[name]; try{ ungesichertMerken(); }catch(x){} try{ speicherVollMelden(); }catch(x){} }
+        }
         try{ toast('Übernahme passt nicht in den Speicher — Sicherungen werden ausgelagert'); }catch(e){}
         try{ sicherungenAuslagern({ auto:true }).then(()=>standHolen(true)).catch(()=>{}); }catch(e){}
         return false;
