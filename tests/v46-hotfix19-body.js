@@ -261,5 +261,5 @@ pruef('19.1 §1.2 Übernahme gelingt: führend, Stand übernommen, Tipp ausgefü
 // ══ Hotfix 19.1 §3 · istSicherung mit Unterstrich nach _bak ══
 pruef('19.1 §3 istSicherung true: settings_bak_ziele400, settings_bak_shopfrei400, settings_bak_ranglast400', ['settings_bak_ziele400','settings_bak_shopfrei400','settings_bak_ranglast400','karten_bak1130','import_bak'].every(istSicherung) && !istSicherung('karten') && !istSicherung('fslive_warteschlange') && !istSicherung('karten_vomGeraet'));
 
-pruef('§C.1 App 4.1.8 · Build 2026-10-26-43 · sw.js Cache hochgezählt (seit Hotfix 19.1)', APP_VERSION==='4.1.8' && APP_BUILD==='2026-10-26-43' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-4'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('§C.1 App 4.1.9 · Build 2026-10-27-44 · sw.js Cache hochgezählt (seit Hotfix 20)', APP_VERSION==='4.1.9' && APP_BUILD==='2026-10-27-44' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-5'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 19 und 19.1 · Speicher voll: Verlustschutz, Sicherungen nach FocusSystem, Führung zurück (4.1.8)');

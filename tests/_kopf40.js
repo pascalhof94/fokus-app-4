@@ -46,5 +46,7 @@ var _ok=0, _rot=0;
 function pruef(name, bedingung, info){ if(bedingung){ _ok++; print('OK   '+name); } else { _rot++; print('FAIL '+name+(info!==undefined ? ' — '+info : '')); } }
 function nah(a, b, eps){ return Math.abs(Number(a)-Number(b))<=(eps===undefined ? 0.5 : eps); }
 /* Die App und der Prüfkörper laufen in EINEM eval: const-Bindungen der App (FSLive, F11, F4N …) sind nur dort sichtbar */
-function suite(koerper){ var src=readFile('index.html'); var m=src.match(/<script>([\s\S]*?)<\/script>/); (0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/_helfer40.js') + "\n;\n" + readFile(koerper)); }
+/* Hotfix 20: die App startet asynchron (DB.laden() → FSLive.start() → init()); in jsc gibt es kein indexedDB, der Ausweichweg läuft über Mikrotasks —
+   warten() (aus _helfer40.js, im selben eval) arbeitet sie ab, bevor der Prüfkörper beginnt. */
+function suite(koerper){ var src=readFile('index.html'); var m=src.match(/<script>([\s\S]*?)<\/script>/); (0,eval)(m[1].replace(/^\s*['"]use strict['"];?/,'') + "\n;\n" + readFile('tests/_helfer40.js') + "\n;warten();\n" + readFile(koerper)); }
 function suiteEnde(titel){ print((_rot ? _rot+' FEHLGESCHLAGEN' : 'ALLES GRÜN')+' · '+titel+' · '+_ok+' OK'); if(_rot){ throw new Error('rot'); } }

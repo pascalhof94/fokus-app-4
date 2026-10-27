@@ -1848,7 +1848,7 @@ function bestandSchreiben(){
             return hit;
           }
           function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
-          function lsLog(){ try{ return JSON.parse(localStorage.getItem('fokus4_intraday')||'[]'); }catch(e){ return []; } }
+          function lsLog(){ try{ return JSON.parse(fw.eval('DB.roh("intraday")')||'[]'); }catch(e){ return []; } }   /* Hotfix 20: intraday liegt in der Browser-Datenbank — über die Speicherschicht lesen */
           freiMachen(); fw.sucheOeffnen();
           var fo=lsFokus(); if(fo && fo.laeuft) fw.fokusZeitEinbuchen();
           fw.fokusKarteAnsehen('a-3');
