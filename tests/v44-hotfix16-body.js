@@ -151,6 +151,6 @@ F12.ungelesen={ 'k-pipe':[A1, A2], 'k-hawk':[A4] }; ZD=f16PostfachDaten();
 pruef('§8.2 mehrere Agenten im selben Gespräch → eine Zeile; Antwort mit Postfach-Karte nur unter Kartenfreigaben', ZD.chats.length===1 && ZD.chats[0].zeilen.length===2 && ZD.freigaben.gruppen.some(function(g){ return g.gespraech==='karte-t-dfm' && g.zeilen.length===1; }));
 
 // ══ Version ══
-pruef('App 4.1.10 · Build 2026-10-27-45 (seit Hotfix 20.1)', APP_VERSION==='4.1.10' && APP_BUILD==='2026-10-27-45', APP_VERSION+' / '+APP_BUILD);
+pruef('App 4.1.11 · Build 2026-10-27-46 (seit Hotfix 20.2)', APP_VERSION==='4.1.11' && APP_BUILD==='2026-10-27-46', APP_VERSION+' / '+APP_BUILD);
 toast=_toastAlt;
 suiteEnde('Hotfix 16 · Nachsende-Schleife, Karten-Chat, Postfach in drei Filtern (4.1.5)');

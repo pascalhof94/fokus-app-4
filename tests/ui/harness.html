@@ -369,14 +369,14 @@ function bestandSchreiben(){
     ladeIframe(function(fw){
       konsoleWaechter(fw);
       ergebnis.checks++;
-      var meta1=JSON.parse(localStorage.getItem('fokus4_meta'));
+      var meta1=JSON.parse(fw.eval('DB.roh("meta")'));   // Hotfix 20.2: meta liegt in der Browser-Datenbank
       if(meta1.zeit191!==true || meta1.gamify190!==true) fatal('Migrationen liefen beim 1. Laden nicht (zeit191/gamify190 fehlen)');
       var bak1=localStorage.getItem('fokus4_karten_bak191');
       if(!bak1) fatal('Migrations-Sicherung karten_bak191 fehlt nach dem 1. Laden');
       var log1=JSON.stringify(meta1.zeit191Log||null);
       /* Timer starten, dann Reload */
       fw.fokusStarten('k-lang', null);
-      var fokus1=JSON.parse(localStorage.getItem('fokus4_fokus'));
+      var fokus1=JSON.parse(fw.eval('DB.roh("fokus")')||'null');   // Hotfix 20.2
       ergebnis.checks++;
       if(!fokus1 || fokus1.karteId!=='k-lang' || fokus1.laeuft!==true) fatal('Laufender Timer wurde nicht persistiert');
 
@@ -385,14 +385,14 @@ function bestandSchreiben(){
         ergebnis.checks++;
         var probe=JSON.parse(localStorage.getItem('fokus4_uiharness_probe')||'null');
         if(!probe || probe.wert!=='überlebt-reload') fatal('localStorage-Wert hat den Reload NICHT überlebt');
-        var meta2=JSON.parse(localStorage.getItem('fokus4_meta'));
+        var meta2=JSON.parse(fw2.eval('DB.roh("meta")'));   // Hotfix 20.2
         ergebnis.checks++;
         if(JSON.stringify(meta2.zeit191Log||null)!==log1) fatal('Migration lief beim 2. Laden ERNEUT (zeit191Log verändert)');
         if(localStorage.getItem('fokus4_karten_bak191')!==bak1) fatal('Migrations-Sicherung wurde beim 2. Laden überschrieben');
         ergebnis.checks++;
         /* const S liegt nicht auf window — Zustand über localStorage plus
            laufendeSek() (Top-Level-Funktion, läuft im App-Scope) prüfen. */
-        var fokus2=JSON.parse(localStorage.getItem('fokus4_fokus')||'null');
+        var fokus2=JSON.parse(fw2.eval('DB.roh("fokus")')||'null');   // Hotfix 20.2
         if(!(fokus2 && fokus2.karteId==='k-lang' && fokus2.laeuft===true))
           fatal('Laufender Timer hat den Reload nicht überlebt (fokus='+JSON.stringify(fokus2)+')');
         var sek=fw2.laufendeSek?fw2.laufendeSek():null;
@@ -683,7 +683,7 @@ function bestandSchreiben(){
       }catch(err){ fatal('diag-Sequenz abgebrochen: '+err); }
       abschluss();
     });
-    function lsGetMeta(){ try{ return JSON.parse(localStorage.getItem('fokus4_meta')||'null'); }catch(e){ return null; } }
+    function lsGetMeta(){ try{ return JSON.parse(appRoh("meta")||'null'); }catch(e){ return null; } }
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -1112,9 +1112,9 @@ function bestandSchreiben(){
           if(sh){ sh.style.transition='none'; sh.style.transform='translateY(0)'; } }
         function sheetRuheAus(){ var sh=d.getElementById('sheet');
           if(sh){ sh.style.transition='none'; sh.style.transform='translateY(110%)'; } }
-        function lsFokus(){ try{ return JSON.parse(localStorage.getItem('fokus4_fokus')||'null'); }catch(e){ return null; } }
+        function lsFokus(){ try{ return JSON.parse(appRoh("fokus")||'null'); }catch(e){ return null; } }
         function lsLaeuft(){ var f=lsFokus(); return !!(f && f.laeuft); }
-        function lsIstSek(id){ try{ var a=JSON.parse(localStorage.getItem('fokus4_karten')||'[]');
+        function lsIstSek(id){ try{ var a=JSON.parse(appRoh("karten")||'[]');
           var k=a.filter(function(x){ return x.id===id; })[0]; return k?Number(k.istSek||0):0; }catch(e){ return 0; } }
         /* ══ v2.3 §1–§3 · SUCHE: kompakt, nur Faelliges, Ungeplantes ans Ende ══ */
         (function(){
@@ -1418,7 +1418,7 @@ function bestandSchreiben(){
             if(hit) hit.click();
             return hit;
           }
-          function lsSubs(pid){ try{ return JSON.parse(localStorage.getItem('fokus4_unteraufgaben')||'[]').filter(function(u){ return u.parentId===pid; }); }catch(e){ return []; } }
+          function lsSubs(pid){ try{ return JSON.parse(appRoh("unteraufgaben")||'[]').filter(function(u){ return u.parentId===pid; }); }catch(e){ return []; } }
           /* §2 · erledigte Karte wieder oeffnen → Abfrage */
           freiMachen(); fw.sucheOeffnen();
           fw.oeffneWiederholen('e-1'); sheetRuhe();
@@ -1582,13 +1582,13 @@ function bestandSchreiben(){
             zf.value='123'; zf.dispatchEvent(new fw.Event('input',{bubbles:true}));
             pruef(rg.value==='123', 'v2.6 §5: Textfeld zieht den Regler nicht nach');
             var sv=d.querySelector('#sheetFoot [data-detailaktion="speichern"]'); pruef(!!sv,'v2.6 §5: Speichern-Knopf fehlt'); if(sv) sv.click();
-            var gespeichert=null; try{ gespeichert=JSON.parse(localStorage.getItem('fokus4_karten')).filter(function(k){ return k.id==='a-1'; })[0]; }catch(e){}
+            var gespeichert=null; try{ gespeichert=JSON.parse(appRoh("karten")).filter(function(k){ return k.id==='a-1'; })[0]; }catch(e){}
             finding('echt · v2.6 §5 nach Speichern: geldImpact='+(gespeichert?gespeichert.geldImpact:'—')+' · geldScore '+(gespeichert&&gespeichert.geldScore!==undefined?'noch da':'weg'));
             pruef(gespeichert && gespeichert.geldImpact===123 && gespeichert.geldScore===undefined, 'v2.6 §5: gespeicherter Geld-Impact stimmt nicht');
           } else pruef(false,'v2.6 §5: Geld-Regler fehlt im Detail');
           freiMachen();
           /* §5/§7 · Migrationsprotokolle am gelebten Bestand */
-          var ls=JSON.parse(localStorage.getItem('fokus4_meta')||'{}'), gl=ls.geld260Log||{}, ul=ls.urlaub260Log||{};
+          var ls=JSON.parse(appRoh("meta")||'{}'), gl=ls.geld260Log||{}, ul=ls.urlaub260Log||{};
           finding('echt · v2.6 §5 Migration: '+gl.umgestellt+' DFM-Karten umgestellt · Stufen '+JSON.stringify(gl.stufen)+' · begrenzt '+gl.gekappt+' · Score >200 '+gl.ueberDeckel+' · Deckel '+gl.deckel);
           finding('echt · v2.6 §7 Urlaub: '+(ul.tage||[]).length+' Tage nachgetragen · geprüft '+ul.geprueft);
           pruef(ls.geld260===true && ls.urlaub260===true, 'v2.6: Migrationen nicht gelaufen');
@@ -1639,7 +1639,7 @@ function bestandSchreiben(){
           pruef(!!d.querySelector('#sheetBody [data-chip="block"][data-val="f1a"].on'), 'v2.7 §1.5: Block-Wahl wirkt nicht');
           var ti=d.querySelector('#sheetBody [data-bind="titel"]'); if(ti){ ti.value='Harness-Block v2.7'; ti.dispatchEvent(new fw.Event('input',{bubbles:true})); }
           var sv=d.querySelector('#sheetFoot [data-detailaktion="speichern"]'); if(sv) sv.click();
-          var neu=null; try{ neu=JSON.parse(localStorage.getItem('fokus4_karten')).filter(function(k){ return k.titel==='Harness-Block v2.7'; })[0]; }catch(e){}
+          var neu=null; try{ neu=JSON.parse(appRoh("karten")).filter(function(k){ return k.titel==='Harness-Block v2.7'; })[0]; }catch(e){}
           finding('echt · v2.7 §1.5 gespeichert: block='+(neu?neu.block:'—'));
           pruef(neu && neu.block==='f1a', 'v2.7 §1.5: neue Karte liegt nicht im gewählten Block');
           zu=fokusZuKnopf(d); if(zu) zu.click();
@@ -1660,7 +1660,7 @@ function bestandSchreiben(){
             if(hit){ if(typeof hit.click==='function') hit.click(); else hit.dispatchEvent(new fw.MouseEvent('click',{bubbles:true})); }
             return hit;
           }
-          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsK(id){ try{ return JSON.parse(appRoh("karten")||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
           freiMachen(); fw.sucheOeffnen();
           fw.syncImport(JSON.stringify(v27Paket(fw))); fw.syncImport(JSON.stringify(v28Paket()));
           fw.fokusKarteAnsehen('a-3');
@@ -1704,7 +1704,7 @@ function bestandSchreiben(){
           var ja=d.querySelector('#sheetBody [data-vomgeraetja]');
           finding('echt · v2.8 §4 nach Tipp: Bestätigung '+(ja?'„'+((d.querySelector('#sheetBody .vg-frage')||{}).textContent||'').slice(0,60)+'…"':'fehlt'));
           tippe(ja,'„Ja, vom Gerät nehmen"');
-          var weg=!lsK('a-9'), ls=JSON.parse(localStorage.getItem('fokus4_meta')||'{}');
+          var weg=!lsK('a-9'), ls=JSON.parse(appRoh("meta")||'{}');
           finding('echt · v2.8 §4 a-9 vom Gerät: '+(weg?'weg':'NOCH DA')+' · gemeldet '+JSON.stringify((ls.vomGeraetGenommen||[]).map(function(x){ return x.id; })));
           pruef(weg && (ls.vomGeraetGenommen||[]).some(function(x){ return x.id==='a-9'; }), 'v2.8 §4: vom Gerät nehmen wirkt nicht');
           freiMachen(); fw.sucheOeffnen();
@@ -1720,8 +1720,8 @@ function bestandSchreiben(){
             if(hit) hit.click(); sheetRuhe();
             return hit;
           }
-          function lsKarten(){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]'); }catch(e){ return []; } }
-          function lsSubs(pid){ try{ return JSON.parse(localStorage.getItem('fokus4_unteraufgaben')||'[]').filter(function(u){ return u.parentId===pid; }); }catch(e){ return []; } }
+          function lsKarten(){ try{ return JSON.parse(appRoh("karten")||'[]'); }catch(e){ return []; } }
+          function lsSubs(pid){ try{ return JSON.parse(appRoh("unteraufgaben")||'[]').filter(function(u){ return u.parentId===pid; }); }catch(e){ return []; } }
           freiMachen(); fw.sucheOeffnen();
           var altSubs=lsSubs('e-1'), altVor=JSON.stringify(lsKarten().filter(function(k){ return k.id==='e-1'; })[0]);
           fw.oeffneDetail(null); sheetRuhe();
@@ -1811,7 +1811,7 @@ function bestandSchreiben(){
           var live=(d.getElementById('pfLive')||{}).textContent||'';
           finding('echt · v2.9 §3 Live-Zeile: „'+live+'"');
           tippe(d.querySelector('#sheetFoot [data-detailaktion="speichern"]'),'Speichern');
-          var k13=null; try{ k13=JSON.parse(localStorage.getItem('fokus4_karten')).filter(function(k){ return k.id==='r-13'; })[0]; }catch(e){}
+          var k13=null; try{ k13=JSON.parse(appRoh("karten")).filter(function(k){ return k.id==='r-13'; })[0]; }catch(e){}
           pruef(k13 && k13.pflicht===true && k13.pflichtWert===nach1.wert, 'v2.9 §1: gespeicherte Pflicht-Werte stimmen nicht');
           var zu=fokusZuKnopf(d); if(zu) zu.click();
           /* §4 Vorschlag übernehmen */
@@ -1847,7 +1847,7 @@ function bestandSchreiben(){
             if(hit){ if(typeof hit.click==='function') hit.click(); else hit.dispatchEvent(new fw.MouseEvent('click',{bubbles:true})); }
             return hit;
           }
-          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsK(id){ try{ return JSON.parse(appRoh("karten")||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
           function lsLog(){ try{ return JSON.parse(fw.eval('DB.roh("intraday")')||'[]'); }catch(e){ return []; } }   /* Hotfix 20: intraday liegt in der Browser-Datenbank — über die Speicherschicht lesen */
           freiMachen(); fw.sucheOeffnen();
           var fo=lsFokus(); if(fo && fo.laeuft) fw.fokusZeitEinbuchen();
@@ -1892,8 +1892,8 @@ function bestandSchreiben(){
             if(hit){ if(typeof hit.click==='function') hit.click(); else hit.dispatchEvent(new fw.MouseEvent('click',{bubbles:true})); }
             ruhe(); return hit;
           }
-          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
-          function lsU(id){ try{ return JSON.parse(localStorage.getItem('fokus4_unteraufgaben')||'[]').filter(function(u){ return u.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsK(id){ try{ return JSON.parse(appRoh("karten")||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsU(id){ try{ return JSON.parse(appRoh("unteraufgaben")||'[]').filter(function(u){ return u.id===id; })[0]||null; }catch(e){ return null; } }
           // v3.2.0 §1.2: die Ticks einer Staffel-/Pflicht-Karte liegen in ihrem Ticker (Unteraufgabe tk-<id>)
           function tLog(x){ var tk=x && x.parentId===undefined ? lsU('tk-'+x.id) : null; return (tk && tk.tickLog) || (x && x.tickLog) || null; }
           function nTicks(x){ var l=tLog(x); return l && Array.isArray(l.ticks) ? l.ticks.length : 0; }
@@ -1964,7 +1964,7 @@ function bestandSchreiben(){
           tippe(q('#sheetBody [data-abv3schritt="4"]'),'Schritt 4');
           /* v3.2.0 §2.3: „Schließen" ist gesperrt, bis kopiert oder heruntergeladen ist */
           tippe(q('#sheetFoot [data-abv3zu]'),'„✓ Schließen" vor dem Export (gesperrt)');
-          var tg0=JSON.parse(localStorage.getItem('fokus4_tag')||'null');
+          var tg0=JSON.parse(appRoh("tag")||'null');
           finding('echt · v3.2 §2.3 „Schließen" vor dem Export: Ansicht „'+d.getElementById('sheetTitel').textContent+'" · Tag abgeschlossen '+!!(tg0&&tg0.endeTs)+' · gesperrt '+!!q('#sheetFoot [data-abv3zu].gesperrt'));
           pruef(/Tagesabschluss/.test(d.getElementById('sheetTitel').textContent) && !(tg0&&tg0.endeTs) && !!q('#sheetFoot [data-abv3zu].gesperrt'), 'v3.2 §2.3: „Schließen" schließt ohne Export');
           var md=(q('#sheetBody #abv3Md')||{}).value||'';
@@ -1973,7 +1973,7 @@ function bestandSchreiben(){
           finding('echt · v3.0 §6 Schritte '+schritte+' · .md Zeile 1 „'+md.split('\n')[0]+'" · '+md.length+' Zeichen · endet mit JSON-Block '+/```json[\s\S]*```\n?$/.test(md));
           pruef(schritte===4 && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(md.split('\n')[0]) && /```json[\s\S]*```\n?$/.test(md), 'v3.0 §6: vier Schritte / .md-Form stimmt nicht');
           tippe(q('#sheetFoot [data-abv3zu]'),'„✓ Schließen"');
-          var tg=JSON.parse(localStorage.getItem('fokus4_tag')||'null');
+          var tg=JSON.parse(appRoh("tag")||'null');
           var aus=[].slice.call(d.querySelectorAll('#fokusView .al-z:not(.al-sub)')).filter(function(z){ return z.className.indexOf(' aus')<0 || Number(fw.getComputedStyle(z).opacity)>0.5; }).map(function(z){ return z.dataset.alkarte; });   // Klasse UND sichtbare Deckkraft
           finding('echt · v3.0 §6 geschlossen: Tag abgeschlossen '+!!(tg&&tg.endeTs)+' · aktiv nur noch '+aus.join(', ')+' · Fokus zeigt '+(q('#fokusView')?'Schlafen':'—'));
           // v3.2.0 §2.4: nach dem Abschluss bleiben Routinen und Counter bis „Schlafen" buchbar — grau ist der Tagesabschluss
@@ -1985,7 +1985,7 @@ function bestandSchreiben(){
           pruef(kNach===kVor+1, 'v3.2 §2.4: +1 nach dem Abschluss wirkt nicht');
           /* Schlafen ▶ — schliesst den Tag endgueltig, Nachtrag-Export */
           tippe(q('#fokusView [data-alplay="v3-schlaf"]'),'▶ „Schlafen"');
-          var sl=JSON.parse(localStorage.getItem('fokus4_meta')||'{}').schlaf, tgS=JSON.parse(localStorage.getItem('fokus4_tag')||'null');
+          var sl=JSON.parse(appRoh("meta")||'{}').schlaf, tgS=JSON.parse(appRoh("tag")||'null');
           pruef(sl && sl.laeuft, 'v3.0 §7: Schlafen startet nicht');
           finding('echt · v3.2 §2.4 „Schlafen": Ansicht „'+d.getElementById('sheetTitel').textContent+'" · Tag geschlossen '+!!(tgS&&tgS.geschlossenTs)+' · Nachtrag '+(tgS&&tgS.nachtrag?tgS.nachtrag.anzahl+' Buchung(en), '+(tgS.nachtrag.punkte>=0?'+':'')+tgS.nachtrag.punkte+' P':'—'));
           pruef(/Nachtrag/.test(d.getElementById('sheetTitel').textContent) && !!q('#sheetBody [data-ntcopy]') && !!q('#sheetBody [data-ntdl]') && tgS && tgS.geschlossenTs && tgS.nachtrag && tgS.nachtrag.anzahl>=1,
@@ -2001,7 +2001,7 @@ function bestandSchreiben(){
           finding('echt · v3.0 §5 Aufstehen: Frage '+(aufR?'„Wie voll fühlt sich der Akku an?" vorbelegt '+aufR.value+' %':'fehlt')+' · Priorisierung '+(q('#sheetBody [data-tsprio]')?'DA':'keine'));
           pruef(!!aufR && !q('#sheetBody [data-tsprio]'), 'v3.0 §5: Aufstehen fragt nicht / Priorisierung noch da');
           tippe(q('#sheetFoot [data-aufgo]'),'„Aufstehen"');
-          var tg2=JSON.parse(localStorage.getItem('fokus4_tag')||'null'), sl2=JSON.parse(localStorage.getItem('fokus4_meta')||'{}').schlaf;
+          var tg2=JSON.parse(appRoh("tag")||'null'), sl2=JSON.parse(appRoh("meta")||'{}').schlaf;
           finding('echt · v3.0 §5 nach „Aufstehen": neuer Tag '+(tg2&&tg2.tagId)+' offen '+!!(tg2&&!tg2.endeTs)+' · Aufstehzeit '+(tg2&&tg2.morgen&&tg2.morgen.aufstehTs?'gesetzt':'—')+' · Schlafen gestoppt '+!(sl2&&sl2.laeuft));
           pruef(tg2 && !tg2.endeTs && tg2.morgen && tg2.morgen.aufstehTs && !(sl2&&sl2.laeuft), 'v3.0 §5: Aufstehen startet den Tag nicht / stoppt Schlafen nicht');
           /* ══ Suche: zwei Filter, vier Sortierungen, jede Ansicht oben ══ */
@@ -2035,10 +2035,10 @@ function bestandSchreiben(){
             pruef(hit && (hit===e || e.contains(hit)), 'v3.2: '+wie+' verdeckt von '+beschreib(hit));
             if(hit) hit.click(); ruhe(); return hit;
           }
-          function lsK(id){ try{ return JSON.parse(localStorage.getItem('fokus4_karten')||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
-          function lsU(id){ try{ return JSON.parse(localStorage.getItem('fokus4_unteraufgaben')||'[]').filter(function(u){ return u.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsK(id){ try{ return JSON.parse(appRoh("karten")||'[]').filter(function(k){ return k.id===id; })[0]||null; }catch(e){ return null; } }
+          function lsU(id){ try{ return JSON.parse(appRoh("unteraufgaben")||'[]').filter(function(u){ return u.id===id; })[0]||null; }catch(e){ return null; } }
           function lsUi(){ try{ return JSON.parse(localStorage.getItem('fokus4_ui')||'{}'); }catch(e){ return {}; } }
-          function nT(id, sub){ var x=sub ? lsU(id) : lsU('tk-'+id), l=x && x.tickLog, tg=JSON.parse(localStorage.getItem('fokus4_tag')||'null');
+          function nT(id, sub){ var x=sub ? lsU(id) : lsU('tk-'+id), l=x && x.tickLog, tg=JSON.parse(appRoh("tag")||'null');
             return (l && tg && l.tag===tg.tagId && Array.isArray(l.ticks)) ? l.ticks.length : 0; }   // nur die Ticks des laufenden Tages
           freiMachen(); var fo=lsFokus(); if(fo && fo.laeuft) fw.fokusZeitEinbuchen();
           if(!lsK('v3-kaffee')){ fw.syncImport(JSON.stringify(v30Paket())); }
@@ -2209,6 +2209,8 @@ function bestandSchreiben(){
       s.push(e); });
   }
   var frame=document.getElementById('app');
+  /* Hotfix 20.2: Karten, meta, Tag, Unteraufgaben, Fokus liegen in der Browser-Datenbank des Frames → Text über DB.roh des aktuellen #app-Frames */
+  function appRoh(name){ try{ return document.getElementById('app').contentWindow.eval('DB.roh("'+name+'")'); }catch(e){ return null; } }
   function ladeIframe(cb){
     var f=document.getElementById('app');
     var neu=document.createElement('iframe'); neu.id='app';

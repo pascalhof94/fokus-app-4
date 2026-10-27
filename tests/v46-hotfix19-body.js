@@ -277,5 +277,17 @@ pruef('20.1 §D3 nachholen: Betriebsschlüssel (meta, karten) vor der Sicherung 
 ['intraday_bak9','meta','karten'].forEach(function(k){ localStorage.removeItem(PREFIX+k); });
 pruef('20.1 §D4 Quelltext: Auslagern löscht aus DB._ungesichert, Puffer-Sicherungen kommen in die Liste', (function(){ var s=readFile('index.html'); return s.indexOf("delete DB._ungesichert[e.key]; ausgelagert.push(")>=0 && s.indexOf("Object.keys(DB._ungesichert).forEach(k=>{ if(istSicherung(k) && namen.indexOf(k)<0) namen.push(k); })")>=0; })());
 
-pruef('§C.1 App 4.1.10 · Build 2026-10-27-45 · sw.js Cache hochgezählt (seit Hotfix 20.1)', APP_VERSION==='4.1.10' && APP_BUILD==='2026-10-27-45' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-6'")>=0, APP_VERSION+' / '+APP_BUILD);
+// ══ Hotfix 20.2 · §E Umzug-Standard alle gemeinsamen Schlüssel, fremde Schlüssel in der Speicher-Karte ══
+pruef('20.2 §E1 UMZUG_STANDARD = GEMEINSAM ohne settings (15 Namen, alle erlaubt)', DB.UMZUG_STANDARD.length===15 && DB.UMZUG_STANDARD.indexOf('meta')>=0 && DB.UMZUG_STANDARD.indexOf('karten')>=0 && DB.UMZUG_STANDARD.indexOf('settings')<0 && DB.UMZUG_STANDARD.every(DB.umzugErlaubt) && FSLive.gemeinsam().filter(function(k){ return k!=='settings'; }).every(function(k){ return DB.UMZUG_STANDARD.indexOf(k)>=0; }), DB.UMZUG_STANDARD.join(','));
+pruef('20.2 §E2 umzugListe: Standard plus Einstellung, ohne Doppelte; leer/kaputt → Standard', DB.umzugListe(['intraday','x']).length===16 && DB.umzugListe(['intraday','x']).indexOf('x')===15 && DB.umzugListe(null).length===15 && DB.umzugListe('meta').length===15);
+pruef('20.2 §E3 DEFAULT_SETTINGS.speicherIdb = Standard', JSON.stringify(DEFAULT_SETTINGS.speicherIdb)===JSON.stringify(DB.UMZUG_STANDARD));
+localStorage.setItem('fokus2.alt', '{"a":1}');
+var bel=speicherBelegung();
+pruef('20.2 §E4 speicherBelegung zählt fremde Schlüssel (ohne Präfix) getrennt, nicht in rows', bel.fremd>=1 && bel.kbFremd>0 && !bel.rows.some(function(r){ return r.key==='fokus2.alt' || r.key==='alt'; }), JSON.stringify({fremd:bel.fremd, kb:bel.kbFremd}));
+localStorage.removeItem('fokus2.alt');
+pruef('20.2 §E5 Quelltext: Speicher-Karte zeigt „Andere Daten auf dieser Adresse“', readFile('index.html').indexOf("Andere Daten auf dieser Adresse</span><b>'+b.fremd+' Schlüssel")>=0);
+
+pruef('20.2 §E6 Quelltext: umziehen ruft kein saveMeta() mehr auf (überschrieb beim Start das echte meta mit dem Startwert)', (function(){ var s=readFile('index.html'); var a=s.indexOf('async umziehen(liste){'), b=s.indexOf('async laden(){'); var u=s.slice(a, s.indexOf('\n  }\n', a)); return a>0 && u.indexOf('saveMeta();')<0 && u.indexOf('DB._umzugLog={')>=0; })());
+
+pruef('§C.1 App 4.1.11 · Build 2026-10-27-46 · sw.js Cache hochgezählt (seit Hotfix 20.2)', APP_VERSION==='4.1.11' && APP_BUILD==='2026-10-27-46' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-7'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 19 und 19.1 · Speicher voll: Verlustschutz, Sicherungen nach FocusSystem, Führung zurück (4.1.8)');
