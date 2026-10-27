@@ -3082,11 +3082,11 @@ body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4s
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '4.1.10';
+const APP_VERSION = '4.1.11';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-27-45';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-27-46';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -3100,7 +3100,8 @@ const DB = {
   // Hotfix 20 §1 · Browser-Datenbank (IndexedDB IDB_NAME, Version 1, Store „schluessel“ ohne keyPath; Schlüssel = Name ohne Präfix, Wert = JSON-Text):
   // _cache = Name → Text der IDB-Schlüssel (Arbeitsspeicher), _inIdb = Namen, die umgezogen sind, _idb = offene Datenbank, _kette = Schreibvorgänge strikt nacheinander.
   _cache:new Map(), _inIdb:new Set(), _idb:null, _kette:Promise.resolve(), _umzugLog:null,
-  UMZUG_STANDARD:['intraday','historie'],   // Hotfix 20 §2: Umzugsliste, Standard (Stufe 1)
+  UMZUG_STANDARD:['karten','unteraufgaben','stapel','ordner','gruppen','vorlagen','tag','fokus','historie','intraday','routinenGruppen','tagesketten','belohnung','meta','karten_vomGeraet'],   // Hotfix 20.2 §1: Standard = Stufe 2, alle gemeinsamen Schlüssel außer settings (der Browser-Speicher auf dem iPhone nimmt große Werte nicht dauerhaft an)
+  umzugListe(l){ const out=DB.UMZUG_STANDARD.slice(); (Array.isArray(l) ? l : []).forEach(k=>{ k=String(k); if(out.indexOf(k)<0) out.push(k); }); return out; },   // Hotfix 20.2 §1: Standard plus Einstellung; Standard-Schlüssel ziehen immer um
   umzugErlaubt(k){ try{ k=String(k); return k!=='settings' && FSLive.gemeinsam().indexOf(k)>=0; }catch(e){ return false; } },   // Hotfix 20: GEMEINSAM außer settings
   get(key, fallback){
     try{
@@ -3218,7 +3219,7 @@ const DB = {
   async umziehen(liste){
     const erg={ umgezogen:[], zurueck:[], fehler:[] }; let frei=0;
     if(!DB._idb) return erg;
-    liste=(Array.isArray(liste) ? liste : []).map(String).filter(DB.umzugErlaubt);
+    liste=DB.umzugListe(liste).filter(DB.umzugErlaubt);   // Hotfix 20.2 §1: Standard plus Einstellung
     const lesen=(name)=>new Promise(res=>{ try{ const rq=DB._idb.transaction('schluessel', 'readonly').objectStore('schluessel').get(name);
       rq.onsuccess=()=>res(rq.result===undefined ? null : String(rq.result)); rq.onerror=()=>res(null); }catch(e){ res(null); } });
     const schreiben=(name, t)=>new Promise(res=>{ try{ const tx=DB._idb.transaction('schluessel', 'readwrite'), st=tx.objectStore('schluessel');
@@ -3258,7 +3259,8 @@ const DB = {
     if(erg.fehler.length){ try{ toast('Umzug unvollständig: '+erg.fehler.join(', ')); }catch(e){} }
     else if(erg.umgezogen.length){ try{ toast('🗄 Umgezogen: '+erg.umgezogen.join(', ')+' · '+Math.round(frei/1024)+' KB frei'); }catch(e){} }
     DB._umzugLog={ ts:new Date().toISOString(), umgezogen:erg.umgezogen.slice(), zurueck:erg.zurueck.slice(), fehler:erg.fehler.slice() };
-    try{ if(typeof S!=='undefined' && S && S.meta){ S.meta.speicherUmzugLog=DB._umzugLog; saveMeta(); } }catch(e){}
+    // Hotfix 20.2 §3 · hier KEIN saveMeta(): beim Start ist S.meta noch der leere Startwert, und saveMeta() hat damit das echte meta überschrieben
+    // (Ursache des meta-Verlusts am 27.10.2026 ab Build 44). ladeAlles() übernimmt DB._umzugLog in S.meta; der nächste reguläre saveMeta() speichert es.
     return erg;
   }
 };
@@ -4007,15 +4009,17 @@ const FSLive = (()=>{
    nur den aktuellen Tag). Zeit- und Punktehistorie werden NIE angefasst. */
 /* Hotfix 20 §4.1 · Größe aus DB.roh(k); idb = Schlüssel liegt in der Browser-Datenbank (🗄). kb = gesamt, kbLokal = Browser-Speicher, kbIdb = Browser-Datenbank. */
 function speicherBelegung(){
-  const rows=[]; let lokal=0, idb=0;
+  const rows=[]; let lokal=0, idb=0, fremd=0, fremdKb=0;
   DB.list().forEach(k=>{
     let n=0; try{ n=(DB.roh(k)||'').length; }catch(e){}
     const inIdb=DB._inIdb.has(k);
     if(inIdb) idb+=n; else lokal+=n;
     rows.push({ key:k, kb:n/1024, idb:inIdb });
   });
+  // Hotfix 20.2 §2 · fremde Schlüssel (ohne Präfix fokus4_, z. B. der alten Fokus App auf derselben Adresse): sie zählen zur Grenze, erscheinen aber nicht in der Liste
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf(PREFIX)!==0){ fremd++; fremdKb+=((localStorage.getItem(k)||'').length+k.length)/1024; } } }catch(e){}
   rows.sort((a,b)=>b.kb-a.kb);
-  return { rows, kb:(lokal+idb)/1024, kbLokal:lokal/1024, kbIdb:idb/1024 };
+  return { rows, kb:(lokal+idb)/1024, kbLokal:lokal/1024, kbIdb:idb/1024, fremd, kbFremd:fremdKb };
 }
 /* Hotfix 19 §B1 · Was eine Sicherung ist (k ohne Präfix): vorUebernahme_<Zeit> oder ein Schlüssel, der auf _bak<Ziffern/Kleinbuchstaben> endet
    (karten_bak1130, settings_bak200n, import_bak, shop360_bak, reset35_bak, feldkarten353_bak, settings_bak_ziele400 …). Nie: Betriebsschlüssel (BETRIEB) und fslive_*. */
@@ -4198,7 +4202,7 @@ const DEFAULT_SETTINGS = {
   bruecke: { onramp:100, ziel:100, abzug:150, zielMin:10, fristMin:15 },   // 5.5 Onramp-Brücke
   abhakbonusAbSollMin: 15,     // 5.5: Abhakbonus nur ab 15 Min Soll
   abzugOhneGrund: 50,          // 5.6: Aufgabe oder Muss-Routine ohne Grund geschoben
-  speicherIdb: ['intraday','historie'],   // Hotfix 20 §2: Umzugsliste (Browser-Datenbank), erlaubt: GEMEINSAM außer settings
+  speicherIdb: ['karten','unteraufgaben','stapel','ordner','gruppen','vorlagen','tag','fokus','historie','intraday','routinenGruppen','tagesketten','belohnung','meta','karten_vomGeraet'],   // Hotfix 20 §2 · 20.2: Umzugsliste (Browser-Datenbank), erlaubt: GEMEINSAM außer settings; der Standard zieht immer um
   chatAgentenMax: 5,           // Hotfix 16 §4.4: höchstens so viele Agenten-Antworten je Gespräch seit Pascals letzter Nachricht (liest der Dienst aus dem Spiegel)
   wochenserieBonus: 300,       // 5.7: DFM-Routinen werktags bzw. am Wochenende komplett
   positionStaffel: [30, 10, 0],   // 5.4: Position 1–5 je 30 · 6–8 je 10 · ab 9 0
@@ -19409,7 +19413,8 @@ function renderEinst(){
       '<p class="d">Mit 🗄 markierte Daten liegen in der Browser-Datenbank (viel Platz), der Rest im Browser-Speicher (~5 MB). Welche Daten umziehen, steht in der Einstellung Speicher-Umzug. Aufräumen lagert Sicherungen nach FocusSystem aus und kappt die Kettenhistorie auf '+KETTENHIST_TAGE+' Tage.</p>'+   // Hotfix 20 §4.4
       '<div class="kv"><span>Browser-Speicher (~5 MB)</span><b>'+Math.round(b.kbLokal)+' KB</b></div>'+   // Hotfix 20 §4.2
       '<div class="kv"><span>Browser-Datenbank 🗄</span><b>'+Math.round(b.kbIdb)+' KB</b></div>'+
-      '<div class="kv"><span>Umgezogen</span><b>'+(DB._inIdb.size ? esc(Array.from(DB._inIdb).join(', ')) : '–')+'</b></div>';   // Hotfix 20 §4.3
+      '<div class="kv"><span>Umgezogen</span><b>'+(DB._inIdb.size ? esc(Array.from(DB._inIdb).join(', ')) : '–')+'</b></div>'+   // Hotfix 20 §4.3
+      (b.fremd ? '<div class="kv"><span>Andere Daten auf dieser Adresse</span><b>'+b.fremd+' Schlüssel · '+Math.round(b.kbFremd)+' KB</b></div>' : '');   // Hotfix 20.2 §2
     b.rows.slice(0,8).forEach(r=>{
       x+='<div class="kv"><span style="font-family:ui-monospace,monospace;font-size:11px">'+(r.idb?'🗄 ':'')+esc(r.key)+'</span><b>'+(r.kb>=1?Math.round(r.kb)+' KB':'&lt;1')+'</b></div>'; });   // Hotfix 20 §4.1
     if(baks.length) x+='<p class="d" style="color:var(--warn);margin-top:6px">'+baks.length+' Sicherung(en) auslagerbar.</p>';   // Hotfix 19 §B4
