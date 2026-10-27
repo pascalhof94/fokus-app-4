@@ -193,7 +193,7 @@ pruef('Hotfix 16 §5.3 Hinweis-Zeile ordnet pf1 dem Gespräch „Erfassungs-Agen
 pruef('§7.1 keine Postfach-Karten mehr als Liste, keine Kette', hp.indexOf('data-f7pfent')<0 && hp.indexOf('Karten vom Trainer')<0 && hp.indexOf('offene Karten in der Kette')<0);
 pruef('Hotfix 16 §5.7 Badge des Postfachs = 1 Chat + 3 Kartenfreigaben', num(S.meta.postfach.offen)===4 && num(S.meta.postfach.karten)===3, JSON.stringify(S.meta.postfach));
 F16.pfFilter='chats'; renderPostfach(); hp=el('postfachBody').innerHTML;
-pruef('§7.2 Zeile: Punkt, „Mails morgen“, Absender und Text, Zeit (gestern)', hp.indexOf('Mails morgen')>=0 && hp.indexOf('Pipeline-Agent: Alles klar, ich lege mich nicht fest …')>=0 && hp.indexOf('<span class="p"></span>')>=0 && /<span>(gestern|\d\d:\d\d)<\/span>/.test(hp), hp.slice(0, 900));
+pruef('§7.2 Zeile: Punkt, „Mails morgen“, Absender und Text, Zeit (Uhrzeit, gestern, Wochentag oder Kurzdatum — je nach Abstand zum Testdatum)', hp.indexOf('Mails morgen')>=0 && hp.indexOf('Pipeline-Agent: Alles klar, ich lege mich nicht fest …')>=0 && hp.indexOf('<span class="p"></span>')>=0 && /<span>(gestern|\d\d:\d\d|Mo|Di|Mi|Do|Fr|Sa|So|\d\d\.\d\d)<\/span>/.test(hp), hp.slice(0, 900));   // Hotfix 20 Abnahme: f12ZeitKurz liefert je nach Abstand Uhrzeit, „gestern“, Wochentag oder TT.MM
 f15MsgOeffnen('k-pipe', 'a1', null); drain();
 pruef('§7.3 Tipp auf eine Antwort öffnet das Gespräch an dieser Nachricht', e1Art()==='chat' && f12Ui().kanal==='k-pipe' && f12Ui().gespraech==='g-x');
 e1Schliessen(); _gesendet.length=0;
