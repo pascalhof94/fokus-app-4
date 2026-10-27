@@ -204,7 +204,7 @@ var erg5=speicherAufraeumen(true);
 pruef('§B4 speicherAufraeumen: Sicherung bleibt, geloescht leer, Protokoll wie bisher', localStorage.getItem(PREFIX+'karten_bak1130')==='[]' && erg5.geloescht.length===0 && S.meta.speicherAufraeumLog.geloescht.length===0 && typeof S.meta.speicherAufraeumLog.histTageWeg==='number');
 localStorage.removeItem(PREFIX+'karten_bak1130');
 pruef('§B4 Karte „💾 Speicher“ und Knopf 🧹 (Quelltext)', (function(){ var s=readFile('index.html');
-  return s.indexOf('Aufräumen lagert alle Sicherungen nach FocusSystem aus (hier erst entfernt, wenn FocusSystem sie geprüft zurückgegeben hat) und kappt die Kettenhistorie auf ')>=0 &&
+  return s.indexOf('Mit 🗄 markierte Daten liegen in der Browser-Datenbank (viel Platz), der Rest im Browser-Speicher (~5 MB). Welche Daten umziehen, steht in der Einstellung Speicher-Umzug. Aufräumen lagert Sicherungen nach FocusSystem aus und kappt die Kettenhistorie auf ')>=0 &&   // Hotfix 20 §4.4: neue Beschreibung
     s.indexOf("' Sicherung(en) auslagerbar.</p>'")>=0 && s.indexOf('alte Sicherung(en) löschbar')<0 &&
     s.indexOf("' Sicherung(en) werden nach FocusSystem ausgelagert und hier erst entfernt, wenn FocusSystem sie geprüft zurückgegeben hat:\\n'")>=0 &&
     s.indexOf("sicherungenAuslagern({ auto:false })")>=0 && s.indexOf("<span>Ausgelagert ('")>=0 && s.indexOf("Nicht gespeichert: '")>=0; })());
