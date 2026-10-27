@@ -2875,6 +2875,11 @@ body[data-e1="agentenkarte"] #e1-agentenkarte{display:flex;flex-direction:column
 .f15-verlauf{font-size:12px;color:#9a9ca2;border-left:2px solid #262a32;padding-left:8px;margin:10px 0 8px;cursor:pointer}.f15-verlauf .r{margin:0 0 8px}.f15-verlauf .r:last-child{margin-bottom:0}.f15-verlauf b{color:#e8e9ec;font-weight:700}.f15-verlauf .x{white-space:pre-wrap;color:#c9cbd0;margin-top:2px}
 .f15-block{background:#1a1d22;border-radius:12px;padding:10px 12px;margin-bottom:8px}.f15-block h4{margin:0 0 6px;font-size:12px;color:#9a9ca2;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
 .f15-tab{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0}.f15-tab th,.f15-tab td{border-bottom:1px solid var(--line);padding:3px 5px;text-align:left;vertical-align:top}.f15-tab th{color:#9a9ca2;font-weight:600}   /* Hotfix 22 §3.4 */
+.f7-m,.f15-block .out{user-select:text;-webkit-user-select:text}   /* Hotfix 22 §5.1: Text in Nachrichten und Karten markierbar */
+.f12-zit{position:relative;border-left:3px solid var(--line);padding:4px 34px 4px 10px;margin:6px 0;color:#c9ccd3}
+.f12-code{position:relative;background:#0f1216;border-radius:8px;padding:8px 34px 8px 10px;margin:6px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;white-space:pre-wrap;word-break:break-word}
+.f12-kopie{position:absolute;top:3px;right:3px;font-size:14px;line-height:1;padding:3px 5px;border-radius:6px;background:rgba(255,255,255,.08);min-height:0}
+.f12-kopie-ganz{display:block;margin:6px 0 0 auto;font-size:12px;opacity:.65;padding:2px 0;min-height:0}
 .f15-block .titel{font-size:16px;font-weight:800;margin-bottom:6px;line-height:1.3}.f15-block .out{font-size:14.5px;line-height:1.4;white-space:pre-wrap;color:#e8e9ec}.f15-block .why{font-size:12.5px;color:#9a9ca2;margin-top:8px;white-space:pre-wrap}
 .f15-opt{display:block;width:100%;text-align:left;background:#262a32;border:1px solid rgba(255,255,255,.08);color:#e8e9ec;border-radius:10px;padding:10px 12px;margin-bottom:6px;font:inherit;font-size:14px;min-height:44px;cursor:pointer}
 .f15-opt.an{background:rgba(59,130,246,.22);border:2px solid #3b82f6;font-weight:700;padding:9px 11px}
@@ -3963,7 +3968,7 @@ const FSLive = (()=>{
       document.body.appendChild(leiste);
       // Hotfix 14 §10.3 · Tipp-Abfang auf nicht führenden Geräten: pointerdown merkt den Startpunkt (verschluckt nichts, Scrollen bleibt),
       // pointerup ≤ 10 px = Tipp → übernehmen; der folgende click wird verschluckt. Ausgenommen: FSLive-Punkt und Elemente mit data-fsgeraet.
-      const ausgenommen=(t)=>{ try{ return !!(t && t.closest && (t.closest('#fsLiveFlaeche') || t.closest('[data-fsgeraet]') || t.closest('#speicherVoll') || t.closest('[data-speicherkarte]'))); }catch(e){ return false; } };   // Hotfix 19.1 §2.2: Leiste und Karte „💾 Speicher“ lösen keine Übernahme aus
+      const ausgenommen=(t)=>{ try{ return !!(t && t.closest && (t.closest('#fsLiveFlaeche') || t.closest('[data-fsgeraet]') || t.closest('#speicherVoll') || t.closest('[data-speicherkarte]') || t.closest('[data-f12kopie]'))); }catch(e){ return false; } };   // Hotfix 22 §5: Kopieren löst keine Übernahme aus   // Hotfix 19.1 §2.2: Leiste und Karte „💾 Speicher“ lösen keine Übernahme aus
       // Hotfix 17 §3.2 · auch auf dem führenden Gerät wird ein Tipp abgefangen, wenn die letzte Bestätigung älter als 30 s ist (Prüfung ohne Sperre);
       // nicht während einer Übernahme, einer laufenden Prüfung oder dem Nachspielen eines Tipps. Wischen und Scrollen (> 10 px) nie.
       const abfangen=()=>!DB._schutz && gekoppelt() && !uebernahmeLaeuft && !pruefungLaeuft && !tippLaeuft && (!ichFuehre || Date.now()-bestaetigtTs>BESTAETIGT_MS);   // Hotfix 21 §A.4: kein Tipp-Abfang, solange angehalten
@@ -7750,8 +7755,39 @@ function f12AgentHtml(kanal){
 }
 /* ── §5 · Stufe Gespräch ── */
 /* Text mit Listen: Zeilen mit „- " oder „• " werden eine Liste, keine Knöpfe (§5.2) */
-function f12TextHtml(text){ const lines=String(text||'').replace(/\r/g,'').split('\n'); let h='', li=[]; const flush=()=>{ if(li.length){ h+='<ul>'+li.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>'; li=[]; } };
-  lines.forEach(l=>{ const m=l.match(/^\s*[-•]\s+(.*)$/); if(m){ li.push(m[1]); return; } flush(); h+=(h && !/<\/ul>$/.test(h) ? '<br>' : '')+esc(l); }); flush(); return h.replace(/^<br>/, ''); }
+/* Hotfix 22 §5.2 · Zitatblock (Zeilen mit „> “) und Codeblock (```) bekommen rechts oben 📋; Tipp kopiert genau den Inhalt (ohne „> “) */
+function f12KopieKnopf(raw, titel){ return '<button type="button" class="f12-kopie" data-f12kopie="'+esc(raw)+'" title="'+esc(titel||'Kopieren')+'">📋</button>'; }
+function f12TextHtml(text){ const lines=String(text||'').replace(/\r/g,'').split('\n'); let h='', li=[], zit=[], code=null;
+  const flush=()=>{ if(li.length){ h+='<ul>'+li.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>'; li=[]; } };
+  const flushZit=()=>{ if(zit.length){ h+='<div class="f12-zit">'+f12KopieKnopf(zit.join('\n'), 'Zitat kopieren')+zit.map(esc).join('<br>')+'</div>'; zit=[]; } };
+  const flushCode=()=>{ if(code!==null){ h+='<pre class="f12-code">'+f12KopieKnopf(code.join('\n'), 'Block kopieren')+esc(code.join('\n'))+'</pre>'; code=null; } };
+  lines.forEach(l=>{
+    if(code!==null){ if(/^\s*```/.test(l)) flushCode(); else code.push(l); return; }
+    if(/^\s*```/.test(l)){ flush(); flushZit(); code=[]; return; }
+    const z=l.match(/^\s*>\s?(.*)$/); if(z){ flush(); zit.push(z[1]); return; }
+    flushZit();
+    const m=l.match(/^\s*[-•]\s+(.*)$/); if(m){ li.push(m[1]); return; } flush(); h+=(h && !/<\/(ul|div|pre)>$/.test(h) ? '<br>' : '')+esc(l); });
+  flush(); flushZit(); flushCode(); return h.replace(/^<br>/, ''); }
+/* Hotfix 22 §5.3/§5.4 · ganze Nachricht: kleiner Knopf am Nachrichtenfuß (ein langer Druck läuft auf dem iPhone in das Kontextmenü und in den Tipp-Abfang) */
+function f12KopieGanzKnopf(text){ return '<button type="button" class="f12-kopie-ganz" data-f12kopie="'+esc(String(text||''))+'" title="Ganze Nachricht kopieren">📋 Ganze Nachricht kopieren</button>'; }
+function kopieren(text){
+  text=String(text==null ? '' : text);
+  const ok=()=>{ try{ toast('Kopiert'); haptik(6); }catch(e){} };
+  const rueckfall=()=>{
+    try{
+      const ta=document.createElement('textarea'); ta.value=text; ta.setAttribute('readonly','');
+      ta.style.cssText='position:fixed;top:0;left:0;width:2px;height:2px;opacity:0;font-size:16px';
+      document.body.appendChild(ta);
+      ta.contentEditable='true'; ta.readOnly=false; ta.focus(); ta.select();
+      try{ ta.setSelectionRange(0, text.length); }catch(e){}
+      const r=document.execCommand('copy'); document.body.removeChild(ta);
+      if(r) ok(); else toast('Kopieren nicht möglich');
+    }catch(e){ try{ toast('Kopieren nicht möglich'); }catch(x){} }
+  };
+  try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(ok, rueckfall); return; } }catch(e){}
+  rueckfall();
+}
+try{ document.addEventListener('click', e=>{ const b=e.target && e.target.closest ? e.target.closest('[data-f12kopie]') : null; if(!b) return; e.preventDefault(); e.stopPropagation(); kopieren(b.dataset.f12kopie); }, true); }catch(e){}   // Hotfix 22 §5
 function f12KartenMarkenHtml(kanal, r){
   const ids=String(r.Karten||'').split('\n').map(s=>s.trim()).filter(Boolean), marken=(r.Marken && r.Marken.karten)||[];
   const anh=r.Marken ? (r.Marken.anhaenge||[]) : f7Link(r['Anhänge']).map(x=>({ id:x.id, name:x.name }));
@@ -7778,11 +7814,11 @@ function f12KnoepfeHtml(r, opt){ const wahl=(S.meta.chatWahl||{})[r.id], aktiv=!
 function f12NachrichtHtml(kanal, r, opt){
   opt=opt||{}; const vonPascal=String(r.Von||'')==='Pascal', art=String(r.Art||''), text=f12Text(kanal, r), von=String(r.Von||'')||f12Name(kanal);
   let h='<div class="f12-n" data-mid="'+esc(r.id)+'">';
-  if(vonPascal){ const s=f12Stand(kanal, r); h+='<div class="f7-m p">'+f12TextHtml(text)+f12KartenMarkenHtml(kanal, r)+'<em class="f12-st '+s.k+'" data-f12st="'+esc(r.id)+'">'+s.html+'</em></div>'; }
+  if(vonPascal){ const s=f12Stand(kanal, r); h+='<div class="f7-m p">'+f12TextHtml(text)+f12KartenMarkenHtml(kanal, r)+'<em class="f12-st '+s.k+'" data-f12st="'+esc(r.id)+'">'+s.html+'</em>'+f12KopieGanzKnopf(text)+'</div>'; }   // Hotfix 22 §5.3
   else if(von==='Dienst' && art==='Hinweis'){ h+='<div class="f16-hw'+(/^⏸/.test(text) ? ' or' : '')+'"><span>'+esc(text.replace(/\s+/g,' ').trim())+'</span></div>'; }   // Hotfix 16 §4.6: Hinweise des Dienstes grau, mittig; ⏸ in ORANGE
   else { const kn=f12Knoepfe(text), pfKarte=(art==='Hinweis' && String(r.Anlass||'')==='Postfach' && f7Link(r.Postfach).length) ? String(f7Link(r.Postfach)[0].id) : null;   // Hotfix 15 §5.1: Hinweis zu einer Agenten-Karte
     const teil=opt.teil||f16TeilVon(kanal, String(r['Gespräch']||'')), farbe=f16Farbe(teil, von), name=f16VonName(von);   // Hotfix 16 §4.6: Rand links 3 px und Name in der Farbe des Absenders
-    h+='<div class="f7-m t f16-a'+(art==='Hinweis' ? ' hinweis' : '')+(pfKarte ? ' f15-hk' : '')+'" style="--abs:'+farbe+'"'+(pfKarte ? ' data-f15karte="'+esc(pfKarte)+'"' : '')+'><div class="f16-w">'+esc(name)+'</div>'+f12TextHtml(kn ? kn.body : text)+(pfKarte ? '<div class="f15-hko">Karte öffnen ›</div>' : '')+'<small>'+(art==='Hinweis' ? (pfKarte ? '📬 Agenten-Karte · ' : '⚠️ Hinweis · ') : esc(name)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
+    h+='<div class="f7-m t f16-a'+(art==='Hinweis' ? ' hinweis' : '')+(pfKarte ? ' f15-hk' : '')+'" style="--abs:'+farbe+'"'+(pfKarte ? ' data-f15karte="'+esc(pfKarte)+'"' : '')+'><div class="f16-w">'+esc(name)+'</div>'+f12TextHtml(kn ? kn.body : text)+f12KopieGanzKnopf(text)+(pfKarte ? '<div class="f15-hko">Karte öffnen ›</div>' : '')+'<small>'+(art==='Hinweis' ? (pfKarte ? '📬 Agenten-Karte · ' : '⚠️ Hinweis · ') : esc(name)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
     if(kn) h+=f12KnoepfeHtml(r, { optionen:kn.optionen, aktiv:opt.letzte===undefined ? true : opt.letzte });
     if(f7Link(r.Postfach).length && !pfKarte){ h+=f12KartenBloeckeHtml(kanal, r); const offen=f12PostfachOffen(); const o=f7Link(r.Postfach).map(x=>String(x.id)).filter(id=>offen.has(id)); if(o.length) h+='<div class="f15-hko f16-zk" data-f15karte="'+esc(o[0])+'">📬 Karten-Ansicht öffnen ›</div>'; } }   // Hotfix 16 §5.4: aus dem Chat zurück zur Karte
   return h+'</div>';
