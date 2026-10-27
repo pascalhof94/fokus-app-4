@@ -3096,6 +3096,7 @@ const CACHE_NAME_PREFIX = 'fokus4-';       // 4.0 · Paket 0: eigener Cache-Name
    1 · Speicher-Wrapper (§1: dünner get/set/list, DB später austauschbar)
    ══════════════════════════════════════════════════════════════════════ */
 const DB = {
+  _schutz:false,   // Hotfix 21 §A.3a: Sperre bei fehlendem meta — set/del schreiben nichts, spiegeln() sendet nichts
   _ungesichert:{},   // Hotfix 19 §A1: Schlüssel (ohne Präfix) → JSON-Text, der bei vollem Speicher nicht in localStorage passte
   // Hotfix 20 §1 · Browser-Datenbank (IndexedDB IDB_NAME, Version 1, Store „schluessel“ ohne keyPath; Schlüssel = Name ohne Präfix, Wert = JSON-Text):
   // _cache = Name → Text der IDB-Schlüssel (Arbeitsspeicher), _inIdb = Namen, die umgezogen sind, _idb = offene Datenbank, _kette = Schreibvorgänge strikt nacheinander.
@@ -3149,6 +3150,7 @@ const DB = {
   // gemerkt (§A3), die rote Leiste erscheint (§A4), einmal je Sitzung werden die Sicherungen nach FocusSystem ausgelagert (§B3).
   // Das stille Aufräumen (speicherAufraeumen(true), _quotaCleanup) und die beiden Toasts entfallen ersatzlos.
   set(key, wert){
+    if(DB._schutz) return false;   // Hotfix 21 §A.3a: angehalten — nichts schreiben, nichts vormerken
     let t; try{ t=JSON.stringify(wert); }catch(e){ console.warn('DB.set', key, e); return false; }
     if(DB._inIdb.has(key)){   // Hotfix 20 §1.3: IDB-Schlüssel — Arbeitsspeicher, Spiegel vormerken, Datenbank über die Kette; localStorage bleibt unberührt
       DB._cache.set(key, t);
@@ -3173,6 +3175,7 @@ const DB = {
     return out;
   },
   del(key){
+    if(DB._schutz) return;   // Hotfix 21 §A.3a
     if(DB._inIdb.has(key)){ DB._cache.delete(key); delete DB._ungesichert[key]; DB._idbSchreiben(key, null); try{ FSLive.vormerken(key); }catch(eS){} try{ FSLive.ungesichertMerken(); }catch(eS){} return; }   // Hotfix 20 §1.4
     try{ localStorage.removeItem(PREFIX+key); }catch(e){} delete DB._ungesichert[key]; try{ FSLive.vormerken(key); }catch(eS){} try{ FSLive.ungesichertMerken(); }catch(eS){} },   // 4.0 · Paket 3: Spiegel vormerken · Hotfix 19 §A1
   // Hotfix 19 §A1 · ungesicherte Werte nachholen: je Schlüssel setItem versuchen; Erfolg → raus aus _ungesichert. Nach jedem Lauf von sicherungenAuslagern (§B3).
@@ -3467,6 +3470,7 @@ const FSLive = (()=>{
   // ── Spiegel ───────────────────────────────────────────────────────
   function planen(){
     try{
+      if(DB._schutz) return;   // Hotfix 21 §A.4
       if(!offen.size) return;
       const jetzt=Date.now();
       if(!ersterTs) ersterTs=jetzt;
@@ -3480,6 +3484,7 @@ const FSLive = (()=>{
   }
   async function spiegeln(){
     clearTimeout(uhr); uhr=null;
+    if(DB._schutz){ anzeigen(); return; }   // Hotfix 21 §A.3a: angehalten — nichts senden
     if(laeuft || !gekoppelt() || !offen.size){ anzeigen(); return; }
     if(nichtFuehrend()){ anzeigen(); return; }   // Hotfix 17 §1.2: nicht führend → kein Aufruf; vorgemerkte Schlüssel (auch ui) bleiben stehen bis zur Übernahme
     laeuft=true; ersterTs=0;
@@ -3585,6 +3590,7 @@ const FSLive = (()=>{
 
   // ── Paket-Eingang ─────────────────────────────────────────────────
   async function paketeHolen(){
+    if(DB._schutz) return;   // Hotfix 21 §A.4
     if(paketeLaufen || !gekoppelt() || aktuellesPaket || !ichFuehre) return;   // Hotfix 14 §8.3: Pakete holt nur das führende Gerät
     try{ if(sheetOffen()) return; }catch(e){}   // ein offenes Blatt wird nicht verdrängt; das Paket wartet auf den nächsten Takt
     paketeLaufen=true;
@@ -3618,6 +3624,7 @@ const FSLive = (()=>{
 
   // ── Uhr ───────────────────────────────────────────────────────────
   function uhrMelden(erzwingen){
+    if(DB._schutz) return;   // Hotfix 21 §A.4
     try{
       if(!gekoppelt()) return;
       if(nichtFuehrend()) return;   // Hotfix 17 §1.2: nicht führend → keine Uhr-Meldung (Takt UHR_MS und alle anderen Aufrufer)
@@ -3687,6 +3694,7 @@ const FSLive = (()=>{
   // Hotfix 17 §3.2 · Führendes Gerät, Bestätigung älter als 30 s: vor dem Tipp GET /api/app/fuehrung (3 s, keine Sperre).
   // führt weiterhin → bestaetigtTs, Tipp · anderes Gerät führt → nicht führend, dann fuehrungUebernehmen(x, y) · keine Antwort → Tipp sofort, Gerät bleibt führend.
   async function fuehrungPruefen(x, y){
+    if(DB._schutz) return false;   // Hotfix 21 §A.4
     if(pruefungLaeuft) return false;
     pruefungLaeuft=true;
     let d=null;
@@ -3699,6 +3707,7 @@ const FSLive = (()=>{
     return fuehrungUebernehmen(x, y);
   }
   async function fuehrungUebernehmen(x, y){
+    if(DB._schutz) return false;   // Hotfix 21 §A.4: keine Übernahme, solange die App angehalten ist
     if(uebernahmeLaeuft) return false;
     uebernahmeLaeuft=true; sperreZeigen(true);
     const t0=Date.now(); let ok=false, neuGeladen=false, standGezeichnet=false;
@@ -3748,6 +3757,7 @@ const FSLive = (()=>{
   }
   // §9.1 · Stand holen: nur gekoppelt, nicht führend, keine Übernahme im Gang. 204 = nichts Neues; 200 = übernehmen.
   async function standHolen(sofort){
+    if(DB._schutz) return false;   // Hotfix 21 §A.4
     if(!gekoppelt() || ichFuehre || uebernahmeLaeuft || standLaeuft) return;
     standLaeuft=true;
     try{
@@ -3944,7 +3954,7 @@ const FSLive = (()=>{
       const ausgenommen=(t)=>{ try{ return !!(t && t.closest && (t.closest('#fsLiveFlaeche') || t.closest('[data-fsgeraet]') || t.closest('#speicherVoll') || t.closest('[data-speicherkarte]'))); }catch(e){ return false; } };   // Hotfix 19.1 §2.2: Leiste und Karte „💾 Speicher“ lösen keine Übernahme aus
       // Hotfix 17 §3.2 · auch auf dem führenden Gerät wird ein Tipp abgefangen, wenn die letzte Bestätigung älter als 30 s ist (Prüfung ohne Sperre);
       // nicht während einer Übernahme, einer laufenden Prüfung oder dem Nachspielen eines Tipps. Wischen und Scrollen (> 10 px) nie.
-      const abfangen=()=>gekoppelt() && !uebernahmeLaeuft && !pruefungLaeuft && !tippLaeuft && (!ichFuehre || Date.now()-bestaetigtTs>BESTAETIGT_MS);
+      const abfangen=()=>!DB._schutz && gekoppelt() && !uebernahmeLaeuft && !pruefungLaeuft && !tippLaeuft && (!ichFuehre || Date.now()-bestaetigtTs>BESTAETIGT_MS);   // Hotfix 21 §A.4: kein Tipp-Abfang, solange angehalten
       document.addEventListener('pointerdown', e=>{ if(!abfangen() || ausgenommen(e.target)) return; sx=e.clientX; sy=e.clientY; }, { capture:true });
       document.addEventListener('pointerup', e=>{
         if(!abfangen() || ausgenommen(e.target) || sx==null) return;
@@ -3996,7 +4006,8 @@ const FSLive = (()=>{
     ungesichertMerken, speicherVollMelden, sperrlisteGroesse:()=>sperrliste.size, standNr:()=>standNr,   // Hotfix 19 §A (DB.set/del/nachholen, Prüfungen)
     sicherungSenden, gleich, istBetrieb:(k)=>BETRIEB.indexOf(String(k))>=0,   // Hotfix 19 §B1/§B3
     speicherZuKlein:()=>speicherZuKlein, standHolen,   // Hotfix 19.1 §2.5 (sicherungenAuslagern), Prüfungen
-    gemeinsam:()=>GEMEINSAM.slice() };   // Hotfix 20: erlaubte Namen der Umzugsliste (GEMEINSAM außer settings)
+    gemeinsam:()=>GEMEINSAM.slice(),   // Hotfix 20: erlaubte Namen der Umzugsliste (GEMEINSAM außer settings)
+    standRoh:()=>aufruf('GET', '/api/app/stand?ab=0', undefined, { zeitgrenze:15000 }) };   // Hotfix 21 §A.3c: Stand für metaSchutz (ohne Übernahme-Logik)
 })();
 // Hotfix 20 §2.3 · FSLive.start() läuft erst nach DB.laden() (am Ende des Skripts, zusammen mit init())
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
@@ -8276,6 +8287,55 @@ f4StatusleisteRender=function(){
   }catch(e){ console.warn('Statusleiste', e); }
 };
 
+/* ══ Hotfix 21 §A · Kein Neuaufbau bei leerem meta ═══════════════════════════════════════════
+   metaFehlt(m, karten): true, wenn karten mindestens 1 Eintrag hat und m fehlt, kein Objekt ist oder migration200 nicht gesetzt ist.
+   migration200 setzt Migration 2.0.0 (ladeAlles, „if(!S.meta.migration200)“) und bleibt auf jedem Stand seit v2.0.0 erhalten.
+   metaSchutz(): Sperre DB._schutz, Vollbild-Blatt (nicht schließbar), Stand vom Mac mini holen — sofort und per Knopf. */
+function metaFehlt(m, karten){
+  if(!Array.isArray(karten) || karten.length<1) return false;
+  return !m || typeof m!=='object' || Array.isArray(m) || !m.migration200;
+}
+let _metaSchutzBlatt=null, _metaSchutzLaeuft=false;
+function metaSchutzStatus(text){ try{ const e=document.getElementById('metaSchutzStatus'); if(e) e.textContent=text; }catch(e){} }
+function metaSchutz(){
+  DB._schutz=true;
+  try{
+    if(!_metaSchutzBlatt){
+      const b=document.createElement('div'); b.id='metaSchutz';
+      b.style.cssText='position:fixed;inset:0;z-index:2147483200;background:#0d1420;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-size:16px;line-height:1.5;pointer-events:auto;touch-action:none';
+      const t=document.createElement('div'); t.id='metaSchutzText';
+      t.textContent='⚠️ Daten auf diesem Gerät unvollständig (meta fehlt). Die App hält an, damit nichts überschrieben wird.';
+      const st=document.createElement('div'); st.id='metaSchutzStatus'; st.style.cssText='margin-top:14px;font-size:14px;color:#facc15;min-height:20px';
+      const k=document.createElement('button'); k.id='metaSchutzHolen'; k.textContent='Stand vom Mac mini holen';
+      k.style.cssText='margin-top:18px;min-height:44px;padding:0 18px;border-radius:12px;border:0;background:#4ade80;color:#0d1420;font-size:16px;font-weight:700';
+      k.addEventListener('click', e=>{ try{ e.stopPropagation(); }catch(x){} metaSchutzHolen(); });
+      b.appendChild(t); b.appendChild(st); b.appendChild(k);
+      document.body.appendChild(b); _metaSchutzBlatt=b;
+    }
+  }catch(e){}
+  metaSchutzHolen();
+  return false;
+}
+// §A.3c–e · Stand holen: gekoppelt → GET /api/app/stand?ab=0; meta im Stand ohne Problem → alle Schlüssel mit DB.rohSetzen schreiben, Sperre weg, neu laden.
+// Sonst Hinweis auf betrieb/stand_wiederherstellen.js; nicht gekoppelt oder nicht erreichbar → „Mac mini nicht erreichbar“. Nichts anderes wird geschrieben.
+async function metaSchutzHolen(){
+  if(_metaSchutzLaeuft) return false;
+  _metaSchutzLaeuft=true;
+  try{
+    let gek=false; try{ gek=FSLive.gekoppelt(); }catch(e){ gek=false; }
+    if(!gek){ metaSchutzStatus('Mac mini nicht erreichbar — App bleibt angehalten.'); return false; }
+    metaSchutzStatus('Hole Stand vom Mac mini …');
+    let d=null; try{ d=await FSLive.standRoh(); }catch(e){ d=null; }
+    if(!d || !d.schluessel || typeof d.schluessel!=='object'){ metaSchutzStatus('Mac mini nicht erreichbar — App bleibt angehalten.'); return false; }
+    if(metaFehlt(d.schluessel.meta, d.schluessel.karten||DB.get('karten', []))){
+      metaSchutzStatus('Auch der Stand auf dem Mac mini ist unvollständig — Claude Code mit betrieb/stand_wiederherstellen.js beauftragen.'); return false; }
+    for(const name of Object.keys(d.schluessel)){ try{ DB.rohSetzen(name, JSON.stringify(d.schluessel[name])); }catch(e){} }
+    try{ await DB._kette; }catch(e){}   // Schreibvorgänge der Browser-Datenbank abschließen, bevor neu geladen wird
+    DB._schutz=false;
+    location.reload();
+    return true;
+  }finally{ _metaSchutzLaeuft=false; }
+}
 function ladeAlles(){
   S.karten   = DB.get('karten', []);
   // v2.5.0 · NEBENBEFUND: Die Unteraufgaben wurden erst NACH ladeAlles() in
@@ -8295,6 +8355,7 @@ function ladeAlles(){
   S.routinenGruppen = DB.get('routinenGruppen', []);   // §3 (1.6.1): Routinen-Gruppen mit Komplett-Bonus
   S.tagesketten = DB.get('tagesketten', []);           // §9.3 (v3.5.0): benannte Sichten auf den Tag
   S.belohnung= DB.get('belohnung', null);
+  if(metaFehlt(DB.get('meta', null), DB.get('karten', []))) return metaSchutz();   // Hotfix 21 §A.2: anhalten, bevor eine Migration läuft oder etwas gespeichert wird
   S.meta     = Object.assign({ wohlstand:0, seeded:false }, DB.get('meta', {}));
   try{ if(DB._umzugLog && !(S.meta.speicherUmzugLog && S.meta.speicherUmzugLog.ts===DB._umzugLog.ts)) S.meta.speicherUmzugLog=DB._umzugLog; }catch(e){}   // Hotfix 20 §2.2: letzter Umzug (lief vor ladeAlles)
   // §3 (v2.0.1): Die Kette GENAU SO, wie sie im Speicher lag — vor jeder
@@ -25772,6 +25833,7 @@ el('analyseOverlay').addEventListener('change', e=>{
    ══════════════════════════════════════════════════════════════════════ */
 function init(){
   ladeAlles();
+  if(DB._schutz) return;   // Hotfix 21 §A.4: angehalten — keine Takte, kein Rendern, nichts weiter
   try{ objBilderBeobachten(); }catch(e){}   // §5 (v3.6.0): Objektbilder überall einfärben, wo sie erscheinen
   S.unteraufgaben = DB.get('unteraufgaben', []);
   baueSuchIndex();   // A10: In-Memory-Suchindex bei App-Start
