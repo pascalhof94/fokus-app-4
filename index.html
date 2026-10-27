@@ -3183,6 +3183,81 @@ const DB = {
     }
     try{ FSLive.ungesichertMerken(); }catch(eS){}
     try{ FSLive.speicherVollMelden(); }catch(eS){}
+  },
+  // Hotfix 20 §2.1 · Beim Start: Datenbank öffnen (Zeitgrenze 5 s; onupgradeneeded legt den Store an). Kein indexedDB, Fehler oder Zeitgrenze →
+  // _inIdb bleibt leer, Toast, Ende (die App läuft wie bisher). Sonst Umzugsliste aus localStorage (fokus4_settings → speicherIdb, Bereich engine4
+  // der Sync-Tür; fehlt sie, der Standard; unerlaubte Namen fallen weg) und umziehen.
+  async laden(){
+    const weiter=(grund)=>{ try{ console.warn('DB.laden', grund); toast('Browser-Datenbank nicht verfügbar — alter Speicher'); }catch(e){} };
+    if(typeof indexedDB==='undefined' || !indexedDB){ weiter('kein indexedDB'); return; }
+    let db=null;
+    try{
+      db=await new Promise((res, rej)=>{
+        let fertig=false;
+        const stop=setTimeout(()=>{ if(fertig) return; fertig=true; rej(new Error('Zeitgrenze')); }, 5000);
+        let req; try{ req=indexedDB.open(IDB_NAME, 1); }catch(e){ clearTimeout(stop); fertig=true; rej(e); return; }
+        req.onupgradeneeded=()=>{ try{ const d=req.result; if(!d.objectStoreNames.contains('schluessel')) d.createObjectStore('schluessel'); }catch(e){} };
+        req.onsuccess=()=>{ if(fertig){ try{ req.result.close(); }catch(e){} return; } fertig=true; clearTimeout(stop); res(req.result); };
+        req.onerror=()=>{ if(fertig) return; fertig=true; clearTimeout(stop); rej(req.error||new Error('open')); };
+        req.onblocked=()=>{};
+      });
+    }catch(e){ weiter(e && e.message); return; }
+    DB._idb=db;
+    try{ db.onversionchange=()=>{ try{ db.close(); }catch(e){} DB._idb=null; }; }catch(e){}
+    let liste=null;
+    try{ const st=JSON.parse(localStorage.getItem(PREFIX+'settings')||'null'); if(st && Array.isArray(st.speicherIdb)) liste=st.speicherIdb; }catch(e){}
+    if(!liste) liste=DB.UMZUG_STANDARD.slice();
+    await DB.umziehen(liste);
+  },
+  // Hotfix 20 §2.2 · Umzug je Name. Hin (in der Liste, nicht in _inIdb): steht im Store schon ein Eintrag und in localStorage keiner → Store gilt;
+  // sonst Text aus _ungesichert (Vorrang) bzw. localStorage in den Store, zurücklesen, nur bei Zeichengleichheit übernehmen und lokal entfernen;
+  // fehlt der Wert überall → leer in _inIdb. Zurück (in _inIdb, nicht mehr in der Liste): Text nach localStorage, zeichengleich zurückgelesen →
+  // Eintrag im Store löschen; scheitert localStorage → bleibt in IDB. Ergebnis { umgezogen, zurueck, fehler }, dazu S.meta.speicherUmzugLog (sobald S.meta geladen ist).
+  async umziehen(liste){
+    const erg={ umgezogen:[], zurueck:[], fehler:[] }; let frei=0;
+    if(!DB._idb) return erg;
+    liste=(Array.isArray(liste) ? liste : []).map(String).filter(DB.umzugErlaubt);
+    const lesen=(name)=>new Promise(res=>{ try{ const rq=DB._idb.transaction('schluessel', 'readonly').objectStore('schluessel').get(name);
+      rq.onsuccess=()=>res(rq.result===undefined ? null : String(rq.result)); rq.onerror=()=>res(null); }catch(e){ res(null); } });
+    const schreiben=(name, t)=>new Promise(res=>{ try{ const tx=DB._idb.transaction('schluessel', 'readwrite'), st=tx.objectStore('schluessel');
+      if(t===null) st.delete(name); else st.put(t, name); tx.oncomplete=()=>res(true); tx.onerror=()=>res(false); tx.onabort=()=>res(false); }catch(e){ res(false); } });
+    await DB._kette.catch(()=>{});   // laufende Schreibvorgänge zuerst
+    for(const name of liste){
+      if(DB._inIdb.has(name)) continue;
+      try{
+        const imStore=await lesen(name);
+        let lokal=null; try{ lokal=localStorage.getItem(PREFIX+name); }catch(e){}
+        const ung=DB._ungesichert[name];
+        if(imStore!==null && lokal===null && ung===undefined){ DB._cache.set(name, imStore); DB._inIdb.add(name); continue; }
+        const t=(ung!==undefined) ? ung : lokal;
+        if(t===null || t===undefined){ DB._inIdb.add(name); continue; }
+        await schreiben(name, t);
+        const zurueck=await lesen(name);
+        if(zurueck===t){
+          DB._cache.set(name, t); DB._inIdb.add(name);
+          try{ localStorage.removeItem(PREFIX+name); }catch(e){}
+          delete DB._ungesichert[name];
+          erg.umgezogen.push(name); frei+=(lokal ? lokal.length : 0);
+        } else erg.fehler.push(name);
+      }catch(e){ erg.fehler.push(name); }
+    }
+    for(const name of Array.from(DB._inIdb)){
+      if(liste.indexOf(name)>=0) continue;
+      try{
+        const t=DB._cache.get(name);
+        if(t===undefined){ await schreiben(name, null); DB._inIdb.delete(name); erg.zurueck.push(name); continue; }
+        let ok=false;
+        try{ localStorage.setItem(PREFIX+name, t); ok=(localStorage.getItem(PREFIX+name)===t); }catch(e){ ok=false; }
+        if(ok){ await schreiben(name, null); DB._cache.delete(name); DB._inIdb.delete(name); erg.zurueck.push(name); }
+        else { try{ localStorage.removeItem(PREFIX+name); }catch(e){} erg.fehler.push(name); }
+      }catch(e){ erg.fehler.push(name); }
+    }
+    try{ FSLive.ungesichertMerken(); }catch(e){} try{ FSLive.speicherVollMelden(); }catch(e){}
+    if(erg.fehler.length){ try{ toast('Umzug unvollständig: '+erg.fehler.join(', ')); }catch(e){} }
+    else if(erg.umgezogen.length){ try{ toast('🗄 Umgezogen: '+erg.umgezogen.join(', ')+' · '+Math.round(frei/1024)+' KB frei'); }catch(e){} }
+    DB._umzugLog={ ts:new Date().toISOString(), umgezogen:erg.umgezogen.slice(), zurueck:erg.zurueck.slice(), fehler:erg.fehler.slice() };
+    try{ if(typeof S!=='undefined' && S && S.meta){ S.meta.speicherUmzugLog=DB._umzugLog; saveMeta(); } }catch(e){}
+    return erg;
   }
 };
 /* ══════════════════════════════════════════════════════════════════════
@@ -3327,7 +3402,7 @@ const FSLive = (()=>{
         const fehlt=[];
         for(const name of Array.from(sperrliste)){
           if(!Object.prototype.hasOwnProperty.call(d.schluessel, name)){ sperrliste.delete(name); continue; }   // kein Stand dazu im Spiegel (z. B. ui): nichts zu schreiben, lokaler Wert bleibt
-          try{ localStorage.setItem(PREFIX+name, JSON.stringify(d.schluessel[name])); sperrliste.delete(name); }catch(e){ fehlt.push(name); }
+          try{ DB.rohSetzen(name, JSON.stringify(d.schluessel[name])); sperrliste.delete(name); }catch(e){ fehlt.push(name); }   // Hotfix 20 §2.5
         }
         if(!fehlt.length){ try{ localStorage.removeItem(K.ungesichert); }catch(e){} sperrliste.clear(); location.reload(); return true; }
         if(versuch===0){ try{ await sicherungenAuslagern({ auto:true }); }catch(e){} continue; }
@@ -3919,7 +3994,7 @@ const FSLive = (()=>{
     speicherZuKlein:()=>speicherZuKlein, standHolen,   // Hotfix 19.1 §2.5 (sicherungenAuslagern), Prüfungen
     gemeinsam:()=>GEMEINSAM.slice() };   // Hotfix 20: erlaubte Namen der Umzugsliste (GEMEINSAM außer settings)
 })();
-try{ FSLive.start(); }catch(e){}
+// Hotfix 20 §2.3 · FSLive.start() läuft erst nach DB.laden() (am Ende des Skripts, zusammen mit init())
 /* Alt-Speicher: strikt read-only (§10 „Alt-Keys bleiben unangetastet") */
 
 /* ══ (v1.13.4) · Speicher-Diagnose & -Aufräumen ══════════════════════════
@@ -4116,6 +4191,7 @@ const DEFAULT_SETTINGS = {
   bruecke: { onramp:100, ziel:100, abzug:150, zielMin:10, fristMin:15 },   // 5.5 Onramp-Brücke
   abhakbonusAbSollMin: 15,     // 5.5: Abhakbonus nur ab 15 Min Soll
   abzugOhneGrund: 50,          // 5.6: Aufgabe oder Muss-Routine ohne Grund geschoben
+  speicherIdb: ['intraday','historie'],   // Hotfix 20 §2: Umzugsliste (Browser-Datenbank), erlaubt: GEMEINSAM außer settings
   chatAgentenMax: 5,           // Hotfix 16 §4.4: höchstens so viele Agenten-Antworten je Gespräch seit Pascals letzter Nachricht (liest der Dienst aus dem Spiegel)
   wochenserieBonus: 300,       // 5.7: DFM-Routinen werktags bzw. am Wochenende komplett
   positionStaffel: [30, 10, 0],   // 5.4: Position 1–5 je 30 · 6–8 je 10 · ab 9 0
@@ -4307,7 +4383,8 @@ const EINST_SCHEMA={
     positionStaffel:{p:'positionStaffel', t:'zahlen'}, rangSchwellen:{p:'rangSchwellen', t:'zahlen'}, rangTage:Z('rangTage',{min:7, max:120}), spitzenTage:Z('spitzenTage',{min:1, max:28}),
     rangAufstiegTage:Z('rangAufstiegTage',{min:1, max:60}), rangAbstiegTage:Z('rangAbstiegTage',{min:1, max:120}), outfitStufen:Z('outfitStufen',{min:3, max:20}),
     outfitPlus:Z('outfitPlus',{min:0, max:10}), outfitMinus:Z('outfitMinus',{min:0, max:10}), outfitLeistungPunkte:Z('outfitLeistungPunkte',{min:1}), outfitErholungPunkte:Z('outfitErholungPunkte',{min:1}), shopPreise:{p:'shopPreise', t:'zahlen'}, shopEuro:{p:'shopEuro', t:'tabelle'}, shopPreisMin:Z('shopPreisMin',{min:0}), shopFreiAb:{p:'shopFreiAb', t:'tabelle'},
-    rangSperre:{p:'rangSperre', t:'bool'}, grundwoche:{p:'grundwoche', t:'tabelle'}, zielsteuerungSchritt:Z('zielsteuerungSchritt',{min:0}), postfachPunkte:{p:'postfachPunkte', t:'tabelle'} }
+    rangSperre:{p:'rangSperre', t:'bool'}, grundwoche:{p:'grundwoche', t:'tabelle'}, zielsteuerungSchritt:Z('zielsteuerungSchritt',{min:0}), postfachPunkte:{p:'postfachPunkte', t:'tabelle'},
+    speicherIdb:{p:'speicherIdb', t:'speicherIdb'} }   // Hotfix 20 §2.4: Umzugsliste (Liste von Texten, nur erlaubte Schlüssel)
 };
 const STAT_SCHEMA={
   module:{ reihenfolge:{p:'statistik.reihenfolge', t:'module'}, ausgeblendet:{p:'statistik.ausgeblendet', t:'moduleAlle'} },
@@ -4387,6 +4464,11 @@ function schemaPruefen(f, roh){
     if(!Array.isArray(roh) || !roh.length || !roh.every(x=>Number.isFinite(Number(x)))) return { fehler:'Liste von Zahlen erwartet' };
     return { ok:true, anzeige:roh, schritte:[[f.p, roh.map(Number)]] };
   }
+  if(t==='speicherIdb'){   // Hotfix 20 §2.4: Liste von Texten, jeder ein erlaubter Schlüssel (GEMEINSAM außer settings)
+    if(!Array.isArray(roh) || !roh.every(x=>typeof x==='string')) return { fehler:'Liste von Texten erwartet' };
+    const falsch=roh.filter(x=>!DB.umzugErlaubt(x)); if(falsch.length) return { fehler:'speicherIdb: unbekannter oder nicht erlaubter Schlüssel '+falsch[0] };
+    const v=roh.filter((x,i)=>roh.indexOf(x)===i); return { ok:true, anzeige:v, schritte:[[f.p, v]] };
+  }
   if(t==='module' || t==='moduleAlle'){
     const erlaubt=(t==='module' ? STAT_MODULE : STAT_MODULE.concat(STAT_DETAIL)).map(x=>x[0]);
     if(!Array.isArray(roh)) return { fehler:'Liste von Modul-Namen erwartet ('+erlaubt.join(', ')+')' };
@@ -4457,6 +4539,8 @@ function syncTuerAnwenden(vs){
   if(vs.statistik && vs.statistik.aenderungen.some(a=>a.bereich==='zeitfenster')) S.ui.analyseZeitraum=null;   // das Paket setzt den Standard — die gemerkte Wahl faellt
   saveSettings(); saveMeta(); saveUi();
   try{ e4EinstellungsHistorie(teile); }catch(e){}   // 4.0 · Paket 4 (5.11): Eintrag in der Einstellungs-Historie
+  // Hotfix 20 §2.4 · speicherIdb geändert → sofort umziehen (ohne Neuladen), danach ladeAlles(); renderAlles();
+  try{ if(teile.some(t=>t.aenderungen.some(a=>a.feld==='speicherIdb'))) DB.umziehen(S.settings.speicherIdb).catch(()=>null).then(()=>{ try{ ladeAlles(); renderAlles(); }catch(e){} }); }catch(e){}
   return n;
 }
 function protokollEintrag(art, grund, zeilen, extra){
@@ -8201,6 +8285,7 @@ function ladeAlles(){
   S.tagesketten = DB.get('tagesketten', []);           // §9.3 (v3.5.0): benannte Sichten auf den Tag
   S.belohnung= DB.get('belohnung', null);
   S.meta     = Object.assign({ wohlstand:0, seeded:false }, DB.get('meta', {}));
+  try{ if(DB._umzugLog && !(S.meta.speicherUmzugLog && S.meta.speicherUmzugLog.ts===DB._umzugLog.ts)) S.meta.speicherUmzugLog=DB._umzugLog; }catch(e){}   // Hotfix 20 §2.2: letzter Umzug (lief vor ladeAlles)
   // §3 (v2.0.1): Die Kette GENAU SO, wie sie im Speicher lag — vor jeder
   // Migration. Nötig, weil die alte migration160 selbst tagesKette() ruft
   // und damit die Auto-Befüllung auslöst; ein Schnappschuss später im
@@ -25949,7 +26034,8 @@ function zeigeMigration1110(){
   openSheet('Update v1.11.0 — Der Tag kleidet dich', h, '<button class="btn prim" data-close="1">Los</button>');
   S.meta.rang1110Gezeigt=true; saveMeta();
 }
-init();
+// Hotfix 20 §2.3 · erst die Browser-Datenbank öffnen und umziehen, dann FSLive und die App starten
+DB.laden().catch(()=>{}).then(()=>{ try{ FSLive.start(); }catch(e){} init(); });
 
 /* ── Offline-PWA (§12) ────────────────────────────────────────────────
    4.0 · Paket 0: eigener network-first Service Worker (sw.js) mit eigenem
