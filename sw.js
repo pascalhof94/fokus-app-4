@@ -6,7 +6,7 @@
    fasst dieser Worker nie an. */
 'use strict';
 
-const CACHE = 'fokus4-v4.0.0-7';   // Hotfix 20.2 · Build 46: Cache-Name hochgezählt
+const CACHE = 'fokus4-v4.0.0-8';   // Hotfix 21 · Build 47: Cache-Name hochgezählt
 const ASSETS = [
   './',
   './index.html',
