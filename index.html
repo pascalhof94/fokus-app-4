@@ -3506,6 +3506,11 @@ const FSLive = (()=>{
       if(ichFuehre){ bestaetigtTs=Date.now(); letzteSpiegelung=zeitText; standZeitSetzen(zeitText); }   // Hotfix 17 §3.1, §4.2
     }catch(e){
       if(e && e.status===409) fuehrungVerloren(e.antwort);   // Hotfix 14 §8.2: ein anderes Gerät führt — kein Fehlerzustand
+      else if(e && e.status===422 && e.antwort && e.antwort.fehler==='Schrumpf abgelehnt'){   // Hotfix 21 §C: Dienst lehnt stark geschrumpfte Daten ab — rot, Schlüssel bleibt in offen, kein schnelleres Wiederholen
+        const s=String(e.antwort.schluessel||'');
+        gescheitert=true; fehlerText='Schrumpf abgelehnt: '+s;
+        try{ toast('FocusSystem hat stark geschrumpfte Daten abgelehnt ('+s+') — auf dem Mac mini ist nichts verloren'); }catch(x){}
+      }
       else { gescheitert=true; fehlerText=String((e && e.message) || 'Fehler'); }
     }finally{
       laeuft=false;
