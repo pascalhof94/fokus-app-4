@@ -132,7 +132,7 @@ var altKarten=JSON.stringify([{ id:'alt-uebernahme' }]);
 localStorage.setItem(PREFIX+'karten', altKarten); localStorage.removeItem(PREFIX+'stapel');
 localStorage.setItem(PREFIX+'karten_bak1130', JSON.stringify([{ id:'bak' }]));
 _vollSchluessel=PREFIX+'meta'; _reloads=0; _toasts.length=0;
-neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:77, schluessel:{ karten:[{ id:'neu-uebernahme' }], stapel:[{ id:'s1' }], meta:{ x:1 } } } }, 'POST /api/app/fuehrung':fuehrungIch, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:77, schluessel:{ karten:[{ id:'neu-uebernahme' }], stapel:[{ id:'s1' }], meta:{ migration200:true, x:1 } } } }, 'POST /api/app/fuehrung':fuehrungIch, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
 var nr0=FSLive.standNr();
 tippen(100, 200); drain(); timerLaufen(); drain(200); timerLaufen(); drain(200);
 pruef('§A6.3 meta passt nicht: karten wieder auf alt, stapel (war null) wieder entfernt, standNr unverändert, Toast', localStorage.getItem(PREFIX+'karten')===altKarten && localStorage.getItem(PREFIX+'stapel')===null && FSLive.standNr()===nr0 && _toasts.indexOf('Übernahme passt nicht in den Speicher — Sicherungen werden ausgelagert')>=0, JSON.stringify([localStorage.getItem(PREFIX+'karten'), localStorage.getItem(PREFIX+'stapel'), nr0, FSLive.standNr(), _toasts]));
@@ -204,7 +204,7 @@ var erg5=speicherAufraeumen(true);
 pruef('§B4 speicherAufraeumen: Sicherung bleibt, geloescht leer, Protokoll wie bisher', localStorage.getItem(PREFIX+'karten_bak1130')==='[]' && erg5.geloescht.length===0 && S.meta.speicherAufraeumLog.geloescht.length===0 && typeof S.meta.speicherAufraeumLog.histTageWeg==='number');
 localStorage.removeItem(PREFIX+'karten_bak1130');
 pruef('§B4 Karte „💾 Speicher“ und Knopf 🧹 (Quelltext)', (function(){ var s=readFile('index.html');
-  return s.indexOf('Mit 🗄 markierte Daten liegen in der Browser-Datenbank (viel Platz), der Rest im Browser-Speicher (~5 MB). Welche Daten umziehen, steht in der Einstellung Speicher-Umzug. Aufräumen lagert Sicherungen nach FocusSystem aus und kappt die Kettenhistorie auf ')>=0 &&   // Hotfix 20 §4.4: neue Beschreibung
+  return s.indexOf('Mit 🗄 markierte Daten liegen in der Browser-Datenbank (viel Platz), der Rest im Browser-Speicher (~2,5 MB, mit der alten App geteilt). Welche Daten umziehen, steht in der Einstellung Speicher-Umzug. Aufräumen lagert Sicherungen nach FocusSystem aus und kappt die Kettenhistorie auf ')>=0 &&   // Hotfix 20 §4.4: neue Beschreibung
     s.indexOf("' Sicherung(en) auslagerbar.</p>'")>=0 && s.indexOf('alte Sicherung(en) löschbar')<0 &&
     s.indexOf("' Sicherung(en) werden nach FocusSystem ausgelagert und hier erst entfernt, wenn FocusSystem sie geprüft zurückgegeben hat:\\n'")>=0 &&
     s.indexOf("sicherungenAuslagern({ auto:false })")>=0 && s.indexOf("<span>Ausgelagert ('")>=0 && s.indexOf("Nicht gespeichert: '")>=0; })());
@@ -221,7 +221,7 @@ localStorage.setItem(PREFIX+'fslive_ersteUebernahme', '1');
 speicherBaks().forEach(function(k){ localStorage.removeItem(PREFIX+k); });
 var altK=JSON.stringify([{ id:'alt-191' }]);
 localStorage.setItem(PREFIX+'karten', altK);
-var STAND191={ json:{ fuehrend:'GERAET-B', stand_nr:80, schluessel:{ karten:[{ id:'neu-191' }], meta:{ x:1 } } } };
+var STAND191={ json:{ fuehrend:'GERAET-B', stand_nr:80, schluessel:{ karten:[{ id:'neu-191' }], meta:{ migration200:true, x:1 } } } };
 function postFuehrung(opt){ return opt.body ? { json:{ fuehrend:JSON.parse(opt.body).geraet_id, stand_nr:80 } } : fuehrungIch(); }
 _vollSchluessel=PREFIX+'meta'; _toasts.length=0; geklickt.length=0;
 neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':STAND191, 'POST /api/app/fuehrung':postFuehrung, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
@@ -289,5 +289,70 @@ pruef('20.2 §E5 Quelltext: Speicher-Karte zeigt „Andere Daten auf dieser Adre
 
 pruef('20.2 §E6 Quelltext: umziehen ruft kein saveMeta() mehr auf (überschrieb beim Start das echte meta mit dem Startwert)', (function(){ var s=readFile('index.html'); var a=s.indexOf('async umziehen(liste){'), b=s.indexOf('async laden(){'); var u=s.slice(a, s.indexOf('\n  }\n', a)); return a>0 && u.indexOf('saveMeta();')<0 && u.indexOf('DB._umzugLog={')>=0; })());
 
-pruef('§C.1 App 4.1.11 · Build 2026-10-27-46 · sw.js Cache hochgezählt (seit Hotfix 20.2)', APP_VERSION==='4.1.11' && APP_BUILD==='2026-10-27-46' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-7'")>=0, APP_VERSION+' / '+APP_BUILD);
+// ══ Hotfix 21 · §F Schutz bei leerem meta, Rückroll ohne Entfernen, 422 Schrumpf, Münzen-Korrektur, Speicher-Karte ══
+// §A.1 metaFehlt
+pruef('21 §A.1 metaFehlt: leer → true · ohne migration200 → true · vollständig → false · ohne Karten → false', metaFehlt(null, [{id:'k'}])===true && metaFehlt({ x:1 }, [{id:'k'}])===true && metaFehlt({ migration200:true }, [{id:'k'}])===false && metaFehlt(null, [])===false && metaFehlt(undefined, null)===false && metaFehlt('text', [{id:'k'}])===true && metaFehlt([], [{id:'k'}])===true);
+// §A.2/§A.3 ladeAlles mit leerem meta: anhalten, keine Migration, kein DB.set, Blatt sichtbar, Status
+var metaAltText=JSON.stringify(S.meta), kartenAltText=localStorage.getItem(PREFIX+'karten');
+var _gebi=document.getElementById; document.getElementById=function(id){ var e=element(id); return e||_gebi.call(document, id); };
+_erzeugt=[]; _angehaengt=[]; document.createElement=function(){ var e=dummyEl(); _erzeugt.push(e); return e; }; document.body.appendChild=function(e){ _angehaengt.push(e); };
+localStorage.setItem(PREFIX+'karten', JSON.stringify([{ id:'k-schutz' }])); localStorage.removeItem(PREFIX+'meta'); delete DB._ungesichert.meta;
+DB._schutz=false; _antworten={ 'GET /api/app/stand':{ offline:true } }; _aufrufe=[]; _reloads=0; _toasts.length=0;
+var migrationsLogVorher=(S.meta.migration200Log||{}).ts||null;
+var rLade=ladeAlles(); drain(100);
+pruef('21 §A.2 ladeAlles mit leerem meta kehrt zurück: Sperre gesetzt, keine Migration gelaufen, meta nicht geschrieben, S.meta unverändert', rLade===false && DB._schutz===true && localStorage.getItem(PREFIX+'meta')===null && JSON.stringify(S.meta)===metaAltText, JSON.stringify([rLade, DB._schutz, localStorage.getItem(PREFIX+'meta')===null]));
+pruef('21 §A.3b Blatt: Text genau, Knopf „Stand vom Mac mini holen“, Status „Mac mini nicht erreichbar — App bleibt angehalten.“ (Dienst offline)', !!element('metaSchutz') && element('metaSchutzText').textContent==='⚠️ Daten auf diesem Gerät unvollständig (meta fehlt). Die App hält an, damit nichts überschrieben wird.' && element('metaSchutzHolen').textContent==='Stand vom Mac mini holen' && element('metaSchutzStatus').textContent==='Mac mini nicht erreichbar — App bleibt angehalten.' && aufrufe('GET', '/api/app/stand?ab=0').length===1, JSON.stringify([!!element('metaSchutz'), element('metaSchutzStatus') && element('metaSchutzStatus').textContent, _aufrufe.map(function(a){ return a.methode+' '+a.pfad; })]));
+pruef('21 §A.3a Sperre: DB.set false und schreibt nichts, DB.del entfernt nichts, spiegeln() sendet nichts', DB.set('karten', [])===false && localStorage.getItem(PREFIX+'karten')===JSON.stringify([{ id:'k-schutz' }]) && (DB.del('karten'), localStorage.getItem(PREFIX+'karten')===JSON.stringify([{ id:'k-schutz' }])) && (function(){ _aufrufe=[]; FSLive.spiegeln(); drain(); return aufrufe('PUT', '/api/spiegel/').length===0 && aufrufe('DELETE', '/api/spiegel/').length===0; })());
+// §A.3d Stand mit leerem meta → angehalten, Hinweis
+_antworten={ 'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:90, schluessel:{ karten:[{ id:'k-mini' }], meta:{ x:1 } } } } }; _aufrufe=[];   // meta ohne migration200 = unvollständig
+metaSchutzHolen(); drain(300);
+pruef('21 §A.3d Stand auch unvollständig: Hinweis auf stand_wiederherstellen.js, Sperre bleibt, nichts geschrieben', element('metaSchutzStatus').textContent==='Auch der Stand auf dem Mac mini ist unvollständig — Claude Code mit betrieb/stand_wiederherstellen.js beauftragen.' && DB._schutz===true && localStorage.getItem(PREFIX+'meta')===null && localStorage.getItem(PREFIX+'karten')===JSON.stringify([{ id:'k-schutz' }]) && _reloads===0, JSON.stringify([element('metaSchutzStatus').textContent, _metaSchutzLaeuft, _aufrufe.map(function(a){ return a.methode+' '+a.pfad; }), DB._schutz]));
+// §A.3c Stand mit gutem meta → geschrieben, Sperre weg, Neuladen
+_antworten={ 'GET /api/app/stand':{ json:{ fuehrend:'GERAET-B', stand_nr:91, schluessel:{ karten:[{ id:'k-mini' }], meta:{ migration200:true, x:2 }, tag:{ datum:'2026-10-27' } } } } }; _aufrufe=[]; _reloads=0;
+metaSchutzHolen(); drain(100);
+pruef('21 §A.3c Stand gut: alle Schlüssel mit rohSetzen geschrieben, Sperre weg, Neuladen', _reloads===1 && DB._schutz===false && JSON.parse(localStorage.getItem(PREFIX+'meta')||'{}').x===2 && JSON.parse(localStorage.getItem(PREFIX+'karten'))[0].id==='k-mini' && JSON.parse(localStorage.getItem(PREFIX+'tag')||'{}').datum==='2026-10-27', JSON.stringify([_reloads, DB._schutz, localStorage.getItem(PREFIX+'meta')]));
+pruef('21 §A.4 Quelltext: init() kehrt bei DB._schutz zurück; planen/spiegeln/paketeHolen/uhrMelden/fuehrungPruefen/fuehrungUebernehmen/standHolen prüfen DB._schutz; Tipp-Abfang nicht bei Sperre', (function(){ var s=readFile('index.html'); return s.indexOf("  ladeAlles();\n  if(DB._schutz) return;")>=0 && (s.match(/if\(DB\._schutz\) return/g)||[]).length>=7 && s.indexOf("const abfangen=()=>!DB._schutz && gekoppelt()")>=0; })());
+// zurück zum vorigen Stand
+document.getElementById=_gebi; localStorage.setItem(PREFIX+'meta', metaAltText); if(kartenAltText===null) localStorage.removeItem(PREFIX+'karten'); else localStorage.setItem(PREFIX+'karten', kartenAltText); localStorage.removeItem(PREFIX+'tag');
+DB._schutz=false; ladeAlles();
+// §B Rückroll ohne Entfernen: zweiter Schlüssel passt nicht, Zurückschreiben des ersten scheitert → Wert in _ungesichert, nichts entfernt
+localStorage.setItem(PREFIX+'fslive_ersteUebernahme', '1');
+speicherBaks().forEach(function(k){ localStorage.removeItem(PREFIX+k); });
+var altRb=JSON.stringify([{ id:'alt-rb' }]); localStorage.setItem(PREFIX+'karten', altRb); localStorage.removeItem(PREFIX+'stapel'); delete DB._ungesichert.karten; delete DB._ungesichert.stapel;
+var _erlaubt=2, _setVorher=localStorage.setItem;
+localStorage.setItem=function(k, v){ if(k===PREFIX+'karten' || k===PREFIX+'stapel' || k===PREFIX+'meta'){ if(_erlaubt>0){ _erlaubt--; return _setItemEcht.call(localStorage, k, v); } throw new Error('QuotaExceededError'); } return _setVorher.call(localStorage, k, v); };
+var STAND21={ json:{ fuehrend:'GERAET-B', stand_nr:95, schluessel:{ karten:[{ id:'neu-rb' }], stapel:[{ id:'s-rb' }], meta:{ migration200:true, x:3 } } } };
+_toasts.length=0; geklickt.length=0;
+neuStart({ 'GET /api/app/fuehrung':FUEHRUNG_B, 'GET /api/app/stand':STAND21, 'POST /api/app/fuehrung':postFuehrung, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+document.elementFromPoint=knopfBei;
+_aufrufe=[]; tippen(100, 200); drain(); timerLaufen(); drain(200); timerLaufen(); drain(200);
+pruef('21 §B Rückroll: karten nicht entfernt (neuer Wert bleibt im Speicher), alter Wert in _ungesichert, Liste gemerkt, Leiste; stapel (war null) entfernt', localStorage.getItem(PREFIX+'karten')===JSON.stringify([{ id:'neu-rb' }]) && DB._ungesichert.karten===altRb && JSON.parse(localStorage.getItem(PREFIX+'fslive_ungesichert')||'[]').indexOf('karten')>=0 && localStorage.getItem(PREFIX+'stapel')===null && leiste().style.display==='block', JSON.stringify([localStorage.getItem(PREFIX+'karten'), DB._ungesichert.karten, localStorage.getItem(PREFIX+'fslive_ungesichert'), localStorage.getItem(PREFIX+'stapel')]));
+pruef('21 §B Quelltext: kein rohEntfernen vor dem Zurückschreiben; Ausnahme → _ungesichert, ungesichertMerken, speicherVollMelden', (function(){ var s=readFile('index.html'); var a=s.indexOf('if(passtNicht){'); var u=s.slice(a, a+900); return u.indexOf('for(const name of geschrieben){ try{ DB.rohEntfernen(name); }catch(e){} }')<0 && u.indexOf("if(alt[name]===null){ try{ DB.rohEntfernen(name); }catch(e){} continue; }")>=0 && u.indexOf('catch(e){ DB._ungesichert[name]=alt[name]; try{ ungesichertMerken(); }catch(x){} try{ speicherVollMelden(); }catch(x){} }')>=0; })());
+localStorage.setItem=_setVorher; delete DB._ungesichert.karten; localStorage.setItem(PREFIX+'karten', altRb); FSLive.ungesichertMerken(); FSLive.speicherVollMelden();
+// §C 422 Schrumpf abgelehnt → rot, Schlüssel bleibt in offen, Toast, kein schnelleres Wiederholen
+neuStart({ 'GET /api/app/fuehrung':fuehrungIch, 'PUT /api/spiegel/fokus4_karten':{ status:422, json:{ fehler:'Schrumpf abgelehnt', schluessel:'fokus4_karten', alt:368, neu:3 } }, 'PUT /api/spiegel/':OK, 'DELETE /api/spiegel/':OK, 'GET /api/app/pakete':LEER, 'PUT /api/app/uhr':UHR, 'POST /api/db/':DBLEER });
+_toasts.length=0; _aufrufe=[]; FSLive.vormerken('karten'); _timer=[]; FSLive.spiegeln(); drain(100);   // _timer leer: der von vormerken geplante Takt zählt nicht als Wiederholung
+pruef('21 §C 422 Schrumpf abgelehnt: Zustand rot, karten bleibt ausstehend, Toast mit Schlüssel', FSLive.ichFuehre()===true && FSLive.zustand()==='rot' && ausstehend().indexOf('karten')>=0 && _toasts.indexOf('FocusSystem hat stark geschrumpfte Daten abgelehnt (fokus4_karten) — auf dem Mac mini ist nichts verloren')>=0, JSON.stringify([FSLive.ichFuehre(), FSLive.zustand(), ausstehend(), _toasts]));
+var timerNachFehler=(_timer||[]).length; timerLaufen(); drain(100);
+pruef('21 §C kein schnelleres Wiederholen: nach dem Fehler nur der Abbruch-Timer von aufruf(), nach den Timern kein zweiter PUT von selbst', timerNachFehler<=1 && aufrufe('PUT', '/api/spiegel/fokus4_karten').length===1, JSON.stringify([timerNachFehler, aufrufe('PUT', '/api/spiegel/fokus4_karten').length]));
+// §D Münzen-Korrektur per Paket
+var mG0=num(S.meta.muenzenGesamt), rp0=S.meta.rangPunkte, ws0=S.meta.wohlstand;
+S.meta.korrekturProtokoll=(S.meta.korrekturProtokoll||[]).filter(function(e){ return !(e && e.art==='muenzen'); });
+var pkM=JSON.stringify({ appVersion:'4.1.12', karten:[], korrekturen:[{ id:'muenzen-2026-10-27-wiederherstellung', muenzen:14225, grund:'Tagesgutschrift 26.10.2026 nach Wiederherstellung vom 27.10.2026 (Hotfix 20) nicht gebucht' }] });
+var rM1=syncImport(pkM);
+pruef('21 §D.3 Münzen-Korrektur gutgeschrieben: muenzenGesamt +14.225, Protokoll { art:muenzen, id, muenzen, grund }, rangPunkte und wohlstand unverändert', !rM1.fehler && rM1.muenzenKorrekturen.length===1 && num(S.meta.muenzenGesamt)===mG0+14225 && S.meta.rangPunkte===rp0 && S.meta.wohlstand===ws0 && S.meta.korrekturProtokoll.some(function(e){ return e.art==='muenzen' && e.id==='muenzen-2026-10-27-wiederherstellung' && e.muenzen===14225 && !!e.ts && /Tagesgutschrift/.test(e.grund); }), JSON.stringify([rM1.fehler, rM1.muenzenKorrekturen, num(S.meta.muenzenGesamt)-mG0]));
+pruef('21 §D.4 Ergebnis-Zeile „🪙 Münzen-Korrektur +14.225 · <grund>“', /🪙 Münzen-Korrektur \+14[. ]225 · Tagesgutschrift/.test(importErgebnisHtml(rM1)), importErgebnisHtml(rM1));
+var rM2=syncImport(pkM);
+pruef('21 §D.2 zweites Mal: übersprungen „bereits angewendet“, Münzen unverändert', rM2.uebersprungen.some(function(u){ return u.grund==='bereits angewendet'; }) && num(S.meta.muenzenGesamt)===mG0+14225 && rM2.muenzenKorrekturen.length===0, JSON.stringify(rM2.uebersprungen));
+var rM3=syncImport(JSON.stringify({ appVersion:'4.1.12', karten:[], korrekturen:[{ id:'m-ohne-grund', muenzen:5 }, { id:'m-zu-gross', muenzen:200000, grund:'x' }, { muenzen:5, grund:'ohne id' }, { id:'m-bruch', muenzen:1.5, grund:'x' }] }));
+pruef('21 §D.1 ohne Grund, über 100.000, ohne id, keine ganze Zahl: je übersprungen mit Grund, nichts gutgeschrieben', rM3.uebersprungen.length===4 && rM3.uebersprungen.some(function(u){ return /grund fehlt/.test(u.grund); }) && rM3.uebersprungen.some(function(u){ return /100\.000/.test(u.grund); }) && rM3.uebersprungen.some(function(u){ return /id fehlt/.test(u.grund); }) && rM3.uebersprungen.some(function(u){ return /ganze Zahl/.test(u.grund); }) && num(S.meta.muenzenGesamt)===mG0+14225, JSON.stringify(rM3.uebersprungen));
+var rM4=syncImport(JSON.stringify({ appVersion:'4.1.12', karten:[], korrekturen:[{ id:'m-minus', muenzen:-100000, grund:'Abzug' }] }));
+pruef('21 §D.3 Abzug bis 100.000 erlaubt, nie unter 0; Zeile mit −', !rM4.fehler && rM4.muenzenKorrekturen.length===1 && num(S.meta.muenzenGesamt)===Math.max(0, mG0+14225-100000) && /Münzen-Korrektur −100[. ]000 · Abzug/.test(importErgebnisHtml(rM4)), importErgebnisHtml(rM4));
+pruef('21 §D.4 Quelltext: Blatt „Paket prüfen“ zeigt Münzen-Korrekturen des Pakets', (function(){ var s=readFile('index.html'); var a=s.indexOf('function oeffneSyncFreigabe('); return s.slice(a, a+2500).indexOf("muenzenKorrekturZeile({ muenzen:Number(k.muenzen), grund:k.grund })")>=0; })());
+S.meta.muenzenGesamt=mG0; S.meta.korrekturProtokoll=S.meta.korrekturProtokoll.filter(function(e){ return !(e && e.art==='muenzen'); }); saveMeta();
+// §E Speicher-Karte und Führungsmarke
+pruef('21 §E.1 Speicher-Karte: „~2,5 MB, mit der alten App geteilt“ an beiden Stellen, kein „~5 MB“ mehr', (function(){ var s=readFile('index.html'); return (s.match(/~2,5 MB, mit der alten App geteilt/g)||[]).length===2 && s.indexOf('(~5 MB)')<0; })());
+pruef('21 §E.2 Rückweg: K.fuehrtJetzt wird im Zweig !standGezeichnet entfernt', (function(){ var s=readFile('index.html'); return s.indexOf("const vorigesGeraet=d.fuehrend;\n          try{ localStorage.removeItem(K.fuehrtJetzt); }catch(e){}")>=0; })());
+
+pruef('§C.1 App 4.1.12 · Build 2026-10-27-47 · sw.js Cache hochgezählt (seit Hotfix 21)', APP_VERSION==='4.1.12' && APP_BUILD==='2026-10-27-47' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-8'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 19 und 19.1 · Speicher voll: Verlustschutz, Sicherungen nach FocusSystem, Führung zurück (4.1.8)');
