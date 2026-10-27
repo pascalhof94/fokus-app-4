@@ -15419,7 +15419,8 @@ function renderDetail(){
       (subsFixiert?'<div class="hint">= Σ Unteraufgaben ('+subSum+'′)</div>'
         : (subs.length?'<div class="hint">alle Unteraufgaben 0′ — Wert wird beim Speichern gleichmäßig verteilt</div>':''))+'</div>'+
     '<div class="field"><label>Zeit Ist (Min)</label><input type="number" inputmode="numeric" data-bind="_istMinEdit" value="'+Math.round(num(k.istSek)/60)+'"><div class="hint">optional · Differenz → heute gebucht</div></div>'+
-  '</div>';
+  '</div>'+
+  '<div class="field"><label>Nachtrag von – bis</label><div style="display:flex;gap:6px"><input type="time" data-bind="_nachtragVon" id="nachtragVon" style="min-height:44px"><input type="time" data-bind="_nachtragBis" id="nachtragBis" style="min-height:44px"></div><div class="hint" id="nachtragHint">Vorschlag: jüngste Lücke ohne Uhr-Sitzung vor jetzt, gekürzt auf die Differenz</div></div>';   // Hotfix 22 §4.2
   // §2 (v2.7.0): feste Bewertung — sichtbar, leer = aus
   h+='<div class="field detail-fest"><label>Feste Bewertung (Min)'+(hatFestMin(k)?' <span style="color:var(--warn)">· feste Bewertung: '+num(k.festMin)+' Min</span>':'')+'</label>'+
     '<input type="number" inputmode="numeric" min="0" step="1" data-bind="festMin" value="'+(hatFestMin(k)?num(k.festMin):'')+'" placeholder="aus">'+
@@ -15591,9 +15592,15 @@ function detailSpeichern(){
   let _nachtragE=null;
   if(entwurf._istMinEdit!=null){
     const delta = num(entwurf._istMinEdit) - Math.round(num(entwurf.istSek)/60);
-    if(delta!==0){ entwurf.istSek=Math.max(0, num(entwurf.istSek)+delta*60); if(delta>0) _nachtragE=logIntraday(entwurf,{minuten:delta,typ:'nachtrag'}); }
+    if(delta>0){   // Hotfix 22 §4: Nachtrag mit Von/Bis (Vorschlag = jüngste Lücke), Punkte nach der Stundenleiter, Überlappung sperrt das Speichern
+      const z=nachtragZeiten(entwurf._nachtragVon, entwurf._nachtragBis, delta);
+      if(z.fehler){ toast(z.fehler); return; }
+      const ue=nachtragUeberlappt(z.von, z.bis, null);
+      if(ue){ toast('Überlappt '+String(ue.karte).slice(0,30)+' '+korrUhr(new Date(ue.von).toISOString())+'–'+korrUhr(new Date(ue.bis).toISOString())+' — Nachtrag nicht gespeichert'); return; }
+      _nachtragE=nachtragBuchen(entwurf, z.von, z.bis);
+    } else if(delta<0){ entwurf.istSek=Math.max(0, num(entwurf.istSek)+delta*60); }
   }
-  delete entwurf._istMinEdit;
+  delete entwurf._istMinEdit; delete entwurf._nachtragVon; delete entwurf._nachtragBis;
   // §8 (v1.12.0): „Neu anlegen" aus dem Wiederholen-Dialog — die neue Karte
   // wandert OBEN in die Kette ihrer Domäne (Flag aus der Vorbelegung).
   const kettenOben=!!entwurf.kettenOben; delete entwurf.kettenOben;
@@ -17651,7 +17658,7 @@ function abhakDialogConfirm(){
   const bonus=num(el('abBonus')?el('abBonus').value:t.bonusDef);
   const istMin=num(el('abIst')?el('abIst').value:t.istMin);
   const deltaMin=istMin-Math.round(istSekLive(k)/60);
-  if(deltaMin!==0){ k.istSek=Math.max(0,num(k.istSek)+deltaMin*60); logIntraday(k,{minuten:deltaMin,typ:'nachtrag'}); }   // Zeit-Nachtrag auf heute
+  if(deltaMin!==0){ k.istSek=Math.max(0,num(k.istSek)+deltaMin*60); const ne=logIntraday(k,{minuten:deltaMin,typ:'nachtrag'}); if(deltaMin>0){ ne.von=new Date(Date.now()-deltaMin*60000).toISOString(); buchungAbgleich(k, ne); } }   // Zeit-Nachtrag auf heute · Hotfix 22 §4.1: mit Punkten nach der Stundenleiter
   // §4.2/§4.3 (v1.10.0): Akku-Messung — protokollieren, lernen, Tagesstand
   // geradeziehen (Differenz zum bereits mit der ANGENOMMENEN Rate Gebuchten).
   if(!t.akkuSkip && t.akkuDelta!==undefined){
@@ -18367,6 +18374,63 @@ function korrekturAnwenden(kx, abgewiesen){
   if(!Array.isArray(S.meta.korrekturProtokoll)) S.meta.korrekturProtokoll=[];
   S.meta.korrekturProtokoll=S.meta.korrekturProtokoll.concat([eintrag]).slice(-200);
   return eintrag;
+}
+/* ══ Hotfix 22 §4 · Nachträge: Punkte nach der Stundenleiter (wie eine Uhr-Sitzung, über buchungAbgleich), Von/Bis mit Vorschlag
+   (jüngste Lücke ohne Uhr-Sitzung vor jetzt, gekürzt auf die Dauer), keine Überlappung mit einer anderen Uhr-Sitzung. Bestehende Nachträge bleiben. */
+function uhrSitzungenHeute(){
+  const hf=belFensterDatum(jetztIso());
+  return (S.intraday||[]).filter(e=>e && e.ts && SITZUNG_TYPEN.indexOf(e.typ)>=0 && num(e.minuten)>=0.5 && belFensterDatum(e.ts)===hf)
+    .map(e=>({ e, von:sitzungVonMs(e), bis:Date.parse(e.ts) })).filter(x=>Number.isFinite(x.von) && Number.isFinite(x.bis));
+}
+function nachtragUeberlappt(vonMs, bisMs, ausserId){
+  for(const x of uhrSitzungenHeute()){
+    if(ausserId && sitzungIdVon(x.e)===String(ausserId)) continue;
+    if(x.von<bisMs && x.bis>vonMs){ const k=S.karten.find(c=>c.id===x.e.kartenId); return { karte:(k && k.titel)||'?', von:x.von, bis:x.bis }; }
+  }
+  if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs) && S.fokus.startMs<bisMs && Date.now()>vonMs){ const k=S.karten.find(c=>c.id===S.fokus.karteId); return { karte:(k && k.titel)||'laufende Uhr', von:S.fokus.startMs, bis:Date.now() }; }
+  return null;
+}
+function nachtragVorschlag(dauerMin){
+  const d=Math.max(1, num(dauerMin)), jetzt=Date.now();
+  const sitz=uhrSitzungenHeute().map(x=>({ von:x.von, bis:x.bis }));
+  if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs)) sitz.push({ von:S.fokus.startMs, bis:jetzt });
+  let ende=jetzt;
+  for(let i=0;i<50;i++){ const x=sitz.find(y=>y.von<ende && y.bis>=ende); if(!x) break; ende=x.von; }   // eine Sitzung deckt das Ende ab → vor sie
+  let anfang=null; sitz.forEach(x=>{ if(x.bis<=ende && (anfang==null || x.bis>anfang)) anfang=x.bis; });
+  const von=Math.max(anfang!=null ? anfang : ende-d*60000, ende-d*60000);
+  return { von, bis:ende };
+}
+/* Von/Bis aus dem Dialog (HH:MM, heute) oder der Vorschlag; Fehler als Text */
+function nachtragZeiten(vonStr, bisStr, dauerMin){
+  const v=String(vonStr||'').trim(), b=String(bisStr||'').trim();
+  if(!v && !b) return nachtragVorschlag(dauerMin);
+  if(!v || !b) return { fehler:'Von und Bis zusammen angeben' };
+  const heute=new Date(); const ms=(t)=>{ const m=/^(\d{1,2}):(\d{2})$/.exec(t); if(!m) return NaN; const d=new Date(heute.getFullYear(), heute.getMonth(), heute.getDate(), Number(m[1]), Number(m[2]), 0, 0); return d.getTime(); };
+  let vm=ms(v), bm=ms(b);
+  if(!Number.isFinite(vm) || !Number.isFinite(bm)) return { fehler:'Von/Bis nicht lesbar (HH:MM)' };
+  if(bm>Date.now()+60000){ vm-=86400000; bm-=86400000; }   // liegt die Zeit noch vor uns, ist gestern gemeint (Tagesfenster ab 5 Uhr)
+  if(bm<=vm) return { fehler:'Bis liegt vor Von' };
+  return { von:vm, bis:bm };
+}
+/* Den Nachtrag buchen: Ist-Zeit, Eintrag typ nachtrag mit von/bis, Punkte nach der Stundenleiter über den Abgleich */
+function nachtragBuchen(k, vonMs, bisMs){
+  const min=Math.round((bisMs-vonMs)/6000)/10;
+  k.istSek=Math.max(0, num(k.istSek)+min*60);
+  const e=logIntraday(k,{ minuten:min, typ:'nachtrag' });
+  e.von=new Date(vonMs).toISOString(); e.ts=new Date(bisMs).toISOString();
+  buchungAbgleich(k, e);
+  DB.set('intraday', S.intraday);
+  return e;
+}
+function nachtragVorschlagFuellen(){
+  const k=entwurf; if(!k) return;
+  const delta=(k._istMinEdit==null) ? 0 : num(k._istMinEdit)-Math.round(num(k.istSek)/60);
+  const hv=el('nachtragHint'), iv=el('nachtragVon'), ib=el('nachtragBis');
+  if(delta<=0){ if(hv) hv.textContent='Vorschlag: jüngste Lücke ohne Uhr-Sitzung vor jetzt, gekürzt auf die Differenz'; return; }
+  const v=nachtragVorschlag(delta), a=belUhr(kalStunde(new Date(v.von).toISOString())), b=belUhr(kalStunde(new Date(v.bis).toISOString()));
+  k._nachtragVon=a; k._nachtragBis=b;
+  if(iv) iv.value=a; if(ib) ib.value=b;
+  if(hv) hv.textContent='Vorschlag '+a+'–'+b+' ('+Math.round((v.bis-v.von)/60000)+' Min Lücke)';
 }
 function kartenSitzungenHeute(kid){
   const hf=belFensterDatum(jetztIso());
@@ -24539,7 +24603,7 @@ function detailFeld(bind, input){
   // §6.2 (v1.6.1): abhakbonus wie die anderen Overrides — leer = Domänen-Default,
   // sonst der eingegebene Wert INKLUSIVE negativer Beträge (kein Clamp).
   else if(bind==='tickWert'){ entwurf.tickWert = v===''?null:num(v); }   // §2 (1.13.0): leer = erbt Standard
-  else if(bind==='punkteProStd'||bind==='akkuProStd'||bind==='_istMinEdit'||bind==='abhakbonus'){ entwurf[bind]= v===''?null:num(v); }  // leer = null (Fallback)
+  else if(bind==='punkteProStd'||bind==='akkuProStd'||bind==='_istMinEdit'||bind==='abhakbonus'){ entwurf[bind]= v===''?null:num(v); if(bind==='_istMinEdit'){ try{ nachtragVorschlagFuellen(); }catch(e){} } }  // leer = null (Fallback) · Hotfix 22 §4.2
   else if(bind==='rhythmusN'){ if(entwurf.rhythmus) entwurf.rhythmus.n=Math.max(1,num(v)); }
   else { entwurf[bind]= (v===''&&(bind==='faelligkeit'||bind==='uhrzeit'||bind==='projekt')) ? null : v; }
 }
