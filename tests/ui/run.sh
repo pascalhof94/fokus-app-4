@@ -62,20 +62,22 @@ fi
 
 CHROME_LIMIT=25   # Sekunden je Aufruf — Chrome beendet sich headless nicht immer selbst
 chrome_lauf(){ # $1=url $2=breite $3=hoehe $4=screenshot-datei ('' = dump-dom auf stdout)
-  local extra out
+  local extra out prof
   out="$(mktemp /tmp/fokus-ui-out.XXXXXX)"
+  prof="$(mktemp -d "$PROFIL/lauf.XXXXXX")"   # Hotfix 20: eigenes Profil je Aufruf — die Browser-Datenbank (IndexedDB) sperrt das Profil, ein noch beendender Chrome hielte den nächsten Aufruf fest
   if [ -n "$4" ]; then extra="--screenshot=$4"; else extra="--dump-dom"; fi
   "$CHROME" --headless --disable-gpu --hide-scrollbars --force-device-scale-factor=2 \
-    --no-first-run --no-default-browser-check --user-data-dir="$PROFIL" \
-    --window-size=$2,$3 --virtual-time-budget=6000 $extra "$1" >"$out" 2>/dev/null &
+    --no-first-run --no-default-browser-check --user-data-dir="$prof" \
+    --window-size=$2,$3 --virtual-time-budget=15000 $extra "$1" >"$out" 2>/dev/null &
   local cpid=$! i=0
   while kill -0 $cpid 2>/dev/null; do
     if [ -n "$4" ] && [ -s "$4" ]; then i=$((i+18)); fi          # Screenshot liegt → nur noch kurz warten
-    [ $((i/2)) -ge $CHROME_LIMIT ] && { kill -9 $cpid 2>/dev/null; break; }
+    [ $((i/2)) -ge $CHROME_LIMIT ] && { kill -9 $cpid 2>/dev/null; echo "HINWEIS: Chrome nach ${CHROME_LIMIT} s beendet: $1" >&2; break; }   # Hotfix 20: Hänger sichtbar machen
     sleep 0.5; i=$((i+1))
   done
   wait $cpid 2>/dev/null
-  cat "$out"; rm -f "$out"
+  cat "$out"; rm -f "$out"; rm -rf "$prof"
+  sleep 0.4   # Hotfix 20: dem beendeten Chrome Zeit lassen — ein noch auslaufender Prozess bremste sonst die Browser-Datenbank des nächsten Aufrufs, und unter virtueller Zeit lief der App das Zeitbudget davon
 }
 
 FEHLER=0; CHECKS=0; SHOTS=0; FINDINGS=""; WARNUNGEN=""

@@ -2215,11 +2215,29 @@ function bestandSchreiben(){
     neu.style.width=FW+'px'; neu.style.height=FH+'px';
     f.parentNode.replaceChild(neu, f);
     neu.addEventListener('load', function(){
-      /* der App etwas Zeit für init() geben (virtuelle Zeit im Headless) */
+      /* Hotfix 20: die App startet asynchron (DB.laden() → FSLive.start() → init()); erst warten, bis init() durch ist
+         (_startLaeuft===false, Top-Level-let im iframe-Skript), höchstens 8 s — dann wie bisher 900 ms (virtuelle Zeit im Headless) */
+      var w=neu.contentWindow, mo=null, fertig=false;
+      function bereit(){ try{ return w.eval('typeof _startLaeuft!=="undefined" && _startLaeuft===false')===true; }catch(e){ return false; } }
+      function weiter(){
+        if(fertig) return; fertig=true;
+        try{ if(mo) mo.disconnect(); }catch(e){}
+        setTimeout(function(){
+          try{ cb(w); }
+          catch(e){ fatal('Aktion fehlgeschlagen: '+e); abschluss(); }
+        }, 900);
+      }
+      if(bereit()){ weiter(); return; }
+      /* ohne Timer warten (Timer verbrauchen das virtuelle Zeitbudget): init() zeichnet den DOM, der Beobachter prüft dann die Marke */
+      try{ mo=new MutationObserver(function(){ if(bereit()) weiter(); }); mo.observe(w.document.documentElement, { childList:true, subtree:true, attributes:true, characterData:true }); }catch(e){ fatal('MutationObserver fehlt: '+e); weiter(); }
+      /* Notausstieg spät (12 s virtuell): statt eines fehlenden UIRESULT ein Befund mit dem Zustand der App */
+      var skriptFehler=[]; try{ w.addEventListener('error', function(e){ skriptFehler.push(String(e.message||e)); }); }catch(e){}
       setTimeout(function(){
-        try{ cb(neu.contentWindow); }
-        catch(e){ fatal('Aktion fehlgeschlagen: '+e); abschluss(); }
-      }, 900);
+        if(fertig) return;
+        var z='?'; try{ z=w.eval('JSON.stringify({ start:_startLaeuft, idb:!!DB._idb, inIdb:Array.from(DB._inIdb), toast:document.getElementById("toast").textContent, meta:!!S.meta })'); }catch(e){ z='eval: '+e; }
+        fatal('App nicht initialisiert nach 12 s: '+z+' · Skriptfehler: '+JSON.stringify(skriptFehler));
+        abschluss();
+      }, 12000);
     });
     neu.src='/index.html';
   }
