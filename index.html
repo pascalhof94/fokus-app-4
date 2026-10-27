@@ -3082,11 +3082,11 @@ body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4s
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '4.1.9';
+const APP_VERSION = '4.1.10';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-10-27-44';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-10-27-45';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -3176,8 +3176,10 @@ const DB = {
     try{ localStorage.removeItem(PREFIX+key); }catch(e){} delete DB._ungesichert[key]; try{ FSLive.vormerken(key); }catch(eS){} try{ FSLive.ungesichertMerken(); }catch(eS){} },   // 4.0 · Paket 3: Spiegel vormerken · Hotfix 19 §A1
   // Hotfix 19 §A1 · ungesicherte Werte nachholen: je Schlüssel setItem versuchen; Erfolg → raus aus _ungesichert. Nach jedem Lauf von sicherungenAuslagern (§B3).
   // Hotfix 20 §1.8 · IDB-Schlüssel: in den Arbeitsspeicher und über die Kette in die Datenbank (scheitert das, kommt der Wert zurück nach _ungesichert).
+  // Hotfix 20.1 §2 · Betriebsschlüssel zuerst, Sicherungen zuletzt (sonst füllen die Sicherungen den Platz, und meta passt nie hinein)
   nachholen(){
-    for(const key of Object.keys(DB._ungesichert)){
+    const alle=Object.keys(DB._ungesichert); let sich=[]; try{ sich=alle.filter(k=>istSicherung(k)); }catch(e){ sich=[]; }
+    for(const key of alle.filter(k=>sich.indexOf(k)<0).concat(sich)){
       if(DB._inIdb.has(key)){ const t=DB._ungesichert[key]; DB._cache.set(key, t); delete DB._ungesichert[key]; DB._idbSchreiben(key, t); continue; }
       try{ localStorage.setItem(PREFIX+key, DB._ungesichert[key]); delete DB._ungesichert[key]; }catch(e){}
     }
@@ -4038,14 +4040,16 @@ async function sicherungenAuslagern(opt){
   try{
     if(!FSLive.gekoppelt()){ if(!auto){ try{ toast('Mac mini nicht erreichbar — nichts entfernt'); }catch(e){} } return null; }
     const vorher=speicherBelegung().kb;
-    const liste=speicherBaks().map(k=>{ let n=0; try{ n=(localStorage.getItem(PREFIX+k)||'').length; }catch(e){} return { key:k, kb:n/1024 }; }).sort((a,b)=>b.kb-a.kb);
+    // Hotfix 20.1 §1 · auch Sicherungen, die nur im Puffer DB._ungesichert liegen (bei vollem Speicher nie in localStorage angekommen)
+    const namen=speicherBaks(); Object.keys(DB._ungesichert).forEach(k=>{ if(istSicherung(k) && namen.indexOf(k)<0) namen.push(k); });
+    const liste=namen.map(k=>{ let n=0; try{ n=(DB.roh(k)||'').length; }catch(e){} return { key:k, kb:n/1024 }; }).sort((a,b)=>b.kb-a.kb);
     const ausgelagert=[], nichtBestaetigt=[];
     for(const e of liste){
       try{
-        let t=null; try{ t=localStorage.getItem(PREFIX+e.key); }catch(x){}
+        let t=null; try{ t=(DB._ungesichert[e.key]!==undefined) ? DB._ungesichert[e.key] : localStorage.getItem(PREFIX+e.key); }catch(x){}
         if(t===null) continue;
         const ok=await FSLive.sicherungSenden(e.key, t);
-        if(ok){ localStorage.removeItem(PREFIX+e.key); ausgelagert.push({ key:e.key, kb:Math.round(e.kb*10)/10 }); }
+        if(ok){ try{ localStorage.removeItem(PREFIX+e.key); }catch(x){} delete DB._ungesichert[e.key]; ausgelagert.push({ key:e.key, kb:Math.round(e.kb*10)/10 }); }   // Hotfix 20.1 §1: auch aus dem Puffer, sonst holt nachholen() sie zurück
         else nichtBestaetigt.push(e.key);
       }catch(x){ continue; }   // Fehler bei einem Schlüssel: überspringen, mit dem nächsten weiter
     }
