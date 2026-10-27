@@ -18922,9 +18922,29 @@ function syncImport(text, opt){
   // ══ §5.7 (v1.13.0) · Rückwirkende Korrektur — NUR benannte Tage, NUR die
   // ausdrücklich getragenen Felder, mit Protokoll. Ein Paket ohne
   // Korrekturblock ändert an vergangenen Tagen NICHTS. ══
-  let korrigiert=[], korrekturNeu=0;
+  let korrigiert=[], korrekturNeu=0, muenzenKorr=[];
   if(paket && !Array.isArray(paket) && Array.isArray(paket.korrekturen)){
     paket.korrekturen.forEach(kx=>{
+      // Hotfix 21 §D · Münzen-Korrektur: Eintrag mit Feld muenzen. Pflicht id (eindeutig), grund, muenzen ganze Zahl, Betrag ≤ 100.000.
+      // Nur muenzenGesamt (nicht rangPunkte, nicht wohlstand, nicht die Mess-Ebene); Protokoll in meta.korrekturProtokoll { ts, art:'muenzen', id, muenzen, grund }.
+      if(kx && kx.muenzen!==undefined){
+        const id=(kx.id===undefined || kx.id===null) ? '' : String(kx.id).trim();
+        const grund=(kx.grund===undefined || kx.grund===null) ? '' : String(kx.grund).trim();
+        const m=Number(kx.muenzen);
+        let fehlt='';
+        if(!id) fehlt='id fehlt (Pflicht)';
+        else if(!grund) fehlt='grund fehlt (Pflicht)';
+        else if(!Number.isInteger(m)) fehlt='muenzen ist keine ganze Zahl';
+        else if(Math.abs(m)>100000) fehlt='Betrag über 100.000';
+        if(fehlt){ uebersprungen.push({was:'Münzen-Korrektur'+(id?' '+id:''), grund:fehlt}); return; }
+        if(!Array.isArray(S.meta.korrekturProtokoll)) S.meta.korrekturProtokoll=[];
+        if(S.meta.korrekturProtokoll.some(e=>e && e.art==='muenzen' && e.id===id)){ uebersprungen.push({was:'Münzen-Korrektur '+id, grund:'bereits angewendet'}); return; }
+        S.meta.muenzenGesamt=Math.max(0, num(S.meta.muenzenGesamt)+m);
+        S.meta.korrekturProtokoll.push({ ts:jetztIso(), art:'muenzen', id, muenzen:m, grund });
+        muenzenKorr.push({ id, muenzen:m, grund });
+        saveMeta();
+        return;
+      }
       // §9.2 (v3.5.0): korrekturen.ausmalen nur mit korrektur:true
       if(kx && kx.ausmalen && typeof kx.ausmalen==='object'){
         if(kx.korrektur!==true){ uebersprungen.push({was:'Korrektur ausmalen', grund:'nur mit korrektur:true'}); return; }
@@ -19064,7 +19084,7 @@ function syncImport(text, opt){
   S.meta.letzterImportTs=jetztIso(); saveMeta();
   return {neu, neuDfm, neuPrivat, upd, arch, ketteGesetzt, ketteUnbekannt, gruppenNeu, gruppenUpd,
     rahmenGesetzt, korrigiert:korrigiert.length, korrekturen:korrekturNeu, vomGeraetGenommen, vomGeraetZurueck, uebersprungen, wiederhergestellt:whLog,
-    subsEntfernt, tuer};
+    subsEntfernt, tuer, muenzenKorrekturen:muenzenKorr};   // Hotfix 21 §D
 }
 
 /* Sync-Sheet (EIN Button in D6). */
@@ -19074,6 +19094,11 @@ function syncImport(text, opt){
 let syncVoll=false;
 /* §1.2 (v2.4.0): Das Import-Ergebnis steht jetzt an ZWEI Stellen (Sync-Sheet
    und Import-Feld oben in den Einstellungen) — eine Formatierung fuer beide. */
+/* Hotfix 21 §D.4 · Zeile „🪙 Münzen-Korrektur <+/−Betrag> · <grund>“ */
+function muenzenKorrekturZeile(m){
+  const b=num(m && m.muenzen);
+  return '🪙 Münzen-Korrektur '+(b<0?'−':'+')+Math.abs(b).toLocaleString('de-DE')+' · '+esc(String((m && m.grund)||''));
+}
 function importErgebnisHtml(res){
   if(res.fehler) return '<div class="card" style="border-color:var(--bad)"><p class="d" style="color:var(--bad)">'+esc(res.fehler)+'</p></div>';
       let kz='<b>'+res.neu+'</b> angelegt';
@@ -19085,6 +19110,7 @@ function importErgebnisHtml(res){
         Object.keys(res.wiederhergestellt).map(f=>f+' '+res.wiederhergestellt[f]).join(' · ')+'</span>';
       if(res.rahmenGesetzt!=null) kz+='<br>🕘 Tagesrahmen übernommen: <b>'+res.rahmenGesetzt+'</b> Segmente'+(tagOffen()?' (ersetzt ab jetzt, Gemessenes unberührt)':'')+'.';
       if(res.korrigiert) kz+='<br><span style="color:var(--cyan)">§5.7-Korrekturen angewandt: <b>'+res.korrigiert+'</b> Felder (Protokoll in den Einstellungen).</span>';
+      if(res.muenzenKorrekturen && res.muenzenKorrekturen.length) kz+='<br>'+res.muenzenKorrekturen.map(m=>'<span style="color:var(--cyan)">'+muenzenKorrekturZeile(m)+'</span>').join('<br>');   // Hotfix 21 §D.4
       if(res.tuer) kz+='<br><span style="color:var(--cyan)">Sync-Tür: <b>'+res.tuer.einstellungen+'</b> Einstellung(en) · <b>'+res.tuer.statistik+'</b> Statistik-Parameter geändert (Protokoll in den Einstellungen).</span>';
       if(res.subsEntfernt) kz+='<br>Unteraufgaben entfernt: <b>'+res.subsEntfernt+'</b>.';
       if(res.uebersprungen && res.uebersprungen.length)
@@ -19104,9 +19130,11 @@ function oeffneSyncFreigabe(text, vs, quelle){
     if((t.ohneWirkung||[]).length) h+='<p class="d" style="color:var(--mut2)">Wird angenommen, '+OHNE_WIRKUNG_TEXT+': '+t.ohneWirkung.map(o=>esc(o.was)).join(' · ')+'</p>';
     if(t.fehler.length) h+='<p class="d" style="color:var(--bad)">Nicht übernehmbar: '+t.fehler.map(f=>esc(f.was)+' — '+esc(f.grund)).join(' · ')+'</p>';
     return h; };
+  let muenzenZeilen='';   // Hotfix 21 §D.4: Münzen-Korrekturen des Pakets im Blatt „Paket prüfen“
+  try{ const pk=JSON.parse(text); if(pk && Array.isArray(pk.korrekturen)) muenzenZeilen=pk.korrekturen.filter(k=>k && k.muenzen!==undefined).map(k=>'<p class="d">'+muenzenKorrekturZeile({ muenzen:Number(k.muenzen), grund:k.grund })+'</p>').join(''); }catch(e){}
   const h='<p class="d">Das Paket ändert Einstellungen'+(vs.statistik?' bzw. die Statistik':'')+'. Erst prüfen, dann übernehmen. '+
     'Vorher legt die App eine Sicherung an; jede Änderung steht danach im Protokoll.</p>'+
-    block(vs.einstellungen,'Einstellungen')+block(vs.statistik,'Statistik')+
+    block(vs.einstellungen,'Einstellungen')+block(vs.statistik,'Statistik')+muenzenZeilen+
     (vs.karten ? '<p class="d">Außerdem im Paket: <b>'+vs.karten+'</b> Karte(n).</p>' : '');
   openSheet('Paket prüfen', h, '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" style="min-height:44px" data-freigabego="1">Übernehmen</button>');
 }
