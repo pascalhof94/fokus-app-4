@@ -261,5 +261,21 @@ pruef('19.1 §1.2 Übernahme gelingt: führend, Stand übernommen, Tipp ausgefü
 // ══ Hotfix 19.1 §3 · istSicherung mit Unterstrich nach _bak ══
 pruef('19.1 §3 istSicherung true: settings_bak_ziele400, settings_bak_shopfrei400, settings_bak_ranglast400', ['settings_bak_ziele400','settings_bak_shopfrei400','settings_bak_ranglast400','karten_bak1130','import_bak'].every(istSicherung) && !istSicherung('karten') && !istSicherung('fslive_warteschlange') && !istSicherung('karten_vomGeraet'));
 
-pruef('§C.1 App 4.1.9 · Build 2026-10-27-44 · sw.js Cache hochgezählt (seit Hotfix 20)', APP_VERSION==='4.1.9' && APP_BUILD==='2026-10-27-44' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-5'")>=0, APP_VERSION+' / '+APP_BUILD);
+// ══ Hotfix 20.1 · §D Auslagern löscht aus dem Puffer, Nachholen schreibt Betrieb zuerst ══
+localStorage.setItem(PREFIX+'fslive_token', 'test-token'); _voll=false; _vollSchluessel=null;
+DB._ungesichert={}; DB._ungesichert['karten_bak9']=JSON.stringify([1,2,3]);   // nur im Puffer, nie in localStorage angekommen
+_aufrufe=[]; _toasts.length=0; _antworten={ 'PUT /api/spiegel/':OK, 'GET /api/spiegel/':spiegelGet };
+var ergD=null; sicherungenAuslagern({ auto:false }).then(function(e){ ergD=e; }); drain(400);
+pruef('20.1 §D1 Sicherung nur im Puffer: gesendet, bestätigt, aus dem Puffer gelöscht, nicht in localStorage', !!ergD && ergD.ausgelagert.some(function(e){ return e.key==='karten_bak9'; }) && ergD.nichtBestaetigt.length===0 && DB._ungesichert['karten_bak9']===undefined && localStorage.getItem(PREFIX+'karten_bak9')===null && aufrufe('PUT', '/api/spiegel/fokus4_karten_bak9').length===1, JSON.stringify(ergD)+' '+JSON.stringify(Object.keys(DB._ungesichert)));
+localStorage.setItem(PREFIX+'stapel_bak9', '[9]'); DB._ungesichert['stapel_bak9']='[9]';   // in beiden: nach Bestätigung in keinem mehr
+_aufrufe=[]; ergD=null; sicherungenAuslagern({ auto:false }).then(function(e){ ergD=e; }); drain(400);
+pruef('20.1 §D2 Sicherung in localStorage und Puffer: nach Bestätigung aus beiden entfernt', !!ergD && ergD.ausgelagert.length===1 && DB._ungesichert['stapel_bak9']===undefined && localStorage.getItem(PREFIX+'stapel_bak9')===null, JSON.stringify(ergD));
+var _reihe=[]; var _setAlt=localStorage.setItem; localStorage.setItem=function(k, v){ _reihe.push(k); return _setItemEcht.call(localStorage, k, v); };
+DB._ungesichert={}; DB._ungesichert['intraday_bak9']='[1]'; DB._ungesichert['meta']='{"x":1}'; DB._ungesichert['karten']='[]';
+DB.nachholen(); localStorage.setItem=_setAlt;
+pruef('20.1 §D3 nachholen: Betriebsschlüssel (meta, karten) vor der Sicherung (intraday_bak9), alle geschrieben', _reihe.slice(0,3).join(',')==='fokus4_meta,fokus4_karten,fokus4_intraday_bak9' && Object.keys(DB._ungesichert).length===0, _reihe.join(','));
+['intraday_bak9','meta','karten'].forEach(function(k){ localStorage.removeItem(PREFIX+k); });
+pruef('20.1 §D4 Quelltext: Auslagern löscht aus DB._ungesichert, Puffer-Sicherungen kommen in die Liste', (function(){ var s=readFile('index.html'); return s.indexOf("delete DB._ungesichert[e.key]; ausgelagert.push(")>=0 && s.indexOf("Object.keys(DB._ungesichert).forEach(k=>{ if(istSicherung(k) && namen.indexOf(k)<0) namen.push(k); })")>=0; })());
+
+pruef('§C.1 App 4.1.10 · Build 2026-10-27-45 · sw.js Cache hochgezählt (seit Hotfix 20.1)', APP_VERSION==='4.1.10' && APP_BUILD==='2026-10-27-45' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.0.0-6'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 19 und 19.1 · Speicher voll: Verlustschutz, Sicherungen nach FocusSystem, Führung zurück (4.1.8)');
