@@ -6728,14 +6728,17 @@ function f7PfKarteLesen(r, text){
   const zeilen=src.split('\n'); let titel=null, i0=-1;
   for(let i=0;i<zeilen.length;i++){ const m=zeilen[i].match(/^\s*(Aufgabe|Karte)\s*:\s*(.+?)\s*$/i); if(m){ titel=m[2]; i0=i; break; } if(zeilen[i].trim()) break; }
   if(!titel) return null;
-  const k={ titel, domain:'dfm', projekt:null, matrixFeld:null, deadline:null, sollMin:30, unteraufgaben:[], notiz:'', karteId:null, gesetzt:{} };   // Hotfix 9: karteId (Änderung), gesetzt = welche Felder der Entwurf trägt
+  const k={ titel, domain:'dfm', projekt:null, matrixFeld:null, deadline:null, sollMin:30, unteraufgaben:[], notiz:'', karteId:null, gesetzt:{}, felder42:{}, unterDetails:[] };   // Hotfix 9: karteId (Änderung), gesetzt = welche Felder der Entwurf trägt · 4.2 §11: felder42, unterDetails
   let modus='felder';
   for(let i=i0+1;i<zeilen.length;i++){ const z=zeilen[i];
     if(modus==='notiz'){ k.notiz+=(k.notiz?'\n':'')+z; continue; }
     const mn=z.match(/^\s*Notiz\s*:\s*(.*)$/i); if(mn){ modus='notiz'; k.notiz=mn[1]; continue; }
     if(/^\s*Unteraufgaben\s*:/i.test(z)){ modus='unter'; continue; }
     const li=z.match(/^\s*[-•*]\s*(.*?)\s*$/);
-    if(modus==='unter'){ if(li && li[1]){ k.unteraufgaben.push(li[1]); continue; } if(!z.trim()) continue; modus='felder'; }
+    if(modus==='unter'){ if(li && li[1]){   // 4.2 §11: „- <Titel> (Soll n, Bonus n, optional)"
+        const md=li[1].match(/^(.*?)\s*\(([^()]*)\)\s*$/); let t=li[1], d={ soll:null, bonus:null, optional:false };
+        if(md && /soll|bonus|optional/i.test(md[2])){ t=md[1].trim(); md[2].split(',').forEach(p=>{ p=p.trim(); let m2; if((m2=p.match(/^soll\s*(\d+)/i))) d.soll=num(m2[1]); else if((m2=p.match(/^bonus\s*(-?\d+)/i))) d.bonus=num(m2[1]); else if(/^optional/i.test(p)) d.optional=true; }); }
+        if(t){ k.unteraufgaben.push(t); k.unterDetails.push(d); } continue; } if(!z.trim()) continue; modus='felder'; }
     if(modus==='felder' && li){ const kv=li[1].match(/^([^:]+):\s*(.*)$/); if(!kv) continue; const key=kv[1].trim().toLowerCase(), wert=kv[2].trim();
       if(key==='projekt'){ k.projekt=wert||null; k.gesetzt.projekt=true; }
       else if(key==='familie' || key==='domäne' || key==='domain'){ k.domain=/^priv/i.test(wert) ? 'privat' : 'dfm'; k.gesetzt.domain=true; }
@@ -6743,7 +6746,18 @@ function f7PfKarteLesen(r, text){
       else if(key==='deadline' || key==='fällig' || key==='faellig' || key==='termin'){ const d=wert.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(d) k.deadline=d[3]+'-'+d[2].padStart(2,'0')+'-'+d[1].padStart(2,'0'); else if(/^\d{4}-\d{2}-\d{2}$/.test(wert)) k.deadline=wert; if(k.deadline) k.gesetzt.deadline=true; }
       else if(key==='soll-minuten' || key==='sollminuten' || key==='soll' || key==='minuten'){ const n=parseInt(wert,10); if(Number.isFinite(n) && n>0){ k.sollMin=n; k.gesetzt.sollMin=true; } }
       else if(key==='karte-id' || key==='karteid' || key==='app-id' || key==='karten-id'){ k.karteId=wert||null; }   // Hotfix 9 · Abschnitt 2 Punkt 6: Änderung an einer bestehenden Karte
-      // Owner, Status, Geld-Impact und andere Schlüssel: ignoriert (der Owner kommt im Dienst)
+      // Karten-Standard 4.2 §11: Kartenart · Prio · Belastung · Matrix · P/h fest · Bonus · Mehrmals (Ziel je Tag) · Status wartet/eingefroren
+      else if(key==='kartenart' || key==='art'){ const a=wert.toLowerCase(); if(KARTENART42_LABEL[a] && a!=='system'){ k.felder42.art=a; k.gesetzt.art=true; } }
+      else if(key==='prio' || key==='priorität' || key==='prioritaet'){ const n=parseInt(wert,10); if(Number.isFinite(n)){ k.felder42.prio=Math.max(1, Math.min(5, n)); k.gesetzt.prio=true; } }
+      else if(key==='belastung'){ const n=parseInt(wert.replace('−','-').replace('–','-'),10); if(Number.isFinite(n)){ k.felder42.belastung=Math.max(-3, Math.min(3, n)); k.gesetzt.belastung=true; } }
+      else if(key==='matrix'){ const f=matrixFeldNorm(wert); if(f){ k.matrixFeld=f; k.gesetzt.matrixFeld=true; } }
+      else if(key==='p/h fest' || key==='ph fest' || key==='phfest' || key==='p/h'){ const n=parseInt(wert,10); k.felder42.phFest=Number.isFinite(n) ? Math.max(0, n) : null; k.gesetzt.phFest=true; }
+      else if(key==='bonus' || key==='abhakbonus'){ const n=parseInt(wert,10); k.felder42.abhakbonus=Number.isFinite(n) ? n : null; k.gesetzt.abhakbonus=true; }
+      else if(key==='mehrmals'){ const ja=/^(ja|yes|true|1)/i.test(wert), mz=wert.match(/\((\d+)\)|ziel\s*(\d+)/i); k.felder42.ticksAktiv=ja; k.felder42.tagesziel=(ja && mz) ? num(mz[1]||mz[2]) : null; k.gesetzt.mehrmals=true; }
+      else if(key==='status'){ let m2; if((m2=wert.match(/^wartet(?:\s+auf)?\s*(.*)$/i))){ k.felder42.wartetAuf=(m2[1]||'').trim()||'…'; k.felder42.freeze=false; k.gesetzt.status=true; }
+        else if((m2=wert.match(/^eingefroren(?:\s+bis\s+(\d{1,2})\.(\d{1,2})\.(\d{4}))?/i))){ k.felder42.freeze=true; k.felder42.eingefrorenBis=m2[1] ? m2[3]+'-'+m2[2].padStart(2,'0')+'-'+m2[1].padStart(2,'0') : null; k.gesetzt.status=true; }
+        else if(/^offen/i.test(wert)){ k.felder42.freeze=false; k.felder42.wartetAuf=null; k.gesetzt.status=true; } }
+      // Owner, Geld-Impact und andere Schlüssel: ignoriert (der Owner kommt im Dienst)
     } }
   k.notiz=k.notiz.trim();
   return k;
@@ -6757,9 +6771,10 @@ function f7PfKarteAnlegen(r, kk){
     return best; }
   const k=Object.assign(neueKarte({ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), matrixFeld:matrixFeldNorm(kk.matrixFeld)||'werkzeug' }), { status:'offen', sollMin:kk.sollMin, erstelltTs:jetztIso(), postfachId:r.id });   // Hotfix 12 §B2.3: neue Karte ohne Wert → werkzeug
   if(kk.projekt) k.projekt=kk.projekt; if(kk.notiz) k.notiz=kk.notiz;
+  f7PfFelder42Anwenden(k, kk, true);   // Karten-Standard 4.2 §11: neue Karte nach Standard 4.2 (std42, Art, Prio, Belastung, …)
   S.karten.push(k);
   if(!ketteHat(k.id)) ketteToggle(k.id);   // Hotfix 9 · Abschnitt 2 Punkt 5: sofort ans Ende der Aktuellen Kette
-  kk.unteraufgaben.forEach(t=>S.unteraufgaben.push(neueUnteraufgabe(k.id, { titel:t })));
+  kk.unteraufgaben.forEach((t,i)=>S.unteraufgaben.push(neueUnteraufgabe(k.id, Object.assign({ titel:t, bonusPunkte:0 }, f7PfUnterDetail(kk, i)))));
   saveKarten();   // speichert Karten und Unteraufgaben
   S.meta.postfachKarten=Object.assign({}, S.meta.postfachKarten, { [r.id]:{ karteId:k.id, ts:jetztIso(), titel:kk.titel } }); saveMeta();
   try{ toast('Karte angelegt: '+kk.titel); }catch(e){}
@@ -6799,11 +6814,28 @@ function f7PfEntwurfAnwenden(k, subs, kk){
   const g=kk.gesetzt||{};
   if(kk.titel && kk.titel!==k.titel) k.titel=kk.titel;
   if(g.sollMin) k.sollMin=kk.sollMin; if(g.matrixFeld && kk.matrixFeld) k.matrixFeld=kk.matrixFeld; if(g.deadline && kk.deadline) k.faelligkeit=kk.deadline; if(g.projekt && kk.projekt) k.projekt=kk.projekt;
+  f7PfFelder42Anwenden(k, kk, false);   // Karten-Standard 4.2 §11: nur gesetzte Zeilen
   if(kk.notiz){ const d=new Date(); const datum=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); k.notiz=(k.notiz ? String(k.notiz)+'\n' : '')+'['+datum+'] '+kk.notiz; }
   const da=(subs||S.unteraufgaben.filter(u=>u.parentId===k.id)).map(u=>String(u.titel||'').trim().toLowerCase());
-  kk.unteraufgaben.forEach(t=>{ const tt=String(t).trim().toLowerCase(); if(!tt || da.indexOf(tt)>=0) return; da.push(tt); const u=neueUnteraufgabe(k.id, { titel:t }); if(subs) subs.push(u); else S.unteraufgaben.push(u); });
+  kk.unteraufgaben.forEach((t,i)=>{ const tt=String(t).trim().toLowerCase(); if(!tt || da.indexOf(tt)>=0) return; da.push(tt); const u=neueUnteraufgabe(k.id, Object.assign({ titel:t }, k.std42 ? { bonusPunkte:0 } : {}, f7PfUnterDetail(kk, i))); if(subs) subs.push(u); else S.unteraufgaben.push(u); });
   return k;
 }
+/* Karten-Standard 4.2 §11: die Zeilen Kartenart · Prio · Belastung · P/h fest · Bonus · Mehrmals · Status aus dem Postfach-Entwurf auf die Karte;
+   neu = neue Karte (std42, Standardwerte), sonst nur die gesetzten Zeilen (Mapping §5) */
+function f7PfFelder42Anwenden(k, kk, neu){
+  const g=kk.gesetzt||{}, f=kk.felder42||{};
+  if(neu){ k.std42=true; k.art=KARTENART42_LABEL[f.art] ? f.art : 'aufgabe'; k.prio=(f.prio!=null) ? f.prio : e42PrioVorschlag(k); k.belastung=(f.belastung!=null) ? f.belastung : 0; }
+  else { if(g.art) k.art=f.art; if(g.prio) k.prio=f.prio; if(g.belastung) k.belastung=f.belastung; if(k.std42!==true && (g.art||g.prio||g.belastung||g.phFest||g.abhakbonus||g.mehrmals)) { k.std42=true; if(!KARTENART42_LABEL[k.art]) k.art=k.rolle ? 'system' : (k.rhythmus ? 'routine' : 'aufgabe'); if(k.prio==null) k.prio=e42PrioVorschlag(k); if(k.belastung==null) k.belastung=0; } }
+  if(g.phFest) k.phFest=f.phFest;
+  if(g.abhakbonus) k.abhakbonus=f.abhakbonus;
+  if(g.mehrmals){ k.ticksAktiv=!!f.ticksAktiv; k.tagesziel=f.ticksAktiv ? f.tagesziel : null; }
+  if(g.status){ if(f.freeze){ k.freeze=true; k.eingefrorenBis=f.eingefrorenBis||null; k.wartetAuf=null; k.wartetSeit=null; }
+    else if(f.wartetAuf){ k.freeze=false; k.eingefrorenBis=null; k.wartetAuf=f.wartetAuf; k.wartetSeit=heuteApp(); }
+    else { k.freeze=false; k.eingefrorenBis=null; k.wartetAuf=null; k.wartetSeit=null; } }
+  if(k.art==='routine' && !k.rhythmus && !k.immerSichtbar) k.rhythmus={ typ:'taeglich' };
+  return k;
+}
+function f7PfUnterDetail(kk, i){ const d=(kk.unterDetails||[])[i]; if(!d) return {}; const o={}; if(d.soll!=null) o.sollMin=Math.max(0, num(d.soll)); if(d.bonus!=null) o.bonusPunkte=num(d.bonus); if(d.optional) o.optional=true; return o; }
 /* ✓ und ▶ auf der Kartenzeile */
 function f7PfVorschlagAnnehmen(id, starten){
   const o=f7PfVorschlag(id); if(!o) return null;
