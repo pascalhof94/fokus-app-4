@@ -2345,6 +2345,18 @@ img.objimg.laedt{opacity:0}
 .kw-z.on{border-color:#e8e9ec}
 .ik-karte{margin-bottom:6px}
 .ik-karte .kl-z{box-shadow:0 0 0 2px #e8e9ec inset}
+/* Karten-Standard 4.2 §4 · eingeklappte std42-Karte: Rand 4 px und Verlauf in der Familienfarbe, rechts P/h und Bonus, Info gestrichelt */
+.kl-z.kz42{background:linear-gradient(90deg,var(--famb,transparent),transparent 65%),#1a1d22;border:1px solid var(--rand,#2a2d33);border-left:4px solid var(--fam,#3b82f6);border-right:1px solid var(--rand,#2a2d33)}
+.kl-z.kz42.laeuft{background:linear-gradient(90deg,var(--famb,transparent),transparent 65%),#16203a}
+.kl-z.kz42-info{border-style:dashed;border-left-style:dashed}
+.kz42-r{flex:none;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;min-width:66px;font-variant-numeric:tabular-nums;line-height:1.2}
+.kz42-r b{font-size:12.5px;font-weight:750;color:#e8e9ec;white-space:nowrap}.kz42-r small{font-size:10.5px;color:#9a9ca2;white-space:nowrap}
+.kz42-meta{white-space:normal;overflow-wrap:anywhere}
+.kz42-bel i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle}
+.kz42-badge{display:inline-block;padding:0 6px;border-radius:8px;border:1px solid #3a3e46;font-size:10px;color:#c9cbd0}
+.kl-z.kz42 .kz42-plus{border-radius:8px}.kl-z.kz42 .kz42-plus em{font-style:normal;font-size:12px}
+.kl-z.kz42 .kz42-check{border-radius:50%;display:flex;align-items:center;justify-content:center}
+.kz42-leer{opacity:.6;display:flex;align-items:center;justify-content:center}
 .ik-hint{margin:0 0 10px;text-align:left}
 .ik-zieht{opacity:.4}
 .ik-ghost{position:fixed;left:0;top:0;z-index:500;pointer-events:none;opacity:.92;box-shadow:0 12px 30px rgba(0,0,0,.6);transform-origin:0 0}
@@ -14016,6 +14028,7 @@ function prioFarbe(k){
 const KL_RAND_ROUTINE='#a0703c';
 function kartenZeileHtml(k, opt){
   opt=opt||{};
+  if(k && k.std42===true) return kartenZeile42Html(k, opt);   // Karten-Standard 4.2 §4: eigene Zeile; Karten ohne std42 wie bisher
   const fam=famFarbe(k), laeuft=uhrLaeuftAuf(k), st=kartenStatusHeute(k), fertig=st==='erledigt', ueber=st==='zielErreicht', art=kartenArt(k), tickbar=istTickbar(k);
   const ticks=Math.max(tickAnzahlHeute(k), num(k.ticksHeute)), limit=num(k.tageslimit);
   const unter=(k.domain==='privat'?'Privat':'DFM')+' · '+(istPflicht(k) ? 'Pflicht' : art!=='Aufgabe' ? art : (num(k.sollMin)>0 ? Math.round(num(k.sollMin))+' Min' : MX_FELD_NAME[matrixFeldVon(k)]));
@@ -14029,6 +14042,54 @@ function kartenZeileHtml(k, opt){
     '<button class="kl-play" data-klplay="'+k.id+'" aria-label="'+(laeuft?'Pause':'Start')+'"'+(laeuft?' style="background:'+verlauf(fam, 180)+';color:#08111f"':'')+'>'+(laeuft?'⏸':'▶')+'</button>'+
     '<div class="kl-t" data-klfokus="'+k.id+'"><b class="kl-titel">'+(k.erholung ? '<span class="kl-erh" title="Erholung">🌿</span>' : '')+esc(String(k.titel||'?'))+'</b><span class="kl-meta">'+unter+(opt.zusatz ? ' · '+opt.zusatz : '')+'</span></div>'+
     rechts+haken+'</div>';
+}
+/* ══ Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §4) · DIE EINGEKLAPPTE KARTE für std42-Karten (Mockup V2, Prüfseite Kartenbestand) ══
+   Linker Rand 4 px und Verlauf in der Familienfarbe (DFM blau, Privat lila, System cyan; Info gestrichelt) · links rund ✓, bei Mehrmals eckig ➕
+   mit Zähler n/Ziel · Titel, darunter die Meta-Zeile (Belastung/Erholung/neutral · Projekt · Soll · ↻ Rhythmus · bis TT.MM. · ⏳ wartet ·
+   ❄︎ eingefroren · ☑ erledigt/gesamt ohne optionale) · rechts ⏱ P/h (✋ bei P/h fest) und ✓ +Bonus (bei Mehrmals „je Mal"); Info: rechts „Info".
+   opt.live: Zeile im Erstellen-/Bearbeiten-Fenster (keine Knöpfe, Unteraufgaben aus opt.subs). */
+const KZ42_FAM={ dfm:'#3b82f6', privat:'#a855f7', system:'#6dd3e0' };
+const KZ42_WT=['','Mo','Di','Mi','Do','Fr','Sa','So'];
+function kz42Familie(k){ return kartenArt42(k)==='system' ? 'system' : (k.domain==='privat' ? 'privat' : 'dfm'); }
+function kz42Farbe(k){ return KZ42_FAM[kz42Familie(k)]; }
+function kz42Belastung(k){ const b=(k.belastung==null) ? null : num(k.belastung, 0);
+  return b==null ? { farbe:'#9a9ca2', text:'noch nicht gesetzt' } : b>0 ? { farbe:FARBE.ORANGE, text:'Belastung '+b } : b<0 ? { farbe:FARBE.GRUEN, text:'Erholung '+Math.abs(b) } : { farbe:'#9a9ca2', text:'neutral' }; }
+function kz42Rhythmus(k){ const r=k.rhythmus; if(!r) return '';
+  if(r.typ==='taeglich') return 'täglich'; if(r.typ==='alleNTage') return 'alle '+num(r.n,2)+' Tage'; if(r.typ==='wochenende') return 'Wochenende';
+  if(r.typ==='wochentage') return (r.tage||[]).map(t=>KZ42_WT[num(t)]||'').filter(Boolean).join(','); return ''; }
+function kz42UaStand(k, subs){ const l=(subs||untermenge(k.id)).filter(u=>!istTicker(u) && !u.optional); return { erledigt:l.filter(u=>u.done).length, gesamt:l.length }; }
+function kz42Datum(iso){ const d=new Date(String(iso).slice(0,10)+'T12:00:00'); return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'; }
+function kz42MetaHtml(k, subs){
+  const b=kz42Belastung(k), teile=['<span class="kz42-bel"><i style="background:'+b.farbe+'"></i>'+esc(b.text)+'</span>'];
+  teile.push('<span>'+esc(k.domain==='privat' ? 'Privat' : (k.projekt||'DFM'))+'</span>');
+  if(num(k.sollMin)>0) teile.push('<span>'+Math.round(num(k.sollMin))+' Min.</span>');
+  const rh=kz42Rhythmus(k); if(rh) teile.push('<span>↻ '+esc(rh)+'</span>');
+  if(k.faelligkeit && !k.sammelkarte){ const ueber=k.status==='offen' && k.faelligkeit<heuteApp(); teile.push('<span'+(ueber?' style="color:'+FARBE.ROT+'"':'')+'>bis '+kz42Datum(k.faelligkeit)+'</span>'); }
+  if(k.wartetAuf) teile.push('<span class="frost">⏳ wartet auf '+esc(String(k.wartetAuf).slice(0,24))+'</span>');
+  if(k.freeze) teile.push('<span class="frost">❄︎ eingefroren'+(k.eingefrorenBis ? ' bis '+kz42Datum(k.eingefrorenBis) : '')+'</span>');
+  if(k.sammelkarte) teile.push('<span class="kz42-badge">Sammel</span>');
+  const ua=kz42UaStand(k, subs); if(ua.gesamt) teile.push('<span>☑ '+ua.erledigt+'/'+ua.gesamt+'</span>');
+  return teile.join(' · ');
+}
+function kz42RechtsHtml(k){
+  if(istInfoKarte(k)) return '<span class="kz42-r"><b class="kz42-badge">Info</b></span>';
+  const satz=e42Satz(k), bonus=e42Bonus(k), fest=k.phFest!=null && k.phFest!=='';
+  return '<span class="kz42-r"><b>'+(fest?'✋':'⏱')+' '+fmtP(satz)+' P/h</b><small>✓ +'+fmtP(bonus)+(k.ticksAktiv?' je Mal':'')+'</small></span>';
+}
+function kartenZeile42Html(k, opt){
+  opt=opt||{};
+  const fam=kz42Farbe(k), laeuft=!opt.live && uhrLaeuftAuf(k), st=kartenStatusHeute(k), fertig=st==='erledigt', ueber=st==='zielErreicht', info=istInfoKarte(k), mehrmals=!!k.ticksAktiv && !info;
+  const ticks=tickAnzahlHeute(k), ziel=num(k.tagesziel);
+  let links;
+  if(opt.live) links = info ? '<span class="kl-play kz42-leer">ℹ︎</span>' : mehrmals ? '<span class="kl-plus kz42-plus"><em>➕</em><b>'+ticks+(ziel>0?'/'+ziel:'')+'</b></span>' : '<span class="kl-check kz42-check'+(fertig?' ok':'')+'">✓</span>';
+  else if(info) links='<span class="kl-play kz42-leer" aria-hidden="true">ℹ︎</span>';
+  else if(mehrmals) links='<button class="kl-plus kz42-plus" data-kltick="'+k.id+'" aria-label="Abhaken +1"><em>➕</em><b>'+ticks+(ziel>0?'/'+ziel:'')+'</b></button>';
+  else links = fertig
+    ? '<button class="kl-check ok kz42-check'+(hakAktiv('kl-'+k.id)?' hak-neu" style="'+hakStil():'')+'" data-klreopen="'+k.id+'" aria-label="Wieder öffnen">✓</button>'+hakFlugHtml('kl-'+k.id)
+    : '<button class="kl-check kz42-check" data-klcheck="'+k.id+'" aria-label="Erledigt">✓</button>';
+  const titel='<b class="kl-titel">'+esc(String(k.titel||'?'))+'</b><span class="kl-meta kz42-meta">'+kz42MetaHtml(k, opt.subs)+(opt.zusatz ? ' · '+opt.zusatz : '')+'</span>';
+  return '<div class="kl-z kz42'+(info?' kz42-info':'')+(laeuft?' laeuft':'')+(fertig?' fertig':'')+(ueber?' ueber':'')+(opt.erl?' erl':'')+'" style="--fam:'+fam+';--famb:'+farbeAlpha(fam, .18)+';--prio:'+fam+';--rand:'+farbeAlpha(fam, .55)+'"'+(opt.live ? '' : ' data-klkarte="'+k.id+'"')+'>'+
+    links+(opt.live ? '<div class="kl-t">'+titel+'</div>' : '<div class="kl-t" data-klfokus="'+k.id+'">'+titel+'</div>')+kz42RechtsHtml(k)+'</div>';
 }
 /* heute gebuchte Zeit der laufenden Karte in allen Zeilen sekündlich nachziehen (Ticker) */
 function kartenZeilenZeitLive(){
