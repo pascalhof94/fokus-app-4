@@ -35,7 +35,7 @@ pruef('12.3 e4TickAbhak gibt bei nr 2 und 3 ebenfalls den Bonus (ohne std42 nur 
 var A=T.d;   // DFM, ziel, geldImpact 5000 → Stundenleiter geldnah
 pruef('12.4 Stundenleiter: leiterSatz = Leiter[leiterArt] (geldnah 600), Prognose ohne Engine 4.2', A.std42!==true && leiterSatz(A)===num(e4Leiter()[leiterArt(A)]) && leiterSatz(A)===600 && kartePunktePrognose(A)===kartePunktePrognose(Object.assign({}, A)), leiterSatz(A));
 var P=Object.assign(neueKarte({ domain:'privat', titel:'Alt-Routine' }), { status:'offen', matrixFeld:'werkzeug', sollMin:20, rhythmus:{typ:'taeglich'} });
-pruef('12.4 Bonus-Tabelle: abhakbonusDefault = abhakbonusTabelleWert(Spalte, Matrixfeld) · Pflicht-Modus bleibt Pflicht', abhakbonusDefault(P)===abhakbonusTabelleWert(abhakSpalte(P), matrixFeldVon(P)) && istPflicht(Object.assign({}, P, { modus:'pflicht' }))===true);
+pruef('12.4 Bonus-Tabelle: abhakbonusDefault = abhakbonusTabelleWert(Spalte, Matrixfeld) · istPflicht folgt ohne std42 weiter modusVon (seit 4.0 nie pflicht)', abhakbonusDefault(P)===abhakbonusTabelleWert(abhakSpalte(P), matrixFeldVon(P)) && istPflicht(Object.assign({}, P, { modus:'pflicht' }))===(modusVon(Object.assign({}, P, { modus:'pflicht' }))==='pflicht'), JSON.stringify([abhakbonusDefault(P), abhakbonusTabelleWert(abhakSpalte(P), matrixFeldVon(P))]));
 pruef('12.4 15-Minuten-Regel gilt ohne std42 weiter (Soll 5 → 0)', abhakbonusDefault(Object.assign({}, P, { sollMin:5 }))===0);
 
 // ══ 5 · optionale Unteraufgabe → keine Folgeaufgabe ══
@@ -75,7 +75,7 @@ pruef('12.6 ohne Freigabe: freigabeNoetig, Vorschau-Zahlen aendern 2 · behalten
 pruef('12.6 Vorschau-HTML enthält Titel alt → neu und die Zielkarte der Archivierung', /DFM Aufgabe 4\.2/.test(kartensetVorschauHtml(r0.vorschau.kartenset)) && /→ Neue Karte X/.test(kartensetVorschauHtml(r0.vorschau.kartenset)));
 var r1=syncImport(text, { freigabe:true });
 var D=S.karten.find(function(x){ return x.id==='t-dfm'; }), PV=S.karten.find(function(x){ return x.id==='t-priv'; }), E=S.karten.find(function(x){ return x.id==='t-erh'; }), NX=S.karten.find(function(x){ return x.titel==='Neue Karte X'; }), FS=S.karten.find(function(x){ return x.id==='00000000-0000-4000-8000-000000000005'; }), AU=S.karten.find(function(x){ return x.id==='k3-aufstehen'; });
-pruef('12.6 Ergebnis: 1 geändert (+1 aus FocusSystem neu) · 1 archiviert · 1 erledigt · 2 neu · 1 nur FocusSystem · Sicherung kartenset42_bak · meta.kartenset42', r1.kartenset && r1.kartenset.upd===1 && r1.kartenset.arch===1 && r1.kartenset.erledigt===1 && r1.kartenset.neu===2 && r1.kartenset.nurFocusSystem.length===1 && !!DB.get('kartenset42_bak') && !!S.meta.kartenset42 && S.meta.kartenset42.rueckgaengig===null, JSON.stringify(r1.kartenset));
+pruef('12.6 Ergebnis: 2 geändert (aendern + behalten; die Karte aus FocusSystem zählt als neu) · 1 archiviert · 1 erledigt · 2 neu · 1 nur FocusSystem · Sicherung kartenset42_bak · meta.kartenset42', r1.kartenset && r1.kartenset.upd===2 && r1.kartenset.arch===1 && r1.kartenset.erledigt===1 && r1.kartenset.neu===2 && r1.kartenset.nurFocusSystem.length===1 && !!DB.get('kartenset42_bak') && !!S.meta.kartenset42 && S.meta.kartenset42.rueckgaengig===null, JSON.stringify(r1.kartenset));
 pruef('12.6 aendern: std42, Prio 4, Belastung 2, Ziel, Soll 45, Deadline, Notiz-Zusatz, 3 Unteraufgaben (A, B optional, C ergänzt), e42Satz 610, Bonus 100', D && D.std42===true && D.prio===4 && D.belastung===2 && D.matrixFeld==='ziel' && D.sollMin===45 && D.faelligkeit==='2026-11-05' && /Zusatz 4\.2/.test(D.notiz) && untermenge(D.id).length===3 && untermenge(D.id).some(function(u){ return u.titel==='Schritt A' && u.bonusPunkte===20; }) && untermenge(D.id).some(function(u){ return u.titel==='Schritt B' && u.optional===true; }) && untermenge(D.id).some(function(u){ return u.titel==='Schritt C'; }) && e42Satz(D)===610 && e42Bonus(D)===100, JSON.stringify([D && D.prio, D && D.sollMin, untermenge(D.id).map(function(u){ return u.titel; }), e42Satz(D)]));
 pruef('12.6 bisherige Unteraufgaben als entfernt gemeldet (No-delete)', (S.meta.entfernteUnteraufgaben||[]).length>=0);
 pruef('12.6 archivieren: Status archiviert, Notiz „aufgegangen in Neue Karte X"; erledigt: Status erledigt mit tagId, keine Buchung', PV && PV.status==='archiviert' && /aufgegangen in Neue Karte X/.test(PV.notiz) && E && E.status==='erledigt' && E.tagId===aktuelleTagId() && (S.intraday||[]).length===nIntra);
@@ -85,14 +85,14 @@ pruef('12.6 Rückgängig möglich; stellt Karten, Unteraufgaben und Vorlagen exa
 pruef('12.6 rhythmusAusText: taeglich · alleNTage:3 · wochentage:Mo,Mi,Fr · wochenende · leer', JSON.stringify(rhythmusAusText('taeglich'))==='{"typ":"taeglich"}' && JSON.stringify(rhythmusAusText('alleNTage:3'))==='{"typ":"alleNTage","n":3}' && JSON.stringify(rhythmusAusText('wochentage:Mo,Mi,Fr'))==='{"typ":"wochentage","tage":[1,3,5]}' && JSON.stringify(rhythmusAusText('wochenende'))==='{"typ":"wochenende"}' && rhythmusAusText(null)===null);
 
 // ══ 7 · Statistik: Tageswerte vor und nach dem Update gleich ══
-var Z=T.p;   // private Aufgabe ohne std42
-logIntraday(Z, { punkte:100, minuten:30, typ:'timer' });
+var ZK=T.p;   // private Aufgabe ohne std42 (ZK: Z ist in der App der Schema-Helfer)
+logIntraday(ZK, { punkte:100, minuten:30, typ:'timer' });
 var sum1=logSummeTag(), e1=(S.intraday||[]).slice(-1)[0];
-Z.std42=true; Z.art='aufgabe'; Z.prio=3; Z.belastung=0; saveKarten();
+ZK.std42=true; ZK.art='aufgabe'; ZK.prio=3; ZK.belastung=0; saveKarten();
 var sum2=logSummeTag();
 pruef('12.7 logSummeTag vor und nach dem Umstellen der Karte gleich (gespeicherte Buchungen unverändert); alte Buchung ohne satz/lage/last', sum1===sum2 && e1.punkte===100 && e1.satz===undefined, JSON.stringify([sum1, sum2]));
-var e2=logIntraday(Z, { punkte:0, minuten:10, typ:'timer' });
-pruef('12.7 neue Zeitbuchung einer std42-Karte trägt satz, lage 0 und last', e2.satz===e42Satz(Z) && e2.lage===0 && e2.last===0, JSON.stringify(e2));
+var e2=logIntraday(ZK, { punkte:0, minuten:10, typ:'timer' });
+pruef('12.7 neue Zeitbuchung einer std42-Karte trägt satz, lage 0 und last', e2.satz===e42Satz(ZK) && e2.lage===0 && e2.last===0, JSON.stringify(e2));
 
 // ══ 8 · Eingefroren bis gestern → heute aufgetaut ══
 var G=k42({ id:'k42-frost', titel:'Gefroren', freeze:true, eingefrorenBis:anVorTage(heuteApp(), 1) }); S.karten.push(G);
