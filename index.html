@@ -13099,7 +13099,7 @@ function renderStatusSheet(){
     const fokusMin=heuteIv.filter(e=>e.typ==='timer'||e.typ==='autopause').reduce((a,e)=>a+num(e.minuten),0);
     const bloecke=heuteIv.filter(e=>(e.typ==='timer'||e.typ==='autopause') && num(e.minuten)>=1).length;
     // §7 (v1.11.1): Bild UND Zahl — je Kachel ein Balken
-    const routOffen=S.karten.filter(k=>k.rhythmus && k.status==='offen' && !k.freeze
+    const routOffen=S.karten.filter(k=>k.rhythmus && k.status==='offen' && !karteRuht(k)
       && routineFaellig(k, heuteApp()) && !routErledigtHeute(k)).length;
     let restMinPlan=0; S.karten.forEach(k=>{ if(imTagesstrom(k)) restMinPlan+=Math.max(0,num(k.sollMin)-heuteInvestiertMin(k)); });
     const pA=kettenGes?Math.round(Math.min(1,erlA/kettenGes)*100):(erlA?100:0);
@@ -15210,7 +15210,7 @@ function abschlussKarten(){
   const h=heuteApp();
   return S.karten.filter(k=>
        k.status==='offen'
-    && !k.freeze
+    && !karteRuht(k)
     && !k.rhythmus                       // keine Routine
     && kartenArt(k)!=='Counter'          // kein Counter
     && k.faelligkeit && k.faelligkeit<=h // Deadline heute oder frueher
@@ -19141,6 +19141,158 @@ function syncExportText(typ){ return JSON.stringify(syncExport(typ), null, 2); }
    rückwirkende Reparatur desselben Musters. */
 const SYNC_BESTAND_SCHWELLE = 10;
 /* Import eines Pakets aus dem Claude-Chat (§8-Hoheitsregeln). */
+/* ══ Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §9) · KARTENSET EINSPIELEN (Paket der Art „kartenset") ══════════════════════════════
+   Quelle 261102_Kartenset_4.2.json: kartenset.eintraege (je Karte quelle {tabelle, id, appId, airtableId, titel}, aktion aendern · behalten ·
+   archivieren · erledigt, ziel, unteraufgaben, aufgehtIn, hinweis) und kartenset.neu. Anwendung nur nach Freigabe im Blatt „Paket prüfen";
+   vorher Sicherung kartenset42_bak (Karten, Unteraufgaben, Vorlagen, Gruppen); „Kartenset 4.2 rückgängig" 7 Tage in den Einstellungen.
+   Keine Zeit- oder Punktebuchung. Unteraufgaben werden ersetzt (bisherige als entfernt gemeldet, No-delete), Sonderfälle laut hinweis. */
+function rhythmusAusText(s){
+  if(s && typeof s==='object') return JSON.parse(JSON.stringify(s));
+  const t=String(s||'').trim(); if(!t) return null;
+  if(/^t(ae|ä)glich$/i.test(t)) return { typ:'taeglich' };
+  if(/^wochenende$/i.test(t)) return { typ:'wochenende' };
+  let m=t.match(/^alleNTage:(\d+)$/i); if(m) return { typ:'alleNTage', n:Math.max(1, num(m[1])) };
+  m=t.match(/^wochentage:(.+)$/i); if(m){ const tage=m[1].split(/[,\s]+/).map(x=>KZ42_WT.indexOf(x.trim().slice(0,2))).filter(n=>n>=1 && n<=7); return tage.length ? { typ:'wochentage', tage:tage.sort((a,b)=>a-b) } : null; }
+  return null;
+}
+function ks42Titel(t){ return String(t||'').replace(/^\s*↳\s*/, '').trim(); }
+function ks42Familie(z){ return (z && String(z.familie||'').toLowerCase()==='privat') ? 'privat' : 'dfm'; }
+function ks42Finden(q){
+  if(!q) return null;
+  return (q.appId && S.karten.find(x=>x.id===q.appId)) || (q.id && S.karten.find(x=>x.id===q.id)) || (q.airtableId && S.karten.find(x=>x.airtableId===q.airtableId)) || null;
+}
+/* Felder aus ziel auf die Karte (Mapping §2) */
+function ks42ZielAnwenden(k, z){
+  if(!z) return k;
+  if(z.titel) k.titel=String(z.titel);
+  k.domain=ks42Familie(z); if(k.domain!=='dfm'){ k.projekt=null; k.geldImpact=0; } else if(z.projekt!==undefined) k.projekt=z.projekt||null;
+  if(KARTENART42_LABEL[z.art]) k.art=z.art; else if(!KARTENART42_LABEL[k.art]) k.art=k.rolle ? 'system' : (k.rhythmus ? 'routine' : 'aufgabe');
+  k.sammelkarte=z.sammelkarte===true;
+  { const mf=matrixFeldNorm(z.matrix); if(mf) k.matrixFeld=mf; }
+  if(z.belastung!==undefined) k.belastung=leer(z.belastung) ? null : Math.max(-3, Math.min(3, Math.round(num(z.belastung))));
+  if(z.prio!==undefined) k.prio=leer(z.prio) ? null : Math.max(1, Math.min(5, Math.round(num(z.prio))));
+  k.ticksAktiv=z.mehrmals===true;
+  if(z.zielProTag!==undefined) k.tagesziel=leer(z.zielProTag) ? null : Math.max(0, num(z.zielProTag));
+  if(z.soll!==undefined && !leer(z.soll)) k.sollMin=Math.max(0, num(z.soll));
+  if(z.deadline!==undefined) k.faelligkeit=leer(z.deadline) ? null : String(z.deadline).slice(0,10);
+  if(z.uhrzeit) k.uhrzeit=String(z.uhrzeit);
+  if(z.rhythmus!==undefined) k.rhythmus=rhythmusAusText(z.rhythmus);
+  if(z.immerSichtbar===true) k.immerSichtbar=true;
+  if(z.vorlaufTage!=null) k.vorlaufTage=Math.max(0, num(z.vorlaufTage));
+  k.phFest=leer(z.phFest) ? null : Math.max(0, num(z.phFest));
+  k.abhakbonus=leer(z.bonus) ? null : num(z.bonus);   // ziel.bewertung ist nur Information
+  if(z.status==='eingefroren'){ k.freeze=true; k.eingefrorenBis=leer(z.eingefrorenBis) ? null : String(z.eingefrorenBis).slice(0,10); } else { k.freeze=false; k.eingefrorenBis=null; }
+  if(!leer(z.wartetAuf)){ k.wartetAuf=String(z.wartetAuf); k.wartetSeit=k.wartetSeit||heuteApp(); } else { k.wartetAuf=null; k.wartetSeit=null; }
+  if(k.sammelkarte){ k.faelligkeit=null; k.immerSichtbar=true; }
+  if(z.notizZusatz) k.notiz=(k.notiz ? String(k.notiz)+'\n' : '')+String(z.notizZusatz);
+  k.std42=true; beruehre(k);
+  return k;
+}
+function ks42SubsErsetzen(k, liste){
+  if(!Array.isArray(S.meta.entfernteUnteraufgaben)) S.meta.entfernteUnteraufgaben=[];
+  untermenge(k.id).forEach(u=>{ S.meta.entfernteUnteraufgaben.push({ id:u.id, parentId:u.parentId, titel:u.titel||'', airtableId:u.airtableId||null, ts:jetztIso() }); });
+  S.unteraufgaben=S.unteraufgaben.filter(u=>u.parentId!==k.id || istTicker(u));
+  (liste||[]).forEach(u=>{ if(!u || !ks42Titel(u.titel)) return;
+    S.unteraufgaben.push(neueUnteraufgabe(k.id, { titel:ks42Titel(u.titel), sollMin:Math.max(0, num(u.soll)), bonusPunkte:leer(u.bonus) ? 0 : num(u.bonus), optional:u.optional===true, done:u.erledigt===true })); });
+}
+function ks42SubsErgaenzen(k, hinweis){
+  const out=[], re=/UA „([^“”"]+)[“”"] ergänzen/g; let m;
+  while((m=re.exec(String(hinweis||'')))){ const t=ks42Titel(m[1]); if(!t) continue;
+    if(untermenge(k.id).some(u=>String(u.titel||'').trim().toLowerCase()===t.toLowerCase())) continue;
+    S.unteraufgaben.push(neueUnteraufgabe(k.id, { titel:t, sollMin:0, bonusPunkte:0, optional:false, done:false })); out.push(t); }
+  return out;
+}
+function ks42Zieltitel(set, ref){
+  if(!ref) return null; const r=String(ref);
+  const neu=(set.neu||[]).find(x=>x.key===(r.indexOf('neu:')===0 ? r.slice(4) : r)); if(neu) return (neu.ziel && neu.ziel.titel) || neu.key;
+  const e=(set.eintraege||[]).find(x=>x.quelle && (x.quelle.id===r || x.quelle.appId===r)); if(e) return (e.ziel && e.ziel.titel) || e.quelle.titel;
+  return r;
+}
+function ks42Archivieren(k, text){
+  if(k.status!=='archiviert'){ k.status='archiviert'; if(S.fokus && S.fokus.karteId===k.id){ S.fokus=null; saveFokus(); } }
+  k.notiz=(k.notiz ? String(k.notiz)+'\n' : '')+text; beruehre(k);
+}
+/* Vorschau fürs Blatt „Paket prüfen": Zahlen je Aktion und Familie, Listen je Aktion mit Titel alt → neu */
+function kartensetVorschau(paket){
+  const set=(paket && paket.kartenset)||{}, E=Array.isArray(set.eintraege) ? set.eintraege : [], N=Array.isArray(set.neu) ? set.neu : [];
+  const je={ aendern:[], behalten:[], archivieren:[], erledigt:[], neu:[] }, fam={};
+  Object.keys(je).forEach(a=>{ fam[a]={ dfm:0, privat:0 }; });
+  let nurFs=0;
+  E.forEach(e=>{ if(!e || !je[e.aktion]) return; const a=e.aktion, f=e.ziel ? ks42Familie(e.ziel) : ((e.quelle && e.quelle.tabelle==='Privat_Karten') ? 'privat' : 'dfm');
+    const k=ks42Finden(e.quelle); if(!k && (a==='archivieren' || a==='erledigt')) nurFs++;
+    je[a].push({ alt:(e.quelle && e.quelle.titel)||'?', neu:(e.ziel && e.ziel.titel)||null, ziel:a==='archivieren' ? ks42Zieltitel(set, e.aufgehtIn) : null, inApp:!!k, fam:f }); fam[a][f]++; });
+  N.forEach(n=>{ if(!n || !n.ziel) return; const f=ks42Familie(n.ziel); je.neu.push({ alt:null, neu:n.ziel.titel, inApp:false, fam:f }); fam.neu[f]++; });
+  const zahlen={}; Object.keys(je).forEach(a=>{ zahlen[a]=je[a].length; });
+  return { je, fam, zahlen, nurFocusSystem:nurFs, grund:String((paket && paket.grund)||'') };
+}
+function kartensetVorschauHtml(vs){
+  const A=[['aendern','Ändern'],['behalten','Behalten'],['archivieren','Archivieren'],['erledigt','Erledigt'],['neu','Neu']];
+  let h='<h4 class="abt-h">Kartenset 4.2</h4>'+(vs.grund ? '<p class="d">'+esc(vs.grund)+'</p>' : '')+'<div class="kvblock">'+A.map(([a,n])=>'<div class="kv"><span>'+n+'</span><b>'+vs.zahlen[a]+' <small>(DFM '+vs.fam[a].dfm+' · Privat '+vs.fam[a].privat+')</small></b></div>').join('')+'</div>';
+  if(vs.nurFocusSystem) h+='<p class="d" style="color:var(--warn)">'+vs.nurFocusSystem+' Karte(n) zum Archivieren/Erledigen liegen nur in FocusSystem, nicht in der App — sie bleiben dort unverändert (Bericht).</p>';
+  h+=A.map(([a,n])=>{ const l=vs.je[a]; if(!l.length) return '';
+    return '<details class="tuer-det"><summary>'+n+' · '+l.length+'</summary>'+l.map(x=>'<div class="kv tuer-z"><span>'+esc(x.alt||'—')+(x.inApp===false && a!=='neu' ? ' <small>(nur FocusSystem)</small>' : '')+'</span><b>'+
+      (a==='archivieren' ? (x.ziel ? '→ '+esc(x.ziel) : 'archiviert') : a==='erledigt' ? 'erledigt' : esc(x.neu||x.alt||''))+'</b></div>').join('')+'</details>'; }).join('');
+  h+='<p class="d">Vorher legt die App eine Sicherung an (Karten, Unteraufgaben, Vorlagen, Gruppen); „Kartenset 4.2 rückgängig" steht danach 7 Tage in den Einstellungen. Keine Zeit- oder Punktebuchung.</p>';
+  return h;
+}
+function kartensetAnwenden(paket){
+  const set=paket.kartenset||{}, E=Array.isArray(set.eintraege) ? set.eintraege : [], N=Array.isArray(set.neu) ? set.neu : [];
+  const r={ neu:0, neuDfm:0, neuPrivat:0, upd:0, arch:0, erledigt:0, vorlagen:0, ergaenzt:0, nurFocusSystem:[], ohneProjekt:[], uebersprungen:[] };
+  const ts=jetztIso(), tid=aktuelleTagId();
+  // 1 Sicherung vorher
+  DB.set('kartenset42_bak', { ts, karten:JSON.parse(JSON.stringify(S.karten)), unteraufgaben:JSON.parse(JSON.stringify(S.unteraufgaben)), vorlagen:JSON.parse(JSON.stringify(S.vorlagen||[])), gruppen:JSON.parse(JSON.stringify(S.gruppen||[])) });
+  const neuAnlegen=(ziel, extra)=>{ const k=neueKarte(Object.assign({ domain:ks42Familie(ziel), titel:String(ziel.titel||''), matrixFeld:matrixFeldNorm(ziel.matrix)||'werkzeug', std42:true }, extra||{}));
+    ks42ZielAnwenden(k, ziel); S.karten.push(k); r.neu++; if(k.domain==='dfm') r.neuDfm++; else r.neuPrivat++; return k; };
+  // 3 je Eintrag nach aktion, 4 Sonderfälle laut hinweis
+  E.forEach(e=>{
+    try{
+      const q=e.quelle||{}, h=String(e.hinweis||''), a=e.aktion;
+      let k=ks42Finden(q);
+      if(a==='aendern' || a==='behalten'){
+        if(!e.ziel){ r.uebersprungen.push({ was:'Karte '+ks42Titel(q.titel), grund:'kein ziel' }); return; }
+        if(/^Wechsel Privat → DFM/.test(h) || (k && k.domain==='privat' && ks42Familie(e.ziel)==='dfm')){   // Post hochholen: neue DFM-Karte, Privat-Karte archivieren
+          const n=neuAnlegen(e.ziel); if(Array.isArray(e.unteraufgaben)) ks42SubsErsetzen(n, e.unteraufgaben);
+          if(k){ ks42Archivieren(k, 'Kartenset 4.2: als DFM-Routine neu angelegt („'+n.titel+'")'); r.arch++; }
+          return; }
+        if(!k) k=neuAnlegen(e.ziel, { id:(q.id && /^[0-9a-f-]{36}$/i.test(String(q.id))) ? q.id : uuid(), airtableId:q.airtableId||null });   // in FocusSystem, noch nicht in der App
+        else { ks42ZielAnwenden(k, e.ziel); r.upd++; }
+        if(Array.isArray(e.unteraufgaben)) ks42SubsErsetzen(k, e.unteraufgaben);
+        r.ergaenzt+=ks42SubsErgaenzen(k, h).length;
+        if(k.domain==='dfm' && !k.projekt && /Projekt beim Paket mit Pascal festlegen/.test(h)) r.ohneProjekt.push(k.titel);
+        { const mv=h.match(/als Vorlage „([^“”"]+)[“”"] speichern/); if(mv){ vorlageAusKarte(k, mv[1]); r.vorlagen++; ks42Archivieren(k, 'Kartenset 4.2: als Vorlage „'+mv[1]+'" gespeichert, Karte archiviert'); r.arch++; } }   // Rewe
+        return;
+      }
+      if(a==='archivieren'){
+        if(!k){ r.nurFocusSystem.push({ titel:ks42Titel(q.titel), aktion:a }); return; }
+        const zt=ks42Zieltitel(set, e.aufgehtIn);
+        ks42Archivieren(k, 'Kartenset 4.2: '+(zt ? 'aufgegangen in '+zt : 'archiviert')); r.arch++;
+        if(/recDoMX5IOUNR8zbz/.test(h)){ const d=S.karten.find(x=>x.airtableId==='recDoMX5IOUNR8zbz' && x.id!==k.id && x.status!=='archiviert'); if(d){ ks42Archivieren(d, 'Kartenset 4.2: App-Dublette archiviert'); r.arch++; } }   // Kalendertool
+        return;
+      }
+      if(a==='erledigt'){
+        if(!k){ r.nurFocusSystem.push({ titel:ks42Titel(q.titel), aktion:a }); return; }
+        if(k.status!=='erledigt'){ k.status='erledigt'; k.tagId=tid; beruehre(k); if(S.fokus && S.fokus.karteId===k.id){ S.fokus=null; saveFokus(); } }   // ohne Punkte, ohne Folgeaufgabe
+        r.erledigt++; return;
+      }
+      r.uebersprungen.push({ was:'Karte '+ks42Titel(q.titel), grund:'unbekannte Aktion '+String(a) });
+    }catch(x){ r.uebersprungen.push({ was:'Karte '+ks42Titel((e && e.quelle||{}).titel), grund:String((x && x.message)||x) }); }
+  });
+  N.forEach(n=>{ try{ if(!n || !n.ziel || !n.ziel.titel) return; const k=neuAnlegen(n.ziel); if(Array.isArray(n.unteraufgaben)) ks42SubsErsetzen(k, n.unteraufgaben);
+    if(k.domain==='dfm' && !k.projekt) r.ohneProjekt.push(k.titel); }catch(x){ r.uebersprungen.push({ was:'Neue Karte '+String((n && n.ziel && n.ziel.titel)||'?'), grund:String((x && x.message)||x) }); } });
+  S.meta.kartenset42={ ts, grund:String(paket.grund||''), zahlen:{ neu:r.neu, upd:r.upd, arch:r.arch, erledigt:r.erledigt, vorlagen:r.vorlagen }, rueckgaengig:null };
+  saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveVorlagen(); saveMeta(); baueSuchIndex();
+  try{ tickerAlleSicherstellen(); }catch(x){}
+  return r;
+}
+function kartensetRueckgaengigMoeglich(){ const K=S.meta && S.meta.kartenset42; if(!K || !K.ts || K.rueckgaengig) return false; if(Date.now()-Date.parse(K.ts)>7*86400000) return false; return !!DB.get('kartenset42_bak', null); }
+function kartensetRueckgaengig(){
+  const B=DB.get('kartenset42_bak', null); if(!B || !kartensetRueckgaengigMoeglich()) return false;
+  if(S.fokus && S.fokus.laeuft){ toast('Erst die Uhr stoppen'); return false; }
+  S.karten=JSON.parse(JSON.stringify(B.karten||[])); S.unteraufgaben=JSON.parse(JSON.stringify(B.unteraufgaben||[])); S.vorlagen=JSON.parse(JSON.stringify(B.vorlagen||[])); S.gruppen=JSON.parse(JSON.stringify(B.gruppen||[]));
+  S.meta.kartenset42.rueckgaengig=jetztIso();
+  saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveVorlagen(); saveGruppen(); saveMeta(); baueSuchIndex();
+  return true;
+}
 function syncImport(text, opt){
   let paket; try{ paket=JSON.parse(text); }catch(e){ return {fehler:'Ungültiges JSON'}; }
   // §6.1 (v1.6.1): Das appVersion-Gate gilt jetzt AUSNAHMSLOS — auch für
@@ -19156,6 +19308,15 @@ function syncImport(text, opt){
   {
     const w=v=>{ const t=String(v).split('.').map(x=>num(x)); return (t[0]||0)*10000+(t[1]||0)*100+(t[2]||0); };
     if(w(av)<w(DATENVERTRAG)) return {fehler:'Paket-appVersion '+av+' ist älter als '+DATENVERTRAG+' — bitte im Chat ein Paket nach Vertrag '+DATENVERTRAG.slice(0,3)+' anfordern (eine Kette, matrixFeld, Positions-Spur).'};
+  }
+  // ══ Karten-Standard 4.2 §9 · Paket der Art „kartenset": nur nach Freigabe im Blatt „Paket prüfen"; eigener Zweig, keine Kartenschleife ══
+  if(paket && !Array.isArray(paket) && paket.art==='kartenset' && paket.kartenset && typeof paket.kartenset==='object'){
+    const vs=kartensetVorschau(paket);
+    if(!(opt && opt.freigabe)) return { freigabeNoetig:true, vorschau:{ einstellungen:null, statistik:null, karten:0, kartenset:vs } };
+    const r=kartensetAnwenden(paket);
+    S.meta.letzterImportTs=jetztIso(); saveMeta();
+    return { neu:r.neu, neuDfm:r.neuDfm, neuPrivat:r.neuPrivat, upd:r.upd, arch:r.arch, ketteGesetzt:null, ketteUnbekannt:[], gruppenNeu:0, gruppenUpd:0, rahmenGesetzt:null,
+      korrigiert:0, korrekturen:0, vomGeraetGenommen:0, vomGeraetZurueck:0, uebersprungen:r.uebersprungen, wiederhergestellt:null, subsEntfernt:0, tuer:null, muenzenKorrekturen:[], kartenset:r };
   }
   // ══ §6 (v3.1.0) · SYNC-TÜR: einstellungen/statistik erst nach „Übernehmen" ══
   // Eine Wiederherstellung bringt die Einstellungen ueber ihren eigenen Block zurueck — dort sind die beiden Bereiche nur Spiegel.
@@ -19623,6 +19784,7 @@ function importErgebnisHtml(res){
       if(res.korrigiert) kz+='<br><span style="color:var(--cyan)">§5.7-Korrekturen angewandt: <b>'+res.korrigiert+'</b> Felder (Protokoll in den Einstellungen).</span>';
       if(res.muenzenKorrekturen && res.muenzenKorrekturen.length) kz+='<br>'+res.muenzenKorrekturen.map(m=>'<span style="color:var(--cyan)">'+muenzenKorrekturZeile(m)+'</span>').join('<br>');   // Hotfix 21 §D.4
       if(res.tuer) kz+='<br><span style="color:var(--cyan)">Sync-Tür: <b>'+res.tuer.einstellungen+'</b> Einstellung(en) · <b>'+res.tuer.statistik+'</b> Statistik-Parameter geändert (Protokoll in den Einstellungen).</span>';
+      if(res.kartenset){ const ks=res.kartenset; kz+='<br><span style="color:var(--cyan)">🗂 Kartenset 4.2: <b>'+num(ks.upd)+'</b> geändert · <b>'+num(ks.arch)+'</b> archiviert · <b>'+num(ks.erledigt)+'</b> erledigt · <b>'+num(ks.neu)+'</b> neu · <b>'+num(ks.vorlagen)+'</b> Vorlage(n)'+((ks.nurFocusSystem||[]).length ? ' · '+ks.nurFocusSystem.length+' nur in FocusSystem' : '')+((ks.ohneProjekt||[]).length ? ' · ohne Projekt: '+ks.ohneProjekt.map(esc).join(', ') : '')+'</span>'; }   // 4.2 §9
       if(res.subsEntfernt) kz+='<br>Unteraufgaben entfernt: <b>'+res.subsEntfernt+'</b>.';
       if(res.uebersprungen && res.uebersprungen.length)
         kz+='<br><span style="color:var(--warn)">Übersprungen ('+res.uebersprungen.length+'):</span><br>'+
@@ -19643,7 +19805,8 @@ function oeffneSyncFreigabe(text, vs, quelle){
     return h; };
   let muenzenZeilen='';   // Hotfix 21 §D.4: Münzen-Korrekturen des Pakets im Blatt „Paket prüfen“
   try{ const pk=JSON.parse(text); if(pk && Array.isArray(pk.korrekturen)) muenzenZeilen=pk.korrekturen.filter(k=>k && k.muenzen!==undefined).map(k=>'<p class="d">'+muenzenKorrekturZeile({ muenzen:Number(k.muenzen), grund:k.grund })+'</p>').join(''); }catch(e){}
-  const h='<p class="d">Das Paket ändert Einstellungen'+(vs.statistik?' bzw. die Statistik':'')+'. Erst prüfen, dann übernehmen. '+
+  const h=vs.kartenset ? kartensetVorschauHtml(vs.kartenset)   // 4.2 §9: Vorschau des Kartensets
+    : '<p class="d">Das Paket ändert Einstellungen'+(vs.statistik?' bzw. die Statistik':'')+'. Erst prüfen, dann übernehmen. '+
     'Vorher legt die App eine Sicherung an; jede Änderung steht danach im Protokoll.</p>'+
     block(vs.einstellungen,'Einstellungen')+block(vs.statistik,'Statistik')+muenzenZeilen+
     (vs.karten ? '<p class="d">Außerdem im Paket: <b>'+vs.karten+'</b> Karte(n).</p>' : '');
@@ -19653,7 +19816,7 @@ function syncFreigabeAnwenden(){
   if(!_freigabe) return null;
   const f=_freigabe; _freigabe=null;
   const res=syncImport(f.text, {freigabe:true});
-  if(!res.fehler){ try{ syncPunkteBuchen('import'); }catch(e){} }   // §3a (v3.7.1): „Übernehmen"
+  if(!res.fehler && !res.kartenset){ try{ syncPunkteBuchen('import'); }catch(e){} }   // §3a (v3.7.1): „Übernehmen" · 4.2 §9: das Kartenset bucht keine Punkte
   try{ FSLive.paketAbgeschlossen(res, f.quelle); }catch(e){}   // 4.0 · Paket 3: Paket aus dem Eingang zurückmelden
   closeSheet(); renderAlles();
   if(!res.fehler){ toast('Übernommen · '+num(res.tuer&&res.tuer.geaendert)+' Einstellung(en)'+(res.upd||res.neu?' · '+(num(res.upd)+num(res.neu))+' Karte(n)':'')); haptik(15); }
@@ -20165,6 +20328,11 @@ function renderEinst(){
       ((L.uebernommen||[]).length>12?'<p class="d" style="color:var(--mut2)">… und '+((L.uebernommen||[]).length-12)+' weitere.</p>':'')+
     '</div>';
   }
+  // Karten-Standard 4.2 §9: „Kartenset 4.2 rückgängig" — 7 Tage nach dem Einspielen sichtbar, stellt die Sicherung kartenset42_bak wieder her
+  { const K=S.meta.kartenset42; if(K && K.ts && Date.now()-Date.parse(K.ts)<=7*86400000){ const z=K.zahlen||{};
+    h+='<div class="card"><h3>🗂 Kartenset 4.2</h3><p class="d">Eingespielt '+spielResetZeitText(K.ts)+' · '+num(z.upd)+' geändert · '+num(z.arch)+' archiviert · '+num(z.erledigt)+' erledigt · '+num(z.neu)+' neu.</p>'+
+      (K.rueckgaengig ? '<p class="d">Rückgängig gemacht '+spielResetZeitText(K.rueckgaengig)+'.</p>'
+        : (kartensetRueckgaengigMoeglich() ? '<div class="btnrow"><button class="btn warn sm" data-kartenset42undo="1">↩︎ Kartenset 4.2 rückgängig</button></div><div class="hint">stellt Karten, Unteraufgaben, Vorlagen und Gruppen von vor dem Einspielen wieder her (Sicherung kartenset42_bak)</div>' : '<p class="d">Keine Sicherung mehr vorhanden.</p>'))+'</div>'; } }
   // Hotfix 23 §3.1: Spiel zurücksetzen — Shop und Kulisse, je mit oder ohne Währung (ersetzt „Shop zurücksetzen (nur Besitz)“ und „Eingriffe mit Tragweite“)
   h+='<div class="card"><h3>🎮 Spiel zurücksetzen</h3>'+
     '<p class="d">Shop und Kulisse einzeln neu beginnen, jeweils mit oder ohne Währung. Punkte, Rang, Lebenswerk, Historie und Statistik bleiben immer. Vorher wird gesichert; der letzte Reset je Bereich lässt sich rückgängig machen, solange danach nichts gekauft bzw. gemalt wurde.</p>'+
@@ -25225,6 +25393,9 @@ el('einstBody').addEventListener('click', e=>{
   if(e.target.closest('[data-urlaubtoggle]')){ S.meta.urlaubsmodus=!S.meta.urlaubsmodus; saveMeta(); renderEinst(); renderStatusbar(); toast(S.meta.urlaubsmodus?'🏖 Urlaubsmodus AN':'Urlaubsmodus aus'); return; }
   // Hotfix 23 §3.4: Spiel zurücksetzen — Bestätigungs-Sheet je Bereich, Rückgängig des letzten Resets nach Rückfrage
   const spr=e.target.closest('[data-spielreset]'); if(spr){ spielResetSheet(spr.dataset.spielreset, false); return; }
+  const ksu=e.target.closest('[data-kartenset42undo]'); if(ksu){   // Karten-Standard 4.2 §9
+    if(!confirm('Kartenset 4.2 rückgängig machen? Karten, Unteraufgaben, Vorlagen und Gruppen gehen auf den Stand von vor dem Einspielen zurück.')) return;
+    if(kartensetRueckgaengig()){ toast('↩︎ Kartenset 4.2 rückgängig'); try{ renderAlles(); }catch(x){} renderEinst(); } else toast('Rückgängig nicht möglich'); return; }
   const spu=e.target.closest('[data-spielresetundo]'); if(spu){ const bereich=spu.dataset.spielresetundo, R=(S.meta.spielReset && S.meta.spielReset[bereich])||null;
     if(!confirm('Letztes Zurücksetzen ('+(bereich==='shop'?'Shop':'Kulisse')+', '+spielResetZeitText(R && R.ts)+') rückgängig machen?')) return;
     spielResetRueckgaengig(bereich); renderEinst(); if(seiteAktuell()==='belohnung') renderBelohnung(); toast('↩︎ '+(bereich==='shop'?'Shop':'Kulisse')+' wiederhergestellt'); return; }
