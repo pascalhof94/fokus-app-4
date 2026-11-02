@@ -19890,6 +19890,80 @@ function shopResetJetzt(){
 }
 /* V3: Debug-Overlay für Tap-Flächen (Mehr → Info). Rein visuell, app-only. */
 function setDebugTap(on){ S.ui.debugTap=!!on; saveUi(); document.body.classList.toggle('debugtap', !!on); if(on) toast('🐞 Tap-Debug an'); }
+/* ══ Hotfix 23 · Spiel zurücksetzen: Shop und Kulisse, je mit oder ohne Währung. Sicherung vorher, Rückgängig für den jeweils letzten Reset. ══ */
+/* §2.1 · S.meta.spielReset = { shop, kulisse } (jeweils letzter Reset mit vorher), S.meta.spielResetLog = [ { bereich, ts, mitWaehrung, rueckgaengig } ] (nur anhängen).
+   Beide werden erst beim ersten Reset angelegt — keine Migration beim Start. */
+function spielResetMeta(){
+  if(!S.meta) S.meta={};
+  if(!S.meta.spielReset || typeof S.meta.spielReset!=='object') S.meta.spielReset={ shop:null, kulisse:null };
+  if(!Array.isArray(S.meta.spielResetLog)) S.meta.spielResetLog=[];
+  return S.meta.spielReset;
+}
+/* §2.2 · Shop: gekaufte Stufen auf 0; mit Währung zusätzlich Konto auf 0 über die Offsets (Münzen des laufenden Tages zählen ab jetzt).
+   kaeufe, app, appAus, ausgegeben, rangResetOffset, panoramaResetOffset, muenzenGesamt, ausgegebenGesamt bleiben. */
+function spielResetShop(mitWaehrung){
+  belohnungInit();
+  const ts=jetztIso(), kontoVorher=Math.round(konto());
+  const stufen={}; KAT_KEYS.forEach(k=>{ stufen[k]=num(S.belohnung.stufen[k],0); });
+  const vorher={ stufen, muenzenResetOffset:num(S.meta.muenzenResetOffset), ausgabenResetOffset:num(S.meta.ausgabenResetOffset), kontoVorher };
+  try{ DB.set('spielreset_bak_shop', { ts, mitWaehrung:!!mitWaehrung, vorher, belohnung:JSON.parse(JSON.stringify(S.belohnung)), meta:{ muenzenGesamt:num(S.meta.muenzenGesamt), ausgegebenGesamt:num(S.meta.ausgegebenGesamt) } }); }catch(e){}
+  KAT_KEYS.forEach(k=>{ S.belohnung.stufen[k]=0; });
+  if(mitWaehrung){ const m=muenzenAnzeige(), a=ausgabenAnzeige(); S.meta.muenzenResetOffset=num(S.meta.muenzenResetOffset)+m; S.meta.ausgabenResetOffset=num(S.meta.ausgabenResetOffset)+a; }
+  spielResetMeta().shop={ ts, mitWaehrung:!!mitWaehrung, vorher };
+  S.meta.spielResetLog.push({ bereich:'shop', ts, mitWaehrung:!!mitWaehrung, rueckgaengig:null });
+  saveBelohnung(); saveMeta(); e4SpielstandMelden();
+  return { kontoVorher, stufenVorher:KAT_KEYS.reduce((a,k)=>a+num(vorher.stufen[k],0),0) };
+}
+/* §2.3 · Kulisse: Durchgang archivieren (ausmalen.durchgaenge, additiv), Topfinhalt in den Tank, Neustart bei Kulisse 1;
+   mit Währung zusätzlich Tank 0, Farbe ab jetzt neu (meta.farbeReset.basis), verteilt 0. malTage und tankVerkauf bleiben. */
+function spielResetKulisse(mitWaehrung){
+  const A=ausmalState(), ts=jetztIso();
+  const vorher={ ausmalen:JSON.parse(JSON.stringify(A)), kulisseErreicht:JSON.parse(JSON.stringify(S.meta.kulisseErreicht||{})), farbeReset:S.meta.farbeReset ? JSON.parse(JSON.stringify(S.meta.farbeReset)) : null, tankVorher:Math.round(num(A.tank)), farbeVorher:farbeGesamt() };
+  try{ DB.set('spielreset_bak_kulisse', { ts, mitWaehrung:!!mitWaehrung, vorher }); }catch(e){}
+  if(!Array.isArray(A.durchgaenge)) A.durchgaenge=[];
+  A.durchgaenge.push({ ts, mitWaehrung:!!mitWaehrung, kulisse:A.kulisse, gefaerbt:A.gefaerbt.length, fertig:A.fertig.slice(), kulissenFertig:JSON.parse(JSON.stringify(A.kulissenFertig||[])), kulissenStart:Object.assign({}, A.kulissenStart), kulisseErreicht:Object.assign({}, S.meta.kulisseErreicht||{}), tank:Math.round(num(A.tank)), farbe:farbeGesamt() });
+  A.toepfe.forEach(t=>{ topfRestInTank(A, t); });
+  A.kulisse=1; A.gefaerbt=[]; A.fertig=[]; A.kulissenFertig=[]; A.kulissenStart={ 1:ts }; A.freigeschaltetBis=1; A.toepfe=[0,1,2,3,4].map(()=>({farbe:null, punkte:0})); A.aktiverTopf=0; A.stationFarbe=null; delete A.geschenkOffen;
+  S.meta.kulisseErreicht={ 1:heuteApp() };
+  if(mitWaehrung){ A.tank=0; S.meta.farbeReset={ ts, basis:ausmalWRoh() }; A.verteilt=0; A.wohlstandSeitReset=0; }
+  _kulRepariert={}; _malZoom={z:1, x:0, y:0}; _ausmalKompositKey='';
+  spielResetMeta().kulisse={ ts, mitWaehrung:!!mitWaehrung, vorher };
+  S.meta.spielResetLog.push({ bereich:'kulisse', ts, mitWaehrung:!!mitWaehrung, rueckgaengig:null });
+  saveMeta(); e4SpielstandMelden();
+  return { kulisseVorher:vorher.ausmalen.kulisse, galerieVorher:(vorher.ausmalen.fertig||[]).length, tankVorher:vorher.tankVorher, farbeVorher:vorher.farbeVorher };
+}
+/* §2.4 · Rückgängig möglich? { ok:true } oder { ok:false, grund } — ohne Eintrag grund '' (die Zeile zeigt dann nichts) */
+function spielResetRueckgaengigMoeglich(bereich){
+  const R=(S.meta && S.meta.spielReset) ? S.meta.spielReset[bereich] : null;
+  if(!R) return { ok:false, grund:'' };
+  const t0=Date.parse(R.ts);
+  if(bereich==='shop'){
+    if(((S.belohnung && S.belohnung.kaeufe)||[]).some(k=>k && Date.parse(k.ts)>t0)) return { ok:false, grund:'seitdem gekauft' };
+  }else{
+    const A=ausmalState();
+    if(A.gefaerbt.length>0 || A.kulisse!==1) return { ok:false, grund:'seitdem gemalt' };
+    if((A.tankVerkauf||[]).some(e=>e && Date.parse(e.ts)>t0)) return { ok:false, grund:'seitdem Tank verkauft' };
+  }
+  return { ok:true };
+}
+/* §2.5 · Rückgängig des letzten Resets je Bereich; die jüngste offene Log-Zeile bekommt rueckgaengig = jetzt */
+function spielResetRueckgaengig(bereich){
+  if(!spielResetRueckgaengigMoeglich(bereich).ok) return false;
+  const R=S.meta.spielReset[bereich];
+  if(bereich==='shop'){
+    KAT_KEYS.forEach(k=>{ S.belohnung.stufen[k]=num(R.vorher.stufen && R.vorher.stufen[k],0); });
+    if(R.mitWaehrung){ S.meta.muenzenResetOffset=num(R.vorher.muenzenResetOffset); S.meta.ausgabenResetOffset=num(R.vorher.ausgabenResetOffset); }
+    saveBelohnung();
+  }else{
+    S.meta.ausmalen=JSON.parse(JSON.stringify(R.vorher.ausmalen)); S.meta.kulisseErreicht=JSON.parse(JSON.stringify(R.vorher.kulisseErreicht));
+    if(R.vorher.farbeReset) S.meta.farbeReset=JSON.parse(JSON.stringify(R.vorher.farbeReset)); else delete S.meta.farbeReset;
+    _kulRepariert={}; _malZoom={z:1,x:0,y:0}; _ausmalKompositKey='';
+  }
+  spielResetMeta(); const log=S.meta.spielResetLog;
+  for(let i=log.length-1; i>=0; i--){ if(log[i] && log[i].bereich===bereich && log[i].rueckgaengig===null){ log[i].rueckgaengig=jetztIso(); break; } }
+  S.meta.spielReset[bereich]=null; saveMeta(); e4SpielstandMelden();
+  return true;
+}
 function backupHtml(){
   const paket={ typ:'backup-v1', appVersion:VERSION, exportZeit:jetztIso(),
     karten:S.karten, unteraufgaben:S.unteraufgaben, stapel:S.stapel, ordner:S.ordner,
