@@ -4187,6 +4187,7 @@ function logIntraday(k, o){
   e.quelle = o.quelle || (abschlussBuchungAktiv() && e.typ!=='schlaf' ? 'tagesabschluss' : logQuelleVonTyp(e.typ));
   if(S.tag && S.tag.endeTs && !_abschlussBuchung) e.nachAbschluss=true;   // §2.4 (v3.2.0) · §6 (v3.7.2): Nachtrag bis „Aufstehen" 
   if(k && k.id && erholungAktiv(k)) e.erholung=true;   // §9a (v3.7.0): Erholungspunkte
+  if(k && k.std42===true && num(o.minuten)>0){ try{ Object.assign(e, e42BuchungsFelder(k, num(o.minuten))); }catch(x){} }   // 4.2 §3: satz, lage, last an jeder Zeitbuchung
   S.intraday.push(e);
   if(S.intraday.length>20000) S.intraday=S.intraday.slice(-20000);   // Sicherungskappe
   DB.set('intraday', S.intraday);
@@ -4223,6 +4224,10 @@ function haptik(ms){ try{ navigator.vibrate && navigator.vibrate(ms||10); }catch
    ══════════════════════════════════════════════════════════════════════ */
 /* §3.8 Settings (alle live einstellbar). Werte = sinnvolle Startbelegung. */
 const DEFAULT_SETTINGS = {
+  // ══ Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §3) · Punkte-Engine 4.2: Barrieren je Familie und Art, Gewichte der Lage, Matrixwert,
+  // Bonus je Prio, Grenze der Tageslage-Verschiebung (P3, in 4.2.0 immer 0), Rundung des Satzes. Über die Sync-Tür (Bereich engine42) änderbar. ══
+  engine42: { barrieren:{ dfmAufgabe:[300,700], dfmRoutine:[300,700], privatAufgabe:[150,350], privatRoutine:[100,250] },
+    gewichte:{ prio:0.5, belastung:0.3, matrix:0.2 }, matrixWert:{ ziel:1, werkzeug:0.5, zustand:0 }, bonusJePrio:25, lageMax:0.2, rundung:10 },
   // ══ 4.0 · Paket 4 · Punkte-Engine nach Punkt 5 (alle Werte über die Sync-Tür, Bereich engine4) ══
   leiter: { geldnah:600, kommunikation:400, ohneGeld:300, privatWerkzeug:200, erholung:200, ablenkung:0 },   // 5.3 Stundenleiter, Punkte je Stunde
   tickAktivierung: 10,         // 5.3: Tick = Satz × echte Tick-Minuten ÷ 60 + 10
@@ -4416,6 +4421,9 @@ const EINST_SCHEMA={
   belohnung:{ punkteProLevel:Z('punkteProLevel',{min:100}) },   // §1 (v3.6.1): preisFaktor entfallen (ein Paket mit dem Feld wird angenommen, der Wert ignoriert)
   ausmalen:{ topfAufschlag:Z('ausmalen.topfAufschlag',{min:1}), zoomDoppeltipp:Z('ausmalen.zoomDoppeltipp',{min:1}), bannerSek:Z('ausmalen.bannerSek',{min:1}) },   // §9.2 (v3.5.0)
   tagesform:{ werktag:{p:'sollFormWerktag', t:'fenster'} },
+  // Karten-Standard 4.2 §3: Punkte-Engine 4.2 — Barrieren als Paare [min, max] je Schlüssel, Gewichte und Matrixwerte als Tabelle, drei Zahlen
+  engine42:{ barrieren:{p:'engine42.barrieren', t:'paare'}, gewichte:{p:'engine42.gewichte', t:'tabelle'}, matrixWert:{p:'engine42.matrixWert', t:'tabelle'},
+    bonusJePrio:Z('engine42.bonusJePrio',{min:0}), lageMax:Z('engine42.lageMax',{min:0, max:1}), rundung:Z('engine42.rundung',{min:1}) },
   // 4.0 · Paket 4: die Punkte-Engine nach Punkt 5 — der Scoring-Spezialist ändert sie nur über das Postfach und ein Paket
   engine4:{ leiter:{p:'leiter', t:'tabelle'}, tickAktivierung:Z('tickAktivierung',{min:0}), startBonus:Z('startBonus',{min:0}), bruecke:{p:'bruecke', t:'tabelle'},
     abhakbonusAbSollMin:Z('abhakbonusAbSollMin',{min:0}), abzugOhneGrund:Z('abzugOhneGrund',{min:0}), wochenserieBonus:Z('wochenserieBonus',{min:0}), chatAgentenMax:Z('chatAgentenMax',{min:1, max:50}),   // Hotfix 16 §4.4
@@ -4497,6 +4505,15 @@ function schemaPruefen(f, roh){
     Object.keys(roh).forEach(k=>{ if(!(k in stdO)){ unbekannt.push(k); return; } const v=roh[k];
       if(v===null) schritte.push([f.p+'.'+k, stdO[k]]); else if(Number.isFinite(Number(v)) && typeof stdO[k]==='number') schritte.push([f.p+'.'+k, Number(v)]);
       else if(typeof stdO[k]==='string' && typeof v==='string') schritte.push([f.p+'.'+k, v]); else unbekannt.push(k+' (falscher Typ)'); });
+    return { ok:true, anzeige:roh, schritte, unbekannt };
+  }
+  if(t==='paare'){   // Karten-Standard 4.2 §3: Objekt mit Paaren [min, max] je bekanntem Schlüssel (engine42.barrieren), null = Standard des Schlüssels
+    if(!roh || typeof roh!=='object' || Array.isArray(roh)) return { fehler:'Objekt {schlüssel: [min, max]} erwartet' };
+    const schritte=[], unbekannt=[], stdO=std(f.p)||{};
+    Object.keys(roh).forEach(k=>{ if(!(k in stdO)){ unbekannt.push(k); return; } const v=roh[k];
+      if(v===null) schritte.push([f.p+'.'+k, stdO[k]]);
+      else if(Array.isArray(v) && v.length===2 && v.every(x=>Number.isFinite(Number(x))) && Number(v[1])>=Number(v[0])) schritte.push([f.p+'.'+k, [Number(v[0]), Number(v[1])]]);
+      else unbekannt.push(k+' (kein Paar [min, max])'); });
     return { ok:true, anzeige:roh, schritte, unbekannt };
   }
   if(t==='zahlen'){   // 4.0 · Paket 4: Liste von Zahlen
@@ -4757,6 +4774,18 @@ function neueKarte(f={}){
     abschluesse: [],                  // §6.1 (1.6.0): Stack der Abschluss-Snapshots (Reaktivierung = Korrektur)
     vorgaengerAppId: null,            // §5 (1.6.0): Folgeaufgabe → App-ID der Vorgängerin
     vorgaengerAirtableId: null,       // §5 (1.6.0): dito Airtable-Record-ID, falls vorhanden
+    // ══ Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §2) · additiv. std42 = die Karte rechnet nach der Punkte-Engine 4.2 (§3);
+    // ohne std42 rechnet sie weiter wie in 4.1.14. Wiederverwendet: ticksAktiv (Mehrmals), tagesziel (Ziel je Tag), freeze (Eingefroren),
+    // immerSichtbar, vorlaufTage, abhakbonus (Bonus). ══
+    art: null,                        // aufgabe | routine | system | info (gespeichert, nicht abgeleitet)
+    belastung: null,                  // −3 … +3 ganzzahlig; negativ = Erholung; null = noch nicht gesetzt
+    prio: null,                       // 1 … 5 ganzzahlig
+    phFest: null,                     // fester Satz P/h (✋); null = berechnet
+    sammelkarte: false,               // immer sichtbar, keine Deadline, Badge „Sammel"
+    eingefrorenBis: null,             // "YYYY-MM-DD": am Morgen dieses Tages taut die Karte auf (§6)
+    wartetAuf: null,                  // Text: gesetzt = Status „wartet" (§6)
+    wartetSeit: null,                 // "YYYY-MM-DD"
+    std42: false,                     // true = Karten-Standard 4.2
     erstelltTs: jetztIso()
   }, f);
   if(!Array.isArray(k.tickKurve) || !k.tickKurve.length) k.tickKurve=[0];
@@ -4772,8 +4801,9 @@ function neueKarte(f={}){
 /* §3.2 Unteraufgabe — kein eigener Geld-Score, keine eigene Uhr. */
 function neueUnteraufgabe(parentId, f={}){
   const p = parentId && S.karten ? S.karten.find(k=>k.id===parentId) : null;   // U6-C: Sub-Bonus-Default je Domäne
-  const def = (p && p.domain==='dfm') ? num(S.settings&&S.settings.subBonusDfm,100) : num(S.settings&&S.settings.subBonusPrivat,100);
-  return Object.assign({ id:uuid(), parentId, titel:'', sollMin:0, done:false, bonusPunkte:def }, f);
+  // Karten-Standard 4.2 §8: an einer std42-Karte gilt der alte Default subBonusDfm/subBonusPrivat nicht — leer = 0
+  const def = (p && p.std42) ? 0 : (p && p.domain==='dfm') ? num(S.settings&&S.settings.subBonusDfm,100) : num(S.settings&&S.settings.subBonusPrivat,100);
+  return Object.assign({ id:uuid(), parentId, titel:'', sollMin:0, done:false, bonusPunkte:def, optional:false }, f);   // 4.2 §2: optional additiv
 }
 /* §3.5 Stapel */
 function neuerStapel(f={}){
@@ -4854,11 +4884,64 @@ function leiterArt(k){
   if(istSonderRolle(k) || k.rolle==='tagesuebergang' || k.rolle==='position' || k.rolle==='sync') return 'ohneGeld';
   return geldImpactVon(k)>0 ? 'geldnah' : 'ohneGeld';
 }
-function leiterSatz(k){ const L=e4Leiter(); return Math.max(0, num(L[leiterArt(k)], 0)); }
+function leiterSatz(k){ if(k && k.std42===true) return e42Satz(k); const L=e4Leiter(); return Math.max(0, num(L[leiterArt(k)], 0)); }   // 4.2 §3: std42 → Engine 4.2
+/* ══ Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §3) · PUNKTE-ENGINE 4.2 ══════════════════════════════════════════════
+   Ein Modul für std42-Karten; alle Stellen (Tick, Zeitbuchung, Fokus-Leiste, Abhak-Blatt, Satz-Anzeige, Prognose) rufen nur noch leiterSatz,
+   abhakbonusDefault und kartePunktePrognose, die hier hineinführen. Karten ohne std42 rechnen weiter wie in 4.1.14.
+   P1 Barriere je Familie und Art · P2 Lage = 0,5·(Prio−1)/4 + 0,3·max(0, Belastung)/3 + 0,2·Matrixwert (Erholung zählt wie neutral, die Familie
+   verschiebt nichts) · P3 Tageslage: Schnittstelle, in 4.2.0 immer 0 · Satz = min + clamp(Lage + Verschiebung, 0, 1) × (max − min), gerundet auf 10 ·
+   P6 Bonus je ✓ = abhakbonus, sonst Prio × 25 bei Soll > 0 · P4 Last = Minuten × Belastung (nur gespeichert) · P5 Prio-Vorschlag aus dem Geld-Impact. */
+function e42Einst(){ const d=DEFAULT_SETTINGS.engine42, s=(S.settings && S.settings.engine42)||{};
+  return { barrieren:Object.assign({}, d.barrieren, s.barrieren||{}), gewichte:Object.assign({}, d.gewichte, s.gewichte||{}), matrixWert:Object.assign({}, d.matrixWert, s.matrixWert||{}),
+    bonusJePrio:num(s.bonusJePrio, d.bonusJePrio), lageMax:num(s.lageMax, d.lageMax), rundung:Math.max(1, num(s.rundung, d.rundung)) }; }
+function e42Art(k){ const a=kartenArt42(k); return a || (k && k.rhythmus ? 'routine' : 'aufgabe'); }   // ohne gespeicherte Art: Routine bei Rhythmus, sonst Aufgabe
+function e42Barriere(k){
+  if(!k) return null;
+  const a=e42Art(k); if(a==='system' || a==='info') return null;
+  const b=e42Einst().barrieren, key=(k.domain==='dfm' ? 'dfm' : 'privat')+(a==='routine' ? 'Routine' : 'Aufgabe'), p=b[key];
+  return (Array.isArray(p) && p.length===2) ? [num(p[0]), num(p[1])] : null;
+}
+function e42Lage(k){
+  const E=e42Einst(), g=E.gewichte, prio=Math.min(5, Math.max(1, num(k && k.prio, 3))), bel=Math.max(0, Math.min(3, num(k && k.belastung, 0)));
+  const mf=matrixFeldVon(k), mw=num(E.matrixWert[mf], 0);
+  return num(g.prio)*(prio-1)/4 + num(g.belastung)*bel/3 + num(g.matrix)*mw;
+}
+function e42LageVerschiebung(tag, k){ return 0; }   // P3 Tageslage: Schnittstelle, liefert in 4.2.0 immer 0
+function e42Satz(k){
+  if(!k) return 0;
+  if(k.phFest!=null && k.phFest!=='' && Number.isFinite(Number(k.phFest))) return Math.max(0, num(k.phFest));
+  if(matrixFeldVon(k)==='ablenkung') return 0;
+  const b=e42Barriere(k); if(!b) return 0;   // System und Info: kein Satz
+  const E=e42Einst(), lage=Math.max(0, Math.min(1, e42Lage(k)+e42LageVerschiebung(S.tag && S.tag.datum, k)));
+  const satz=b[0]+lage*(b[1]-b[0]), r=E.rundung;
+  return Math.max(0, Math.round(satz/r)*r);
+}
+function e42Bonus(k){
+  if(!k) return 0;
+  if(k.abhakbonus!=null && k.abhakbonus!=='' && Number.isFinite(Number(k.abhakbonus))) return num(k.abhakbonus);   // 0 erlaubt
+  if(num(k.sollMin)>0) return Math.min(5, Math.max(1, num(k.prio, 3)))*e42Einst().bonusJePrio;
+  return 0;
+}
+function e42Last(k, min){ return Math.round(Math.max(0, num(min))*num(k && k.belastung, 0)*10)/10; }
+function e42PrioVorschlag(k){
+  if(!k || k.domain!=='dfm') return 3;
+  const g=geldImpactVon(k); return g>=400 ? 5 : g>=200 ? 4 : g>=1 ? 3 : 2;
+}
+/* Prognose einer std42-Karte: Soll-Minuten × Satz + Bonus je ✓ (bei Mehrmals × Ziel je Tag) + Unteraufgaben-Boni — mindestens das schon Gebuchte */
+function e42Prognose(k){
+  const n=(k.ticksAktiv && num(k.tagesziel)>0) ? num(k.tagesziel) : 1;
+  const soll=istInfoKarte(k) ? 0 : num(k.sollMin)/60*e42Satz(k) + e42Bonus(k)*n + subBonusErreicht(k) + subBonusOffen(k);
+  return Math.max(kartePunkte(k), soll);
+}
+/* Zeile für Buchungen: Satz, Lage (P3, in 4.2.0 immer 0) und Last — nur speichern, keine Statistik liest sie in 4.2.0 */
+function e42BuchungsFelder(k, min){ return { satz:e42Satz(k), lage:0, last:e42Last(k, min) }; }
 /* Farbtopf nach Herkunft (Punkt 5.2): DFM warm · Privat-Werkzeug gelb · Erholung und Schlaf kühl */
 function leiterFarbe(k){ const a=leiterArt(k); return a==='erholung' ? 'kuehl' : (k && k.domain==='dfm') ? 'warm' : 'gelb'; }
 /* Tick = Satz der Karte × echte Tick-Minuten ÷ 60 + Aktivierung; beim ersten Tick des Tages der Abhakbonus (ab 15 Min Soll) */
-function e4TickAbhak(k, nr){ return (nr===1 && k && !istSonderRolle(k)) ? Math.max(0, abhakbonusDefault(k)) : 0; }
+function e4TickAbhak(k, nr){
+  if(k && k.std42===true && !istSonderRolle(k)) return Math.max(0, e42Bonus(k));   // 4.2 §3: Mehrmals — JEDER Tick gibt den Bonus
+  return (nr===1 && k && !istSonderRolle(k)) ? Math.max(0, abhakbonusDefault(k)) : 0;
+}
 function e4TickBasis(k, min, nr, opt){
   opt=opt||{};
   if(!k || istSonderRolle(k)) return 0;
@@ -5155,7 +5238,7 @@ function e4SpielstandMelden(){
   }catch(e){}
 }
 /* ── Einstellungs-Historie (Punkt 5.11): jedes übernommene Einstellungs-Paket als Eintrag in FocusSystem ── */
-const E4_HIST_BEREICH={ ziele:'Ziele', abhakbonus:'Abhakbonus', engine4:'Punkte-Engine', punkte:'Punkte-Engine' };
+const E4_HIST_BEREICH={ ziele:'Ziele', abhakbonus:'Abhakbonus', engine4:'Punkte-Engine', punkte:'Punkte-Engine', engine42:'Punkte-Engine' };   // 4.2 §3: engine42
 function e4EinstellungsHistorie(teile){
   try{
     (teile||[]).forEach(t=>{ if(!t || t.art!=='einstellungen' || !t.aenderungen.length) return;
@@ -9490,6 +9573,7 @@ function kartePunkte(k){
    Läuft die Uhr bereits länger als das Soll, ist die Prognose die Ist-Lage —
    sonst zeigte sie einen Wert unterhalb des schon Verdienten. */
 function kartePunktePrognose(k){
+  if(k && k.std42===true) return e42Prognose(k);   // 4.2 §3: Satz und Bonus aus der Engine 4.2 (der alte matrixFaktor wirkt nicht mehr)
   // §1/§10 (v3.0.0): Routinen-System — was die Karte heute hoechstens bringt (mindestens das schon Gebuchte)
   if(istV3(k)) return Math.max(kartePunkte(k), routineMaxPunkte(k));
   // §2 (v2.9.0): Pflicht — was schon gebucht ist plus der Wert eines weiteren Durchgangs
@@ -9513,6 +9597,15 @@ function tickPunkte(k){ return tickSumme(k, num(k.ticksHeute)) * (S.settings.tic
    Routine = rhythmus gesetzt · Counter = mehrgliedrige Tick-Kurve · sonst Aufgabe.
    timerFlag/Stoppuhr ist ORTHOGONAL (§4: eine Karte kann Zeit UND Ticks tragen). */
 function kartenArt(k){
+  // Karten-Standard 4.2 §2: eine std42-Karte trägt ihre Art gespeichert (k.art: aufgabe · routine · system · info). Rückgabe in der Schreibweise
+  // der bisherigen Werte („Aufgabe", „Routine"), damit die Vergleiche in Statistik, Listen und Export unverändert gelten; ohne art wie bisher.
+  if(k && k.std42===true && k.art && KARTENART42_LABEL[k.art]) return KARTENART42_LABEL[k.art];
+  return kartenArtAlt(k);
+}
+const KARTENART42_LABEL={ aufgabe:'Aufgabe', routine:'Routine', system:'System', info:'Info' };
+function kartenArt42(k){ return (k && k.std42===true && KARTENART42_LABEL[k.art]) ? k.art : null; }   // 4.2: aufgabe · routine · system · info oder null
+function istInfoKarte(k){ return kartenArt42(k)==='info'; }   // 4.2 §7
+function kartenArtAlt(k){
   if(k.rhythmus) return 'Routine';
   if(k.ticksAktiv) return 'Counter';                                    // §9 (1.8.0): neues Tick-Modell
   if(Array.isArray(k.tickKurve) && k.tickKurve.length>1) return 'Counter';   // Altbestand vor Migration
@@ -15684,8 +15777,8 @@ function detailSpeichern(){
 function karteTick(kid, fromDetail, wertOverride){
   const k = kid ? S.karten.find(x=>x.id===kid) : entwurf;
   if(!k) return;
-  // §3.1 (v3.0.0): Routinen-System — ein +1 ist ein Tick nach Modus und Staffel
-  if(istV3(k)){ routineTick(k); if(!fromDetail){ saveKarten(); saveTag(); renderAlles(); } return; }
+  // §3.1 (v3.0.0): Routinen-System — ein +1 ist ein Tick nach Modus und Staffel · 4.2 §3: eine std42-Karte tickt immer über routineTick (Bonus je Tick)
+  if(istV3(k) || k.std42===true){ routineTick(k); if(!fromDetail){ saveKarten(); saveTag(); renderAlles(); } return; }
   // §2 (v2.9.0, Entscheidung Pascal): Pflicht-Counter — jedes +1 zaehlt wie ein Haken: der Wert
   if(istPflicht(k)){
     if(!Array.isArray(k.tickWerteHeute)) k.tickWerteHeute=[];
@@ -16152,6 +16245,7 @@ function abhakbonusTabelleWert(spalte, feld){
   const d=(DEFAULT_SETTINGS.abhakbonusTabelle[spalte]||{})[feld]; return Number.isFinite(Number(d)) ? Number(d) : 0;
 }
 function abhakbonusDefault(k){
+  if(k && k.std42===true) return (istSonderRolle(k) || istInfoKarte(k)) ? 0 : e42Bonus(k);   // 4.2 §3: Engine 4.2 — ohne 15-Minuten-Regel, ohne Pflicht-Regel
   if(istPflicht(k)) return 0;   // §2 (v2.9.0): der Pflicht-Wert ersetzt den Abhakbonus
   if(!k || istSonderRolle(k) || num(k.sollMin)<num(S.settings.abhakbonusAbSollMin,15)) return 0;   // 4.0 · Paket 4 (5.5): nur ab 15 Min Soll
   return k.abhakbonus!=null ? num(k.abhakbonus) : abhakbonusTabelleWert(abhakSpalte(k), matrixFeldVon(k));
@@ -16221,7 +16315,7 @@ function durchgangPause(k, sek){
    (Entscheidung Pascal). Gilt fuer JEDE Pflicht-Karte, auch mit Soll-Minuten
    (Entscheidung Pascal). Das Matrixfeld bleibt und zaehlt in allen
    Matrix-Auswertungen wie bisher. Ab dem Update, nicht rueckwirkend. */
-function istPflicht(k){ return !!k && modusVon(k)==='pflicht'; }   // §1 (v3.0.0): modus pflicht — ohne modus wie v2.9 das Feld pflicht
+function istPflicht(k){ if(k && k.std42===true) return false; return !!k && modusVon(k)==='pflicht'; }   // §1 (v3.0.0): modus pflicht — ohne modus wie v2.9 das Feld pflicht · 4.2 §3: std42 nie Pflicht (Felder bleiben gespeichert)
 function pflichtWerte(k){
   return { wert:num(k&&k.pflichtWert,0), deckel:Math.max(0,num(k&&k.pflichtDeckel,0)),
            abzug:Math.max(0,num(k&&k.pflichtAbzug,0)), min:num(k&&k.pflichtMin,0) };
@@ -16535,6 +16629,7 @@ function routineTick(k, opt){
   if(k.rolle==='schlafen'){ basis=staffelWert(k,nr); }
   else { abhak=e4TickAbhak(k, nr); basis=e4TickBasis(k, min, nr); faktor=(k.serienfaktor && k.domain!=='dfm') ? (num(k.serienFaktor,1)||1) : 1; }   // 4.0 · Paket 4 (5.3): Satz × Minuten ÷ 60 + 10, Serienfaktor nur privat
   const t={ ts:jetztIso(), nr, basis, faktor, punkte:logRund(basis*faktor), min, uhr:!!opt.uhr, gebucht:min>0, abhak };   // §7 (v3.7.0): gebucht = Minuten liegen in der Ist-Zeit · 4.0: abhak = Anteil Abhakbonus (Münzen, keine Farbe)
+  if(k.std42===true){ try{ Object.assign(t, e42BuchungsFelder(k, min)); }catch(x){} }   // 4.2 §3: satz, lage, last am Tick
   if(!leer(opt.eingabe)) t.eingabe=opt.eingabe;
   tickLogHeute(k).push(t);
   k.ticksHeute=nr;
@@ -17180,7 +17275,7 @@ function kartenFelderBekannt(){
   return _kartenFelder;
 }
 const UNTER_FELDER_BEKANNT=new Set(['id','parentId','titel','sollMin','done','bonusPunkte','airtableId','staffel','staffelDanach','tagesziel','tageslimit',
-  'entfernt','entferntTs','tickLog','tickProtokoll','punkteHeute','ziel','ticksHeute','typ','naechsterWert']);
+  'entfernt','entferntTs','tickLog','tickProtokoll','punkteHeute','ziel','ticksHeute','typ','naechsterWert','optional','ausgelassen']);   // 4.2 §8
 function felderMelden(was, inc, bekannt, uebersprungen){
   Object.keys(inc||{}).forEach(f=>{ if(!bekannt.has(f)) uebersprungen.push({was:was+' · '+f, grund:'unbekanntes Feld — ignoriert'}); });
 }
@@ -18973,6 +19068,16 @@ function syncImport(text, opt){
     if(inc.arbeitsart!==undefined) lok.arbeitsart=inc.arbeitsart==null ? null : String(inc.arbeitsart);   // 4.0 · Paket 4
     if(inc.uhrzeit!==undefined) lok.uhrzeit=inc.uhrzeit;               // Uhrzeit↔Airtable-Deadline
     if(inc.freeze!==undefined) lok.freeze=!!inc.freeze;               // M1 (v1.1.0): freeze true setzt / false löst; fehlend = unverändert
+    // Karten-Standard 4.2 §2: die neuen Felder per Paket — Feld fehlt = unverändert, null leert
+    if(inc.std42!==undefined) lok.std42=(inc.std42===true || inc.std42==='true');
+    if(inc.art!==undefined){ const a=String(inc.art||'').toLowerCase(); lok.art=KARTENART42_LABEL[a] ? a : null; }
+    if(inc.belastung!==undefined) lok.belastung=leer(inc.belastung) ? null : Math.max(-3, Math.min(3, Math.round(num(inc.belastung))));
+    if(inc.prio!==undefined) lok.prio=leer(inc.prio) ? null : Math.max(1, Math.min(5, Math.round(num(inc.prio))));
+    if(inc.phFest!==undefined) lok.phFest=leer(inc.phFest) ? null : Math.max(0, num(inc.phFest));
+    if(inc.sammelkarte!==undefined) lok.sammelkarte=(inc.sammelkarte===true || inc.sammelkarte==='true');
+    if(inc.eingefrorenBis!==undefined) lok.eingefrorenBis=leer(inc.eingefrorenBis) ? null : String(inc.eingefrorenBis).slice(0,10);
+    if(inc.wartetAuf!==undefined) lok.wartetAuf=leer(inc.wartetAuf) ? null : String(inc.wartetAuf);
+    if(inc.wartetSeit!==undefined) lok.wartetSeit=leer(inc.wartetSeit) ? null : String(inc.wartetSeit).slice(0,10);
     // App-Hoheit (Status offen/erledigt, Ist, Punkte) wird NIE vom Import
     // überschrieben — AUSSER im Wiederherstellungs-Modus (§5).
     if(restore){
@@ -19005,6 +19110,7 @@ function syncImport(text, opt){
         if(iu.sollMin!=null) lu.sollMin=num(iu.sollMin);
         v3FelderUebernehmen(lu, iu, true);            // §3.2 (v3.0.0): Unter-Zaehler (Staffel, Tagesziel, Tageslimit)
         if(iu.bonusPunkte!==undefined && !restore) lu.bonusPunkte = iu.bonusPunkte==null ? 0 : num(iu.bonusPunkte);   // §4 (v3.1.0)
+        if(iu.optional!==undefined) lu.optional=(iu.optional===true || iu.optional==='true');   // 4.2 §8
         if(iu.ticksHeute!==undefined){ if(inc.korrektur===true){ ticksSetzen(lu, num(iu.ticksHeute)); buchungAbgleich(lok, 'korrektur'); }
           else if(num(iu.ticksHeute)!==tickAnzahlHeute(lu)) uebersprungen.push({was:'Unter-Zähler „'+String(lu.titel||'').slice(0,30)+'" · ticksHeute', grund:'nur mit korrektur:true an der Karte'}); }
         felderMelden('Unteraufgabe „'+String(lu.titel||lu.id).slice(0,30)+'"', iu, UNTER_FELDER_BEKANNT, uebersprungen);
