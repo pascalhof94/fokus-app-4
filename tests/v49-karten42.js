@@ -1,0 +1,2 @@
+/* Suite 4.9 · Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §12: Punkte-Engine 4.2, Mehrmals, Rückfall 4.1.14, optionale Unteraufgaben, Kartenset mit Sicherung und Rückgängig, Statistik unverändert, Eingefroren bis) — Aufruf aus der Repo-Wurzel: jsc tests/v49-karten42.js · Prüfpunkte in tests/v49-karten42-body.js (läuft im Geltungsbereich der App) */
+load('tests/_kopf40.js'); suite('tests/v49-karten42-body.js');
