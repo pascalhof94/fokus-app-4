@@ -18738,6 +18738,9 @@ function syncExport(typ){
     ausmalen: ausmalExport(),
     matrixfeldAenderungen: (Array.isArray(S.meta.matrixfeldAenderungen) ? S.meta.matrixfeldAenderungen.slice(-200) : []),
     reset35: (S.meta.reset35 && S.meta.reset35.ts) ? { ts:S.meta.reset35.ts } : null,
+    // Hotfix 23 §4.3: additiv — Farbe-Startpunkt und die letzten 50 Zeilen des Reset-Logs
+    farbeReset: (S.meta.farbeReset && S.meta.farbeReset.ts) ? { ts:S.meta.farbeReset.ts, basis:Math.round(num(S.meta.farbeReset.basis)) } : null,
+    spielReset: (Array.isArray(S.meta.spielResetLog) ? S.meta.spielResetLog.slice(-50) : []),
     tagesketten: tagesketten().map(c=>({ id:c.id, name:c.name, karten:(c.karten||[]).slice() })),
     wiederherstellung: voll ? {
       hinweis:'Vollsicherung. Import mit gesetztem wiederherstellung-Block stellt Karten, '+
@@ -21898,7 +21901,8 @@ function ausmalW(){ return Math.max(0, ausmalWRoh() - num(S.meta && S.meta.farbe
 function farbeGesamt(){ return Math.round(ausmalW()); }
 function ausmalExport(){ const A=ausmalState(); return { kulisse:A.kulisse, gefaerbt:A.gefaerbt.slice(), toepfe:A.toepfe.map(t=>({farbe:t.farbe, punkte:Math.round(num(t.punkte))})), aktiverTopf:A.aktiverTopf, stationFarbe:A.stationFarbe, tank:Math.round(num(A.tank)), wohlstandSeitReset:Math.round(ausmalW()), freigeschaltetBis:A.freigeschaltetBis, fertig:A.fertig.slice(),
   kulissenStart:Object.assign({}, A.kulissenStart), kulissenFertig:A.kulissenFertig.map(e=>Object.assign({}, e)), malTage:A.malTage.slice(),
-  tankVerkauf:(A.tankVerkauf||[]).map(e=>Object.assign({}, e)) }; }   // §4c (v3.7.0) · §3 (v3.7.2): additiv
+  tankVerkauf:(A.tankVerkauf||[]).map(e=>Object.assign({}, e)),
+  durchgaenge:(A.durchgaenge||[]).map(e=>JSON.parse(JSON.stringify(e))) }; }   // §4c (v3.7.0) · §3 (v3.7.2): additiv · Hotfix 23 §4.1: durchgaenge additiv
 function ausmalKorrektur(o){
   const A=ausmalState();
   if(o.kulisse!=null) A.kulisse=Math.max(1, Math.min(10, num(o.kulisse,1)));
@@ -21915,6 +21919,7 @@ function ausmalKorrektur(o){
   if(Array.isArray(o.kulissenFertig)) A.kulissenFertig=o.kulissenFertig.filter(e=>e && typeof e==='object').map(e=>Object.assign({}, e));
   if(Array.isArray(o.malTage)) A.malTage=o.malTage.map(String).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d));
   if(Array.isArray(o.tankVerkauf)) A.tankVerkauf=o.tankVerkauf.filter(e=>e && typeof e==='object').map(e=>Object.assign({}, e));   // §3 (v3.7.2)
+  if(Array.isArray(o.durchgaenge)) A.durchgaenge=o.durchgaenge.filter(e=>e && typeof e==='object').map(e=>JSON.parse(JSON.stringify(e)));   // Hotfix 23 §4.2: additiv
   _ausmalKompositKey=''; saveMeta();
 }
 /* §9.4 (v3.5.0): der einmalige Reset — mit Sicherung in der Datenbank (reset35_bak) */
