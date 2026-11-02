@@ -19801,92 +19801,14 @@ function renderEinst(){
       ((L.uebernommen||[]).length>12?'<p class="d" style="color:var(--mut2)">… und '+((L.uebernommen||[]).length-12)+' weitere.</p>':'')+
     '</div>';
   }
-  // §1 (v1.13.3): Shop zurücksetzen — das GEGENTEIL des Wohlstand-Resets,
-  // bewusst als eigene Karte klar davon getrennt.
-  h+='<div class="card"><h3>🛍 Shop zurücksetzen (nur Besitz)</h3>'+
-    '<p class="d">Setzt ausschließlich die gekauften Objektstufen auf 0 — der Shop ist neu spielbar. Konto, Münzen, Ausgegebenes (und damit die Kulisse), Rang, Bestwert, Serie, Punkte und Statistik bleiben unangetastet.</p>'+
-    '<div class="btnrow"><button class="btn sm" data-shopreset="1">🛍 Shop zurücksetzen …</button></div>'+
-    (S.meta.shopReset1133Log?'<div class="kv" style="margin-top:6px"><span>Zuletzt zurückgesetzt</span><b>'+esc(String(S.meta.shopReset1133Log.ts||'').slice(0,10))+' · Sicherung besitz_bak1133</b></div>':'')+
-  '</div>';
-  // §4 (v1.8.1): Eingriffe mit Tragweite — optisch abgesetzt, GANZ unten
-  h+='<div class="card" style="border-color:var(--bad);margin-top:18px"><h3 style="color:var(--bad)">⚠️ Eingriffe mit Tragweite</h3>'+
-    '<p class="d">„Spielstand zurücksetzen" stellt das Konto (Münzen) auf 0 und die Stufen aller Gegenstände auf 0 — über die Offset-Mechanik; die Münzen des laufenden Tages zählen weiter. Farbe, Töpfe und Kulissen, Rang und Outfit bleiben. <b>Gelöscht wird nichts:</b> Historie, Intraday-Log, Streaks und Statistiken bleiben unangetastet. Für „nur den Besitz leeren" gibt es die eigene Karte 🛍 oben.</p>'+
-    '<div class="btnrow"><button class="btn warn sm" data-panoreset="1">🔄 Spielstand zurücksetzen</button>'+
-    (S.meta.panoramaResetBackup?'<button class="btn sm" data-panoundo="1">↩︎ Letzten Reset rückgängig</button>':'')+'</div>'+
+  // Hotfix 23 §3.1: Spiel zurücksetzen — Shop und Kulisse, je mit oder ohne Währung (ersetzt „Shop zurücksetzen (nur Besitz)“ und „Eingriffe mit Tragweite“)
+  h+='<div class="card"><h3>🎮 Spiel zurücksetzen</h3>'+
+    '<p class="d">Shop und Kulisse einzeln neu beginnen, jeweils mit oder ohne Währung. Punkte, Rang, Lebenswerk, Historie und Statistik bleiben immer. Vorher wird gesichert; der letzte Reset je Bereich lässt sich rückgängig machen, solange danach nichts gekauft bzw. gemalt wurde.</p>'+
+    spielResetZeileHtml('shop')+spielResetZeileHtml('kulisse')+
   '</div>';
   h+='<div style="text-align:center;color:var(--mut2);font-size:11px;margin-top:6px" id="einstVersion">Fokus App '+UI_VERSION+' · Build '+APP_BUILD+'</div>';
   el('einstBody').innerHTML=einstAbschnitte(h);   // §6 (v3.5.4): klappbare Abschnitte
   _esGedreht=null;
-}
-/* §4 (v1.8.1): Wohlstand-Reset per Button — exakt die Offset-Mechanik der
-   151er-Migration, jetzt wiederholbar und mit Rückgängig (solange ein Backup
-   vorliegt). Es wird ausschließlich Anzeige-Zustand verschoben. */
-const SPIELSTAND_RESET_TEXT='Spielstand zurücksetzen?\n\nAuf 0 gehen: das Konto (Münzen) und die Stufen aller Gegenstände im Shop. Die Münzen des laufenden Tages zählen weiter.\n\nEs bleiben: Farbe, Töpfe und Kulissen, Rang (samt Bestwert) und Outfit — außerdem Historie, Intraday-Log, Streaks und Statistiken.\n\nDer Schritt ist über „Rückgängig" umkehrbar, solange kein neuer Reset folgt.';
-function panoramaResetJetzt(){
-  // §2 (v3.6.1): der Knopf heisst „Spielstand zurücksetzen"; die Rückfrage nennt den TATSÄCHLICHEN Umfang (Funktion unverändert):
-  // Konto und Gegenstands-Stufen gehen auf 0 — Farbe/Töpfe/Kulissen (seit 3.5.0 eigener Stand), Rang und Outfit bleiben
-  if(!confirm(SPIELSTAND_RESET_TEXT)) return;
-  if(!S.belohnung){ S.belohnung={ stufen:{}, ausgegeben:0, kaeufe:[] }; }
-  S.belohnung.stufen=S.belohnung.stufen||{};
-  const altStufen={}; KAT_KEYS.forEach(k=>{ altStufen[k]=num(S.belohnung.stufen[k],0); });
-  const rohVorher=lifetimePunkteRoh();
-  S.meta.panoramaResetBackup={
-    ts: jetztIso(), offset: num(S.meta.panoramaResetOffset),   // vorheriger Offset (nicht der neue!)
-    levelVorher: avatarStufe(), stufen: altStufen,
-    wohlstand: num(S.meta.wohlstand), ausgegeben: num(S.belohnung.ausgegeben),
-    lifetimeBasis: num(S.meta.lifetimeBasis),
-    // §7.2 (v1.9.0): die drei Spiel-Offsets VOR dem Reset — Undo stellt sie her
-    rangResetOffset: num(S.meta.rangResetOffset),
-    muenzenResetOffset: num(S.meta.muenzenResetOffset),
-    ausgabenResetOffset: num(S.meta.ausgabenResetOffset)
-  };
-  S.meta.panoramaResetOffset=rohVorher;
-  // §7.2 (v1.9.0): die neuen Achsen mitnehmen — Anzeige = Rohwert − Offset
-  S.meta.rangResetOffset    = num(S.meta.rangPunkte);
-  S.meta.muenzenResetOffset = num(S.meta.muenzenGesamt);
-  S.meta.ausgabenResetOffset= num(S.meta.ausgegebenGesamt);
-  KAT_KEYS.forEach(k=>{ S.belohnung.stufen[k]=0; });
-  saveMeta(); saveBelohnung(); renderEinst(); toast('Spielstand zurückgesetzt — Konto und Gegenstände auf 0');
-}
-function panoramaResetUndo(){
-  const b=S.meta.panoramaResetBackup;
-  if(!b){ toast('Kein Reset-Backup vorhanden'); return; }
-  if(!confirm('Letztes Zurücksetzen des Spielstands rückgängig machen?\n\nKonto und Gegenstands-Stufen gehen auf den Stand von '+String(b.ts||'?').slice(0,10)+' zurück.')) return;
-  S.meta.panoramaResetOffset = (b.offset>0 ? b.offset : null);
-  // §7.2 (v1.9.0): alle drei Spiel-Offsets zurück auf den Stand vor dem Reset
-  S.meta.rangResetOffset    = num(b.rangResetOffset);
-  S.meta.muenzenResetOffset = num(b.muenzenResetOffset);
-  S.meta.ausgabenResetOffset= num(b.ausgabenResetOffset);
-  KAT_KEYS.forEach(k=>{ S.belohnung.stufen[k]=num(b.stufen&&b.stufen[k],0); });
-  delete S.meta.panoramaResetBackup;
-  saveMeta(); saveBelohnung(); renderEinst(); toast('Reset rückgängig gemacht');
-}
-/* ══ §1/§2 (v1.13.3) · „Shop zurücksetzen" — das GEGENTEIL des Wohlstand-
-   Resets: NUR der Besitz (Objektstufen) geht auf 0, damit der Shop neu
-   spielbar ist. Konto, muenzenGesamt, ausgegebenGesamt (und damit die
-   Kulisse), Rang, Bestwert, Serie, Punkte, Statistik und Schätzfaktoren
-   bleiben unangetastet. §1 (v3.6.1): die Preiskalibrierung danach ist entfallen. ══ */
-function oeffneShopReset(){
-  belohnungInit();
-  const gekauft=KAT_KEYS.reduce((a,k)=>a+Math.max(0,num(S.belohnung.stufen[k],0)),0);
-  const h='<p class="d"><b>Nur der Besitz wird zurückgesetzt</b> — alle gekauften Objektstufen ('+gekauft+') gehen auf 0, der Shop ist neu spielbar.</p>'+
-    '<div class="kvblock">'+
-    '<div class="kv"><span>Verschwindet</span><b>Besitz-Stufen (Objekte in Shop &amp; Album → „???")</b></div>'+
-    '<div class="kv"><span>Bleibt</span><b>Konto '+fmtKurzP(konto())+' · Münzen · Ausgegebenes '+fmtKurzP(ausgabenAnzeige())+'</b></div>'+
-    '<div class="kv"><span>Bleibt</span><b>Kulisse '+bgStufeAus(ausgabenAnzeige())+'/10 · Rang · Bestwert · Serie 🔥'+routinenSerieBeste().tage+'</b></div>'+
-    '<div class="kv"><span>Bleibt</span><b>alle Punkte, Statistik, Schätzfaktoren, Upgrade-Faktor</b></div></div>'+
-    '<p class="d" style="margin-top:8px">Sicherung vorher unter <code>besitz_bak1133</code>. Die Preise bleiben, wie die Preisformel sie ergibt.</p>';
-  openSheet('🛍 Shop zurücksetzen', h,
-    '<button class="btn ghost sm" data-close="1">Abbrechen</button>'+
-    '<button class="btn warn" data-shopresetgo="1">Besitz auf 0 zurücksetzen</button>');
-}
-function shopResetJetzt(){
-  belohnungInit();
-  const vorher={}; KAT_KEYS.forEach(k=>{ vorher[k]=num(S.belohnung.stufen[k],0); });
-  DB.set('besitz_bak1133', { ts:jetztIso(), stufen:vorher, kaeufe:(S.belohnung.kaeufe||[]).slice() });
-  KAT_KEYS.forEach(k=>{ S.belohnung.stufen[k]=0; });
-  S.meta.shopReset1133Log={ ts:jetztIso(), vorher };
-  saveBelohnung(); saveMeta();
 }
 /* V3: Debug-Overlay für Tap-Flächen (Mehr → Info). Rein visuell, app-only. */
 function setDebugTap(on){ S.ui.debugTap=!!on; saveUi(); document.body.classList.toggle('debugtap', !!on); if(on) toast('🐞 Tap-Debug an'); }
@@ -19963,6 +19885,39 @@ function spielResetRueckgaengig(bereich){
   for(let i=log.length-1; i>=0; i--){ if(log[i] && log[i].bereich===bereich && log[i].rueckgaengig===null){ log[i].rueckgaengig=jetztIso(); break; } }
   S.meta.spielReset[bereich]=null; saveMeta(); e4SpielstandMelden();
   return true;
+}
+/* §3.2 · Zeitpunkt TT.MM.JJJJ HH:MM in Ortszeit für die Zeile „Zuletzt …“ und die Rückfrage */
+function spielResetZeitText(ts){ try{ const d=new Date(ts); return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' })+' '+d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' }); }catch(e){ return String(ts||'').slice(0,16); } }
+/* §3.2 · je Bereich eine kv-Zeile mit Stand und Knopf „Zurücksetzen …“; gibt es einen letzten Reset, darunter „Zuletzt …“ mit Rückgängig oder dem Grund dagegen */
+function spielResetZeileHtml(bereich){
+  let h='';
+  if(bereich==='shop'){ const st=(S.belohnung && S.belohnung.stufen)||{}, n=KAT_KEYS.reduce((a,k)=>a+Math.max(0, num(st[k],0)),0);
+    h+='<div class="kv"><span>🛍 Shop<br><small>'+n+' Stufen gekauft · Konto '+fmtKurzP(konto())+' '+MZ+'</small></span><b><button class="btn sm" data-spielreset="shop">Zurücksetzen …</button></b></div>';
+  }else{ const A=ausmalState(), st=ausmalStand();
+    h+='<div class="kv"><span>🖼 Kulisse<br><small>Kulisse '+A.kulisse+' · '+Math.round(st.anteil*100)+' % · Galerie '+A.fertig.length+' · Tank '+fmtKurzP(Math.round(num(A.tank)))+' · Farbe '+fmtKurzP(farbeGesamt())+'</small></span><b><button class="btn sm" data-spielreset="kulisse">Zurücksetzen …</button></b></div>';
+  }
+  const R=(S.meta && S.meta.spielReset) ? S.meta.spielReset[bereich] : null;
+  if(R){ const m=spielResetRueckgaengigMoeglich(bereich);
+    h+='<div class="kv"><span><small>Zuletzt '+spielResetZeitText(R.ts)+' · '+(R.mitWaehrung?'mit':'ohne')+' Währung</small></span><b>'+(m.ok ? '<button class="btn sm" data-spielresetundo="'+bereich+'">↩︎ Rückgängig</button>' : '<small>Rückgängig nicht mehr möglich ('+esc(m.grund)+')</small>')+'</b></div>'; }
+  return h;
+}
+/* §3.3 · Bestätigungs-Sheet mit Schalter „Währung mit zurücksetzen“; der Schalter zeichnet das Sheet mit dem jeweils anderen Umfang neu */
+function spielResetSheet(bereich, mitWaehrung){
+  const mit=!!mitWaehrung, shop=bereich==='shop';
+  let b='<label class="kv"><span>Währung mit zurücksetzen<br><small>'+(shop?'Münzen-Konto':'Töpfe, Tank und Farbe')+'</small></span><b><input type="checkbox" data-spielresetwaehrung="'+bereich+'"'+(mit?' checked':'')+'></b></label>';
+  let null0='', bleibt='';
+  if(shop){ const st=(S.belohnung && S.belohnung.stufen)||{}, n=KAT_KEYS.reduce((a,k)=>a+Math.max(0, num(st[k],0)),0), K='Konto '+fmtKurzP(konto())+' '+MZ;
+    null0= mit ? 'gekaufte Stufen ('+n+') · '+K+' → 0 (Münzen zählen ab jetzt neu)' : 'gekaufte Stufen ('+n+') → Objekte in Shop und Album wieder „???“';
+    bleibt=(mit ? '' : K+' · ')+'Kaufliste · App &amp; Avatar · Kulisse · Rang · Lebenswerk · Punkte · Statistik';
+  }else{ const A=ausmalState(), g=A.gefaerbt.length, f=A.fertig.length, X=fmtKurzP(Math.round(num(A.tank))), Y=fmtKurzP(farbeGesamt());
+    null0='Kulisse '+A.kulisse+' → 1 · gemalte Felder ('+g+') · Galerie ('+f+(mit ? ', archiviert' : ' fertige Kulissen, archiviert')+')'+(mit ? ' · Töpfe leer · Tank '+X+' → 0 · Farbe '+Y+' → 0 (zählt ab jetzt neu)' : ' · Topfinhalt → in den Tank');
+    bleibt= mit ? 'Münzen · Shop · Rang · Punkte · Statistik' : 'Tank '+X+' (+ Topfinhalt) · Farbe '+Y+' · Münzen · Shop · Rang · Punkte · Statistik';
+  }
+  b+='<div class="kvblock"><div class="kv"><span>Geht auf 0</span><b>'+null0+'</b></div><div class="kv"><span>Bleibt</span><b>'+bleibt+'</b></div></div>';
+  b+='<p class="d" style="margin-top:8px">Sicherung vorher unter <code>spielreset_bak_'+bereich+'</code>. Rückgängig geht, solange danach '+(shop?'nichts gekauft':'kein Feld gemalt und kein Tank verkauft')+' wurde.</p>';
+  const label= shop ? (mit ? 'Shop + Münzen zurücksetzen' : 'Shop zurücksetzen') : (mit ? 'Kulisse + Farbe zurücksetzen' : 'Kulisse zurücksetzen');
+  openSheet(shop ? '🛍 Shop zurücksetzen' : '🖼 Kulisse zurücksetzen', b,
+    '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn warn" data-spielresetgo="'+bereich+'" data-mitwaehrung="'+(mit?1:0)+'">'+label+'</button>');
 }
 function backupHtml(){
   const paket={ typ:'backup-v1', appVersion:VERSION, exportZeit:jetztIso(),
@@ -24424,11 +24379,12 @@ el('sheet').addEventListener('click', e=>{
     const cb=el('v200Ok');
     if(!cb || !cb.checked){ toast('⚠︎ Erst den Vollexport bestätigen'); return; }
     v200LeerungAusfuehren(); return; }
-  // §1 (v1.13.3): Shop-Reset bestätigen (der Knopf liegt im Sheet-FUSS → dieser Handler); §1 (v3.6.1): ohne Kalibrierungs-Dialog
-  if(t.closest('[data-shopresetgo]')){
-    shopResetJetzt();
+  // Hotfix 23 §3.4: Spiel zurücksetzen — der Schalter „Währung mit“ zeichnet das Sheet neu; der Knopf im Sheet-FUSS führt den Reset aus
+  const sprw=t.closest('[data-spielresetwaehrung]'); if(sprw){ spielResetSheet(sprw.dataset.spielresetwaehrung, sprw.checked); return; }
+  const sprg=t.closest('[data-spielresetgo]'); if(sprg){ const bereich=sprg.dataset.spielresetgo, mit=sprg.dataset.mitwaehrung==='1';
+    if(bereich==='shop') spielResetShop(mit); else spielResetKulisse(mit);
     closeSheet(); renderEinst(); if(seiteAktuell()==='belohnung') renderBelohnung();
-    toast('🛍 Besitz auf 0 — Konto, Kulisse, Rang und Serie unverändert');
+    toast(bereich==='shop' ? '🛍 Shop zurückgesetzt'+(mit?' · Konto 0':' · Konto unverändert') : '🖼 Kulisse 1 · neu beginnen'+(mit?' · Töpfe, Tank und Farbe 0':' · Topfinhalt im Tank'));
     return; }
   // §6.4 (v1.13.0): Blockade-Vorschlag — Übernahme nur per Freigabe-Knopf
   const blh=null; if(blh){
@@ -24874,11 +24830,11 @@ el('einstBody').addEventListener('click', e=>{
   // §5 (v1.8.1): Urlaubsmodus an/aus
   if(e.target.closest('[data-momenttoggle]')){ S.meta.momenteAus=!S.meta.momenteAus; saveMeta(); renderEinst(); return; }   // §6.4 (1.9.0)
   if(e.target.closest('[data-urlaubtoggle]')){ S.meta.urlaubsmodus=!S.meta.urlaubsmodus; saveMeta(); renderEinst(); renderStatusbar(); toast(S.meta.urlaubsmodus?'🏖 Urlaubsmodus AN':'Urlaubsmodus aus'); return; }
-  // §4 (v1.8.1): Wohlstand-Reset + Rückgängig
-  if(e.target.closest('[data-panoreset]')){ panoramaResetJetzt(); return; }
-  if(e.target.closest('[data-panoundo]')){ panoramaResetUndo(); return; }
-  // §1 (v1.13.3): Shop zurücksetzen — Bestätigungs-Sheet
-  if(e.target.closest('[data-shopreset]')){ oeffneShopReset(); return; }
+  // Hotfix 23 §3.4: Spiel zurücksetzen — Bestätigungs-Sheet je Bereich, Rückgängig des letzten Resets nach Rückfrage
+  const spr=e.target.closest('[data-spielreset]'); if(spr){ spielResetSheet(spr.dataset.spielreset, false); return; }
+  const spu=e.target.closest('[data-spielresetundo]'); if(spu){ const bereich=spu.dataset.spielresetundo, R=(S.meta.spielReset && S.meta.spielReset[bereich])||null;
+    if(!confirm('Letztes Zurücksetzen ('+(bereich==='shop'?'Shop':'Kulisse')+', '+spielResetZeitText(R && R.ts)+') rückgängig machen?')) return;
+    spielResetRueckgaengig(bereich); renderEinst(); if(seiteAktuell()==='belohnung') renderBelohnung(); toast('↩︎ '+(bereich==='shop'?'Shop':'Kulisse')+' wiederhergestellt'); return; }
   // (v1.13.4): Speicher aufräumen — die zu löschenden Sicherungen werden
   // VOR dem Entfernen mit Größe benannt.
   // Hotfix 19 §B4 · Bestätigung listet jede Sicherung mit KB; bestätigt → auslagern (§B3), Kettenhistorie kappen, saveMeta, nachholen, neu zeichnen.
