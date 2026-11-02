@@ -187,5 +187,5 @@ neuStart({});
 _aufrufe=[]; var u4=ereignis(100, 200); feuern('pointerdown', ereignis(100, 200)); feuern('pointerup', u4); drain();
 pruef('§4.3 nicht gekoppelt: keine Krone, keine Pille, kein Abfangen, kein Aufruf, nichtFuehrend false', krone().style.display==='none' && pille().style.display==='none' && u4.pd===0 && _aufrufe.length===0 && FSLive.nichtFuehrend()===false && FSLive.zustand()==='grau');
 
-pruef('§6.1 App 4.1.13 · Build 2026-10-28-48 (seit Hotfix 22)', APP_VERSION==='4.1.13' && APP_BUILD==='2026-10-28-48', APP_VERSION+' / '+APP_BUILD);
+pruef('§6.1 App 4.1.14 · Build 2026-11-02-49 (seit Hotfix 23)', APP_VERSION==='4.1.14' && APP_BUILD==='2026-11-02-49', APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 17 · Führung ohne Dauerabruf, Krone, Stand-Hinweis (4.1.6)');
