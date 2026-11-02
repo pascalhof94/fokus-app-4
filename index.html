@@ -2357,6 +2357,18 @@ img.objimg.laedt{opacity:0}
 .kl-z.kz42 .kz42-plus{border-radius:8px}.kl-z.kz42 .kz42-plus em{font-style:normal;font-size:12px}
 .kl-z.kz42 .kz42-check{border-radius:50%;display:flex;align-items:center;justify-content:center}
 .kz42-leer{opacity:.6;display:flex;align-items:center;justify-content:center}
+/* Karten-Standard 4.2 §5 · Erstellen-/Bearbeiten-Fenster: Live-Zeile, Barrieren-Balken, Regler, Unteraufgaben-Zeilen */
+.d42-live{position:sticky;top:0;z-index:3;background:#121418;padding:4px 0 8px;margin:0 0 6px;border-bottom:1px solid #2a2d33}
+.d42-live .kl-z{margin-bottom:0}
+.d42-bar{position:relative;height:22px;margin:8px 2px 0;border-radius:6px;background:linear-gradient(90deg,#2a2d33,#3a3e46);font-size:10.5px;color:#c9cbd0;font-variant-numeric:tabular-nums}
+.d42-bar i{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1px;background:#e8e9ec;border-radius:2px;box-shadow:0 0 4px rgba(255,255,255,.6)}
+.d42-bar span{position:absolute;top:0;line-height:22px}.d42-bar-min{left:6px}.d42-bar-max{right:6px}.d42-bar-wert{left:50%;transform:translateX(-50%);font-weight:750;color:#e8e9ec}
+.d42-bar-wert small{font-weight:500;color:#9a9ca2}
+.d42-bar-leer{background:#1f2227}
+.d42-rr{display:flex;align-items:center;gap:8px}.d42-rr input[type=range]{flex:1;min-height:36px}.d42-rr span{font-size:11px;color:#9a9ca2;font-variant-numeric:tabular-nums}
+.d42-regler label b{margin-left:6px}.d42-regler label small{color:#9a9ca2;font-weight:500;margin-left:6px}
+.d42-sub{flex-wrap:wrap}.d42-sub .m{width:54px}.d42-sub .d42-opt{min-height:28px;padding:0 8px;font-size:11px}
+.abt-h{margin:14px 0 6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#9a9ca2}
 .ik-hint{margin:0 0 10px;text-align:left}
 .ik-zieht{opacity:.4}
 .ik-ghost{position:fixed;left:0;top:0;z-index:500;pointer-events:none;opacity:.92;box-shadow:0 12px 30px rgba(0,0,0,.6);transform-origin:0 0}
@@ -15446,7 +15458,9 @@ function oeffneDetail(kid, opt){   // Hotfix 9 · Abschnitt 1: opt { vorbelegung
   _vomGeraetFrage = false;
   wdhTmp = null;   // §1 (v2.8.1)
   entwurf = JSON.parse(JSON.stringify(orig));
-  entwurfSubs = kid ? JSON.parse(JSON.stringify(untermenge(kid))) : ((opt && opt.unteraufgaben) || []).map(t=>neueUnteraufgabe(orig.id, { titel:t }));   // Hotfix 9: vorbelegte Unteraufgaben
+  // Karten-Standard 4.2 §2/§5: jede ab 4.2.0 neu angelegte Karte trägt std42; Art Aufgabe, Prio aus dem Vorschlag, Belastung „noch nicht gesetzt"
+  if(!kid){ entwurf.std42=true; if(!KARTENART42_LABEL[entwurf.art]) entwurf.art='aufgabe'; if(entwurf.prio==null) entwurf.prio=e42PrioVorschlag(entwurf); }
+  entwurfSubs = kid ? JSON.parse(JSON.stringify(untermenge(kid))) : ((opt && opt.unteraufgaben) || []).map(t=>neueUnteraufgabe(orig.id, Object.assign({ titel:t }, entwurf.std42 ? { bonusPunkte:0 } : {})));   // Hotfix 9: vorbelegte Unteraufgaben · 4.2: Bonus leer = 0
   if(!kid && opt && opt.postfachId) entwurf.postfachId=opt.postfachId;   // Hotfix 9 · Abschnitt 2: Speichern = Freigabe mit Anpassung
   _detailMehrAuf = !entwurfNeu || !!(opt && opt.mehrAuf);   // Neuanlage: „Weitere Einstellungen" eingeklappt; Bearbeiten: offen · Hotfix 9: opt.mehrAuf öffnet sie
   _detailAutofocus = entwurfNeu;  // Neuanlage: Titel autofokussieren
@@ -15535,6 +15549,7 @@ function wdhVorlageHtml(){
 }
 function renderDetail(){
   const _sbEl=el('sheetBody'), _scroll=_sbEl?_sbEl.scrollTop:0;   // V3: Scrollposition über Re-Render halten
+  if(!abschlussLauf && detail42Gilt(entwurf)) return renderDetail42(_scroll);   // Karten-Standard 4.2 §5: std42-Karten und jede neue Karte; der Abschluss-Durchgang bleibt
   const k=entwurf, istDfm=k.domain==='dfm';
   const subs=entwurfSubs;
   const subSum=subs.reduce((a,u)=>a+num(u.sollMin),0);
@@ -15751,6 +15766,149 @@ function renderDetail(){
   const _dt=el('sheetBody').querySelector('details.mehrfelder'); if(_dt) _dt.addEventListener('toggle',()=>{ _detailMehrAuf=_dt.open; });   // U6-D: Zustand halten
   if(_detailAutofocus){ _detailAutofocus=false; const _ti=el('sheetBody').querySelector('[data-bind="titel"]'); if(_ti) setTimeout(()=>{ try{ _ti.focus(); }catch(e){} }, 60); }
 }
+/* ══ Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §5) · ERSTELLEN- UND BEARBEITEN-FENSTER (Mockup V2) ══════════════════════════════
+   Gilt für std42-Karten und jede neue Karte; Karten ohne std42 öffnen das bisherige Fenster (renderDetail). Oben eine feste Live-Zeile (§4), die bei
+   jeder Änderung neu rechnet, darunter der Barrieren-Balken (Min … Max, weißer Strich = P/h). Erstellen = Schnellansicht; Bearbeiten = Abschnitte
+   Zuordnung · Bewertung · Abhaken · Routine · Planung · Unteraufgaben · Ketten · Verlauf. Die bisherigen „Weiteren Einstellungen" (Pflicht, Staffel,
+   Tickkurve, Zeitstufen, Feste Minuten, Nur abhaken, Strafpunkte, Akku, P/Std-Override, Serienfaktor …) werden nicht angezeigt; die Werte bleiben. */
+function detail42Gilt(k){ return !!(k && (k.std42===true || entwurfNeu)); }
+function d42Chip(feld, aktuell, opts, klasse){ return chipGroup(feld, aktuell, opts, klasse); }
+function d42Zahl(bind, wert, opt){ opt=opt||{};
+  return '<input type="number" inputmode="'+(opt.dezimal?'decimal':'numeric')+'" data-bind="'+bind+'" value="'+(wert==null||wert===''?'':esc(String(wert)))+'"'+(opt.placeholder?' placeholder="'+esc(opt.placeholder)+'"':'')+(opt.min!=null?' min="'+opt.min+'"':'')+(opt.max!=null?' max="'+opt.max+'"':'')+(opt.step?' step="'+opt.step+'"':'')+(opt.style?' style="'+opt.style+'"':'')+'>'; }
+/* Live-Zeile und Barrieren-Balken — als Ganzes neu gezeichnet (d42LiveNachziehen), damit Tippen im Formular den Fokus behält */
+function d42LiveHtml(k){
+  let h=kartenZeile42Html(k, { live:true, subs:entwurfSubs });
+  const b=e42Barriere(k), satz=e42Satz(k), fest=k.phFest!=null && k.phFest!=='';
+  if(b && matrixFeldVon(k)!=='ablenkung'){ const pos=Math.max(0, Math.min(100, (satz-b[0])/Math.max(1, b[1]-b[0])*100));
+    h+='<div class="d42-bar"><i style="left:'+pos.toFixed(1)+'%"></i><span class="d42-bar-min">'+fmtP(b[0])+'</span><span class="d42-bar-wert">'+(fest?'✋ ':'')+fmtP(satz)+' P/h'+(fest?' <small>(berechnet '+fmtP(e42Satz(Object.assign({}, k, {phFest:null})))+')</small>':'')+'</span><span class="d42-bar-max">'+fmtP(b[1])+'</span></div>'; }
+  else h+='<div class="d42-bar d42-bar-leer"><span class="d42-bar-wert">'+(istInfoKarte(k) ? 'Info · kein P/h' : kartenArt42(k)==='system' ? 'Systemkarte · eigene Regeln' : matrixFeldVon(k)==='ablenkung' ? 'Ablenkung · 0 P/h' : 'kein P/h')+'</span></div>';
+  return h;
+}
+function d42LiveNachziehen(){ if(!entwurf) return; const box=el('d42live'); if(box) box.innerHTML=d42LiveHtml(entwurf);
+  const ph=document.querySelector('#sheetBody [data-d42phber]'); if(ph) ph.textContent='berechnet '+fmtP(e42Satz(Object.assign({}, entwurf, {phFest:null})))+' P/h';
+  const bo=document.querySelector('#sheetBody [data-bind="abhakbonus"]'); if(bo) bo.placeholder=d42BonusPlatzhalter(entwurf); }
+function d42BonusPlatzhalter(k){ return num(k.sollMin)>0 ? 'Prio × '+e42Einst().bonusJePrio+' = '+fmtP(Math.min(5, Math.max(1, num(k.prio, 3)))*e42Einst().bonusJePrio) : '0'; }
+function d42ReglerHtml(k){
+  const bNull=k.belastung==null, b=bNull ? 0 : Math.max(-3, Math.min(3, num(k.belastung))), bl=kz42Belastung(k), p=Math.max(1, Math.min(5, num(k.prio, e42PrioVorschlag(k))));
+  return '<div class="field d42-regler"><label>Belastung · Erholung <b data-d42lbl="belastung" style="color:'+bl.farbe+'">'+esc(bl.text)+'</b></label>'+
+    '<div class="d42-rr"><span>−3</span><input type="range" min="-3" max="3" step="1" data-d42="belastung" value="'+b+'" aria-label="Belastung"><span>+3</span>'+
+    '<button class="chip'+(!bNull && b===0 ? ' on' : '')+'" data-d42neutral="1" style="margin-left:6px">neutral</button></div>'+
+    (bNull ? '<div class="hint">noch nicht gesetzt — Regler bewegen oder „neutral" wählen</div>' : '<div class="hint">links Erholung, rechts Belastung; 0 = neutral</div>')+'</div>'+
+    '<div class="field d42-regler"><label>Prio <b data-d42lbl="prio">'+p+'</b>'+(k.domain==='dfm' ? ' <small>Vorschlag aus Geld-Impact: '+e42PrioVorschlag(k)+'</small>' : ' <small>Vorschlag: 3</small>')+'</label>'+
+    '<div class="d42-rr"><span>1</span><input type="range" min="1" max="5" step="1" data-d42="prio" value="'+p+'" aria-label="Prio"><span>5</span></div></div>';
+}
+function d42MatrixHtml(k){ const mf=matrixFeldVon(k);
+  return '<div class="field"><label>Matrix</label>'+d42Chip('matrixFeld', mf, [['ziel','🎯 Ziel'],['werkzeug','🔧 Werkzeug'],['zustand','🌀 Zustand'],['ablenkung','📵 Ablenkung']], 'gruen')+'</div>'; }
+function d42SubsHtml(k, subs){
+  const info=istInfoKarte(k);
+  let h='<div class="field"><label>Unteraufgaben</label><div id="subWrap" class="d42-subs">';
+  subs.forEach(u=>{ h+='<div class="sub d42-sub" data-sub="'+u.id+'">'+
+    '<div class="cb '+(u.done?'on':'')+'" data-subdone="'+u.id+'">✓</div>'+
+    '<input class="t" data-subtitel="'+u.id+'" value="'+esc(u.titel)+'" placeholder="Teilschritt">'+
+    (info ? '' : '<input class="m" type="number" inputmode="numeric" data-submin="'+u.id+'" value="'+num(u.sollMin)+'" title="Soll-Minuten"><span class="mlab">′</span>'+
+      '<input class="m" type="number" inputmode="numeric" data-subbonus="'+u.id+'" value="'+(u.bonusPunkte==null?'':num(u.bonusPunkte))+'" title="Bonus" placeholder="0"><span class="mlab">P</span>'+
+      '<button class="chip d42-opt'+(u.optional?' on':'')+'" data-subopt="'+u.id+'" title="optional">opt.</button>')+
+    '<button class="del" data-subdel="'+u.id+'">✕</button></div>'; });
+  h+='</div><button class="minibtn" data-subadd="1" style="margin-top:4px">＋ Unteraufgabe</button>'+(info ? '' : '<div class="hint">je Zeile: Titel · Soll-Min. · Bonus beim ✓ · optional (zählt nicht im Gesamt, keine Folgeaufgabe)</div>')+'</div>';
+  return h;
+}
+function d42RhythmusHtml(k){
+  const rTyp = k.rhythmus ? k.rhythmus.typ : 'keine';
+  let h='<div class="field"><label>Rhythmus</label>'+d42Chip('rhythmus', rTyp, [['keine','keiner'],['taeglich','täglich'],['alleNTage','alle N Tage'],['wochentage','Wochentage']], rTyp!=='keine'?'lila':'');
+  if(rTyp==='alleNTage') h+='<div style="margin-top:8px;display:flex;align-items:center;gap:8px"><span class="mlab" style="font-size:13px">alle</span><input type="number" inputmode="numeric" style="width:70px" data-bind="rhythmusN" value="'+num(k.rhythmus.n||2)+'"><span class="mlab" style="font-size:13px">Tage</span></div>';
+  else if(rTyp==='wochentage'){ const tage=(k.rhythmus.tage||[]); h+='<div class="chips" style="margin-top:8px">'+[['1','Mo'],['2','Di'],['3','Mi'],['4','Do'],['5','Fr'],['6','Sa'],['7','So']].map(([v,t])=>'<button class="chip '+(tage.includes(num(v))?'on lila':'')+'" data-wtag="'+v+'">'+t+'</button>').join('')+'</div>'; }
+  else if(rTyp==='wochenende') h+='<div class="hint">Wochenende (Sa+So)</div>';
+  return h+'</div>';
+}
+function d42GebuchtePunkte(k){ let p=0; (S.intraday||[]).forEach(e=>{ if(e && e.kartenId===k.id) p+=num(e.punkte); }); return Math.round(p); }
+function d42ZuletztInKette(k){ const H=(S.meta && S.meta.kettenHistorie)||{}; let best=null;
+  Object.keys(H).forEach(d=>{ const l=H[d]; if(!Array.isArray(l)) return; if(l.some(e=>(e && (e.id===k.id || e.karteId===k.id)) || e===k.id) && (!best || d>best)) best=d; }); return best; }
+function renderDetail42(_scroll){
+  const k=entwurf, istDfm=k.domain==='dfm', subs=entwurfSubs, info=istInfoKarte(k), system=kartenArt42(k)==='system';
+  let h='';
+  if(!entwurfNeu) h+='<div class="field"><button type="button" class="btn ghost sm" data-fkchat="'+esc(k.id)+'">💬 Zur Karte schreiben</button></div>';   // Hotfix 9 · 3.2
+  if(entwurfNeu && S.vorlagen.length) h+='<div class="field"><label>Aus Vorlage</label><div class="chips">'+S.vorlagen.map(v=>'<button class="chip" data-ausvorlage="'+v.id+'">📄 '+esc(v.name)+'</button>').join('')+'</div></div>';
+  h+='<div id="d42live" class="d42-live">'+d42LiveHtml(k)+'</div>';
+  const titel='<div class="field"><label>Titel</label><input data-bind="titel" value="'+esc(k.titel)+'" placeholder="Was ist zu tun?"></div>'+(entwurfNeu ? '<div id="detailVorlage">'+wdhVorlageHtml()+'</div>' : '');
+  const familie='<div class="field"><label>Familie</label>'+d42Chip('domain', k.domain, [['dfm','DFM'],['privat','Privat']], k.domain==='privat'?'gruen':'')+'</div>';
+  const projekt=istDfm ? '<div class="field"><label>Projekt <small>(Pflicht)</small></label><input data-bind="projekt" value="'+esc(k.projekt||'')+'" placeholder="Projekt aus FocusSystem"></div>' : '';
+  const art=system ? '<div class="field"><label>Kartenart</label><div class="hint" style="margin-top:0">Systemkarte („'+esc(k.rolle||'')+'") — in diesem Update unverändert</div></div>'
+    : '<div class="field"><label>Kartenart</label>'+d42Chip('art', k.art||'aufgabe', [['aufgabe','Aufgabe'],['routine','Routine'],['info','Info']], 'lila')+'</div>';
+  const soll='<div class="field"><label>Soll-Minuten</label>'+d42Zahl('sollMin', num(k.sollMin), {min:0})+'</div>';
+  const bonus='<div class="field"><label>Bonus beim ✓'+(k.abhakbonus!=null?' <span style="color:var(--warn)">· eigener Wert</span>':'')+'</label>'+d42Zahl('abhakbonus', k.abhakbonus!=null?num(k.abhakbonus):'', {placeholder:d42BonusPlatzhalter(k), step:5})+'<div class="hint">leer = Prio × '+e42Einst().bonusJePrio+' bei Zeit-Karten · 0 = kein Bonus'+(k.ticksAktiv?' · bei Mehrmals je Mal':'')+'</div></div>';
+  const deadline='<div class="grid2"><div class="field"><label>Deadline</label><input type="date" data-bind="faelligkeit" value="'+esc(k.faelligkeit||'')+'"'+(k.sammelkarte?' disabled':'')+'><div class="hint">'+(k.sammelkarte?'Sammelkarte: keine Deadline':'leer = ohne Termin')+'</div></div>'+
+    '<div class="field"><label>Uhrzeit</label><input type="time" data-bind="uhrzeit" value="'+esc(k.uhrzeit||'')+'"><div class="hint">gesetzt ⇒ Termin</div></div></div>';
+  if(entwurfNeu){
+    // ── Erstellen (Schnellansicht) ──
+    h+=titel+familie+projekt+art;
+    if(!info){ h+=d42MatrixHtml(k)+d42ReglerHtml(k)+soll+bonus; }
+    h+=d42SubsHtml(k, subs);
+    if(!info) h+=deadline;
+    h+='<div class="field"><label>Notiz</label><textarea data-bind="notiz" placeholder="Notiz">'+esc(k.notiz||'')+'</textarea></div>';
+  } else if(info){
+    // ── Info-Karte (§7): Titel, Notiz, Unteraufgaben als Liste ohne Punkte, Kommentar ──
+    h+='<h4 class="abt-h">Zuordnung</h4>'+titel+familie+projekt+art;
+    h+='<h4 class="abt-h">Notiz</h4><div class="field"><textarea data-bind="notiz" placeholder="Notiz">'+esc(k.notiz||'')+'</textarea></div>';
+    h+='<h4 class="abt-h">Unteraufgaben</h4>'+d42SubsHtml(k, subs);
+    h+='<h4 class="abt-h">Kommentar</h4><div class="field"><label>Kommentar für Claude</label><textarea data-bind="kommentarClaude" placeholder="Hinweis für den nächsten Sync">'+esc(k.kommentarClaude||'')+'</textarea></div>';
+  } else {
+    // ── Bearbeiten · 1 Zuordnung ──
+    const status=k.freeze ? 'eingefroren' : (k.wartetAuf ? 'wartet' : 'offen');
+    h+='<h4 class="abt-h">1 · Zuordnung</h4>'+titel+familie+projekt+art;
+    h+='<div class="field"><label>Status</label>'+d42Chip('status42', status, [['offen','offen'],['wartet','⏳ wartet'],['eingefroren','❄︎ eingefroren']], status==='offen'?'gruen':'rot');
+    if(status==='wartet') h+='<div class="grid2" style="margin-top:8px"><div class="field"><label>Wartet auf</label><input data-bind="wartetAuf" value="'+esc(k.wartetAuf||'')+'" placeholder="wen oder was"></div><div class="field"><label>Wartet seit</label><input type="date" data-bind="wartetSeit" value="'+esc(k.wartetSeit||'')+'"></div></div><div class="hint">wartet = nicht vorgeschlagen; Leeren von „Wartet auf" beendet den Zustand</div>';
+    if(status==='eingefroren') h+='<div class="field" style="margin-top:8px"><label>Eingefroren bis</label><input type="date" data-bind="eingefrorenBis" value="'+esc(k.eingefrorenBis||'')+'"><div class="hint">am Morgen dieses Tages taut die Karte auf</div></div>';
+    h+='</div>';
+    // ── 2 Bewertung ──
+    h+='<h4 class="abt-h">2 · Bewertung</h4>'+d42MatrixHtml(k)+d42ReglerHtml(k);
+    h+='<div class="field"><label>✋ P/h fest'+(k.phFest!=null && k.phFest!==''?' <span style="color:var(--warn)">· gesetzt</span>':'')+'</label><div style="display:flex;align-items:center;gap:8px">'+d42Zahl('phFest', k.phFest!=null?num(k.phFest):'', {placeholder:'berechnet', min:0, step:10, style:'width:120px'})+'<small data-d42phber>berechnet '+fmtP(e42Satz(Object.assign({}, k, {phFest:null})))+' P/h</small></div><div class="hint">leer = berechnet aus Prio, Belastung und Matrix in der Barriere</div></div>';
+    if(istDfm) h+='<div class="field"><label>Geld-Impact <span class="geld-skala">0 … '+GELD_MAX+'</span></label>'+d42Zahl('geldImpact', geldImpactVon(k), {min:0, max:GELD_MAX})+'<div class="hint">Vorschlag für die Prio: 0 → 2 · 1–199 → 3 · 200–399 → 4 · ab 400 → 5</div></div>';
+    // ── 3 Abhaken ──
+    h+='<h4 class="abt-h">3 · Abhaken</h4><div class="field"><label>Abhaken</label>'+d42Chip('abhaken42', k.ticksAktiv?'mehrmals':'einmal', [['einmal','✓ einmal'],['mehrmals','➕ mehrmals']], 'gruen')+'</div>';
+    if(k.ticksAktiv) h+='<div class="field"><label>Ziel je Tag</label>'+d42Zahl('tagesziel', k.tagesziel!=null?num(k.tagesziel):'', {placeholder:'ohne Ziel', min:0, style:'width:120px'})+'<div class="hint">Zähler „n/Ziel" an der Karte</div></div>';
+    h+=bonus;
+    // ── 4 Routine ──
+    h+='<h4 class="abt-h">4 · Routine</h4>'+d42RhythmusHtml(k);
+    h+='<div class="grid2"><div class="field"><label>Vorlauf-Tage</label>'+d42Zahl('vorlaufTage', k.vorlaufTage!=null?num(k.vorlaufTage):'', {placeholder:'—', min:0})+'</div>'+
+      '<div class="field"><label>Immer sichtbar</label><div class="chips"><button class="chip '+(k.immerSichtbar?'on gruen':'')+'" data-d42toggle="immerSichtbar">'+(k.immerSichtbar?'✓ immer sichtbar':'nur wenn fällig')+'</button>'+
+      '<button class="chip '+(k.sammelkarte?'on lila':'')+'" data-d42toggle="sammelkarte">'+(k.sammelkarte?'✓ Sammelkarte':'Sammelkarte')+'</button></div></div></div>';
+    // ── 5 Planung ──
+    h+='<h4 class="abt-h">5 · Planung</h4>'+soll+deadline;
+    if(istDfm) h+='<div class="kv"><span>Frist extern</span><b>'+(k.fristExtern ? esc(kz42Datum(k.fristExtern)) : '—')+'</b></div>';
+    // ── 6 Unteraufgaben ──
+    h+='<h4 class="abt-h">6 · Unteraufgaben</h4>'+d42SubsHtml(k, subs);
+    // ── 7 Ketten ──
+    h+='<h4 class="abt-h">7 · Ketten</h4><div class="field"><label>Gruppe</label><div class="chips">'+
+      '<button class="chip '+(!k.gruppeId?'on':'')+'" data-gruppe="">keine</button>'+S.gruppen.map(g=>'<button class="chip '+(k.gruppeId===g.id?'on':'')+'" data-gruppe="'+g.id+'">'+esc(g.name)+'</button>').join('')+
+      '<button class="chip" data-gruppeneu="1">＋ Neue Gruppe…</button></div></div>';
+    { const drin=S.karten.some(x=>x.id===k.id) && ketteHat(k.id);
+      h+='<div class="field"><label>Heutige Kette</label><div class="chips"><button class="chip '+(drin?'on gruen':'')+'" data-d42kette="'+esc(k.id)+'">'+(drin?'✓ in der heutigen Kette':'in die heutige Kette')+'</button></div></div>'; }
+    // ── 8 Verlauf ──
+    h+='<h4 class="abt-h">8 · Verlauf</h4>';
+    h+='<div class="field"><label>Notiz</label><textarea data-bind="notiz" placeholder="Notiz">'+esc(k.notiz||'')+'</textarea></div>';
+    h+='<div class="field"><label>Kommentar für Claude</label><textarea data-bind="kommentarClaude" placeholder="Hinweis für den nächsten Sync">'+esc(k.kommentarClaude||'')+'</textarea></div>';
+    { const zk=d42ZuletztInKette(k);
+      h+='<div class="kvblock"><div class="kv"><span>Zuletzt in Kette</span><b>'+(zk ? esc(kz42Datum(zk)) : '—')+'</b></div>'+
+        '<div class="kv"><span>Verschiebungen</span><b>'+num(k.schiebeZaehler)+'</b></div>'+
+        '<div class="kv"><span>Gebuchte Punkte</span><b>'+fmtP(d42GebuchtePunkte(k))+' P'+(S.karten.some(x=>x.id===k.id) ? ' · heute '+fmtP(Math.round(kartePunkte(k))) : '')+'</b></div>'+
+        '<div class="kv"><span>Art · Status</span><b>'+esc(kartenArt(k))+' · '+esc(k.status)+(k.tagId?' · '+esc(k.tagId):'')+'</b></div></div>'; }
+    h+='<button class="minibtn" data-alsvorlage="1" style="margin:8px 0 10px">☆ Als Vorlage speichern</button>';
+  }
+  let foot='<button class="btn ghost sm" data-detailaktion="abhaken">'+(k.status==='erledigt'?'↩︎ offen':'✓ fertig')+'</button>';
+  if(k.status==='erledigt') foot+='<button class="btn ghost sm" data-detailaktion="neustarten">🔄 Neu starten</button>';
+  if(!entwurfNeu) foot+='<button class="btn ghost sm" data-detailaktion="archiv">🗄</button>';
+  foot+='<button class="btn prim" data-detailaktion="speichern">Speichern</button>';
+  if(!entwurfNeu && S.karten.some(x=>x.id===k.id)){   // §4 (v2.8.0): vom Gerät nehmen, wie im bisherigen Fenster
+    const laeuft=S.fokus && S.fokus.karteId===k.id && S.fokus.laeuft;
+    h+='<div class="field detail-vomgeraet">'+(_vomGeraetFrage
+      ? '<div class="vg-frage">„'+esc(String(k.titel||'').slice(0,40))+'" vom Gerät nehmen? In FocusSystem bleibt sie offen. Zeit und Punkte bleiben in der Historie.</div>'+
+        '<div class="btnrow"><button class="btn ghost sm" data-vomgeraetnein="1">Abbrechen</button><button class="btn warn sm" data-vomgeraetja="'+esc(k.id)+'">Ja, vom Gerät nehmen</button></div>'
+      : '<button class="btn ghost sm vg-knopf" data-vomgeraet="1"'+(laeuft?' disabled':'')+'>📤 Vom Gerät nehmen</button>')+'</div>';
+  }
+  openSheet(entwurfNeu ? 'Karte erstellen' : (info ? 'Info-Karte' : 'Karte bearbeiten'), h, foot, null);
+  const _sb=el('sheetBody'); if(_sb) _sb.scrollTop=_scroll||0;
+  if(_detailAutofocus){ _detailAutofocus=false; const _ti=el('sheetBody').querySelector('[data-bind="titel"]'); if(_ti) setTimeout(()=>{ try{ _ti.focus(); }catch(e){} }, 60); }
+}
 /* Unteraufgaben-Balance (§3.2) */
 function subBalanceNachAdd(){
   // Neue Unteraufgabe: Parent-Gesamtzeit gleichmäßig auf alle aufteilen.
@@ -15776,6 +15934,21 @@ function detailSpeichern(){
   entwurf.titel = (entwurf.titel||'').trim();
   if(!entwurf.titel){ toast('Titel fehlt'); return; }
   if(entwurf.domain!=='dfm'){ entwurf.projekt=null; entwurf.geldImpact=0; }
+  // Karten-Standard 4.2 §5: neue Karten tragen std42; Pflichtangaben der Schnellansicht; Sammelkarte ohne Deadline; Routine/Mehrmals wie bisher über rhythmus/ticksAktiv
+  if(detail42Gilt(entwurf)){
+    entwurf.std42=true;
+    if(!KARTENART42_LABEL[entwurf.art]) entwurf.art=entwurf.rolle ? 'system' : 'aufgabe';
+    if(entwurfNeu && !istInfoKarte(entwurf) && entwurf.belastung==null){ toast('Belastung fehlt — Regler bewegen oder „neutral" wählen'); return; }
+    if(entwurfNeu && entwurf.domain==='dfm' && !(entwurf.projekt && String(entwurf.projekt).trim())){ toast('Projekt fehlt (Pflicht bei DFM)'); return; }
+    if(entwurf.belastung!=null) entwurf.belastung=Math.max(-3, Math.min(3, Math.round(num(entwurf.belastung))));
+    if(entwurf.prio!=null) entwurf.prio=Math.max(1, Math.min(5, Math.round(num(entwurf.prio))));
+    if(entwurf.sammelkarte){ entwurf.faelligkeit=null; entwurf.immerSichtbar=true; }
+    if(entwurf.art==='routine' && !entwurf.rhythmus && !entwurf.immerSichtbar){ entwurf.rhythmus={ typ:'taeglich' }; }   // Routine ohne Rhythmus: täglich
+    if(entwurf.art==='aufgabe' && entwurf.rhythmus) entwurf.art='routine';   // Rhythmus gesetzt → Routine
+    if(entwurf.wartetAuf!=null && !String(entwurf.wartetAuf).trim()) entwurf.wartetAuf=null;
+    if(!entwurf.wartetAuf) entwurf.wartetSeit=null;
+    if(!entwurf.freeze) entwurf.eingefrorenBis=null;
+  }
   if(!Array.isArray(entwurf.tickKurve)||!entwurf.tickKurve.length) entwurf.tickKurve=[0];
   subParentAngleichen();
   // U6-D: Zeit-Ist-Nachtrag — Differenz zur bisher getrackten Zeit auf heute buchen
@@ -19520,14 +19693,22 @@ function vorlageAusEntwurf(){
   const name = (prompt('Name der Vorlage:', entwurf.titel||'Vorlage')||'').trim();
   if(!name) return;
   S.vorlagen.push({ id:uuid(), name, karte:cfg,
-    unteraufgaben: entwurfSubs.map(u=>({ titel:u.titel, sollMin:num(u.sollMin) })) });
+    unteraufgaben: entwurfSubs.map(u=>({ titel:u.titel, sollMin:num(u.sollMin), bonusPunkte:(u.bonusPunkte==null?null:num(u.bonusPunkte)), optional:u.optional===true })) });   // 4.2 §5: Bonus und optional
   saveVorlagen(); toast('Vorlage „'+name+'" gespeichert');
+}
+/* Karten-Standard 4.2 §9 (Rewe): Vorlage aus einer bestehenden Karte und ihren Unteraufgaben, ohne Dialog */
+function vorlageAusKarte(k, name){
+  const cfg=JSON.parse(JSON.stringify(k)); VORLAGE_WEG.forEach(f=>delete cfg[f]);
+  const v={ id:uuid(), name:String(name||k.titel||'Vorlage'), karte:cfg,
+    unteraufgaben: untermenge(k.id).map(u=>({ titel:u.titel, sollMin:num(u.sollMin), bonusPunkte:(u.bonusPunkte==null?null:num(u.bonusPunkte)), optional:u.optional===true })) };
+  S.vorlagen.push(v); saveVorlagen(); return v;
 }
 function detailAusVorlage(vid){
   const v=S.vorlagen.find(x=>x.id===vid); if(!v) return;
   entwurfNeu=true;
   entwurf = neueKarte(Object.assign({}, v.karte, { faelligkeit: heuteApp() }));
-  entwurfSubs = (v.unteraufgaben||[]).map(u=>neueUnteraufgabe(entwurf.id, { titel:u.titel, sollMin:num(u.sollMin) }));
+  if(!KARTENART42_LABEL[entwurf.art]) entwurf.art='aufgabe'; entwurf.std42=true; if(entwurf.prio==null) entwurf.prio=e42PrioVorschlag(entwurf);   // 4.2 §5: neue Karte nach Standard 4.2
+  entwurfSubs = (v.unteraufgaben||[]).map(u=>neueUnteraufgabe(entwurf.id, { titel:u.titel, sollMin:num(u.sollMin), bonusPunkte:(u.bonusPunkte==null?0:num(u.bonusPunkte)), optional:u.optional===true }));
   renderDetail();
 }
 function vorlageLoeschen(vid){ S.vorlagen=S.vorlagen.filter(v=>v.id!==vid); saveVorlagen(); }
@@ -24617,6 +24798,12 @@ el('sheet').addEventListener('click', e=>{
     else if(feld==='matrixFeld'){ entwurf.matrixFeld=matrixFeldVon({matrixFeld:val}); }
     else if(feld==='block'){ entwurf.block = val ? val : null; entwurf.blockTag = val ? heuteApp() : null; }   // §1.5 (v2.7.0)
     else if(feld==='nurAbhaken'){ entwurf.nurAbhaken = val==='ja' ? true : (val==='nein' ? false : null); }   // §1.1 (v2.8.0)
+    // Karten-Standard 4.2 §5/§6: Status offen · wartet · eingefroren (status selbst bleibt offen | erledigt | archiviert) · Abhaken einmal/mehrmals
+    else if(feld==='status42'){ detailLies();
+      if(val==='wartet'){ entwurf.freeze=false; entwurf.wartetAuf=entwurf.wartetAuf||'…'; entwurf.wartetSeit=entwurf.wartetSeit||heuteApp(); }
+      else if(val==='eingefroren'){ entwurf.freeze=true; entwurf.wartetAuf=null; entwurf.wartetSeit=null; }
+      else { entwurf.freeze=false; entwurf.wartetAuf=null; entwurf.wartetSeit=null; entwurf.eingefrorenBis=null; } }
+    else if(feld==='abhaken42'){ detailLies(); entwurf.ticksAktiv=(val==='mehrmals'); if(!entwurf.ticksAktiv) entwurf.tagesziel=null; }
     else if(feld==='pflicht'){ entwurf.pflicht = (val==='ja'); if(entwurf.pflicht) pflichtInit(entwurf); detailLies(); pflichtNeuZeichnen(); return; }   // §1 (v2.9.0)
     else { entwurf[feld]=val; }
     renderDetail(); return;
@@ -24650,6 +24837,11 @@ el('sheet').addEventListener('click', e=>{
   const gr=t.closest('[data-gruppe]'); if(gr){ entwurf.gruppeId = gr.dataset.gruppe || null; renderDetail(); return; }
   if(t.closest('[data-gruppeneu]')){ const n=(prompt('Name der Gruppe:')||'').trim(); if(n){ const g=neueGruppe({name:n}); S.gruppen.push(g); saveGruppen(); entwurf.gruppeId=g.id; } renderDetail(); return; }
   if(t.closest('[data-dfreeze]')){ entwurf.freeze=!entwurf.freeze; renderDetail(); return; }   // A4
+  // Karten-Standard 4.2 §5: Belastung „neutral", Schalter immerSichtbar/sammelkarte, heutige Kette, optionale Unteraufgabe
+  if(t.closest('[data-d42neutral]') && entwurf){ detailLies(); entwurf.belastung=0; renderDetail(); return; }
+  const d42t=t.closest('[data-d42toggle]'); if(d42t && entwurf){ detailLies(); const f=d42t.dataset.d42toggle; entwurf[f]=!entwurf[f]; if(f==='sammelkarte' && entwurf.sammelkarte){ entwurf.faelligkeit=null; entwurf.immerSichtbar=true; } renderDetail(); return; }
+  const d42k=t.closest('[data-d42kette]'); if(d42k && entwurf){ detailLies(); const id=d42k.dataset.d42kette; if(S.karten.some(x=>x.id===id)){ const drin=ketteToggle(id); toast(drin ? 'In die heutige Kette' : 'Aus der heutigen Kette'); kettenListenNeu(); } else toast('Erst speichern, dann in die Kette'); renderDetail(); return; }
+  const sopt=t.closest('[data-subopt]'); if(sopt){ detailLies(); const u=entwurfSubs.find(x=>x.id===sopt.dataset.subopt); if(u) u.optional=!u.optional; renderDetail(); return; }
   if(t.closest('[data-dabhak]')){ entwurf.abhakbonus = (entwurf.abhakbonus===0) ? null : 0; renderDetail(); return; }   // U6-D: Abhakbonus an/aus (null=Domänen-Default)
   // §2 (v1.13.0): Rückweg je Karte — beide Overrides auf „erbt Standard"
   if(t.closest('[data-dstandard]')){ entwurf.abhakbonus=null; entwurf.tickWert=null; renderDetail(); toast('↺ erbt wieder den Domänen-Standard'); return; }
@@ -24795,9 +24987,16 @@ el('sheetBody').addEventListener('input', e=>{
     if(entwurf && feld && feld.querySelector('[data-bind="geldImpact"]')) entwurf.geldImpact=w;
     return;
   }
+  // Karten-Standard 4.2 §5: Regler Belastung und Prio — Wert in den Entwurf, Beschriftung und Live-Zeile nachziehen (kein Neuaufbau, der Fokus bleibt)
+  if(t.dataset.d42!=null && entwurf){ const f=t.dataset.d42, v=Math.round(num(t.value));
+    if(f==='belastung'){ entwurf.belastung=Math.max(-3, Math.min(3, v)); const bl=kz42Belastung(entwurf), l=document.querySelector('#sheetBody [data-d42lbl="belastung"]'); if(l){ l.textContent=bl.text; l.style.color=bl.farbe; } }
+    else if(f==='prio'){ entwurf.prio=Math.max(1, Math.min(5, v)); const l=document.querySelector('#sheetBody [data-d42lbl="prio"]'); if(l) l.textContent=String(entwurf.prio); }
+    d42LiveNachziehen(); return; }
+  if(t.dataset.subbonus!=null){ const u=entwurfSubs.find(x=>x.id===t.dataset.subbonus); if(u){ u.bonusPunkte = t.value==='' ? 0 : num(t.value); d42LiveNachziehen(); } return; }   // 4.2 §5
   if(t.dataset.bind!=null && entwurf){ detailFeld(t.dataset.bind, t);
     // §1 (v2.8.1): beim Tippen des Titels das Vorlage-Angebot nachziehen (ohne Neuaufbau — der Fokus bleibt)
     if(t.dataset.bind==='titel' && entwurfNeu && !wdhTmp){ const box=el('detailVorlage'); if(box) box.innerHTML=wdhVorlageHtml(); }
+    if(detail42Gilt(entwurf) && el('d42live')) d42LiveNachziehen();   // 4.2 §5: Live-Zeile rechnet bei jeder Änderung neu
     return; }
   if(t.dataset.absubtitel!=null){ const u=S.unteraufgaben.find(x=>x.id===t.dataset.absubtitel); if(u){ u.titel=t.value; DB.set('unteraufgaben', S.unteraufgaben); } return; }
   if(t.dataset.absubmin!=null){ const u=S.unteraufgaben.find(x=>x.id===t.dataset.absubmin); if(u){ u.sollMin=num(t.value);
@@ -24805,7 +25004,7 @@ el('sheetBody').addEventListener('input', e=>{
     if(k){ k.sollMin=untermenge(k.id).reduce((a,x)=>a+num(x.sollMin),0); saveKarten(); }   // §3.2-Invariante
     DB.set('unteraufgaben', S.unteraufgaben); } return; }
   if(t.dataset.subtitel!=null){ const u=entwurfSubs.find(x=>x.id===t.dataset.subtitel); if(u) u.titel=t.value; return; }
-  if(t.dataset.submin!=null){ const u=entwurfSubs.find(x=>x.id===t.dataset.submin); if(u){ u.sollMin=num(t.value); subParentAngleichen(); } return; }
+  if(t.dataset.submin!=null){ const u=entwurfSubs.find(x=>x.id===t.dataset.submin); if(u){ u.sollMin=num(t.value); subParentAngleichen(); if(detail42Gilt(entwurf) && el('d42live')) d42LiveNachziehen(); } return; }
   if((t.dataset.zsbis!=null||t.dataset.zspkt!=null) && entwurf){ zeitStufenLies(); return; }   // Zeitstaffel live binden
   if(t.dataset.sbind!=null && stapelEntwurf){ stapelFeld(t.dataset.sbind, t.value); return; }
   // Filter-Werte live in den Entwurf binden, damit Re-Renders (Farbe/Ordner/Chips) nichts verlieren
@@ -24845,6 +25044,12 @@ function detailFeld(bind, input){
   else if(bind==='tickWert'){ entwurf.tickWert = v===''?null:num(v); }   // §2 (1.13.0): leer = erbt Standard
   else if(bind==='punkteProStd'||bind==='akkuProStd'||bind==='_istMinEdit'||bind==='abhakbonus'){ entwurf[bind]= v===''?null:num(v); if(bind==='_istMinEdit'){ try{ nachtragVorschlagFuellen(); }catch(e){} } }  // leer = null (Fallback) · Hotfix 22 §4.2
   else if(bind==='rhythmusN'){ if(entwurf.rhythmus) entwurf.rhythmus.n=Math.max(1,num(v)); }
+  // Karten-Standard 4.2 §5: neue Felder — leer = null; Zahlen ganzzahlig im erlaubten Bereich
+  else if(bind==='phFest'){ entwurf.phFest = v==='' ? null : Math.max(0, num(v)); }
+  else if(bind==='belastung'){ entwurf.belastung = v==='' ? null : Math.max(-3, Math.min(3, Math.round(num(v)))); }
+  else if(bind==='prio'){ entwurf.prio = v==='' ? null : Math.max(1, Math.min(5, Math.round(num(v)))); }
+  else if(bind==='tagesziel'||bind==='vorlaufTage'){ entwurf[bind] = v==='' ? null : Math.max(0, Math.round(num(v))); }
+  else if(bind==='wartetAuf'||bind==='wartetSeit'||bind==='eingefrorenBis'){ entwurf[bind] = (v==='' ? null : v); }
   else { entwurf[bind]= (v===''&&(bind==='faelligkeit'||bind==='uhrzeit'||bind==='projekt')) ? null : v; }
 }
 /* Zeitstaffel aus dem DOM in den Entwurf lesen (leere bis-Minute = null „danach"). */
@@ -24863,6 +25068,9 @@ function detailLies(){
   document.querySelectorAll('#sheetBody [data-bind]').forEach(inp=>detailFeld(inp.dataset.bind, inp));
   document.querySelectorAll('#sheetBody [data-subtitel]').forEach(inp=>{ const u=entwurfSubs.find(x=>x.id===inp.dataset.subtitel); if(u) u.titel=inp.value; });
   document.querySelectorAll('#sheetBody [data-submin]').forEach(inp=>{ const u=entwurfSubs.find(x=>x.id===inp.dataset.submin); if(u) u.sollMin=num(inp.value); });
+  document.querySelectorAll('#sheetBody [data-subbonus]').forEach(inp=>{ const u=entwurfSubs.find(x=>x.id===inp.dataset.subbonus); if(u) u.bonusPunkte = inp.value==='' ? 0 : num(inp.value); });   // 4.2 §5
+  document.querySelectorAll('#sheetBody [data-d42]').forEach(inp=>{ const f=inp.dataset.d42, v=Math.round(num(inp.value));   // 4.2 §5: Regler (Belastung nur, wenn schon gesetzt)
+    if(f==='prio') entwurf.prio=Math.max(1, Math.min(5, v)); else if(f==='belastung' && entwurf.belastung!=null) entwurf.belastung=Math.max(-3, Math.min(3, v)); });
   zeitStufenLies();
   subParentAngleichen();
 }
