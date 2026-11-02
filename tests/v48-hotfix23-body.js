@@ -5,7 +5,8 @@
 var _toasts=[]; toast=function(m){ _toasts.push(String(m)); }; haptik=function(){};
 fsliveStumm();
 testTag();
-// etwas Farbe aus einem abgeschlossenen Tag, damit ausmalWRoh() > 0 ist
+// etwas Farbe aus einem abgeschlossenen Tag, damit ausmalWRoh() > 0 ist; reset35.ts entsteht beim Laden mit „jetzt“ und würde den Tag sonst herausfiltern
+if(S.meta.reset35 && String(S.meta.reset35.ts).slice(0,10)>'2026-10-30') S.meta.reset35.ts='2026-10-01T00:00:00.000Z';
 S.historie.push({ datum:'2026-10-30', tagId:'2026-10-30-1', laufindex:1, startTs:'2026-10-30T06:00:00.000Z', endeTs:'2026-10-30T20:00:00.000Z', punkteBilanz:400, punkteDfm:400, punktePrivat:0, aufgabenBonus:0, akku:70, log:[], zeit:{ dfm:3600, privat:0 } });
 function summeStufen(){ return KAT_KEYS.reduce(function(a,k){ return a+num(S.belohnung.stufen[k],0); }, 0); }
 function alleNull(){ return KAT_KEYS.every(function(k){ return S.belohnung.stufen[k]===0; }); }
@@ -105,7 +106,7 @@ einstAbschnittUmschalten('spiel-zurücksetzen');   // der Abschnitt ist standard
 renderEinst(); var eh=el('einstBody').innerHTML;
 pruef('6.1.11 renderEinst(): „🎮 Spiel zurücksetzen“ als Abschnitt spiel-zurücksetzen, data-spielreset shop und kulisse, Zeilen 🛍 Shop und 🖼 Kulisse, Versionszeile zuletzt', eh.indexOf('🎮 Spiel zurücksetzen')>=0 && eh.indexOf('data-einstabschnitt="spiel-zurücksetzen"')>=0 && eh.indexOf('data-spielreset="shop"')>=0 && eh.indexOf('data-spielreset="kulisse"')>=0 && eh.indexOf('🛍 Shop<br>')>=0 && eh.indexOf('🖼 Kulisse<br>')>=0 && eh.indexOf('Kulisse 10 · ')>=0 && eh.lastIndexOf('id="einstVersion"')>eh.lastIndexOf('data-spielreset='), eh.slice(eh.indexOf('🎮 Spiel zurücksetzen')-200, eh.indexOf('🎮 Spiel zurücksetzen')+900));
 pruef('6.1.11 keine alten Karten: kein data-panoreset, kein data-shopreset=, kein „Eingriffe mit Tragweite“; panoramaResetJetzt und shopResetJetzt existieren nicht mehr', eh.indexOf('data-panoreset')<0 && eh.indexOf('data-shopreset=')<0 && eh.indexOf('Eingriffe mit Tragweite')<0 && typeof panoramaResetJetzt==='undefined' && typeof shopResetJetzt==='undefined' && typeof panoramaResetUndo==='undefined' && typeof oeffneShopReset==='undefined' && typeof SPIELSTAND_RESET_TEXT==='undefined');
-pruef('6.1.11 ohne letzten Reset keine Zeile „Zuletzt“; die anderen Reset-Knöpfe bleiben (🗑 Alle Karten löschen, ↺ DFM/Privat auf Standard, ↺ Tabelle, ↺ Abhakbonus + Tick auf Standard) — Quelltext', eh.indexOf('Zuletzt ')<0 && (function(){ var s=readFile('index.html'); return s.indexOf('🗑 Alle Karten löschen')>=0 && s.indexOf('↺ DFM/Privat auf Standard')>=0 && s.indexOf('↺ Tabelle')>=0 && s.indexOf('↺ Abhakbonus + Tick auf Standard')>=0; })(), eh.indexOf('Zuletzt '));
+pruef('6.1.11 ohne letzten Reset keine Zeile „Zuletzt“; die anderen Reset-Knöpfe bleiben (🗑 Alle Karten löschen, ↺ DFM auf Standard, ↺ Privat auf Standard, ↺ Tabelle, ↺ Abhakbonus + Tick auf Standard) — Quelltext', eh.indexOf('Zuletzt ')<0 && (function(){ var s=readFile('index.html'); return s.indexOf('🗑 Alle Karten löschen')>=0 && s.indexOf('↺ DFM auf Standard')>=0 && s.indexOf('↺ Privat auf Standard')>=0 && s.indexOf('↺ Tabelle')>=0 && s.indexOf('↺ Abhakbonus + Tick auf Standard')>=0; })(), eh.indexOf('Zuletzt '));
 // Zeile „Zuletzt“ mit Rückgängig bzw. Grund
 spielResetShop(false); renderEinst(); eh=el('einstBody').innerHTML;
 var zuletztOk=eh.indexOf('data-spielresetundo="shop"')>=0 && /Zuletzt \d{2}\.\d{2}\.\d{4} \d{2}:\d{2} · ohne Währung/.test(eh);
