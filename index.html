@@ -19360,6 +19360,165 @@ function kartensetRueckgaengig(){
   saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveVorlagen(); saveGruppen(); saveMeta(); baueSuchIndex();
   return true;
 }
+/* ══ Hotfix 24 §4.3 · TAG NACHHOLEN ═══════════════════════════════════════════════════════════════════════════════════
+   Der laufende Tag liegt noch auf dem Vortag (vortagOffen), weil der ✓ auf „Aufstehen" in 4.2.0 nur abgehakt hat. Die Aktion holt
+   den Tageswechsel zum Aufstehzeitpunkt nach, ohne dass Pascal erneut „Aufstehen" tippt — genau der Weg aus 4.1.14 (f11VortagBuchen:
+   Vortag buchen und schließen, Tagesbilanz senden, Aufstehen, Eckpunkte Aufstehen und Übergang, Nachricht an den Trainer), rückdatiert:
+   jetztIso/heuteIso liefern während des Nachholens den Aufstehzeitpunkt. Stunden-Log-Einträge ab dem Aufstehzeitpunkt wandern auf den
+   neuen Tag (tagId); die Wertung des Vortags sieht nur den Stand davor. Sicherung tagNachholen_bak (kompakt: Tag, Vortag der Historie,
+   Stunden-Log des Vortags, Tagesfelder je Karte, erledigt-Marken der Unteraufgaben, Meta-Schlüssel); Rückgängig, solange danach
+   nichts Neues gebucht wurde. Auch als Paket der Art „tagNachholen" (nach Freigabe im Blatt „Paket prüfen"). */
+const TN_KARTENFELDER=['status','tagId','ticksHeute','tickWerteHeute','istSek','punkteOverride','bewegungsBonus','strafPunkte','durchgang','startBonus','faelligkeit','ungeplant','streak','zuletztRoutine','letzteErfuellung','letzterTickTag','abschluesse','tickLog','serienFaktor','serienfaktor','letzteBearbeitung','pflichtHeute','ticksHeuteV3'];
+const TN_METAFELDER=['schlaf','f11Ausstehend','f11Protokoll','nachtraegeOffen','wohlstand','muenzenGesamt','rangPunkte','rang4','rangBest','rangErreicht','tagesStreak','tagesStreakBest','streakLetzterTag','lifetimeBasis','lifetimeQuelle','ausgegebenGesamt','tagesRahmen','postfachHeute'];
+const TN_SITZUNG=['timer','autopause','nachtrag','korrektur'];
+function tagNachholenMoeglich(){ return !!(S.tag && tagOffen() && S.tag.datum<heuteIso()); }
+function tagNachholenDatum(ts){ const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function tagNachholenVorschlag(){   // Vorschlag: der letzte ✓/Tick auf „Aufstehen" vom heutigen Kalendertag, sonst jetzt
+  const a=aufstehenKarte(), heute=heuteIso();
+  const e=(S.intraday||[]).filter(x=>x && a && x.kartenId===a.id && tagNachholenDatum(x.ts)===heute).pop();
+  return e ? e.ts : jetztIso();
+}
+function tagNachholenPruefen(aufstehTs){
+  const ms=Date.parse(String(aufstehTs||''));
+  if(!Number.isFinite(ms)) return 'Aufstehzeitpunkt ungültig';
+  if(!tagNachholenMoeglich()) return 'Kein offener Vortag — nichts nachzuholen';
+  if(S.tag.startTs && ms<=Date.parse(S.tag.startTs)) return 'Aufstehzeitpunkt liegt vor dem Start des Vortags';
+  if(tagNachholenDatum(ms)<=S.tag.datum) return 'Aufstehzeitpunkt liegt noch am Vortag';
+  if(ms>Date.now()) return 'Aufstehzeitpunkt liegt in der Zukunft';
+  return null;
+}
+function tagNachholenSicherung(alt, tsAuf){
+  const kopie=x=>JSON.parse(JSON.stringify(x===undefined ? null : x));
+  const karten=S.karten.map(k=>{ const o={ id:k.id }; TN_KARTENFELDER.forEach(f=>{ if(k[f]!==undefined) o[f]=kopie(k[f]); }); return o; });
+  const meta={}; TN_METAFELDER.forEach(f=>{ if(S.meta[f]!==undefined) meta[f]=kopie(S.meta[f]); });
+  return { ts:jetztIso(), aufstehTs:tsAuf, vonTagId:alt, tag:kopie(S.tag), historie:kopie((S.historie||[]).filter(h=>h && h.tagId===alt)), historieLaenge:(S.historie||[]).length,
+    intraday:kopie((S.intraday||[]).filter(e=>e && e.tagId===alt)), karten, unteraufgaben:(S.unteraufgaben||[]).map(u=>({ id:u.id, done:!!u.done, ausgelassen:u.ausgelassen })), fokus:kopie(S.fokus), meta };
+}
+function tagNachholenZurueck(B){
+  const alt=B.vonTagId, neu=S.meta.tagNachholen && S.meta.tagNachholen.nachTagId;
+  S.tag=JSON.parse(JSON.stringify(B.tag));
+  S.historie=(S.historie||[]).filter(h=>!(h && (h.tagId===alt || (neu && h.tagId===neu)))).concat(JSON.parse(JSON.stringify(B.historie||[]))).sort((a,b)=>String(a.tagId)<String(b.tagId) ? -1 : String(a.tagId)>String(b.tagId) ? 1 : 0);
+  S.intraday=(S.intraday||[]).filter(e=>!(e && (e.tagId===alt || (neu && e.tagId===neu)))).concat(JSON.parse(JSON.stringify(B.intraday||[]))).sort((a,b)=>String(a.ts)<String(b.ts) ? -1 : String(a.ts)>String(b.ts) ? 1 : 0);
+  (B.karten||[]).forEach(s=>{ const k=S.karten.find(x=>x.id===s.id); if(!k) return; TN_KARTENFELDER.forEach(f=>{ if(s[f]!==undefined) k[f]=JSON.parse(JSON.stringify(s[f])); else delete k[f]; }); });
+  (B.unteraufgaben||[]).forEach(s=>{ const u=(S.unteraufgaben||[]).find(x=>x.id===s.id); if(!u) return; u.done=!!s.done; if(s.ausgelassen===undefined) delete u.ausgelassen; else u.ausgelassen=s.ausgelassen; });
+  S.fokus=B.fokus ? JSON.parse(JSON.stringify(B.fokus)) : null;
+  const M=B.meta||{}; TN_METAFELDER.forEach(f=>{ if(M[f]!==undefined) S.meta[f]=JSON.parse(JSON.stringify(M[f])); else delete S.meta[f]; });
+  saveTag(); saveKarten(); saveHistorie(); DB.set('intraday', S.intraday); DB.set('unteraufgaben', S.unteraufgaben); saveMeta(); saveFokus();
+  try{ baueSuchIndex(); }catch(e){}
+}
+function tagNachholen(aufstehTs, opt){
+  opt=opt||{};
+  const fehler=tagNachholenPruefen(aufstehTs); if(fehler) return { fehler };
+  const ms=Date.parse(aufstehTs), tsAuf=new Date(ms).toISOString(), alt=S.tag.tagId, altDatum=S.tag.datum, datumNeu=tagNachholenDatum(ms);
+  // 1 · Sicherung
+  const bak=tagNachholenSicherung(alt, tsAuf);
+  DB.set('tagNachholen_bak', bak);
+  // 2 · Einträge ab dem Aufstehzeitpunkt beiseitelegen (sie gehören auf den neuen Tag)
+  const spaeter=[]; S.intraday=(S.intraday||[]).filter(e=>{ if(e && e.tagId===alt && String(e.ts)>=tsAuf){ spaeter.push(e); return false; } return true; });
+  const logSpaeter=[]; S.tag.log=(S.tag.log||[]).filter(e=>{ if(e && e.ts && String(e.ts)>=tsAuf){ logSpaeter.push(e); return false; } return true; });
+  // 3 · Karten auf den Stand zum Aufstehzeitpunkt zurücknehmen (Ticks, Abhaken und Zeit nach dem Zeitpunkt)
+  const je={};
+  spaeter.forEach(e=>{ if(!e.kartenId) return; const j=je[e.kartenId]=je[e.kartenId]||{ ticks:0, min:0, abhaken:false, wiederoffen:false };
+    if(e.typ==='tick'||e.typ==='pflicht'||e.typ==='unterzaehler') j.ticks++; if(TN_SITZUNG.indexOf(e.typ)>=0) j.min+=num(e.minuten); if(e.typ==='abhaken'||e.typ==='startbonus') j.abhaken=true; if(e.typ==='wiederoffen') j.wiederoffen=true; });
+  const stand={};
+  Object.keys(je).forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(!k) return; const j=je[id];
+    const tl=(k.tickLog && k.tickLog.tag===alt && Array.isArray(k.tickLog.ticks)) ? k.tickLog.ticks : [];
+    const tlSpaeter=tl.filter(t=>t && String(t.ts||'')>=tsAuf), tlVorher=tl.filter(t=>!(t && String(t.ts||'')>=tsAuf));
+    stand[id]={ status:k.status, tickWerte:(k.tickWerteHeute||[]).slice(), tlSpaeter, j };
+    if(tl.length) k.tickLog={ tag:alt, ticks:tlVorher };
+    if(j.ticks){ k.ticksHeute=Math.max(0, num(k.ticksHeute)-j.ticks); if(Array.isArray(k.tickWerteHeute)) k.tickWerteHeute=k.tickWerteHeute.slice(0, Math.max(0, k.tickWerteHeute.length-j.ticks)); }
+    if(j.abhaken && k.status==='erledigt' && k.tagId===alt){ k.status='offen'; k.tagId=null; }
+  });
+  const fokus=S.fokus; S.fokus=null;   // die laufende Uhr zählt weiter (startMs bleibt) und wird später auf den neuen Tag gebucht
+  // 4 · Vortag buchen und schließen, neuen Tag starten — rückdatiert auf den Aufstehzeitpunkt (Weg aus f11VortagBuchen)
+  const _jetzt=jetztIso, _heute=heuteIso; let m=null; const prot=[];
+  jetztIso=function(){ return tsAuf; }; heuteIso=function(){ return datumNeu; };
+  try{
+    S.tag.eckpunkte=Object.assign({}, S.tag.eckpunkte||{}); if(!S.tag.eckpunkte.abschluss) S.tag.eckpunkte.abschluss='4.0 · Tagesübergang';
+    try{ abschlussV3Schliessen(); prot.push('abschluss ok'); }catch(e){ prot.push('abschluss Fehler: '+((e&&e.message)||e)); }
+    try{ tagEndgueltigSchliessen(); prot.push('schliessen ok'); }catch(e){ prot.push('schliessen Fehler: '+((e&&e.message)||e)); }
+    const h=(S.historie||[]).find(x=>x.tagId===alt)||null;
+    try{ f11TagesbilanzSenden(h, S.tag); prot.push('bilanz gesendet'); }catch(e){ prot.push('bilanz Fehler: '+((e&&e.message)||e)); }
+    let nacht=null;
+    if(opt.einschlafUm){ const t=String(opt.einschlafUm).split(':'); if(t.length>=2){ const d=new Date(ms); d.setHours(num(t[0]), num(t[1]), 0, 0); if(d.getTime()>ms) d.setDate(d.getDate()-1);
+      if((ms-d.getTime())/60000>=SCHLAF_NACHT_MIN){ schlafNachtSetzen(d.getTime(), ms, null, '', { neu:true, quelle:'nachgefragt' }); schlafPunkteBuchen(); nacht=schlafZustand().letzte; prot.push('nacht ab '+String(opt.einschlafUm)); } } }
+    try{ m=aufstehenBestaetigen(null, { tapTs:tsAuf, nacht, prog:null, kommentar:'Tag nachgeholt (Hotfix 24)' }); prot.push(m ? 'aufstehen ok · Tag '+S.tag.datum : 'kein neuer Tag'); }
+    catch(e){ prot.push('aufstehen Fehler: '+((e&&e.message)||e)); }
+    if(S.tag && tagOffen() && S.tag.tagId!==alt){
+      const k=tagesuebergangKarte(); S.tag.uebergang={ ts:tsAuf, karte:k ? k.id : null, vortag:altDatum, nachgeholt:true };
+      try{ const p=f11EckpunkteBuchen('uebergang'); prot.push('eckpunkte uebergang '+p); }catch(e){ prot.push('eckpunkte Fehler: '+((e&&e.message)||e)); }
+      try{ if(k && k.status==='offen' && tickAnzahlHeute(k)===0) routineTick(k, {still:true}); }catch(e){}
+    }
+  } finally { jetztIso=_jetzt; heuteIso=_heute; }
+  S.fokus=fokus;
+  if(!S.tag || S.tag.tagId===alt){ tagNachholenZurueck(bak); return { fehler:'Tag konnte nicht gestartet werden ('+prot.join(' · ')+')' }; }
+  const neu=S.tag.tagId;
+  // 5 · beiseitegelegte Einträge auf den neuen Tag, Kartenstände wiederherstellen
+  spaeter.forEach(e=>{ e.tagId=neu; S.intraday.push(e); });
+  S.intraday.sort((a,b)=>String(a.ts)<String(b.ts) ? -1 : String(a.ts)>String(b.ts) ? 1 : 0);
+  S.tag.log=(S.tag.log||[]).concat(logSpaeter);
+  Object.keys(stand).forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(!k) return; const s=stand[id], j=s.j;
+    if(j.ticks){ k.ticksHeute=num(k.ticksHeute)+j.ticks; if(!Array.isArray(k.tickWerteHeute)) k.tickWerteHeute=[]; k.tickWerteHeute=k.tickWerteHeute.concat(s.tickWerte.slice(Math.max(0, s.tickWerte.length-j.ticks))); }
+    if(s.tlSpaeter.length){ const tl=tickLogHeute(k); s.tlSpaeter.forEach(t=>tl.push(t)); }
+    if(j.abhaken && s.status==='erledigt' && !j.wiederoffen){ k.status='erledigt'; k.tagId=neu; if(k.rhythmus) k.zuletztRoutine=S.tag.datum; }
+    if(j.min>0 && S.tag.istMinutenStart) S.tag.istMinutenStart[id]=Math.max(0, num(S.tag.istMinutenStart[id])-j.min);   // die Zeit nach dem Aufstehen zählt heute
+  });
+  try{ tagesAbgleich(); }catch(e){}
+  S.tag.letzteAktivitaetTs=jetztIso();
+  const letzter=S.intraday.length ? S.intraday[S.intraday.length-1].ts : null;
+  S.meta.tagNachholen={ ts:jetztIso(), aufstehTs:tsAuf, vonTagId:alt, nachTagId:neu, verschoben:spaeter.length, einschlafUm:opt.einschlafUm||null, protokoll:prot, intradayLaenge:S.intraday.length, letzterTs:letzter, rueckgaengig:null };
+  saveTag(); saveKarten(); saveHistorie(); DB.set('intraday', S.intraday); DB.set('unteraufgaben', S.unteraufgaben); saveMeta(); saveFokus();
+  // 6 · Nachricht an den Trainer wie im Tagesübergang (Feedback zum Vortag und Tagesplan)
+  try{ const h=(S.historie||[]).find(x=>x.tagId===alt)||null;
+    const text='Tagesübergang (nachgeholt, Hotfix 24): Vortag '+f11Datum(altDatum)+' gebucht ('+fmtP(h ? Math.round(num(h.punkteBilanz)) : 0)+' P). Bitte Feedback zum Vortag und den Tagesplan für heute als Paket.';
+    S.meta.f11Ausstehend=Object.assign({}, S.meta.f11Ausstehend, { chat:{ text, art:'Feedback', tag:altDatum, gespraech:f12TagGespraech(), versuche:0, seit:jetztIso() } }); saveMeta();
+    const p=f12TrainerSenden(text, { anlass:'Feedback', id:'chat-uebergang-'+altDatum });
+    if(p && p.then) p.then(r=>{ f11Log('chat', r && r.sofort ? 'gesendet (nachgeholt)' : (r && r.wartend ? 'wartend' : 'ohne Antwort')); f11ChatBestaetigt(r); }).catch(e=>f11Log('chat', 'Fehler: '+((e&&e.message)||e)));
+  }catch(e){ f11Log('chat', 'Fehler: '+((e&&e.message)||e)); }
+  f11Log('nachgeholt', 'Tag '+neu+' ab '+tsAuf+' · '+spaeter.length+' Einträge verschoben · '+prot.join(' · '));
+  return { ok:true, vonTagId:alt, nachTagId:neu, aufstehTs:tsAuf, verschoben:spaeter.length, protokoll:prot };
+}
+function tagNachholenRueckgaengigMoeglich(){
+  const N=S.meta && S.meta.tagNachholen; if(!N || !N.ts || N.rueckgaengig) return false;
+  const B=DB.get('tagNachholen_bak', null); if(!B || !B.tag) return false;
+  const letzter=(S.intraday||[]).length ? S.intraday[S.intraday.length-1].ts : null;
+  return (S.intraday||[]).length===num(N.intradayLaenge) && letzter===N.letzterTs && !!(S.tag && S.tag.tagId===N.nachTagId);   // nichts Neues gebucht
+}
+function tagNachholenRueckgaengig(){
+  if(!tagNachholenRueckgaengigMoeglich()) return false;
+  const B=DB.get('tagNachholen_bak', null); if(!B) return false;
+  tagNachholenZurueck(B);
+  S.meta.tagNachholen.rueckgaengig=jetztIso(); saveMeta();
+  f11Log('nachgeholt', 'rückgängig');
+  return true;
+}
+function tagNachholenVorschauHtml(v){
+  const t=v && v.aufstehTs ? new Date(v.aufstehTs) : null;
+  let h='<h4 class="abt-h">☀️ Tag nachholen</h4>'+(v && v.grund ? '<p class="d">'+esc(v.grund)+'</p>' : '');
+  h+='<div class="kvblock"><div class="kv"><span>Aufstehzeitpunkt</span><b>'+(t && !isNaN(t.getTime()) ? esc(fmtDatum(tagNachholenDatum(t)))+' '+esc(fmtUhr(t.toISOString())) : '—')+'</b></div>'+
+    '<div class="kv"><span>Eingeschlafen</span><b>'+(v && v.einschlafUm ? esc(String(v.einschlafUm)) : 'nicht angegeben')+'</b></div>'+
+    '<div class="kv"><span>Laufender Tag</span><b>'+esc(S.tag ? S.tag.tagId : '—')+'</b></div></div>';
+  h+=v && v.fehler ? '<p class="d" style="color:var(--bad)">'+esc(v.fehler)+'</p>'
+    : '<p class="d">Der Vortag wird zum Aufstehzeitpunkt gebucht und geschlossen, der neue Tag beginnt dort (Aufstehen, Eckpunkte, Messung); Buchungen danach wandern auf den neuen Tag. Vorher legt die App eine Sicherung an („Tag nachholen rückgängig" in den Einstellungen, solange nichts Neues gebucht ist).</p>';
+  return h;
+}
+function oeffneTagNachholen(){
+  const v=tagNachholenVorschlag(), d=new Date(v), p2=x=>String(x).padStart(2,'0');
+  const lokal=d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'T'+p2(d.getHours())+':'+p2(d.getMinutes());
+  const h='<p class="d">Der laufende Tag ist noch <b>'+esc(S.tag ? f11Datum(S.tag.datum) : '—')+'</b>. Der Tageswechsel wird zum Aufstehzeitpunkt nachgeholt, ohne erneut „Aufstehen" zu tippen.</p>'+
+    '<div class="field"><label>Aufstehzeitpunkt</label><input type="datetime-local" id="tnAuf" value="'+esc(lokal)+'" style="min-height:44px"><div class="hint">Vorschlag: der ✓ auf „Aufstehen" von heute.</div></div>'+
+    '<div class="field"><label>Wann eingeschlafen? (optional)</label><input type="time" id="tnEin" value="" style="min-height:44px"><div class="hint">Leer lassen = keine Nacht buchen.</div></div>';
+  openSheet('☀️ Tag nachholen', h, '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-tagnachholengo="1">Nachholen</button>');
+}
+function tagNachholenAusUI(){
+  const a=el('tnAuf'), e=el('tnEin'); const ms=a ? Date.parse(String(a.value||'')) : NaN;
+  if(!Number.isFinite(ms)){ toast('Aufstehzeitpunkt fehlt'); return; }
+  const r=tagNachholen(new Date(ms).toISOString(), { einschlafUm:(e && String(e.value||'').trim()) || null });
+  if(r && r.fehler){ toast(r.fehler); return; }
+  closeSheet(); try{ renderAlles(); }catch(x){} try{ renderEinst(); }catch(x){}
+  toast('☀️ Tag '+r.nachTagId+' nachgeholt · '+r.verschoben+' Buchungen verschoben'); haptik(15);
+  setTimeout(()=>{ try{ oeffneTagesuebergang(3); }catch(x){} }, 250);
+}
 function syncImport(text, opt){
   let paket; try{ paket=JSON.parse(text); }catch(e){ return {fehler:'Ungültiges JSON'}; }
   // §6.1 (v1.6.1): Das appVersion-Gate gilt jetzt AUSNAHMSLOS — auch für
@@ -19384,6 +19543,16 @@ function syncImport(text, opt){
     S.meta.letzterImportTs=jetztIso(); saveMeta();
     return { neu:r.neu, neuDfm:r.neuDfm, neuPrivat:r.neuPrivat, upd:r.upd, arch:r.arch, ketteGesetzt:null, ketteUnbekannt:[], gruppenNeu:0, gruppenUpd:0, rahmenGesetzt:null,
       korrigiert:0, korrekturen:0, vomGeraetGenommen:0, vomGeraetZurueck:0, uebersprungen:r.uebersprungen, wiederhergestellt:null, subsEntfernt:0, tuer:null, muenzenKorrekturen:[], kartenset:r };
+  }
+  // ══ Hotfix 24 §4.3 · Paket der Art „tagNachholen": { appVersion, art:'tagNachholen', aufstehTs, einschlafUm?, grund } — nur nach Freigabe im Blatt „Paket prüfen" ══
+  if(paket && !Array.isArray(paket) && paket.art==='tagNachholen'){
+    const v={ aufstehTs:paket.aufstehTs||null, einschlafUm:paket.einschlafUm||null, grund:String(paket.grund||''), fehler:tagNachholenPruefen(paket.aufstehTs) };
+    if(!(opt && opt.freigabe)) return { freigabeNoetig:true, vorschau:{ einstellungen:null, statistik:null, karten:0, tagNachholen:v } };
+    const r=v.fehler ? { fehler:v.fehler } : tagNachholen(paket.aufstehTs, { einschlafUm:v.einschlafUm });
+    if(r.fehler) return { fehler:'Tag nachholen: '+r.fehler };
+    S.meta.letzterImportTs=jetztIso(); saveMeta();
+    return { neu:0, neuDfm:0, neuPrivat:0, upd:0, arch:0, ketteGesetzt:null, ketteUnbekannt:[], gruppenNeu:0, gruppenUpd:0, rahmenGesetzt:null,
+      korrigiert:0, korrekturen:0, vomGeraetGenommen:0, vomGeraetZurueck:0, uebersprungen:[], wiederhergestellt:null, subsEntfernt:0, tuer:null, muenzenKorrekturen:[], tagNachholen:r };
   }
   // ══ §6 (v3.1.0) · SYNC-TÜR: einstellungen/statistik erst nach „Übernehmen" ══
   // Eine Wiederherstellung bringt die Einstellungen ueber ihren eigenen Block zurueck — dort sind die beiden Bereiche nur Spiegel.
@@ -19852,6 +20021,7 @@ function importErgebnisHtml(res){
       if(res.muenzenKorrekturen && res.muenzenKorrekturen.length) kz+='<br>'+res.muenzenKorrekturen.map(m=>'<span style="color:var(--cyan)">'+muenzenKorrekturZeile(m)+'</span>').join('<br>');   // Hotfix 21 §D.4
       if(res.tuer) kz+='<br><span style="color:var(--cyan)">Sync-Tür: <b>'+res.tuer.einstellungen+'</b> Einstellung(en) · <b>'+res.tuer.statistik+'</b> Statistik-Parameter geändert (Protokoll in den Einstellungen).</span>';
       if(res.kartenset){ const ks=res.kartenset; kz+='<br><span style="color:var(--cyan)">🗂 Kartenset 4.2: <b>'+num(ks.upd)+'</b> geändert · <b>'+num(ks.arch)+'</b> archiviert · <b>'+num(ks.erledigt)+'</b> erledigt · <b>'+num(ks.neu)+'</b> neu · <b>'+num(ks.vorlagen)+'</b> Vorlage(n)'+((ks.nurFocusSystem||[]).length ? ' · '+ks.nurFocusSystem.length+' nur in FocusSystem' : '')+((ks.ohneProjekt||[]).length ? ' · ohne Projekt: '+ks.ohneProjekt.map(esc).join(', ') : '')+'</span>'; }   // 4.2 §9
+      if(res.tagNachholen){ const tn=res.tagNachholen; kz+='<br><span style="color:var(--cyan)">☀️ Tag nachgeholt: <b>'+esc(String(tn.nachTagId||''))+'</b> ab '+esc(fmtUhr(tn.aufstehTs))+' · <b>'+num(tn.verschoben)+'</b> Buchungen verschoben.</span>'; }   // Hotfix 24 §4.3
       if(res.subsEntfernt) kz+='<br>Unteraufgaben entfernt: <b>'+res.subsEntfernt+'</b>.';
       if(res.uebersprungen && res.uebersprungen.length)
         kz+='<br><span style="color:var(--warn)">Übersprungen ('+res.uebersprungen.length+'):</span><br>'+
@@ -19873,6 +20043,7 @@ function oeffneSyncFreigabe(text, vs, quelle){
   let muenzenZeilen='';   // Hotfix 21 §D.4: Münzen-Korrekturen des Pakets im Blatt „Paket prüfen“
   try{ const pk=JSON.parse(text); if(pk && Array.isArray(pk.korrekturen)) muenzenZeilen=pk.korrekturen.filter(k=>k && k.muenzen!==undefined).map(k=>'<p class="d">'+muenzenKorrekturZeile({ muenzen:Number(k.muenzen), grund:k.grund })+'</p>').join(''); }catch(e){}
   const h=vs.kartenset ? kartensetVorschauHtml(vs.kartenset)   // 4.2 §9: Vorschau des Kartensets
+    : vs.tagNachholen ? tagNachholenVorschauHtml(vs.tagNachholen)   // Hotfix 24 §4.3
     : '<p class="d">Das Paket ändert Einstellungen'+(vs.statistik?' bzw. die Statistik':'')+'. Erst prüfen, dann übernehmen. '+
     'Vorher legt die App eine Sicherung an; jede Änderung steht danach im Protokoll.</p>'+
     block(vs.einstellungen,'Einstellungen')+block(vs.statistik,'Statistik')+muenzenZeilen+
@@ -19883,7 +20054,8 @@ function syncFreigabeAnwenden(){
   if(!_freigabe) return null;
   const f=_freigabe; _freigabe=null;
   const res=syncImport(f.text, {freigabe:true});
-  if(!res.fehler && !res.kartenset){ try{ syncPunkteBuchen('import'); }catch(e){} }   // §3a (v3.7.1): „Übernehmen" · 4.2 §9: das Kartenset bucht keine Punkte
+  if(!res.fehler && !res.kartenset && !res.tagNachholen){ try{ syncPunkteBuchen('import'); }catch(e){} }   // §3a (v3.7.1): „Übernehmen" · 4.2 §9: das Kartenset bucht keine Punkte · Hotfix 24: Tag nachholen ebenso
+  if(!res.fehler && res.tagNachholen){ try{ renderEinst(); }catch(e){} setTimeout(()=>{ try{ oeffneTagesuebergang(3); }catch(e){} }, 250); }   // Hotfix 24 §4.3: danach das Feedback des Trainers
   try{ FSLive.paketAbgeschlossen(res, f.quelle); }catch(e){}   // 4.0 · Paket 3: Paket aus dem Eingang zurückmelden
   closeSheet(); renderAlles();
   if(!res.fehler){ toast('Übernommen · '+num(res.tuer&&res.tuer.geaendert)+' Einstellung(en)'+(res.upd||res.neu?' · '+(num(res.upd)+num(res.neu))+' Karte(n)':'')); haptik(15); }
@@ -20251,6 +20423,10 @@ function renderEinst(){
   h+='<div class="card" data-fsgeraet="1"><h3>📱 Geräte</h3>'+(FSLive.gekoppelt()
     ? '<div id="fsGeraeteListe"><p class="d">lädt …</p></div>'
     : '<p class="d">Dieses Gerät ist nicht mit dem Mac mini gekoppelt.</p><div class="btnrow"><button class="btn sm" data-fsgeraet-koppeln="1">Koppeln</button></div>')+
+    // Hotfix 24 §4.3: Tag nachholen — sichtbar, solange der laufende Tag auf dem Vortag liegt; Rückgängig, solange danach nichts gebucht wurde
+    (tagNachholenMoeglich() ? '<div class="btnrow" style="margin-top:8px"><button class="btn warn sm" data-tagnachholen="1">☀️ Tag nachholen</button></div><div class="hint">Der laufende Tag ist noch '+esc(f11Datum(S.tag.datum))+'. Holt den Tageswechsel zum Aufstehzeitpunkt nach (Sicherung tagNachholen_bak).</div>' : '')+
+    (S.meta.tagNachholen && S.meta.tagNachholen.ts ? '<p class="d">Tag nachgeholt '+spielResetZeitText(S.meta.tagNachholen.ts)+' · '+esc(String(S.meta.tagNachholen.nachTagId||''))+' ab '+esc(fmtUhr(S.meta.tagNachholen.aufstehTs))+(S.meta.tagNachholen.rueckgaengig ? ' · rückgängig gemacht '+spielResetZeitText(S.meta.tagNachholen.rueckgaengig) : '')+'</p>'+
+      (tagNachholenRueckgaengigMoeglich() ? '<div class="btnrow"><button class="btn warn sm" data-tagnachholenundo="1">↩︎ Tag nachholen rückgängig</button></div>' : '') : '')+
     '</div>';
   if(FSLive.gekoppelt()) FSLive.geraeteLaden().then(l=>fsGeraeteListeFuellen(l)).catch(e=>{ const b=el('fsGeraeteListe'); if(b) b.innerHTML='<p class="d">'+esc(String((e && e.message)||'Mac mini nicht erreichbar'))+'</p>'; });
   // (v1.13.4): Speicher — Belegung sichtbar, Aufräumen per Knopf
@@ -24925,6 +25101,7 @@ el('sheet').addEventListener('click', e=>{
     if(navigator.clipboard) navigator.clipboard.writeText(ta.value).catch(()=>{}); toast(okc?'Kopiert':'Markiert — ⌘C'); } return; }
   if(t.closest('[data-tagdownload]')){ backupDownload(tagBackupPaket(), 'fokus-tagesabschluss-'+(S.tag?S.tag.tagId:'tag')+'.json'); return; }
   if(t.closest('[data-freigabego]')){ syncFreigabeAnwenden(); return; }
+  if(t.closest('[data-tagnachholengo]')){ tagNachholenAusUI(); return; }   // Hotfix 24 §4.3: Blatt „Tag nachholen"
   if(t.closest('[data-syncimport]')){ const ta=el('syncIn'); const res=syncImport(ta?ta.value:''); const box=el('syncErgebnis');
     if(res.freigabeNoetig){ oeffneSyncFreigabe(ta.value, res.vorschau, 'sync'); return; }
     if(!res.fehler){ try{ syncPunkteBuchen('import'); }catch(e){} renderAlles(); const exta=el('syncEx'); if(exta) exta.value=syncExportText('sync'); toast('Sync importiert'); haptik(15); }   // §3a (v3.7.1)
@@ -25445,6 +25622,11 @@ el('einstBody').addEventListener('click', e=>{
   { const kf=e.target.closest('[data-fsgeraet-fuehren]'); if(kf){ FSLive.fuehrungSetzen(kf.dataset.fsgeraetFuehren); return; }
     if(e.target.closest('[data-fsgeraet-name]')){ FSLive.geraetBenennen((el('fsGeraetName')||{}).value); return; }
     if(e.target.closest('[data-fsgeraet-koppeln]')){ FSLive.koppeln(); return; } }
+  // Hotfix 24 §4.3: Tag nachholen (Blatt), ausführen, rückgängig
+  if(e.target.closest('[data-tagnachholen]')){ oeffneTagNachholen(); return; }
+  if(e.target.closest('[data-tagnachholenundo]')){
+    if(!confirm('Tag nachholen rückgängig machen? Tag, Historie, Stunden-Log und Kartenstände gehen auf den Stand von vor dem Nachholen zurück.')) return;
+    if(tagNachholenRueckgaengig()){ toast('↩︎ Tag nachholen rückgängig'); try{ renderAlles(); }catch(x){} renderEinst(); } else toast('Rückgängig nicht möglich'); return; }
   if(e.target.closest('[data-debugtap]')){ setDebugTap(!S.ui.debugTap); renderEinst(); return; }   // V3
   // §2.5 (v1.13.0): listenweiter Standard-Reset je Domäne (mit Vorschau-Zahl)
   const sre=e.target.closest('[data-standardreset]'); if(sre){
