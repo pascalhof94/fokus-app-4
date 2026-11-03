@@ -1,6 +1,6 @@
 /* Suite 4.9 · Karten-Standard 4.2 (Auftrag 261102 §12): 1 e42Satz · 2 e42Bonus · 3 Mehrmals = Bonus je Tick · 4 Karte ohne std42 rechnet wie 4.1.14 ·
    5 optionale Unteraufgabe → keine Folgeaufgabe · 6 Kartenset auf einem Testbestand (Zahlen, Sicherung, Rückgängig exakt) · 7 Statistik eines Tages
-   vor und nach dem Update gleich · 8 Eingefroren bis gestern → heute aufgetaut · 9 Version 4.2.0, Build 50, sw.js Cache.
+   vor und nach dem Update gleich · 8 Eingefroren bis gestern → heute aufgetaut · 9 Version 4.2.1, Build 51, sw.js Cache (seit Hotfix 24).
    Aufruf: jsc tests/v49-karten42.js · Geschrieben, im Rahmen des Auftrags nicht ausgeführt. */
 var _toasts=[]; toast=function(m){ _toasts.push(String(m)); }; haptik=function(){};
 fsliveStumm();
@@ -55,7 +55,7 @@ pruef('12.5 neueUnteraufgabe an std42-Karte: Bonus leer = 0, optional false', ne
 
 // ══ 6 · Kartenset auf einem Testbestand ══
 var vorherK=JSON.stringify(S.karten), vorherU=JSON.stringify(S.unteraufgaben), vorherV=JSON.stringify(S.vorlagen||[]), nIntra=(S.intraday||[]).length;
-var SET={ appVersion:'4.2.0', art:'kartenset', grund:'Test Kartenset', karten:[], kartenset:{ eintraege:[
+var SET={ appVersion:'4.2.1', art:'kartenset', grund:'Test Kartenset', karten:[], kartenset:{ eintraege:[
   { quelle:{ tabelle:'Aufgaben', id:'00000000-0000-4000-8000-000000000001', appId:'t-dfm', airtableId:null, titel:'DFM Aufgabe' }, aktion:'aendern',
     ziel:{ titel:'DFM Aufgabe 4.2', familie:'DFM', projekt:'P', art:'aufgabe', sammelkarte:false, status:'offen', wartetAuf:null, matrix:'ziel', belastung:2, prio:4, bewertung:'zeit', mehrmals:false, zielProTag:null, soll:45, deadline:'2026-11-05', rhythmus:null, immerSichtbar:null, phFest:null, bonus:null, eingefrorenBis:null, notizZusatz:'Zusatz 4.2' },
     unteraufgaben:[{ titel:'↳ Schritt A', soll:10, bonus:20, optional:false, erledigt:false },{ titel:'Schritt B', soll:5, bonus:0, optional:true, erledigt:false }], aufgehtIn:null, hinweis:'UA „Schritt C“ ergänzen' },
@@ -104,5 +104,5 @@ pruef('12.8 wartet: karteRuht true (nicht vorgeschlagen), ohne wartetAuf false; 
 pruef('12.8 Kartenzeile 4.2: ⏳ wartet, ❄︎ eingefroren, P/h und Bonus rechts, Info-Badge', /⏳ wartet auf Rückmeldung/.test(kartenZeile42Html(W)) && /❄︎ eingefroren/.test(kartenZeile42Html(H)) && /P\/h/.test(kartenZeile42Html(W)) && /kz42-badge">Info/.test(kartenZeile42Html(k42({ art:'info' }))) && kartenZeileHtml(W).indexOf('kz42')>=0);
 
 // ══ 9 · Version ══
-pruef('12.9 App 4.2.0 · Build 2026-11-02-50 · sw.js Cache fokus4-v4.2.0-1 · DATENVERTRAG 2.1.0', APP_VERSION==='4.2.0' && APP_BUILD==='2026-11-02-50' && DATENVERTRAG==='2.1.0' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.2.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
-suiteEnde('Karten-Standard 4.2 · Punkte-Engine 4.2, Kartenset, Status, Unteraufgaben (4.2.0)');
+pruef('12.9 App 4.2.1 · Build 2026-11-03-51 · sw.js Cache fokus4-v4.2.1-1 · DATENVERTRAG 2.1.0', APP_VERSION==='4.2.1' && APP_BUILD==='2026-11-03-51' && DATENVERTRAG==='2.1.0' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.2.1-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+suiteEnde('Karten-Standard 4.2 · Punkte-Engine 4.2, Kartenset, Status, Unteraufgaben (4.2.1)');

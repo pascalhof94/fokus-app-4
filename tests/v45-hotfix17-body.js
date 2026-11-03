@@ -187,5 +187,5 @@ neuStart({});
 _aufrufe=[]; var u4=ereignis(100, 200); feuern('pointerdown', ereignis(100, 200)); feuern('pointerup', u4); drain();
 pruef('§4.3 nicht gekoppelt: keine Krone, keine Pille, kein Abfangen, kein Aufruf, nichtFuehrend false', krone().style.display==='none' && pille().style.display==='none' && u4.pd===0 && _aufrufe.length===0 && FSLive.nichtFuehrend()===false && FSLive.zustand()==='grau');
 
-pruef('§6.1 App 4.2.0 · Build 2026-11-02-50 (seit Karten-Standard 4.2)', APP_VERSION==='4.2.0' && APP_BUILD==='2026-11-02-50', APP_VERSION+' / '+APP_BUILD);
+pruef('§6.1 App 4.2.1 · Build 2026-11-03-51 (seit Hotfix 24)', APP_VERSION==='4.2.1' && APP_BUILD==='2026-11-03-51', APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 17 · Führung ohne Dauerabruf, Krone, Stand-Hinweis (4.1.6)');

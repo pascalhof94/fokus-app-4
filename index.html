@@ -3112,11 +3112,11 @@ body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4s
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '4.2.0';
+const APP_VERSION = '4.2.1';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-11-02-50';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-11-03-51';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -7418,6 +7418,21 @@ function f11TagesstartKorrektur(text){ let p=null; try{ p=JSON.parse(text); }cat
   S.tag.startTs=neu; S.tag.morgen=Object.assign(S.tag.morgen||{}, { aufstehTs:neu }); if(S.tag.aufstehen) S.tag.aufstehen.ts=neu;
   if(!Array.isArray(S.meta.syncKorrekturen)) S.meta.syncKorrekturen=[]; S.meta.syncKorrekturen=S.meta.syncKorrekturen.concat([{ ts:jetztIso(), datum:S.tag.datum, feld:'startTs', vorher:alt, nachher:neu, grund:String(t.grund) }]).slice(-200);
   saveTag(); saveMeta(); try{ toast('Tagesstart berichtigt: '+fmtUhr(neu)); }catch(e){} }
+/* Hotfix 24 §2.2 · Migration rolle421 (einmalig): fehlt einer der sieben festen Karten die Rolle, wird sie aus dem Stand vor dem
+   Kartenset 4.2 wiederhergestellt (Spiegel 02.11.2026 03:30 Uhr: die Rolle entspricht jeweils dem Namen hinter „k3-"). Protokoll in meta.migrationen. */
+const ROLLE421_FEST={ 'k3-aufstehen':'aufstehen', 'k3-tagesuebergang':'tagesuebergang', 'k3-schlafen':'schlafen', 'k3-tagesabschluss':'tagesabschluss', 'k3-tagebuch':'tagebuch', 'k3-position':'position', 'k3-reflexion':'reflexion' };
+function migrationRolle421(){
+  if(S.meta.rolle421 && S.meta.rolle421.ts) return null;
+  const hergestellt=[], fehlt=[];
+  Object.keys(ROLLE421_FEST).forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(!k){ fehlt.push(id); return; } if(!k.rolle){ k.rolle=ROLLE421_FEST[id]; beruehre(k); hergestellt.push(id+' → '+ROLLE421_FEST[id]); } });
+  const p={ name:'rolle421', ts:jetztIso(), version:APP_VERSION, hergestellt, fehlt, geprueft:Object.keys(ROLLE421_FEST).length-fehlt.length };
+  S.meta.rolle421=p;
+  if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[];
+  S.meta.migrationen=S.meta.migrationen.concat([p]).slice(-50);
+  if(hergestellt.length) saveKarten();
+  saveMeta();
+  return p;
+}
 function migration401(){
   if(S.meta.migration401 && S.meta.migration401.ts) return;
   const fest=(id, titel, extra)=>{ let k=S.karten.find(x=>x.id===id || (extra.rolle && x.rolle===extra.rolle && x.status!=='archiviert')); if(k) return k;
@@ -9315,6 +9330,7 @@ function ladeAlles(){
   if(!S.meta.shop360){ try{ shop360Durchfuehren(); }catch(e){ S.meta.shop360={ ts:jetztIso(), fehler:String(e&&e.message||e) }; saveMeta(); } }
   try{ migration400(); }catch(e){ console.warn('migration400', e); }
   try{ migration401(); }catch(e){ console.warn('migration401', e); }
+  try{ migrationRolle421(); }catch(e){ console.warn('rolle421', e); }   // Hotfix 24 §2.2: Rolle der sieben festen Karten wiederherstellen, falls sie fehlt
   try{ if(S.settings.outfitLeistungPunkte==null) S.settings.outfitLeistungPunkte=900; if(S.settings.outfitErholungPunkte==null) S.settings.outfitErholungPunkte=50; }catch(e){}   // Betriebsbereit 3: Vorgaben für vorhandene Speicher
   try{ f11FesteKarten(); }catch(e){}   // Hotfix 4.0.0-12: Tagesabschluss und Tagesplanung bleiben archiviert, auch nach einem Import vor diesem Build   // 4.0 · Paket 11: feste Karten Tagesübergang, Reflexion, Nacht vorbereiten   // 4.0 · Paket 4: Einstellungen der Punkte-Engine nach Punkt 5
   try{ feldkarten353Start(); }catch(e){}   // §5 (v3.5.3): Ausmal-Stand auf neue Feldkarten uebernehmen (ruht, solange FELDKARTEN_353 = false)
@@ -14081,9 +14097,22 @@ function prioFarbe(k){
    tickbaren Karten der Tick-Knopf mit Zahl, sonst die heute gebuchte Zeit (bei laufender Uhr live) · über Tagesziel blasser.
    Tipp auf den Titel übernimmt die Karte in die Fokusansicht. (Ausnahme vom Standard: Familienfarbe im Hintergrund.) */
 const KL_RAND_ROUTINE='#a0703c';
+/* ══ Hotfix 24 §2.1 · KARTEN MIT ROLLE GEHEN IHREN EIGENEN WEG (wie 4.1.14) ══
+   Aufstehen, Tagesabschluss, Schlafen, Tagebuch, Tagesübergang und Reflexion lösen beim ✓ (Kartenliste, Fokus-Seite,
+   Onramp-Band, Detail) und beim Schnellzugriff ihre Ansicht bzw. Uhr aus — unabhängig von std42, art oder Kartenart System.
+   Der allgemeine Abhak-Weg aus 4.2 (kartenListeCheck → routineErledigen → karteAbhaken, 0 P) wird für sie nicht durchlaufen;
+   ihre Zeile ist weiter die Zeile aus 4.1.14 (▶, +1, ✓), nicht die eingeklappte 4.2-Zeile (die nur ✓ kennt). */
+const ROLLEN_EIGENER_WEG=['aufstehen','tagesabschluss','schlafen','tagebuch','tagesuebergang','reflexion'];
+function rolleMitEigenemWeg(k){ return !!(k && k.rolle && ROLLEN_EIGENER_WEG.indexOf(k.rolle)>=0); }
+function rollenWegAusloesen(kid){
+  const k=S.karten.find(x=>x.id===kid); if(!rolleMitEigenemWeg(k)) return false;
+  if(k.rolle==='tagesuebergang' || k.rolle==='reflexion'){ fokusStarten(kid); renderAlles(); return true; }   // 4.1.14: ▶ → fokusStarten (Tagesübergang bzw. Reflexion öffnen)
+  leisteTicken(kid);   // 4.1.14: +1 → Tagebuch-Dialog, Aufstehen, Tagesabschluss, Schlafen-Uhr
+  return true;
+}
 function kartenZeileHtml(k, opt){
   opt=opt||{};
-  if(k && k.std42===true) return kartenZeile42Html(k, opt);   // Karten-Standard 4.2 §4: eigene Zeile; Karten ohne std42 wie bisher
+  if(k && k.std42===true && !rolleMitEigenemWeg(k)) return kartenZeile42Html(k, opt);   // Karten-Standard 4.2 §4: eigene Zeile; Karten ohne std42 wie bisher · Hotfix 24 §2.1: Rollenkarten behalten die 4.1.14-Zeile
   const fam=famFarbe(k), laeuft=uhrLaeuftAuf(k), st=kartenStatusHeute(k), fertig=st==='erledigt', ueber=st==='zielErreicht', art=kartenArt(k), tickbar=istTickbar(k);
   const ticks=Math.max(tickAnzahlHeute(k), num(k.ticksHeute)), limit=num(k.tageslimit);
   const unter=(k.domain==='privat'?'Privat':'DFM')+' · '+(istPflicht(k) ? 'Pflicht' : art!=='Aufgabe' ? art : (num(k.sollMin)>0 ? Math.round(num(k.sollMin))+' Min' : MX_FELD_NAME[matrixFeldVon(k)]));
@@ -14426,6 +14455,7 @@ function karteWiederOeffnen(kid){
 }
 function kartenListeCheck(kid){
   const k=S.karten.find(x=>x.id===kid); if(!k) return;
+  if(rolleMitEigenemWeg(k)){ rollenWegAusloesen(kid); return; }   // Hotfix 24 §2.1: ✓ auf einer Rollenkarte = ihr Weg aus 4.1.14, kein Abhaken
   const vor=tagesPunkteLive();
   if(istAufgabeKarte(k)){ karteAbhakenAuto(kid, false); if(k.status==='erledigt'){ hakMerken('kl-'+kid, tagesPunkteLive()-vor, k); renderFokus(); } return; }
   if(!routineBuchbar(k)){ toast('Der Tag ist geschlossen'); return; }
@@ -16370,6 +16400,7 @@ function karteAbhakenAuto(kid, fromDetail){
   // §4 (v1.9.1): ✓ heißt Abschließen — auch bei Tick-Karten (＋ tickt separat).
   // §3.1 (v3.0.0): im Routinen-System ist der Haken ein Tick (+1) — kein Abhak-Dialog, kein fester Punktwert
   // §1.3 (v3.2.0): ✓ gibt es nur auf Aufgaben — bei Routinen und Countern ist jeder Weg dorthin ein +1 (Tick)
+  if(rolleMitEigenemWeg(k)){ rollenWegAusloesen(k.id); return; }   // Hotfix 24 §2.1: Rollenkarten lösen ihre Ansicht bzw. Uhr aus (auch erledigt, z. B. Tagesübergang nach dem Übergang)
   if(istRoutineOderCounter(k)){ if(k.status==='offen') leisteTicken(k.id); else toast('„'+String(k.titel||'').slice(0,24)+'" ist für heute erledigt'); return; }
   if(k.status==='offen'){ abhakDialog(k.id, fromDetail); return; }
   // §8 (v1.12.0): ✓ auf einer ERLEDIGTEN Karte öffnet den Wiederholen-Dialog —
@@ -19196,14 +19227,17 @@ function ks42Finden(q){
 /* Felder aus ziel auf die Karte (Mapping §2) */
 function ks42ZielAnwenden(k, z){
   if(!z) return k;
+  // Hotfix 24 §2.3: ein Kartenset überschreibt nur Felder, die im Paket stehen; rolle, eingabe und nachtnotiz fasst es nie an
+  const halt={ rolle:k.rolle, eingabe:k.eingabe, nachtnotiz:k.nachtnotiz };
   if(z.titel) k.titel=String(z.titel);
-  k.domain=ks42Familie(z); if(k.domain!=='dfm'){ k.projekt=null; k.geldImpact=0; } else if(z.projekt!==undefined) k.projekt=z.projekt||null;
+  if(z.familie!==undefined){ k.domain=ks42Familie(z); if(k.domain!=='dfm'){ k.projekt=null; k.geldImpact=0; } }
+  if(k.domain==='dfm' && z.projekt!==undefined) k.projekt=z.projekt||null;
   if(KARTENART42_LABEL[z.art]) k.art=z.art; else if(!KARTENART42_LABEL[k.art]) k.art=k.rolle ? 'system' : (k.rhythmus ? 'routine' : 'aufgabe');
-  k.sammelkarte=z.sammelkarte===true;
+  if(z.sammelkarte!==undefined) k.sammelkarte=z.sammelkarte===true;
   { const mf=matrixFeldNorm(z.matrix); if(mf) k.matrixFeld=mf; }
   if(z.belastung!==undefined) k.belastung=leer(z.belastung) ? null : Math.max(-3, Math.min(3, Math.round(num(z.belastung))));
   if(z.prio!==undefined) k.prio=leer(z.prio) ? null : Math.max(1, Math.min(5, Math.round(num(z.prio))));
-  k.ticksAktiv=z.mehrmals===true;
+  if(z.mehrmals!==undefined) k.ticksAktiv=z.mehrmals===true;
   if(z.zielProTag!==undefined) k.tagesziel=leer(z.zielProTag) ? null : Math.max(0, num(z.zielProTag));
   if(z.soll!==undefined && !leer(z.soll)) k.sollMin=Math.max(0, num(z.soll));
   if(z.deadline!==undefined) k.faelligkeit=leer(z.deadline) ? null : String(z.deadline).slice(0,10);
@@ -19211,12 +19245,13 @@ function ks42ZielAnwenden(k, z){
   if(z.rhythmus!==undefined) k.rhythmus=rhythmusAusText(z.rhythmus);
   if(z.immerSichtbar===true) k.immerSichtbar=true;
   if(z.vorlaufTage!=null) k.vorlaufTage=Math.max(0, num(z.vorlaufTage));
-  k.phFest=leer(z.phFest) ? null : Math.max(0, num(z.phFest));
-  k.abhakbonus=leer(z.bonus) ? null : num(z.bonus);   // ziel.bewertung ist nur Information
-  if(z.status==='eingefroren'){ k.freeze=true; k.eingefrorenBis=leer(z.eingefrorenBis) ? null : String(z.eingefrorenBis).slice(0,10); } else { k.freeze=false; k.eingefrorenBis=null; }
-  if(!leer(z.wartetAuf)){ k.wartetAuf=String(z.wartetAuf); k.wartetSeit=k.wartetSeit||heuteApp(); } else { k.wartetAuf=null; k.wartetSeit=null; }
+  if(z.phFest!==undefined) k.phFest=leer(z.phFest) ? null : Math.max(0, num(z.phFest));
+  if(z.bonus!==undefined) k.abhakbonus=leer(z.bonus) ? null : num(z.bonus);   // ziel.bewertung ist nur Information
+  if(z.status!==undefined){ if(z.status==='eingefroren'){ k.freeze=true; k.eingefrorenBis=leer(z.eingefrorenBis) ? null : String(z.eingefrorenBis).slice(0,10); } else { k.freeze=false; k.eingefrorenBis=null; } }
+  if(z.wartetAuf!==undefined){ if(!leer(z.wartetAuf)){ k.wartetAuf=String(z.wartetAuf); k.wartetSeit=k.wartetSeit||heuteApp(); } else { k.wartetAuf=null; k.wartetSeit=null; } }
   if(k.sammelkarte){ k.faelligkeit=null; k.immerSichtbar=true; }
   if(z.notizZusatz) k.notiz=(k.notiz ? String(k.notiz)+'\n' : '')+String(z.notizZusatz);
+  if(halt.rolle!==undefined) k.rolle=halt.rolle; if(halt.eingabe!==undefined) k.eingabe=halt.eingabe; if(halt.nachtnotiz!==undefined) k.nachtnotiz=halt.nachtnotiz;   // Hotfix 24 §2.3
   k.std42=true; beruehre(k);
   return k;
 }
