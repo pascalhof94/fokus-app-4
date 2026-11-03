@@ -43,7 +43,7 @@ f7PfEntscheiden('pf-4', 'freigegeben', { felder:{ 'Pascals Anpassung':'Option A'
 pruef('Klärung: keine Karte, Antwort unverändert', S.karten.length===n0+2 && _gesendet[0].args.felder['Pascals Anpassung']==='Option A');
 // Postfach-Seite (Abschnitt 1): plan-Zeile mit „öffnen", aufgeklappt fünf Knöpfe, Kartenhinweis, Kartenzeile
 F7.lager.postfach={ ts:Date.now(), daten:[Object.assign({}, r, { id:'pf-2' })], fehler:'' }; S.ui.f7pfAuf={};
-var host=document.getElementById('postfachBody'); F16.pfFilter=null; renderPostfach(); var H=host.innerHTML;   // Hotfix 16: Start-Filter neu bestimmen (im Betrieb über seiteZeigen)
+var host=document.getElementById('postfachBody'); F16.pfFilter='freigaben'; renderPostfach(); var H=host.innerHTML;   // Hotfix 16: Start-Filter neu bestimmen (im Betrieb über seiteZeigen) · 4.3 §6.4: Standard ist 🗂️ Freigegeben, diese Suite prüft 📬 Offen
 pruef('Hotfix 16 §5: Postfach zeigt die offene Karte unter Kartenfreigaben (keine Zeile mit Knöpfen, keine Kette)', H.indexOf('data-f7pfauf="1"')<0 && H.indexOf('data-f7pfent=')<0 && H.indexOf('data-f16filter="freigaben"')>=0 && H.indexOf('data-f15karte="pf-2"')>=0 && H.indexOf('offene Karte')<0, H.slice(0, 300));
 pruef('Hotfix 15 §7: angelegte Karte bleibt über f7PfAngelegteKarten erreichbar; die Postfach-Seite zeigt sie nicht mehr', f7PfAngelegteKarten().some(function(x){ return x.id===k.id; }) && H.indexOf('data-klkarte="'+k.id+'"')<0);
 S.ui.f7pfAuf={ 'pf-2':true }; renderPostfach(); H=host.innerHTML;
@@ -73,7 +73,7 @@ var ge9=_gesendet.filter(function(g){ return g.werkzeug==='datensatz_aendern' &&
 pruef('Speichern: Karte angelegt (35 Min), postfachKarten gesetzt, ein datensatz_aendern angepasst/erledigt/10 Punkte', S.karten.length===n9+1 && S.meta.postfachKarten['pf-9b'] && S.meta.postfachKarten['pf-9b'].karteId===id9b && num(S.karten.find(function(x){ return x.id===id9b; }).sollMin)===35 && ge9.length===1 && ge9[0].args.felder.Entscheidung==='angepasst' && ge9[0].args.felder.Status==='erledigt' && ge9[0].args.felder['Punkte gebucht']===10, JSON.stringify(ge9.map(function(g){ return g.args.felder; })));
 pruef('Speichern: Eintrag aus dem Lager, nicht mehr als Vorschlag', !(F7.lager.postfach.daten||[]).some(function(x){ return x.id==='pf-9b'; }) && !f7PfVorschlaege(f7Postfach()||[]).some(function(o){ return o.r.id==='pf-9b'; }));
 // Nachholen: zwei „gesehen"-Einträge mit demselben Kartentitel → eine Zeile, ✓ → eine Karte, ohne Status
-var TEXTH='Aufgabe: Mail-Zugang bauen\n- Soll-Minuten: 30\n\nUnteraufgaben:\n- Anforderungen\n- CC\n- Merge';   // anderer Titel als die Karte aus pf-1 (gleicher Titel würde als schon angelegt gelten)
+var TEXTH='Aufgabe: Mail-Zugang bauen\n- Abteilung: Automatisierungen\n- Soll-Minuten: 30\n\nUnteraufgaben:\n- Anforderungen\n- CC\n- Merge';   // 4.3 §3: DFM-Karte braucht Projekt oder Abteilung   // anderer Titel als die Karte aus pf-1 (gleicher Titel würde als schon angelegt gelten)
 F7.lager.postfach={ ts:Date.now(), daten:[], fehler:'' };
 F7.lager.postfachNachholen={ ts:Date.now(), daten:[{ id:'pf-g1', Titel:'Neue Aufgabe anlegen: Mail-Zugang bauen', Agent:'Trainer', Art:'Plan', Status:'erledigt', Entscheidung:'gesehen', 'Output/Entwurf':TEXTH }, { id:'pf-g2', Titel:'Neu: Aufgabe anlegen Mail-Zugang bauen', Agent:'Trainer', Art:'Plan', Status:'erledigt', Entscheidung:'gesehen', 'Output/Entwurf':TEXTH }], fehler:'' };
 renderPostfach(); H=host.innerHTML;

@@ -23,6 +23,7 @@ S.settings.weModus='getrennt';
 pruef('weModus getrennt: volle Wochenendziele, Samstag-Anteil 0', zielTag('dfm')===1000 && zielTag('privat')===4200 && weSamstagAnteil('dfm')===0, JSON.stringify([zielTag('dfm'), zielTag('privat')]));
 S.settings.weModus='gemeinsam';
 // Heute: zwei Eckpunkte = 300 DFM + 300 Privat
+S.settings.engine43={ eckpunkte:true };   // 4.3: Eckpunkte-Schalter (abgeschaltet in der App)
 tagesEckpunkteBuchen('aufstehen', K.a); tagesEckpunkteBuchen('uebergang', K.u);
 pruef('heute 300 DFM aus zwei Eckpunkten', tagesPunkteDomain('dfm')===300, tagesPunkteDomain('dfm'));
 pruef('belIstDfm: nur heute, nicht Sa+So', belIstDfm()===300, belIstDfm());

@@ -10,14 +10,12 @@ pruef('Vortag offen (vortagOffen)', vortagOffen()===true);
 var R=f11Reste();
 pruef('Reste: die fällige Aufgabe', R.aufg.some(function(k){ return k.id==='t-dfm'; }), R.aufg.map(function(k){ return k.id; }).join(','));
 pruef('Reste: die fällige Routine, nicht die festen Karten', R.rout.some(function(k){ return k.id==='t-priv'; }) && !R.rout.some(function(k){ return k.rolle==='tagesuebergang'; }), R.rout.map(function(k){ return k.id; }).join(','));
-// Aufstehen mit offenem Vortag → Übergang statt Uhr
+// 4.3 §4.2: kein Dialog mehr — fokusStarten('k3-aufstehen') läuft sofort über k43Aufstehen, der Vortag wird im Hintergrund über f11VortagBuchen gebucht;
+// der Eckpunkte-Schalter hält den Buchungsweg dieser Suite (in der App abgeschaltet)
+S.settings.engine43={ eckpunkte:true }; S.meta.f11Protokoll=[]; S.meta.f11Ausstehend=null; _gesendet.length=0;
 fokusStarten('k3-aufstehen');
-pruef('Aufstehen öffnet den Dialog (aufstehenTmp gesetzt)', !!aufstehenTmp);
-aufstehenBestaetigenUI();
-pruef('… und danach den Tagesübergang in Schritt 1', F11.schritt===1 && !!F11.auf, 'Schritt '+F11.schritt);
-// Schritt 2 buchen
-S.meta.f11Protokoll=[]; S.meta.f11Ausstehend=null; _gesendet.length=0;
-f11VortagBuchen();
+pruef('Aufstehen startet sofort (4.3: kein Dialog, aufstehenTmp leer)', !aufstehenTmp);
+pruef('… der Vortag ist im Hintergrund gebucht (F11.auf leer, kein offener Vortag)', F11.auf===null && !vortagOffen(), 'auf '+JSON.stringify(F11.auf));
 pruef('neuer Tag ist heute', S.tag && S.tag.datum===heuteIso(), S.tag && S.tag.datum);
 pruef('Vortag in der Historie mit Ende', S.historie.some(function(h){ return h.datum===gestern && h.endeTs; }));
 var eck=S.intraday.filter(function(e){ return e.tagId===S.tag.tagId && e.eck; });

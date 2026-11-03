@@ -9,6 +9,7 @@ pruef('leiterSatz der DFM-Karte (geldnah) = 600', leiterSatz(K.d)===600, leiterS
 pruef('leiterSatz der Erholungskarte = 200', leiterSatz(K.e)===200, leiterSatz(K.e));
 // Eckpunkte: Aufstehen 150+150 und Tagesübergang 150+150 = 600 am Tag (Pascal 17.10.)
 var vorher=tagesPunkteDomain('dfm')+tagesPunkteDomain('privat');
+S.settings.engine43={ eckpunkte:true };   // 4.3: Eckpunkte sind abgeschaltet (Tagesplanung); der Buchungsweg bleibt und wird hier mit dem Schalter geprüft
 var eA=tagesEckpunkteBuchen('aufstehen', K.a), eU=tagesEckpunkteBuchen('uebergang', K.u);
 pruef('Aufstehen bucht 300 (150 DFM + 150 Privat)', eA===300, eA);
 pruef('Tagesübergang bucht zusätzlich 300', eU===300, eU);

@@ -1,7 +1,8 @@
 /* Suite 4.0 · Statusleiste v3: Aufbau der vier Fälle, Neuaufbau nur bei Datenänderung; Namen und Titel nie abgeschnitten (CSS). Aufruf: jsc tests/v40-statusleiste.js
    Höhen in Pixeln misst der UI-Harness (tests/ui/run.sh, Ansichten sbA–sbD); hier der Aufbau. */
 fsliveStumm();
-var K=testTag(); tagesEckpunkteBuchen('aufstehen', K.a);
+var K=testTag(); S.settings.engine43={ eckpunkte:true }; tagesEckpunkteBuchen('aufstehen', K.a);
+f4StatusleisteHtml=f4StatusleisteHtmlAlt;   // 4.3 §7: die App zeigt die schmale Leiste (Zielbild 08); die Leiste 4.0 bleibt als Alt im Code und wird hier weiter geprüft
 function leiste(){ return f4StatusleisteHtml(); }
 S.meta.postfach={ offen:3, dringend:1, dringendText:'Rückruf bis 17:00', ts:jetztIso() };
 var A=leiste();

@@ -187,8 +187,8 @@ F12.ungelesen={ 'k-erf':[H1], 'k-pipe':[A1, N1] }; F12.badge={ 'k-erf':1, 'k-pip
 F7.lager.postfach={ ts:Date.now(), daten:[PF1, PF2, PF3], fehler:'' };
 var uz=f15UngelesenZeilen();
 pruef('§7.1 nur Antwort/Hinweis mit Status offen, neueste zuerst', uz.length===2 && uz[0].r.id==='h1' && uz[1].r.id==='a1' && uz[0].karte==='pf1' && uz[1].karte===null, JSON.stringify(uz.map(function(e){ return e.r.id; })));
-F16.pfFilter=null; seiteZeigen('postfach'); var hp=el('postfachBody').innerHTML;
-pruef('Hotfix 16 §5.1 drei Filter, Start Kartenfreigaben (3 offene Karten), Chats 1 Gespräch', hp.indexOf('class="f16-chip an" data-f16filter="freigaben">✓ 📬 Kartenfreigaben <span class="n">3</span>')>=0 && hp.indexOf('💬 Chats <span class="n">1</span>')>=0);
+F16.pfFilter=null; seiteZeigen('postfach'); F16.pfFilter='freigaben'; renderPostfach(); var hp=el('postfachBody').innerHTML;   // 4.3 §6.4: Standard-Filter ist 🗂️ Freigegeben; 📬 Offen hier gewählt
+pruef('Hotfix 16 §5.1 drei Filter, Filter 📬 Offen (3 offene Karten), Chats 1 Gespräch (4.3)', hp.indexOf('class="f16-chip an" data-f16filter="freigaben">✓ 📬 Offen <span class="n">3</span>')>=0 && hp.indexOf('💬 Chats <span class="n">1</span>')>=0);
 pruef('Hotfix 16 §5.3 Hinweis-Zeile ordnet pf1 dem Gespräch „Erfassungs-Agent · „Agenten-Karten““ zu', hp.indexOf('Erfassungs-Agent · „Agenten-Karten“')>=0 && hp.indexOf('data-f15karte="pf1"')>=0);
 pruef('§7.1 keine Postfach-Karten mehr als Liste, keine Kette', hp.indexOf('data-f7pfent')<0 && hp.indexOf('Karten vom Trainer')<0 && hp.indexOf('offene Karten in der Kette')<0);
 pruef('Hotfix 16 §5.7 Badge des Postfachs = 1 Chat + 3 Kartenfreigaben', num(S.meta.postfach.offen)===4 && num(S.meta.postfach.karten)===3, JSON.stringify(S.meta.postfach));

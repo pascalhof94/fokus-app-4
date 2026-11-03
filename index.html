@@ -8379,7 +8379,7 @@ function f12KwToggle(id){ const kw=f12Kw(), k=f12KwKarte(id); if(!k) return fals
 function f12KwFertig(){ const kw=f12Kw(), e=f12EntwurfAktuell(); e.karten=kw.auswahl.map(k=>Object.assign({}, k)); kw.auswahl=[]; saveUi(); e1Oeffnen('chat'); f12EntwurfSync(); f12Fokus(); }   // Hotfix 13 §4.2: Fertig übernimmt die Auswahl vollständig
 function f12KwPrivatSichtbar(){ const k=f12KanalAktuell(); return !k || k.Bereich==='privat'; }   // §7.6: private Karten nur im Privat-Kanal
 function f12PlusErsetzen(html){
-  return String(html||'').replace(/<button class="kl-play" data-klplay="([^"]+)"[^>]*>[^<]*<\/button>/g, (m, id)=>{ const on=f12KwGewaehlt(id); return '<button class="kl-add'+(on?' on':'')+'" data-f12add="'+id+'" aria-label="Kontext">'+(on?'✓':'＋')+'</button>'; })
+  return String(html||'').replace(/<button class="kl-play(?: kz42-play)?" data-klplay="([^"]+)"[^>]*>[^<]*<\/button>/g, (m, id)=>{ const on=f12KwGewaehlt(id); return '<button class="kl-add'+(on?' on':'')+'" data-f12add="'+id+'" aria-label="Kontext">'+(on?'✓':'＋')+'</button>'; })
     .replace(/<div class="kl-z([^"]*)" style="([^"]*)" data-klkarte="([^"]+)">/g, (m, cls, st, id)=>'<div class="kl-z'+cls+(f12KwGewaehlt(id)?' gew':'')+'" style="'+st+'" data-klkarte="'+id+'" data-f12wahl="'+id+'">');
 }
 function f12AufgabenListeHtml(l){
@@ -27978,8 +27978,8 @@ function k43StatusleisteHtml(){
 }
 f4StatusleisteHtml=function(){ return k43StatusleisteHtml(); };
 { const _alt=f4StatusleisteRender; f4StatusleisteRender=function(){ const host=el('f4sb'); if(!host) return;
-    if(!S.tag){ host.innerHTML='<div class="k43-sb"><div class="k43-sbz"><span class="l">Kein Tag gestartet</span><button type="button" class="k43-einst" data-k43einst="1" aria-label="Einstellungen">⚙</button></div></div>'; return; }
-    try{ host.innerHTML=f4StatusleisteHtml(); if(_e1 && el('e1Bar')) punkteleisteZeichnen('e1Bar', diaGroessen(), S.belohnung?konto():0, punkteHeuteAnzeige()); }catch(e){ console.warn('Statusleiste', e); } }; }   // 4.3: ohne Punkteleisten-Canvas sBar
+    if(!S.tag){ if(F4N.key!=='leer43'){ F4N.key='leer43'; host.innerHTML='<div class="k43-sb"><div class="k43-sbz"><span class="l">Kein Tag gestartet</span><button type="button" class="k43-einst" data-k43einst="1" aria-label="Einstellungen">⚙</button></div></div>'; } return; }
+    _alt(); }; }   // 4.3: die bestehende Hülle (Aufbau nur bei Datenänderung) zeichnet f4StatusleisteHtml = schmale Leiste; punkteleisteZeichnen('sBar') kehrt ohne Element zurück
 /* Tableiste: Suche als Tab (öffnet die Suche; die Leiste bleibt sichtbar), ⚙ → Einstellungen */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
   if(t.closest('[data-navsuche]')){ e.stopPropagation(); haptik(6); if(e1Art()==='suche') e1Schliessen(); else e1Oeffnen('suche'); return; }
