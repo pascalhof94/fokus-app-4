@@ -3124,6 +3124,30 @@ body[data-seite="ketten"] #v-ketten{display:block}
 .k43-kbbtn button{flex:1;min-height:44px;border-radius:10px;border:1px solid #243349;background:#141e2e;color:var(--fg);font-size:12px;font-weight:700}
 .k43-kbbtn button.ok{background:#163a2b;border-color:#3ecf8e;color:#3ecf8e}
 .k43-kbbtn button.no{color:#ffb4b4}
+/* ══ Karten-Standard 4.3 · §7 Tableiste (Zielbild 08), schmale Statusleiste, FABs ══ */
+#nav{align-items:flex-end;overflow:visible}
+#nav button{min-height:48px;min-width:48px;padding:6px 2px 6px}
+#nav button.fokus{position:relative;flex:0 0 100px;min-height:48px;background:none!important;color:transparent;overflow:visible}
+#nav button.fokus .k43-ring{position:absolute;left:50%;top:-40px;transform:translateX(-50%);width:84px;height:84px;border-radius:50%;background:var(--card);border:1px solid var(--line);box-shadow:0 2px 12px rgba(0,0,0,.45)}
+#nav button.fokus .k43-ring svg{position:absolute;inset:0;width:100%;height:100%}
+#nav button.fokus .k43-ring img{position:absolute;left:50%;top:50%;width:58px;height:58px;transform:translate(-50%,-50%);border-radius:50%;object-fit:cover;object-position:top}
+#nav button.fokus .k43-ring img.laeuft{box-shadow:0 0 0 2px #3ecf8e}
+#nav button.fokus.on .k43-ring{border-color:#3b82f6}
+#nav .badge{top:2px;right:6px}
+body[data-e1="suche"] #nav{display:flex}   /* 4.3 §7: die Suche ist eine Seite mit Tableiste */
+body[data-e1="suche"] #e1-suche{padding-bottom:calc(var(--sab) + 110px)}
+#suchFab{display:none!important}   /* 4.3 §7: 🔍 abgelöst durch den Tab Suche (Code bleibt) */
+body[data-e1="suche"] #nav button[data-navsuche]{color:#e8e9ec;background:#262a32}
+main{padding-bottom:calc(var(--sab) + 110px + var(--s2))}   /* 4.3 §7: Platz für den Fokus-Kreis über der Leiste */
+.k43-sb{display:flex;flex-direction:column;gap:4px;padding:2px 0 0}
+.k43-sbz{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);min-height:30px}
+.k43-sbz .l{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k43-sbz .l b{font-weight:800}
+.k43-sbz .r{flex:none;color:var(--fg);font-weight:700}
+.k43-einst{flex:none;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:15px;padding:0;line-height:1}
+.k43-sbbar{position:relative;height:6px;border-radius:3px;background:#262a32;overflow:hidden;display:flex}
+.k43-sbbar i{display:block;height:100%}
+#topbar .inner.f4 #f4sb .f4-onr{margin-top:4px}
 </style>
 </head>
 <body>
@@ -3176,11 +3200,13 @@ body[data-seite="ketten"] #v-ketten{display:block}
 <button id="trainerFab" aria-label="Trainer">💬</button>
 
 <nav id="nav">
-  <button data-seite="fokus"><span class="ic">🎯</span>Fokus</button>
-  <button data-seite="postfach"><span class="ic">📥</span>Postfach</button>
-  <button data-seite="statistik"><span class="ic">📊</span>Statistik</button>
-  <button data-seite="belohnung"><span class="ic">🛍</span>Shop</button>
-  <button data-seite="einst"><span class="ic">⚙︎</span>Einstellungen</button>
+  <!-- Karten-Standard 4.3 §7 (Zielbild 08): Ketten · Suche · Fokus (groß, Ring = Tagesfortschritt, Charakter innen, ohne Beschriftung) · Shop · Statistik.
+       Vorher: Fokus · Postfach · Statistik · Shop · Einstellungen. Einstellungen über ⚙ in der Statusleiste, Postfach im Ketten-Tab. -->
+  <button data-seite="ketten"><span class="ic">⛓</span>Ketten</button>
+  <button data-navsuche="1"><span class="ic">⌕</span>Suche</button>
+  <button class="fokus" data-seite="fokus" aria-label="Fokus"><span class="k43-ring" id="navRing"></span></button>
+  <button data-seite="belohnung"><span class="ic">◇</span>Shop</button>
+  <button data-seite="statistik"><span class="ic">▤</span>Statistik</button>
 </nav>
 
 <!-- ══ C3 (v3.8.0) · EBENE 1 — direktes Kind von <body>, deckt alles; oben NUR die Punkteleiste (#e1Kopf), darunter die Ansicht ══ -->
@@ -27913,6 +27939,43 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) r
 }, true);
 /* Postfach-Lager und Freigaben neu → Seite nachziehen */
 { const _alt=f7NeuJetzt; f7NeuJetzt=function(){ _alt(); try{ if(seiteAktuell()==='ketten' && !e1Art()) renderKetten(); }catch(e){} }; }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   Karten-Standard 4.3 · §7 · TABLEISTE · STATUSLEISTE · FABs (Zielbild 08)
+   Tableiste: Ketten (⛓) · Suche (⌕) · Fokus in der Mitte groß (Kreis 84 px, ragt 40 px über die Leiste, Ring = Tagesfortschritt, Charakter innen,
+   keine Beschriftung, aria-label „Fokus“) · Shop (◇) · Statistik (▤); Tippflächen ≥ 48 px. Statusleiste schmal: links „<P DFM> / <Ziel DFM> DFM ·
+   <P Privat> / <Ziel Privat> Privat“, rechts „h:mm Std.“, darunter 6 px Fortschrittsbalken, ganz rechts ⚙ 30×30 px → Einstellungen; Ring und Figur
+   sind nicht mehr in der Statusleiste. FABs: 🔍 abgeschaltet (Code bleibt), ＋ unverändert, 💬 → Ketten-Tab Trainer heute (§6). einst und postfach
+   bleiben Seiten ohne Tab. Die bisherige Statusleiste bleibt als f4StatusleisteHtmlAlt im Code.
+   ══════════════════════════════════════════════════════════════════════ */
+function k43Tagesfortschritt(){ if(!S.tag) return 0; try{ const g=diaGroessen(); const ziel=num(g.zielDfm)+num(g.zielPrivat), ist=num(g.dfm)+num(g.privat); return ziel>0 ? Math.max(0, Math.min(1, ist/ziel)) : 0; }catch(e){ return 0; } }
+function k43AvatarBild(){ try{ return AVATAR_BILDER[Math.max(0, Math.min(AVATAR_BILDER.length-1, (typeof outfitHeute==='function' ? outfitHeute() : 1)-1))]; }catch(e){ return AVATAR_BILDER[0]; } }
+function k43NavRingHtml(){ const t=k43Tagesfortschritt(), r=38, u=2*Math.PI*r, farbe=t>=1 ? FARBE.GRUEN : FARBE.BLAU, laeuft=!!(S.fokus && S.fokus.laeuft);
+  return '<svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="'+r+'" fill="none" stroke="#262a32" stroke-width="5"/><circle cx="42" cy="42" r="'+r+'" fill="none" stroke="'+farbe+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(u*t).toFixed(1)+' '+u.toFixed(1)+'" transform="rotate(-90 42 42)"/></svg><img src="'+k43AvatarBild()+'" alt="" draggable="false"'+(laeuft ? ' class="laeuft"' : '')+'>'; }
+function k43NavRingRender(){ const n=el('navRing'); if(!n) return; const h=k43NavRingHtml(); if(n.innerHTML!==h) n.innerHTML=h; }
+{ const _alt=renderStatusbar; renderStatusbar=function(){ _alt(); try{ k43NavRingRender(); }catch(e){} }; }
+/* Statusleiste schmal (Zielbild 08) — die Bänder Onramp und Dringend bleiben unter dem Balken (nichts wird entfernt) */
+const _f4StatusleisteHtml42=f4StatusleisteHtml;
+function f4StatusleisteHtmlAlt(){ return _f4StatusleisteHtml42(); }   // 4.3: abgelöst durch k43StatusleisteHtml
+function k43StatusleisteHtml(){
+  const g=diaGroessen(), z=familienZeitHeute(), min=num(z.dfm)+num(z.privat), pst=f4PostfachStand(), br=e4Bruecke(), W=e4BrueckeWerte();
+  const zielG=Math.max(1, num(g.zielDfm)+num(g.zielPrivat)), pD=Math.max(0, Math.min(100, num(g.dfm)/zielG*100)), pP=Math.max(0, Math.min(100-pD, num(g.privat)/zielG*100));
+  let onr='';
+  if(br && br.onrampErledigtTs && !br.zielGestartetTs){ const rest=Math.max(0, num(W.zielMin,10)*60-(Date.now()-Date.parse(br.onrampErledigtTs))/1000); onr='<div class="f4-onr" data-f4ziel="'+esc(br.zielId||'')+'"><span>⏳ Onramp erledigt · Zielaufgabe starten</span><b>'+mmss(Math.round(rest))+' · +'+num(W.ziel,100)+'</b></div>'; }
+  if(pst.dringend>0) onr+='<div class="f4-onr dr" data-f4postfach="1"><span>❗ Dringend · '+esc(pst.dringendText||(pst.dringend+' Karte'+(pst.dringend===1?'':'n')))+'</span><b>📥 öffnen ›</b></div>';
+  return '<div class="k43-sb"><div class="k43-sbz"><span class="l" data-f4kurve="1"><b style="color:'+FARBE.BLAU_HELL+'">'+fmtP(g.dfm)+'</b> / '+fmtP(g.zielDfm)+' DFM · <b style="color:'+FARBE.LILA_HELL+'">'+fmtP(g.privat)+'</b> / '+fmtP(g.zielPrivat)+' Privat</span><span class="r mono">'+hMin(min)+' Std.</span><button type="button" class="k43-einst" data-k43einst="1" aria-label="Einstellungen">⚙</button></div>'+
+    '<div class="k43-sbbar" data-f4kurve="1"><i style="width:'+pD.toFixed(1)+'%;background:'+FARBE.BLAU+'"></i><i style="width:'+pP.toFixed(1)+'%;background:'+FARBE.LILA+'"></i></div>'+onr+'</div>';
+}
+f4StatusleisteHtml=function(){ return k43StatusleisteHtml(); };
+{ const _alt=f4StatusleisteRender; f4StatusleisteRender=function(){ const host=el('f4sb'); if(!host) return;
+    if(!S.tag){ host.innerHTML='<div class="k43-sb"><div class="k43-sbz"><span class="l">Kein Tag gestartet</span><button type="button" class="k43-einst" data-k43einst="1" aria-label="Einstellungen">⚙</button></div></div>'; return; }
+    try{ host.innerHTML=f4StatusleisteHtml(); if(_e1 && el('e1Bar')) punkteleisteZeichnen('e1Bar', diaGroessen(), S.belohnung?konto():0, punkteHeuteAnzeige()); }catch(e){ console.warn('Statusleiste', e); } }; }   // 4.3: ohne Punkteleisten-Canvas sBar
+/* Tableiste: Suche als Tab (öffnet die Suche; die Leiste bleibt sichtbar), ⚙ → Einstellungen */
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
+  if(t.closest('[data-navsuche]')){ e.stopPropagation(); haptik(6); if(e1Art()==='suche') e1Schliessen(); else e1Oeffnen('suche'); return; }
+  if(t.closest('[data-k43einst]')){ e.stopPropagation(); haptik(6); seiteZeigen('einst'); return; }
+}, true);
 
 function init(){
   ladeAlles();
