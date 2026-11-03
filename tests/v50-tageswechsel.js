@@ -1,0 +1,2 @@
+/* Suite 5.0 · Hotfix 24 · Tageswechsel (App 4.2.1, Auftrag 261103 §5: ✓ und Schnellzugriff auf Rollenkarten mit std42/System lösen den Weg aus 4.1.14 aus, Tagesübergang stößt den Trainer an, Kartenset ohne rolle lässt rolle stehen, tagNachholen mit Rückgängig, Migration rolle421) — Aufruf aus der Repo-Wurzel: jsc tests/v50-tageswechsel.js · Prüfpunkte in tests/v50-tageswechsel-body.js (läuft im Geltungsbereich der App). Diese Suite muss auch mit Karten-Standard 4.3 grün bleiben. */
+load('tests/_kopf40.js'); suite('tests/v50-tageswechsel-body.js');
