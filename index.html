@@ -3085,6 +3085,45 @@ body[data-e1="spezial"] #e1-spezial{display:block}
 .k43-kbtn button{flex:1;min-height:44px;border-radius:10px;border:1px solid #243349;background:#0d1420;color:var(--fg);font-size:13px}
 .k43-neu{min-height:48px;border-radius:14px;border:1px dashed #3b82f6;background:none;color:#93c5fd;font-size:14px;font-weight:700}
 .k43-next .k43-ketten{margin-top:2px}
+/* ══ Karten-Standard 4.3 · §6 Ketten-Tab: Umschalter (Zielbild 09), eingebettete Chats, Postfach-Historie (Zielbild 10), Chat-Kasten ══ */
+body[data-seite="ketten"] #v-ketten{display:block}
+#kettenBody{display:flex;flex-direction:column;gap:10px;padding:6px 0 0}
+.k43-seg{display:flex;gap:3px;background:#141e2e;border:1px solid #243349;border-radius:12px;padding:3px;position:sticky;top:0;z-index:4}
+.k43-seg button{position:relative;flex:1;min-height:40px;border:0;border-radius:9px;background:none;color:var(--mut);font-size:12px;font-weight:700;padding:0 4px}
+.k43-seg button.an{background:#0d1420;color:var(--fg)}
+.k43-seg .badge{position:absolute;top:-4px;right:2px;min-width:18px;height:18px;border-radius:9px;background:#3b82f6;color:#fff;font:700 10px/18px system-ui;text-align:center;padding:0 5px}
+.k43-chatseite{background:#141e2e;border:1px solid #243349;border-radius:14px;padding:8px;min-height:200px;display:flex;flex-direction:column}
+.k43-chatseite .f12-verlauf{max-height:60vh}
+.k43-chatkopf2{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:4px 4px 8px}
+.k43-zurueck{min-width:40px;min-height:40px;border-radius:10px;border:1px solid #243349;background:#0d1420;color:var(--fg);font-size:18px}
+.k43-pf{background:#141e2e;border:1px solid #243349;border-radius:14px;padding:8px}
+.k43-frei{background:#0d1420;border:1px solid #243349;border-radius:12px;margin-bottom:6px;overflow:hidden}
+.k43-frei.auf{border-color:#3b82f6}
+.k43-freiz{display:flex;align-items:center;gap:10px;padding:8px 10px;min-height:52px;cursor:pointer}
+.k43-freiz .nr{flex:none;font-size:11px;font-weight:800;color:#93c5fd;background:#1e3a8a;border-radius:8px;padding:3px 7px;font-variant-numeric:tabular-nums}
+.k43-freiz .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.k43-freiz .t b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k43-freiz .t small{font-size:11px;color:var(--mut)}
+.k43-freiz .r{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.k43-freiz .r b{font-size:16px;font-weight:800}
+.k43-freiz .r small{font-size:10px;color:var(--mut)}
+.k43-freik{padding:0 8px 8px}
+.k43-archiviert{position:relative;opacity:.5}
+.k43-archiviert .k43-tag{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--mut);background:#1a1d22;border-radius:6px;padding:2px 6px}
+.k43-fehlt-k{font-size:12px;color:#ffb4b4;background:#2a1d1d;border:1px dashed #5a2a2a;border-radius:10px;padding:10px 12px;margin-bottom:6px}
+.k43-kb .k43-kbkopf{font-size:12px;color:#f2b84b;margin:6px 0 4px}
+.k43-kb .k43-kbkopf.grau{color:var(--mut)}
+.k43-kb .k43-kbkopf b{color:var(--fg)}
+.k43-kbfelder{display:flex;flex-wrap:wrap;gap:6px;background:#0d1420;border-left:3px solid var(--fam,#3b82f6);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:12px}
+.k43-kbfelder span{display:inline-flex;flex-direction:column;gap:1px;min-width:0}
+.k43-kbfelder span small{font-size:10px;color:var(--mut)}
+.k43-kbfelder span.diff{flex-basis:100%}
+.k43-kbfelder s{color:var(--mut)}
+.k43-kbfelder em{font-style:normal;color:#93c5fd}
+.k43-kbbtn{display:flex;gap:6px;margin-bottom:6px}
+.k43-kbbtn button{flex:1;min-height:44px;border-radius:10px;border:1px solid #243349;background:#141e2e;color:var(--fg);font-size:12px;font-weight:700}
+.k43-kbbtn button.ok{background:#163a2b;border-color:#3ecf8e;color:#3ecf8e}
+.k43-kbbtn button.no{color:#ffb4b4}
 </style>
 </head>
 <body>
@@ -3108,6 +3147,7 @@ body[data-e1="spezial"] #e1-spezial{display:block}
   </section>
 
   <!-- 4.0 · Paket 7 (7.5): Postfach — Ergebnisse der Agenten, sortiert nach Dringlichkeit -->
+  <section class="view" id="v-ketten"><div id="kettenBody"></div></section>   <!-- Karten-Standard 4.3 §6: Ketten-Tab -->
   <section class="view" id="v-postfach">
     <div class="headbar"><h2>Postfach</h2></div>
     <div id="postfachBody"></div>
@@ -3726,6 +3766,12 @@ const FSLive = (()=>{
     try{ const d=await aufruf('POST', '/api/db/'+encodeURIComponent(werkzeug), JSON.stringify(args||{})); gescheitert=false; fehlerText=''; anzeigen(); return d; }
     catch(e){ if(e.offline){ gescheitert=true; fehlerText=e.message; anzeigen(); } throw e; }
   }
+  // Karten-Standard 4.3 §6.4: GET /api/app/<pfad> lesen (Freigaben-Historie)
+  async function appLesen(pfad){
+    if(!gekoppelt()){ const e=new Error('nicht gekoppelt'); e.offline=true; throw e; }
+    try{ const d=await aufruf('GET', '/api/app/'+String(pfad)); gescheitert=false; fehlerText=''; anzeigen(); return d; }
+    catch(e){ if(e.offline){ gescheitert=true; fehlerText=e.message; anzeigen(); } throw e; }
+  }
   // Hotfix 15 §1.3 · Datei zuerst: POST /api/app/datei → {pfad, name, groesse}; erst danach legt die App den Inbox-Eintrag mit pfad an.
   // Nicht in der Warteschlange: schlägt der Upload fehl (offline, abgelehnt), wirft die Funktion und der Eintrag bleibt in der Erfassung stehen (§1.4).
   async function hochladen(datei){
@@ -4186,7 +4232,7 @@ const FSLive = (()=>{
       planen(); anzeigen();
     }catch(e){}
   }
-  return { vormerken, spiegeln, senden, lesen, hochladen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
+  return { vormerken, spiegeln, senden, lesen, appLesen, hochladen, koppeln, start, zustand, gekoppelt, adresse, adresseSetzen, uhrMelden, paketeHolen, paketAbgeschlossen, paketAbgebrochen, blattOeffnen,
     warteschlangeAnzahl:(w)=>warteschlange.filter(x=>!w || x.werkzeug===w).length, warteschlangeHat:(id)=>warteschlange.some(x=>x && x.id===id),
     geraeteLaden, geraetBenennen, fuehrungSetzen, ichFuehre:()=>ichFuehre, geraet, koennteSchreiben,   // Hotfix 14 §11 (geraet: Kennung für „dieses Gerät“ in den Einstellungen)
     nichtFuehrend,   // Hotfix 17 §1: Takte außerhalb des Moduls (Chat-Badge, Nachsenden, Statusleiste, Ticker) ruhen auf nicht führenden Geräten
@@ -7527,7 +7573,7 @@ const F9_MQ=window.matchMedia ? window.matchMedia('(min-width: 1000px) and (orie
 function f9Breit(){ return !!(F9_MQ && F9_MQ.matches); }
 function f9Anwenden(){ try{ document.body.classList.toggle('breit', f9Breit()); layoutTopbarNeu(); f9Rendern(); }catch(e){ console.warn('Paket 9', e); } }
 function layoutTopbarNeu(){ try{ _tbH=-1; layoutTopbar(); }catch(e){} }
-const F9_SEITE={ fokus:'Fokus', postfach:'Postfach', statistik:'Statistik', belohnung:'Shop', einst:'Einstellungen' };
+const F9_SEITE={ fokus:'Fokus', ketten:'Ketten', postfach:'Postfach', statistik:'Statistik', belohnung:'Shop', einst:'Einstellungen' };   // 4.3: Ketten
 function f9Rendern(){
   if(!f9Breit()) return;
   const L=el('slBody'), C=el('srChat'), E=el('srErf'); if(!L || !C || !E) return;
@@ -7941,7 +7987,7 @@ function f12RaumWaehlen(name){ const u=f12Ui(); u.raum=name; u.kanal=null; u.ges
   saveUi(); e1Rendern(); }
 function f12Klick(e){
   const t=e.target; if(!t || !t.closest) return false; const d=x=>t.closest('['+x+']'); let z;
-  const imChat=t.closest('#e1-chat') || t.closest('#srChat'), imKw=t.closest('#e1-kontextwahl'), imErf=t.closest('#e1-erfassen') && f12ErfChat();
+  const imChat=t.closest('#e1-chat') || t.closest('#srChat') || t.closest('.k43-chatseite'), imKw=t.closest('#e1-kontextwahl'), imErf=t.closest('#e1-erfassen') && f12ErfChat();
   if(!imChat && !imKw && !imErf && !d('data-fkchat') && !d('data-f7planchat') && !d('data-f11chat') && !(d('data-f7akt') && d('data-f7akt').dataset.f7akt==='chat')) return false;
   const stopp=()=>{ try{ e.stopImmediatePropagation(); }catch(x){} };   // auch die Kettenlisten-Handler auf document nicht mehr
   if(imErf){ if(d('data-f7zurueck')){ stopp(); F7.erf=null; e1Oeffnen('chat'); f12Fokus(); return true; } return false; }
@@ -23645,7 +23691,7 @@ function suFrage(){ return String(S.ui.suFrage||'').trim(); }
      S.fokus            unverändert: die GETRACKTE Karte (Uhr, Buchung) — auch pausiert
    Die Sichtbarkeit hängt per CSS allein an body[data-seite] und body[data-e1]. Ebene 3 (Animationen, e3Spielen) und die
    Dialoge (openSheet/closeSheet) sind flüchtig bzw. eine eigene Klasse und stehen nicht in diesem Zustand. */
-const SEITEN=['fokus','postfach','belohnung','statistik','einst'];   // 4.0 · Paket 7: Postfach
+const SEITEN=['fokus','ketten','postfach','belohnung','statistik','einst'];   // Karten-Standard 4.3 §6: Ketten-Tab   // 4.0 · Paket 7: Postfach
 const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch','durchsuchen','erfassen','routinen','chat','plan','kontextwahl','agentenkarte','spezial'];   // Karten-Standard 4.3 §4: spezial (Schlafen · Aufstehen · Tagesplanung · Blockade)   // 4.0 · Paket 7 · 4.1: kontextwahl · Hotfix 15 §5: agentenkarte
 let _e1=null;
 function seiteAktuell(){ const s=S.ui && S.ui.seite; return SEITEN.indexOf(s)>=0 ? s : 'fokus'; }
@@ -23671,7 +23717,7 @@ function ebeneDarstellen(){
 function ebeneRendern(){
   renderFokusleiste();
   const s=seiteAktuell();
-  if(s==='statistik') renderStatistik(); else if(s==='einst') renderEinst(); else if(s==='belohnung') renderBelohnung(); else if(s==='postfach') renderPostfach(); else renderFokus();
+  if(s==='statistik') renderStatistik(); else if(s==='einst') renderEinst(); else if(s==='belohnung') renderBelohnung(); else if(s==='postfach') renderPostfach(); else if(s==='ketten') renderKetten(); else renderFokus();   // 4.3 §6: Ketten-Tab
   if(_e1) e1Rendern();
 }
 function e1Rendern(){
@@ -26091,7 +26137,7 @@ ikDragBinden();   // §2 (v3.7.0)
 /* §5 (v3.7.0): die wischbaren Sichten der Suche sind entfallen — unter dem Suchfeld steht die Kettenliste */
 // §11 (v3.7.0): der 🔍-Knopf öffnet die Suche (Suchfeld + Kettenliste, §5); liegt sie schon vor, bekommt das Suchfeld den Fokus
 el('suchFab').addEventListener('click', ()=>{ haptik(8); e1Oeffnen('suche'); });
-el('trainerFab').addEventListener('click', ()=>{ haptik(8); f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null }); });   // Hotfix 8 · Abschnitt 1 · 4.1 §9.1: Stufe Raum Trainerstab
+el('trainerFab').addEventListener('click', ()=>{ haptik(8); k43TrainerHeuteOeffnen(); });   // 4.3 §6/§7: 💬 → Ketten-Tab, Trainer heute (vorher f12Oeffnen Trainerstab)   // Hotfix 8 · Abschnitt 1 · 4.1 §9.1: Stufe Raum Trainerstab
 el('suZu').addEventListener('click', ()=>{ haptik(6); e1Schliessen(); });   // leert das Feld (ebeneSetzen) und schliesst Ebene 1
 el('suFreitext').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); try{ e.target.blur(); }catch(x){} } });   // §4 (v3.7.6): „Fertig" schliesst nur die Tastatur
 
@@ -27742,6 +27788,131 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) r
 }, true);
 /* Ketten normieren beim Laden */
 { const _alt=migrationRolle421; migrationRolle421=function(){ const r=_alt(); try{ k43KettenNormieren(); }catch(e){} return r; }; }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   Karten-Standard 4.3 · §6 · KETTEN-TAB (Zielbilder 09–10, K21, Teil 1 §6 Postfach)
+   Seite 'ketten' (Ebene 0) mit Umschalter Trainer heute · Ketten · Abteilungen · Postfach (Standard Ketten).
+   Trainer heute = das Tagesgespräch des Trainers (f12TagGespraech) im Trainer-Kanal, eingebettet wie im breiten Layout (#srChat).
+   Abteilungen = die bestehenden Chat-Räume (Stufen Raum → Agent → Gespräch), eingebettet. Postfach = das bestehende Postfach mit den Filtern
+   🗂️ Freigegeben (Standard, Historie aller Freigaben mit Nummer) · 📬 Offen · 💬 Chats; unten „Vor 4.3 · ohne Nummer“ (Archiv der angelegten Karten).
+   Freigabe im Chat (6.3): Kasten „📬 Neu: <Titel>“ / „📬 Änderung: <Titel>“ mit Feldern (vorher → nachher), ✅ Freigeben · ✏️ Anpassen · ✕ Ablehnen,
+   danach „✅ freigegeben <Uhrzeit> · Paket <Nummer>“. Jede Freigabe (Postfach, Chat, Tagesplan) bekommt ihre Nummer über /api/app/freigaben (§2.2).
+   ══════════════════════════════════════════════════════════════════════ */
+const K43_TABS=[['trainer','Trainer heute'],['ketten','Ketten'],['abteilungen','Abteilungen'],['postfach','Postfach']];
+const K43_FREIGABE_AB='2026-11-03';   // ab hier tragen Freigaben eine Nummer (Migration 0033)
+function k43Tab(){ const t=S.ui.kettenTab; return K43_TABS.some(x=>x[0]===t) ? t : 'ketten'; }
+function k43TabSetzen(t){ S.ui.kettenTab=t; saveUi(); if(seiteAktuell()!=='ketten') seiteZeigen('ketten'); else renderKetten(); }
+function k43TrainerHeuteOeffnen(){ S.ui.kettenTab='trainer'; saveUi(); seiteZeigen('ketten'); }
+function k43PostfachOffen(){ const p=(S.meta && S.meta.postfach)||{}; return num(p.offen); }
+function k43UmschalterHtml(){ const t=k43Tab(), n=k43PostfachOffen();
+  return '<div class="k43-seg" role="tablist">'+K43_TABS.map(([id, name])=>'<button type="button" role="tab" class="'+(t===id?'an':'')+'" data-kt="'+id+'" aria-selected="'+(t===id?'true':'false')+'">'+name+(id==='postfach' && n>0 ? '<span class="badge">'+n+'</span>' : '')+'</button>').join('')+'</div>'; }
+function renderKetten(){ const host=el('kettenBody'); if(!host) return; const t=k43Tab(); let h=k43UmschalterHtml();
+  try{
+    if(t==='trainer') h+=k43TrainerHeuteHtml();
+    else if(t==='abteilungen') h+='<div class="k43-chatseite abt">'+k43AbteilungenHtml()+'</div>';
+    else if(t==='postfach'){ f7Postfach(); h+='<div class="k43-pf">'+f16PostfachHtml()+'</div>'; }
+    else h+=k43KettenansichtHtml('kettentab');
+  }catch(e){ console.warn('Ketten-Tab', t, e); h+='<div class="leer">Ansicht konnte nicht gezeichnet werden: '+esc(String((e && e.message)||e))+'</div>'; }
+  host.innerHTML=h; if(t==='trainer'){ try{ f12UhrStarten(); f12EingabeHoehe(); }catch(e){} } k43ChatTakt(t==='trainer' || t==='abteilungen');
+}
+/* Trainer heute: Tagesgespräch des Trainers als Chat-Seite (die Chat-Klicks laufen über .k43-chatseite wie über #srChat) */
+function k43TrainerHeuteHtml(){ const kanal=f12TrainerKanal(); if(!kanal) return '<div class="k43-chatseite"><div class="leer">'+(FSLive.gekoppelt() ? 'Chat-Kanäle laden …' : 'Nicht gekoppelt — der Chat braucht FocusSystem.')+'</div></div>';
+  const g=f12TagGespraech(), u=f12Ui(); if(e1Art()!=='chat' && (u.kanal!==kanal.id || u.gespraech!==g)){ u.raum='Trainerstab'; u.kanal=kanal.id; u.gespraech=g; saveUi(); }
+  if(e1Art()==='chat') return '<div class="k43-chatseite"><div class="leer">Der Chat ist als Fenster offen.</div></div>';
+  return '<div class="k43-chatseite" id="ktChat"><div class="k43-chatkopf2">💬 Trainer · '+esc(f12TagTitel())+'</div>'+f12GespraechHtml(kanal, g, { breit:true })+'</div>'; }
+/* Abteilungen: die bestehenden Räume, Stufe wie im Chat (Raum → Agent → Gespräch) */
+function k43AbteilungenHtml(){ if(e1Art()==='chat') return '<div class="leer">Der Chat ist als Fenster offen.</div>'; const st=f12Stufe(), kanal=f12KanalAktuell(), u=f12Ui();
+  if(st==='gespraech' && kanal) return '<div class="k43-chatkopf2"><button type="button" class="k43-zurueck" data-k43chatzurueck="1">‹</button>'+f12Avatar(kanal)+' '+esc(f12Name(kanal))+'</div>'+f12GespraechHtml(kanal, u.gespraech, { breit:true });
+  if(st==='agent' && kanal) return '<div class="k43-chatkopf2"><button type="button" class="k43-zurueck" data-k43chatzurueck="1">‹</button>'+esc(f12Raum(kanal)||'')+'</div>'+f12AgentHtml(kanal);
+  return f12RaumHtml(); }
+{ const _alt=f12Rendern; f12Rendern=function(){ _alt(); try{ if(seiteAktuell()==='ketten' && !e1Art() && (k43Tab()==='abteilungen' || k43Tab()==='trainer')) renderKetten(); }catch(e){} }; }
+/* Takt für die eingebetteten Chats: alle 15 s Verlauf und Badge (wie f12NachladenStarten, aber für die Seite) */
+function k43ChatTakt(an){ if(K43.chatTakt){ clearInterval(K43.chatTakt); K43.chatTakt=null; } if(!an) return;
+  K43.chatTakt=setInterval(()=>{ try{ if(seiteAktuell()!=='ketten' || e1Art()){ k43ChatTakt(false); return; } if(FSLive.nichtFuehrend()) return; const u=f12Ui(), kanal=f12KanalAktuell(); if(kanal && u.gespraech){ const L=F7.lager[f12VerlaufKey(kanal, u.gespraech)]; if(L) L.ts=0; f12Verlauf(kanal, u.gespraech); f12VerlaufAktualisieren(kanal, u.gespraech); f12PfNachlesen(kanal, u.gespraech); } f12BadgeLaden(); }catch(e){} }, 15000); }
+/* ── 6.4 · Postfach im Ketten-Tab: Filter 🗂️ Freigegeben (Standard) · 📬 Offen · n · 💬 Chats · n ── */
+function renderPostfachAlt(){ return renderPostfach(); }   // 4.3: die Seite 'postfach' bleibt; ihr Inhalt kommt aus f16PostfachHtml
+function f16PostfachHtml(){
+  const rows=f7Postfach();
+  if(rows && F7.pfStandTs!==F7.lager.postfach.ts){ F7.pfStandTs=F7.lager.postfach.ts; f7PostfachStandSetzen(rows); }
+  if(!F7.pfSeit) F7.pfSeit=Date.now();
+  const Z=f16PostfachDaten(), filter=k43PfFilter();
+  let h='<div class="f7-pkopf"><span>📥 Postfach</span><small>'+((Z.chats.length+Z.freigaben.karten) ? (Z.chats.length+Z.freigaben.karten)+' offen' : (f12Kanaele() ? '' : 'lädt aus FocusSystem …'))+'</small></div>';
+  h+='<div class="f16-filter">'+[['freigegeben','🗂️ Freigegeben', null],['freigaben','📬 Offen', Z.freigaben.karten],['chats','💬 Chats', Z.chats.length]].map(f=>'<div class="f16-chip'+(filter===f[0]?' an':'')+'" data-f16filter="'+f[0]+'">'+(filter===f[0]?'✓ ':'')+f[1]+(f[2]!=null ? ' <span class="n">'+f[2]+'</span>' : '')+'</div>').join('')+'</div>';
+  if(filter==='chats') h+=f16ChatsHtml(Z);
+  else if(filter==='freigaben') h+=f16FreigabenHtml(Z);
+  else h+=k43FreigegebenHtml();
+  return h;
+}
+function k43PfFilter(){ const f=F16.pfFilter; if(f==='chats' || f==='freigaben' || f==='freigegeben') return f; F16.pfFilter='freigegeben'; return 'freigegeben'; }   // 4.3: Standard 🗂️ Freigegeben (der Start-Filter aus Hotfix 16 entfällt)
+{ const _alt=renderPostfach; renderPostfach=function(){ const host=el('postfachBody'); if(host){ try{ host.innerHTML=f16PostfachHtml(); }catch(e){ console.warn('Postfach', e); } } try{ if(seiteAktuell()==='ketten' && k43Tab()==='postfach') renderKetten(); }catch(e){} }; }
+/* Historie aller Freigaben: GET /api/app/freigaben (Lager 60 s) plus lokale Einträge, die noch auf ihre Nummer warten */
+function k43Freigaben(){ return f7Lager('freigaben43', 60000, ()=>FSLive.appLesen('freigaben?limit=200').then(d=>(d && d.freigaben)||[])); }
+function k43FreigabenLokal(){ const F=S.meta.freigaben||{}; return Object.keys(F).map(k=>F[k]).filter(x=>x && !x.nummer); }
+function k43FreigabeKarten(f){ const l=Array.isArray(f.karten) ? f.karten : []; return l.map(x=>({ id:String((x && x.id)||''), aktion:(x && x.aktion)||null, k:S.karten.find(y=>y.id===String((x && x.id)||''))||null })); }
+function k43QuelleName(q){ return q==='tagesplan' ? 'Tagesplan' : q==='chat' ? 'Chat' : q==='postfach' ? 'Postfach' : q==='paket' ? 'Paket' : (q||'Paket'); }
+function k43TagKopf(d){ const h=heuteApp(); return (d===h ? 'Heute' : d===anVorTage(h,1) ? 'Gestern' : AN_WT[anWochentag(d)])+' · '+anKurzDatum(d)+'.'; }
+function k43FreigegebenHtml(){
+  const rows=k43Freigaben(), lokal=k43FreigabenLokal(); let h='';
+  if(!rows) h+='<div class="leer">'+(f7LagerFehler('freigaben43') ? 'FocusSystem: '+esc(f7LagerFehler('freigaben43')) : 'lädt aus FocusSystem …')+'</div>';
+  else{ const alle=lokal.map(x=>({ id:null, lokal:true, titel:x.titel, quelle:x.quelle, karten:x.karten, uebernommen_am:x.ts, status:'wartet', ketten:x.ketten })).concat(rows.map(r=>({ id:r.id, titel:r.titel||r.grund||('Paket '+r.id), quelle:r.quelle||'paket', karten:r.karten, uebernommen_am:r.uebernommen_am||r.empfangen_am, status:r.status, art:r.art, ketten:null })));
+    if(!alle.length) h+='<div class="leer">Noch keine Freigabe.</div>';
+    let tag=''; const auf=S.ui.k43FreiAuf||null;
+    alle.forEach(f=>{ const d=String(f.uebernommen_am||'').slice(0,10); if(d!==tag){ tag=d; h+='<div class="f7-day">'+esc(k43TagKopf(d))+'</div>'; }
+      const ks=k43FreigabeKarten(f), n=Array.isArray(f.karten) ? f.karten.length : null, key=f.id!=null ? String(f.id) : 'lokal:'+f.uebernommen_am, offen=auf===key;
+      const rechts=(n==null ? '<small>Karten unbekannt</small>' : '<b>'+n+'</b><small>Karte'+(n===1?'':'n')+(f.quelle==='tagesplan' && f.ketten ? ' · '+f.ketten+' Ketten' : '')+'</small>');
+      h+='<div class="k43-frei'+(offen?' auf':'')+'" data-k43frei="'+esc(key)+'"><div class="k43-freiz"><span class="nr">'+(f.id!=null ? 'Nr. '+f.id : '…')+'</span><div class="t"><b>'+esc(f.titel||'')+'</b><small>'+(f.status==='wartet' ? 'wartet auf die Nummer' : (f.status==='abgelehnt' ? 'abgelehnt' : (f.quelle==='paket' || !f.quelle ? 'übernommen' : 'freigegeben'))+' '+f12Uhrzeit(f.uebernommen_am)+' · '+esc(k43QuelleName(f.quelle)))+'</small></div><div class="r">'+rechts+'</div></div>';
+      if(offen) h+='<div class="k43-freik"><div class="kl k43-kl">'+(ks.length ? ks.map(x=>x.k ? (x.k.status==='archiviert' ? '<div class="k43-archiviert">'+kartenZeileHtml(x.k, { erl:true })+'<span class="k43-tag">archiviert</span></div>' : kartenZeileHtml(x.k)) : '<div class="k43-fehlt-k">nicht mehr vorhanden · App-ID '+esc(x.id)+'</div>').join('') : '<div class="leer">keine Karten in dieser Freigabe</div>')+'</div></div>';
+      h+='</div>'; }); }
+  const archivAuf=!!S.ui.k43ArchivAuf;
+  h+='<div class="k43-grp" style="margin-top:10px"><div class="k43-grk" data-k43archiv="1" role="button" aria-expanded="'+(archivAuf?'true':'false')+'"><b>Vor 4.3 · ohne Nummer</b><span class="anz">Archiv · Angelegte Karten bis '+anKurzDatum(K43_FREIGABE_AB)+'.</span><span class="stm-tog'+(archivAuf?' auf':'')+'" aria-hidden="true">'+STM_CHEVRON+'</span></div>'+(archivAuf ? f16AngelegtHtml() : '')+'</div>';
+  return h;
+}
+/* Badge (f7NavBadge): Tab Ketten und Umschalter Postfach tragen dieselbe Zahl */
+{ const _alt=f7NavBadge; f7NavBadge=function(){ _alt(); try{ const p=(S.meta && S.meta.postfach)||{}, n=num(p.offen);
+    const b=document.querySelector('#nav button[data-seite="ketten"]'); if(b){ let s=b.querySelector('.badge'); if(n>0){ if(!s){ s=document.createElement('span'); s.className='badge'; b.appendChild(s); } s.textContent=n; s.classList.toggle('rot', num(p.dringend)>0); } else if(s) s.remove(); }
+    const u=document.querySelector('[data-kt="postfach"]'); if(u){ let s=u.querySelector('.badge'); if(n>0){ if(!s){ s=document.createElement('span'); s.className='badge'; u.appendChild(s); } s.textContent=n; } else if(s) s.remove(); } }catch(e){} }; }
+/* ── 6.3 · Freigabe im Chat: der Kasten unter der Agenten-Antwort ── */
+function f12KartenBloeckeHtmlAlt(kanal, r){ return _f12KartenBloeckeHtml42(kanal, r); }   // 4.3: abgelöst durch den Kasten 📬 Neu / 📬 Änderung
+const _f12KartenBloeckeHtml42=f12KartenBloeckeHtml;
+f12KartenBloeckeHtml=function(kanal, r){
+  const ids=f7Link(r.Postfach).map(x=>String(x.id)); if(!ids.length) return '';
+  return '<div class="f12-kb k43-kb" data-f12kbvon="'+esc(r.id)+'">'+ids.map(id=>{ const p=f12PfLesen(id); if(!p) return '<div class="f7-info">📬 lädt …</div>';
+    const kk=f7PfKarteLesen(p), erledigt=String(p.Status||'').toLowerCase()==='erledigt', ent=String(p.Entscheidung||''), wann=p.geaendert_am ? f12Uhrzeit(p.geaendert_am) : '', imPf=erledigt && !F12.entschieden[id] ? ' im Postfach' : '';
+    if(!kk) return '<div class="f7-info" data-f7pfoeffnen="1">📬 '+esc(p.Titel||'Postfach')+'</div>';
+    const best=kk.karteId ? S.karten.find(x=>x.id===kk.karteId) : null, aend=!!kk.karteId, fam=famFarbe({ domain:kk.domain }), abgelehnt=erledigt && /abgelehnt/i.test(ent), frei=erledigt && !abgelehnt;
+    let h='<div class="k43-kbkopf'+(erledigt?' grau':'')+'">📬 '+(aend ? 'Änderung' : 'Neu')+': <b>'+esc(kk.titel)+'</b></div>';
+    const fl=[]; const z=(l, v)=>{ if(v!=null && v!=='') fl.push('<span><small>'+l+'</small>'+v+'</span>'); };
+    if(aend && best){ const d=f12PfDiff(kk); d.teile.forEach(t=>fl.push('<span class="diff">'+t+'</span>')); if(d.neu.length) fl.push('<span><small>neu</small>'+d.neu.map(n=>'„'+esc(n)+'“').join(', ')+'</span>'); if(!d.teile.length && !d.neu.length) fl.push('<span><small>Felder</small>unverändert</span>'); }
+    else { z('Familie', kk.domain==='privat' ? 'Privat' : 'DFM'); z('Projekt / Abteilung', esc(kk.projekt||kk.abteilung||'')); z('Soll', kk.sollMin ? kk.sollMin+' Min' : null); z('Prio', kk.prio!=null ? String(kk.prio) : null); z('Deadline', kk.deadline ? esc(anKurzDatum(kk.deadline)) : null); z('Matrixfeld', kk.matrixFeld ? esc(MX_FELD_NAME[kk.matrixFeld]||kk.matrixFeld) : null); z('Unteraufgaben', kk.unteraufgaben.length ? String(kk.unteraufgaben.length) : null); }
+    h+='<div class="k43-kbfelder" data-f12pfdetail="'+esc(id)+'" style="--fam:'+fam+'">'+fl.join('')+'</div>';
+    if(!erledigt){ h+=k43PfFehltHtml(p, kk); h+='<div class="k43-kbbtn"><button type="button" class="ok" data-f12pffrei="'+esc(id)+'">✅ Freigeben</button><button type="button" data-k43pfanpassen="'+esc(id)+'">✏️ Anpassen</button><button type="button" class="no" data-f12pfablehnen="'+esc(id)+'">✕ Ablehnen</button></div>'; }
+    else if(abgelehnt) h+='<div class="f12-erg no">✕ abgelehnt '+wann+imPf+(p.Ablehnungsgrund ? ' · „'+esc(String(p.Ablehnungsgrund).slice(0,80))+'“' : '')+'</div>';
+    else { const F=(S.meta.freigaben||{})['pf:'+id], nr=F && F.nummer; h+='<div class="f12-erg ok">✅ '+(aend ? 'übernommen' : 'freigegeben')+' '+wann+' · '+(nr ? 'Paket '+nr : (F ? 'Paket … (Nummer folgt)' : 'ohne Nummer (vor 4.3)'))+imPf+'</div>'; }
+    return h; }).join('')+'</div>';
+};
+function k43PfAnpassen(id){ const r=(f7Postfach()||[]).find(x=>x.id===id) || f12PfRecord(id); if(!r) return;
+  openSheet('✏️ Anpassen', '<p class="d"><b>'+esc(r.Titel||'')+'</b></p><div class="field"><label>Entwurf, so wie er rausgehen soll</label><textarea id="f7pfText" rows="6">'+esc(r['Output/Entwurf']||'')+'</textarea></div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-f7pfanpassengo="'+esc(id)+'">Freigeben mit Anpassung</button>'); }
+/* jede Freigabe einer Postfach-Karte bekommt ihre Nummer (Quelle chat oder postfach); Korrektur-Karten melden ohne Karten */
+{ const _alt=f7PfEntscheiden; f7PfEntscheiden=function(id, ent, extra){ extra=extra||{};
+    const r=(f7Postfach()||[]).find(x=>x.id===id) || (f7PostfachOhneKarte()||[]).find(x=>x.id===id) || extra.datensatz || (typeof f12PfRecord==='function' ? f12PfRecord(id) : null);
+    const vorher=(S.meta.postfachKarten||{})[id] ? true : false, kkVor=r ? f7PfKarteLesen(r) : null, aend=!!(kkVor && kkVor.karteId);
+    _alt(id, ent, extra);
+    try{ if(!r || !(ent==='freigegeben' || ent==='angepasst')) return; const m=(S.meta.postfachKarten||{})[id]; if(!m && !extra.keineKarte && kkVor && k43PfFehlt(kkVor)) return;   // nicht freigegeben (Projekt oder Abteilung fehlt)
+      if((S.meta.freigaben||{})['pf:'+id]) return;   // schon gemeldet
+      const u=f12Ui(), kanal=extra.vonChat ? f12KanalAktuell() : null, karten=m && m.karteId ? [{ id:m.karteId, aktion:(aend || vorher) ? 'geändert' : 'neu' }] : [];
+      k43FreigabeMelden({ quelle:extra.vonChat ? 'chat' : 'postfach', titel:String(r.Titel||'Postfach-Karte'), grund:'Postfach '+id+' · '+ent, karten, gespraech:extra.vonChat ? (u.gespraech||null) : null, kanal:kanal ? kanal.id : null, pfId:id }); }catch(e){ console.warn('Freigabe melden', e); } }; }
+/* Klicks des Ketten-Tabs */
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
+  if((z=d('data-kt'))){ e.stopPropagation(); haptik(6); k43TabSetzen(z.dataset.kt); return; }
+  if((z=d('data-k43frei'))){ if(t.closest('.k43-freik')) return; e.stopPropagation(); haptik(6); const key=z.dataset.k43frei; S.ui.k43FreiAuf=(S.ui.k43FreiAuf===key) ? null : key; saveUi(); renderPostfach(); return; }
+  if(d('data-k43archiv')){ e.stopPropagation(); haptik(6); S.ui.k43ArchivAuf=!S.ui.k43ArchivAuf; saveUi(); if(S.ui.k43ArchivAuf) f16Angelegt(); renderPostfach(); return; }
+  if((z=d('data-k43pfanpassen'))){ e.stopPropagation(); haptik(6); k43PfAnpassen(z.dataset.k43pfanpassen); return; }
+  if(d('data-k43chatzurueck')){ e.stopPropagation(); haptik(6); f12Zurueck(); renderKetten(); return; }
+  if(t.closest('.k43-chatseite.abt')) setTimeout(()=>{ try{ if(seiteAktuell()==='ketten' && !e1Art()) renderKetten(); }catch(x){} }, 60);
+}, true);
+/* Postfach-Lager und Freigaben neu → Seite nachziehen */
+{ const _alt=f7NeuJetzt; f7NeuJetzt=function(){ _alt(); try{ if(seiteAktuell()==='ketten' && !e1Art()) renderKetten(); }catch(e){} }; }
 
 function init(){
   ladeAlles();
