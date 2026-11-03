@@ -3048,6 +3048,43 @@ body[data-e1="spezial"] #e1-spezial{display:block}
 .k43-leg{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--mut);margin-top:4px}
 .k43-leg i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
 #k43Nacht{width:100%;min-height:64px;background:#0d1420;border:1px solid #243349;color:var(--fg);border-radius:10px;padding:8px 10px;font-size:16px;resize:vertical}
+/* ══ Karten-Standard 4.3 · §5 Kettenansicht (Fokus und Ketten-Tab) ══ */
+.k43-ketten{display:flex;flex-direction:column;gap:8px}
+.k43-grp{display:flex;flex-direction:column;gap:6px}
+.k43-grk{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.k43-grk b{font-size:13px;font-weight:700;flex:1}
+.k43-grk .anz{font-size:11px;color:var(--mut);background:#1a1d22;border-radius:999px;padding:2px 8px}
+.k43-abt{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 0 2px}
+.k43-kette{background:#141e2e;border:1px solid #243349;border-radius:14px;overflow:hidden}
+.k43-kette.aktiv{border-color:#3b82f6}
+.k43-kette.auf{border-color:#3b82f6;background:#121a28}
+.k43-kzeile{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;min-height:58px;cursor:pointer}
+.k43-kname{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.k43-kname b{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k43-kname b em{font-style:normal;font-size:10px;color:#93c5fd;margin-left:4px}
+.k43-kname small{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k43-felder{display:flex;gap:6px;flex:none}
+.k43-felder.gross{justify-content:center;gap:14px;padding:4px 0 8px}
+.k43-feld{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.k43-feld svg{position:absolute;inset:0;width:100%;height:100%}
+.k43-feld b{font-size:10px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;z-index:1}
+.k43-feld small{font-size:9px;color:var(--mut);z-index:1;margin-top:2px}
+.k43-felder.gross .k43-feld b{font-size:20px}
+.k43-felder.gross .k43-feld small{font-size:11px}
+.k43-feld.zahl{border-radius:12px;background:#0d1420;border:1px solid #243349}
+.k43-feld.zahl small{display:none}
+.k43-felder.gross .k43-feld.zahl small{display:block}
+.k43-gesamt{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--mut);padding:0 2px 6px}
+.k43-gesamt b{color:var(--fg)}
+.k43-kinhalt{padding:0 10px 10px;display:flex;flex-direction:column;gap:6px}
+.k43-kinhalt .k43-felder{justify-content:flex-end}
+.k43-kinhalt .k43-lab{margin:6px 0 0}
+.k43-kl{margin-top:0}
+.k43-blo .kl-z{border-style:dashed;opacity:.75}
+.k43-kbtn{display:flex;gap:6px;margin-top:4px}
+.k43-kbtn button{flex:1;min-height:44px;border-radius:10px;border:1px solid #243349;background:#0d1420;color:var(--fg);font-size:13px}
+.k43-neu{min-height:48px;border-radius:14px;border:1px dashed #3b82f6;background:none;color:#93c5fd;font-size:14px;font-weight:700}
+.k43-next .k43-ketten{margin-top:2px}
 </style>
 </head>
 <body>
@@ -20096,8 +20133,9 @@ function syncImport(text, opt){
   // §9.2 (v3.5.0): tagesketten = vollstaendige Liste, ersetzt den Bestand (Karten per id, airtableId oder Titel)
   if(paket && Array.isArray(paket.tagesketten)){
     const aufl=ref=>{ if(ref==null) return null; const r=String(ref); let k=S.karten.find(x=>x.id===r) || S.karten.find(x=>x.airtableId===r) || S.karten.find(x=>String(x.titel||'').trim().toLowerCase()===r.trim().toLowerCase()); return k ? k.id : null; };
-    S.tagesketten=paket.tagesketten.filter(c=>c && (c.id || c.name)).map((c,i)=>({ id:String(c.id||('tk'+(i+1))), name:String(c.name||('Kette '+(i+1))), karten:(Array.isArray(c.karten)?c.karten:[]).map(aufl).filter(Boolean) }));
-    DB.set('tagesketten', S.tagesketten);
+    // 4.3: abgelöst durch k43KettenAusPaket (tk-* → Block-Ketten von heute, tk-abschluss entfällt, andere → Eigene; Morgen- und eigene Ketten bleiben)
+    // S.tagesketten=paket.tagesketten.filter(c=>c && (c.id || c.name)).map((c,i)=>({ id:String(c.id||('tk'+(i+1))), name:String(c.name||('Kette '+(i+1))), karten:(Array.isArray(c.karten)?c.karten:[]).map(aufl).filter(Boolean) }));
+    const kettenErg=k43KettenAusPaket(paket.tagesketten, aufl); if(kettenErg.entfallen) uebersprungen.push({ was:'Kette tk-abschluss ('+kettenErg.entfallen+' Karten)', grund:'4.3: entfällt' });
   }
   if(paket && Array.isArray(paket.gruppen)){
     if(!Array.isArray(S.routinenGruppen)) S.routinenGruppen=[];
@@ -24928,7 +24966,7 @@ el('fokusView').addEventListener('click', e=>{
   if(zaehlerKlick(t)) return;   // §1.2 (v3.2.0): Zaehler-Zeile
   const tg=t.closest('[data-fktoggle]'); if(tg){ const kid=tg.dataset.fktoggle;
     if(S.fokus && S.fokus.karteId===kid) fokusToggle(); else fokusStarten(kid); return; }
-  const ck=t.closest('[data-fkcheck]'); if(ck){ karteAbhakenAuto(ck.dataset.fkcheck, false); return; }
+  const ck=t.closest('[data-fkcheck]'); if(ck){ K43.hakenImFokus=ck.dataset.fkcheck; karteAbhakenAuto(ck.dataset.fkcheck, false); return; }   // 4.3 K1: nach dem Abhak-Dialog startet die nächste Karte der Kette (k43NachHaken)
   const tpf=t.closest('[data-tickplus]'); if(tpf){ karteTick(tpf.dataset.tickplus, false); return; }   // A3
   const sch=t.closest('[data-fkschieben]'); if(sch){ oeffneSchieben(sch.dataset.fkschieben); return; }  // A4
   const ik=t.closest('[data-fkinkette]'); if(ik){ haptik(6); e1Oeffnen('inkette', { kid:ik.dataset.fkinkette||null }); return; }   // C6 (v3.8.0): Ebene 1 — auch ohne Karte (B10)
@@ -27398,7 +27436,7 @@ function k43PlanFreigeben(){ const P=k43TP(), R=k43PlanAusChat(); if(!P || !R.pl
   const heute=heuteApp(), alle=[], kettenIds=[]; if(!Array.isArray(S.tagesketten)) S.tagesketten=[];
   S.tagesketten=S.tagesketten.filter(c=>!(c.quelle==='tagesplan' && c.datum===heute));   // ein neuer Plan ersetzt die Tagesketten dieses Plans (nie die Morgen- oder eigenen Ketten)
   (plan.bloecke||[]).forEach((b,i)=>{ const ids=(b.karten||[]).map(c=>c.id).filter(id=>S.karten.some(k=>k.id===id)), planInfo={}; (b.karten||[]).forEach(c=>{ planInfo[c.id]={ start:c.start||null, min:num(c.min), onramp:c.onramp===true }; });
-    const id='tk43-'+String(b.block||('block'+(i+1))).replace(/[^a-z0-9]/gi,'').toLowerCase()+'-'+heute; S.tagesketten.push({ id, name:(b.name||b.block||'Block')+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:String(b.block||''), von:b.von||null, karten:ids, plan:planInfo, quelle:'tagesplan' }); kettenIds.push(id); ids.forEach(x=>{ if(alle.indexOf(x)<0) alle.push(x); }); });
+    const bn=k43BlockNorm(b.block||b.name)||('block'+(i+1)), id=k43KetteId(bn, heute); S.tagesketten.push({ id, name:(b.name||k43BlockName(bn))+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:bn, von:b.von||null, karten:ids, plan:planInfo, quelle:'tagesplan' }); kettenIds.push(id); ids.forEach(x=>{ if(alle.indexOf(x)<0) alle.push(x); }); });
   S.tagesketten.push({ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:alle.slice(), quelle:'tagesplan' }); kettenIds.push('tk43-tag-'+heute);
   DB.set('tagesketten', S.tagesketten);
   alle.forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(k && k.status==='offen'){ k.faelligkeit=heute; beruehre(k); if(!ketteHat(k.id)) ketteToggle(k.id); } }); saveKarten();
@@ -27528,6 +27566,182 @@ function k43ZustandMessen(z){ if(!S.tag) return; if(!Array.isArray(S.tag.zustand
 setInterval(()=>{ try{ if(FSLive.nichtFuehrend()) return; }catch(e){} try{ k43WeckerPruefen(); }catch(e){} try{ k43BlockVorbeiPruefen(); }catch(e){} }, 20000);
 /* Migration und Startwerte beim Laden */
 { const _alt=migrationRolle421; migrationRolle421=function(){ const r=_alt(); try{ migrationKarten43(); k43TagesplanungSatzSetzen(); }catch(e){ console.warn('karten43', e); } return r; }; }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   Karten-Standard 4.3 · §5 · KETTEN (Teil 2 Ketten-Struktur, K1 K8 K9 K14, T4 T5, Zielbilder 08–09)
+   EINE Kettenansicht (k43KettenansichtHtml, ort 'fokus' | 'kettentab') für den Fokus und den Ketten-Tab; jede Karte als kartenZeileHtml.
+   Arten: A Tag „Heute gesamt“ · B Blöcke (Aufstehen, Aufwachen & Tagesplanung, Fokus 1, Senke, Fokus 2, Overload, Abendroutine) ·
+   C Familie (Routinen DFM, Routinen privat, Privat heute; berechnet) · D Themen (je Projekt oder Abteilung, berechnet) ·
+   E Sammeln (heute bearbeitet, 📬 Agenten-Karten, wartet/eingefroren) · F Eigene (feste Liste oder gespeicherter Filter).
+   S.tagesketten: { id, name, art:'tag'|'block'|'eigene', datum, block?, von?, plan?, karten:[App-ID], quelle:'tagesplan'|'morgen'|'pascal', filter? }
+   Bestehende Einträge ohne art → art 'eigene', quelle 'pascal'. Drei Felder je Kette (5.6): Kreis Zeit · Kreis Punkte · Zahlenfeld.
+   ══════════════════════════════════════════════════════════════════════ */
+const K43_BLOECKE=[['aufstehen','Aufstehen'],['aufwachen','Aufwachen & Tagesplanung'],['fokus1','Fokus 1'],['senke','Senke'],['fokus2','Fokus 2'],['overload','Overload'],['abendroutine','Abendroutine']];
+/* Abbildung der bisherigen Ketten-IDs aus Tagesplan-Paketen (Teil 2 · Ketten-Struktur): Block-Kette, Onramp-Gruppen Bad · Aufräumrunde · Kommunikation; tk-abschluss entfällt */
+const K43_TK_ABBILDUNG={ 'tk-morgen':{ block:'aufwachen' }, 'tk-bad':{ block:'aufstehen', onramp:'Bad' }, 'tk-fokus1':{ block:'fokus1' }, 'tk-senke':{ block:'senke' }, 'tk-erholung':{ block:'senke' },
+  'tk-aufraeumrunde':{ block:'senke', onramp:'Aufräumrunde' }, 'tk-kommunikation':{ block:'fokus2', onramp:'Kommunikation' }, 'tk-fokus2':{ block:'fokus2' }, 'tk-abendroutine':{ block:'abendroutine' }, 'tk-abschluss':null };
+const K43_GRUPPEN=[['tag','Tag'],['block','Blöcke'],['thema','Themen'],['familie','Familie'],['sammeln','Sammeln'],['eigene','Eigene']];
+function k43BlockName(b){ const e=K43_BLOECKE.find(x=>x[0]===b); return e ? e[1] : (b||'Block'); }
+function k43BlockNorm(s){ const t=String(s||'').toLowerCase().replace(/[^a-z0-9äöü]/g,''); if(!t) return null;
+  if(/aufsteh/.test(t)) return 'aufstehen'; if(/aufwach|morgen|tagesplan/.test(t)) return 'aufwachen'; if(/fokus1|vormittag/.test(t)) return 'fokus1'; if(/fokus2|nachmittag/.test(t)) return 'fokus2';
+  if(/senke|erhol|mittag/.test(t)) return 'senke'; if(/over/.test(t)) return 'overload'; if(/abend/.test(t)) return 'abendroutine'; return t; }
+function k43KetteId(block, datum){ return 'tk43-'+block+'-'+datum; }
+/* Normierung der gespeicherten Ketten (idempotent, bei jedem Laden und nach jedem Import): art, quelle, datum */
+function k43KettenNormieren(){ if(!Array.isArray(S.tagesketten)) S.tagesketten=[]; let dirty=false;
+  S.tagesketten.forEach(c=>{ if(!c || typeof c!=='object') return; if(!Array.isArray(c.karten)) { c.karten=[]; dirty=true; }
+    if(!c.art){ c.art='eigene'; c.quelle=c.quelle||'pascal'; dirty=true; } if(!c.quelle){ c.quelle=c.art==='eigene' ? 'pascal' : 'tagesplan'; dirty=true; } });
+  if(dirty) DB.set('tagesketten', S.tagesketten); return dirty; }
+/* Ketten aus einem Paket (syncImport): tk-* werden auf die Block-Ketten von heute abgebildet (Onramp-Gruppen als Plan-Einträge), tk-abschluss entfällt,
+   andere Ketten des Pakets werden Eigene (quelle tagesplan). Morgenketten (quelle morgen) und Pascals eigene (quelle pascal) bleiben stehen. */
+function k43KettenAusPaket(liste, aufl){ const heute=heuteApp(), alt=tagesketten(), bleibt=alt.filter(c=>c.quelle==='morgen' || c.quelle==='pascal' || (c.art==='eigene' && c.quelle!=='tagesplan')), neu=[], abb=[];
+  const blockKette=(b)=>{ let c=neu.find(x=>x.art==='block' && x.block===b); if(!c){ c={ id:k43KetteId(b, heute), name:k43BlockName(b)+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:b, karten:[], plan:{}, quelle:'tagesplan' }; neu.push(c); } return c; };
+  let entfallen=0;
+  (liste||[]).forEach((c,i)=>{ if(!c || !(c.id || c.name)) return; const id=String(c.id||('tk'+(i+1))), karten=(Array.isArray(c.karten)?c.karten:[]).map(aufl).filter(Boolean), m=K43_TK_ABBILDUNG[id];
+    if(id in K43_TK_ABBILDUNG){ if(!m){ entfallen+=karten.length; abb.push({ id, nach:null, n:karten.length }); return; } const z=blockKette(m.block); karten.forEach(kid=>{ if(z.karten.indexOf(kid)<0) z.karten.push(kid); if(m.onramp) z.plan[kid]=Object.assign({}, z.plan[kid], { onramp:true, gruppe:m.onramp }); }); abb.push({ id, nach:z.id, n:karten.length, onramp:m.onramp||null }); return; }
+    const b=k43BlockNorm(c.block||null); if(b && K43_BLOECKE.some(x=>x[0]===b)){ const z=blockKette(b); karten.forEach(kid=>{ if(z.karten.indexOf(kid)<0) z.karten.push(kid); }); if(c.von) z.von=String(c.von); abb.push({ id, nach:z.id, n:karten.length }); return; }
+    neu.push({ id, name:String(c.name||('Kette '+(i+1))), art:'eigene', datum:heute, karten, quelle:'tagesplan' }); });
+  S.tagesketten=bleibt.concat(neu); DB.set('tagesketten', S.tagesketten); return { ketten:neu.length, entfallen, abbildung:abb }; }
+/* ── Kette finden (gespeichert oder berechnet, 'k43:…'-IDs) ── */
+const K43K={ cache:null, ts:0 };
+function k43KettenBauen(frisch){ if(!frisch && K43K.cache && Date.now()-K43K.ts<800) return K43K.cache; const K=k43KettenBerechnen(); K43K.cache=K; K43K.ts=Date.now(); return K; }
+function k43KetteFinden(id){ if(!id) return null; const K=k43KettenBauen(); for(const g of Object.keys(K)){ const c=K[g].find(x=>x.id===id); if(c) return c; } return null; }
+function k43Sichtbar(k){ return !!(k && k.status!=='archiviert' && !karteVerborgen(k)); }
+function k43HeuteIds(){ const heute=heuteApp(), ids=[]; const add=id=>{ if(id && ids.indexOf(id)<0) ids.push(id); };
+  tagesketten().forEach(c=>{ if(c.art==='block' && c.datum===heute) c.karten.forEach(add); }); tagesKette().forEach(add);
+  S.karten.forEach(k=>{ if(k.status==='offen' && k.faelligkeit && k.faelligkeit<=heute && !karteRuht(k)) add(k.id); });
+  const t=tagesketten().find(c=>c.art==='tag' && c.datum===heute); if(t) t.karten.forEach(add); klErledigtHeute().forEach(k=>add(k.id)); return ids; }
+function k43FilterKarten(f){ f=f||{}; const q=String(f.suchtext||'').trim().toLowerCase(), fam=f.familie||null, abt=String(f.abteilung||'').trim().toLowerCase();
+  return S.karten.filter(k=>{ if(k.status!=='offen' || !k43Sichtbar(k) || k.rolle) return false; if(fam && (k.domain==='privat' ? 'privat' : 'dfm')!==fam) return false;
+    if(abt && String(k43Thema(k).abteilung||'').toLowerCase()!==abt && String(k.abteilung||'').toLowerCase()!==abt) return false;
+    if(q && String(k.titel||'').toLowerCase().indexOf(q)<0 && String(k.projekt||'').toLowerCase().indexOf(q)<0) return false; return true; }); }
+function k43KettenBerechnen(){
+  k43KettenNormieren(); try{ k43PrioVererben(); }catch(e){}
+  const heute=heuteApp(), by={}; S.karten.forEach(k=>by[k.id]=k); const st=tagesketten(), ids=x=>(x||[]).map(id=>by[id]).filter(k43Sichtbar);
+  const mk=o=>{ const karten=(o.karten||[]).filter(k43Sichtbar).filter((k,i,a)=>a.indexOf(k)===i); return k43KetteFertig(Object.assign({ datum:heute, untertitel:'', plan:{} }, o, { karten })); };
+  const block=[]; K43_BLOECKE.forEach(([b])=>{ const c=st.find(x=>x.art==='block' && x.datum===heute && x.block===b); if(c) block.push(mk({ id:c.id, name:c.name||k43BlockName(b), art:'block', block:b, von:c.von||null, plan:c.plan||{}, quelle:c.quelle, gespeichert:c, karten:ids(c.karten) })); });
+  st.filter(x=>x.art==='block' && x.datum===heute && !K43_BLOECKE.some(b=>b[0]===x.block)).forEach(c=>block.push(mk({ id:c.id, name:c.name||'Block', art:'block', block:c.block, von:c.von||null, plan:c.plan||{}, quelle:c.quelle, gespeichert:c, karten:ids(c.karten) })));
+  const tagC=st.find(x=>x.art==='tag' && x.datum===heute)||null, heuteK=ids(k43HeuteIds()).filter(k=>!istSonderRolle(k) && !k.rolle);
+  const tag=[mk({ id:tagC ? tagC.id : 'k43:tag', name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', gespeichert:tagC, quelle:tagC ? tagC.quelle : 'berechnet', karten:heuteK })];
+  const rout=S.karten.filter(k=>k.status==='offen' && k43Sichtbar(k) && !k.rolle && !istInfoKarte(k) && (k.rhythmus || (k.std42===true && k.art==='routine') || k.ticksAktiv));   // K14: auch nicht tägliche Routinen, immer abschließbar
+  const familie=[ mk({ id:'k43:fam:routinenDfm', name:'Routinen DFM', art:'familie', fam:'dfm', karten:rout.filter(k=>k.domain!=='privat') }),
+    mk({ id:'k43:fam:routinenPrivat', name:'Routinen privat', art:'familie', fam:'privat', karten:rout.filter(k=>k.domain==='privat') }),
+    mk({ id:'k43:fam:privatHeute', name:'Privat heute', art:'familie', fam:'privat', karten:heuteK.filter(k=>k.domain==='privat' && rout.indexOf(k)<0) }) ];
+  const je={}; heuteK.forEach(k=>{ const t=k43Thema(k), key=t.abteilung+'|'+t.thema; (je[key]=je[key]||{ key, t, karten:[] }).karten.push(k); });
+  const thema=Object.values(je).sort((a,b)=>a.t.abteilung.localeCompare(b.t.abteilung) || a.t.thema.localeCompare(b.t.thema)).map(o=>mk({ id:'k43:thema:'+o.key, name:o.t.thema, art:'thema', abteilung:o.t.abteilung, themaArt:o.t.art, karten:o.karten }));
+  const tr=getrackteKarte(), bearbeitet=verlaufKarten().slice(); if(tr && !bearbeitet.some(k=>k.id===tr.id)) bearbeitet.unshift(tr);
+  const sammeln=[ mk({ id:'k43:sammeln:bearbeitet', name:'Heute bearbeitet', art:'sammeln', karten:bearbeitet.filter(k=>!istSonderRolle(k)) }),
+    mk({ id:'agentenkarten', name:'📬 Agenten-Karten', art:'sammeln', pf:true, karten:[] }),
+    mk({ id:'k43:sammeln:wartet', name:'Wartet / eingefroren', art:'sammeln', karten:S.karten.filter(k=>k.status==='offen' && k43Sichtbar(k) && karteRuht(k) && !istInfoKarte(k)) }) ];
+  const eigene=st.filter(x=>x.art==='eigene').map(c=>mk({ id:c.id, name:c.name||'Kette', art:'eigene', gespeichert:c, quelle:c.quelle, filter:c.filter||null, karten:c.filter ? k43FilterKarten(c.filter) : ids(c.karten) }));
+  return { tag, block, thema, familie, sammeln, eigene };
+}
+/* Reihenfolge (5.1): offene nach Startzeit im Plan, sonst Prio; erledigte unten, zuletzt zuerst */
+function k43ErledigtTs(k){ let best=k.erledigtTs||k.zuletztRoutine||''; (S.intraday||[]).forEach(e=>{ if(e && e.kartenId===k.id && (e.typ==='abhaken'||e.typ==='tick') && String(e.ts)>String(best)) best=e.ts; }); return String(best||''); }
+function k43KetteFertig(c){ const plan=c.plan||{}, offen=[], erl=[];
+  c.karten.forEach(k=>{ (k.status==='offen' && kartenStatusHeute(k)!=='erledigt' ? offen : erl).push(k); });
+  offen.sort((a,b)=>{ const pa=plan[a.id] && plan[a.id].start, pb=plan[b.id] && plan[b.id].start; if(pa && pb && pa!==pb) return pa<pb ? -1 : 1; if(pa && !pb) return -1; if(pb && !pa) return 1; return num(b.prio,3)-num(a.prio,3); });
+  erl.sort((a,b)=>k43ErledigtTs(b).localeCompare(k43ErledigtTs(a)));
+  c.offen=offen; c.erledigt=erl; c.karten=offen.concat(erl); c.felder=k43KetteFelder(c);
+  if(!c.untertitel){ const t=[]; if(c.art==='thema') t.push(c.abteilung); if(c.art==='block' && c.von) t.push('ab '+c.von); t.push(offen.length+' offen'+(erl.length ? ' · '+erl.length+' erledigt' : '')); if(c.art==='eigene' && c.filter) t.push('Filter'); c.untertitel=t.filter(Boolean).join(' · '); }
+  return c; }
+function k43HeuteKarte(k, c){ if(c.art!=='eigene' && c.art!=='sammeln' && c.art!=='familie') return true; const h=heuteApp(); return !!((k.faelligkeit && k.faelligkeit<=h) || kartenStatusHeute(k)==='erledigt' || heuteInvestiertMin(k)>0 || k.rhythmus || (k.std42===true && k.art==='routine')); }
+/* 5.6 · die drei Felder: Zeit (offene Minuten heute = Σ max(0, Soll − heute gebucht); Ring = gebucht ÷ (gebucht + offen), Grün) ·
+   Punkte (% = heute gebuchte Punkte ÷ (gebucht + Prognose der heutigen offenen Karten); DFM Blau, Privat Lila, gemischt Blau) · Zahl („+N geplant“) */
+function k43KetteFelder(c){ let gebMin=0, offenMin=0, gebP=0, progP=0, geplant=0, gesMin=0, gesP=0, dfm=0, priv=0;
+  c.karten.forEach(k=>{ const heuteK=k43HeuteKarte(k, c), offen=k.status==='offen' && kartenStatusHeute(k)!=='erledigt'; let gm=0, gp=0; try{ gm=heuteInvestiertMin(k)+tickMinHeuteAlt(k); gp=Math.max(0, kartePunkteHeute(k)); }catch(e){}
+    if(heuteK){ gebMin+=gm; gebP+=gp; }
+    if(offen){ const rest=num(k.sollMin)>0 ? Math.max(0, num(k.sollMin)-gm) : 0; let pr=0; try{ pr=Math.max(0, kartePunktePrognose(k)-gp); }catch(e){} gesMin+=rest; gesP+=pr; if(heuteK){ offenMin+=rest; progP+=pr; geplant++; if(k.domain==='privat') priv++; else dfm++; } } });
+  return { zeitMin:Math.round(offenMin), zeitAnteil:(gebMin+offenMin)>0 ? gebMin/(gebMin+offenMin) : 0, gebuchtMin:Math.round(gebMin), punkteProzent:(gebP+progP)>0 ? Math.max(0, Math.min(100, Math.round(gebP/(gebP+progP)*100))) : 0,
+    punkteFarbe:(priv>0 && dfm===0) ? FARBE.LILA : FARBE.BLAU, geplant, offenGesamtMin:Math.round(gesMin), offenGesamtP:Math.round(gesP) }; }
+function k43RingHtml(px, anteil, farbe, text, sub){ const sw=px>60 ? 8 : 4, r=(px-sw)/2-1, u=2*Math.PI*r, a=Math.max(0, Math.min(1, num(anteil)));
+  return '<div class="k43-feld" style="width:'+px+'px;height:'+px+'px"><svg viewBox="0 0 '+px+' '+px+'" aria-hidden="true"><circle cx="'+(px/2)+'" cy="'+(px/2)+'" r="'+r+'" fill="none" stroke="#243349" stroke-width="'+sw+'"/><circle cx="'+(px/2)+'" cy="'+(px/2)+'" r="'+r+'" fill="none" stroke="'+farbe+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-dasharray="'+(u*a).toFixed(1)+' '+u.toFixed(1)+'" transform="rotate(-90 '+(px/2)+' '+(px/2)+')"/></svg><b>'+text+'</b>'+(sub && px>60 ? '<small>'+sub+'</small>' : '')+'</div>'; }
+function k43FelderHtml(c, px){ const f=c.felder||k43KetteFelder(c), leer=!c.karten.length;
+  return '<div class="k43-felder'+(px>60?' gross':'')+'">'+k43RingHtml(px, leer?0:f.zeitAnteil, FARBE.GRUEN, leer ? "0'" : (f.zeitMin>=60 ? hMin(f.zeitMin) : f.zeitMin+"'"), 'offen heute')+k43RingHtml(px, leer?0:f.punkteProzent/100, f.punkteFarbe, (leer?0:f.punkteProzent)+'%', 'Punkte')+
+    '<div class="k43-feld zahl" style="width:'+px+'px;height:'+px+'px"><b>+'+(leer?0:f.geplant)+'</b><small>geplant</small></div></div>'+
+    (px>60 ? '<div class="k43-gesamt"><span><b class="mono">'+hMin(f.offenGesamtMin)+'</b> Std. offen gesamt</span><span><b class="mono">'+fmtP(f.offenGesamtP)+' P</b> offen gesamt</span></div>' : ''); }
+/* T4 · blockierte Karte (Vorgänger offen): gestrichelt, „⏳ frei nach <Vorgänger>“ */
+function k43ZeileHtml(k, c, opt){ opt=opt||{}; const bl=k43Blockiert(k), on=c && c.plan && c.plan[k.id] && c.plan[k.id].onramp, z=[]; if(on) z.push('Onramp'+(c.plan[k.id].gruppe ? ' '+esc(c.plan[k.id].gruppe) : '')); if(bl) z.push('⏳ frei nach '+esc(String(bl.titel||'').slice(0,28))); if(k43PrioGeerbt(k)) z.push('⬆ Prio geerbt');
+  if(c && (c.art==='familie') && k.rhythmus && typeof istNichtFaellig==='function' && istNichtFaellig(k)) z.push('nicht fällig · abschließbar');   // K14
+  const o=Object.assign({}, opt); if(z.length) o.zusatz=(o.zusatz ? o.zusatz+' · ' : '')+z.join(' · ');
+  return (bl ? '<div class="k43-blo">' : '')+kartenZeileHtml(k, o)+(bl ? '</div>' : ''); }
+/* ── Klapp- und Aufklappzustand (S.ui, kein Export) ── */
+function k43Klapp(ort){ if(!S.ui.k43Klapp || typeof S.ui.k43Klapp!=='object') S.ui.k43Klapp={}; if(!S.ui.k43Klapp[ort]) S.ui.k43Klapp[ort]={}; return S.ui.k43Klapp[ort]; }
+function k43GruppeOffen(ort, g){ const z=k43Klapp(ort); if(z[g]!=null) return !!z[g]; return ort==='kettentab' ? (g!=='sammeln') : (g==='tag' || g==='block'); }
+function k43Auf(ort){ if(!S.ui.k43Auf || typeof S.ui.k43Auf!=='object') S.ui.k43Auf={}; return S.ui.k43Auf[ort]||null; }
+function k43AufSetzen(ort, id){ k43Auf(ort); S.ui.k43Auf[ort]=(S.ui.k43Auf[ort]===id) ? null : id; saveUi(); }
+/* ── 5.4/5.5 · DIE Kettenansicht ── */
+function k43KettenansichtHtml(ort){ ort=ort||'fokus'; const K=k43KettenBauen(true), tab=ort==='kettentab', auf=k43Auf(ort), wahl=tageskettenWahl();
+  return '<div class="k43-ketten '+ort+'">'+K43_GRUPPEN.map(([g, name])=>{ let l=K[g]||[]; if(!tab) l=l.filter(c=>c.karten.length || c.art==='tag' || c.art==='block'); if(!l.length && !(tab && g==='eigene')) return '';
+    const offen=k43GruppeOffen(ort, g), n=l.reduce((a,c)=>a+c.offen.length,0);
+    let inner=''; if(offen){ if(g==='thema'){ let abt=null; l.forEach(c=>{ if(c.abteilung!==abt){ abt=c.abteilung; inner+='<div class="k43-abt">'+esc(abt||'')+'</div>'; } inner+=k43KetteHtml(c, ort, auf===c.id, wahl===c.id); }); }
+      else inner=l.map(c=>k43KetteHtml(c, ort, auf===c.id, wahl===c.id)).join('');
+      if(tab && g==='eigene') inner+='<button type="button" class="k43-neu" data-k43ketteneu="1">＋ Kette neu</button>'; }
+    return '<div class="k43-grp"><div class="k43-grk" data-k43gruppe="'+ort+'|'+g+'" role="button" aria-expanded="'+(offen?'true':'false')+'"><b>'+name+'</b><span class="anz">'+n+'</span><span class="stm-tog'+(offen?' auf':'')+'" aria-hidden="true">'+STM_CHEVRON+'</span></div>'+inner+'</div>'; }).join('')+'</div>'; }
+function k43KetteHtml(c, ort, auf, aktiv){ const tab=ort==='kettentab', heute=heuteApp();
+  let h='<div class="k43-kette'+(auf?' auf':'')+(aktiv?' aktiv':'')+' art-'+c.art+'" data-k43kette="'+esc(c.id)+'"><div class="k43-kzeile" data-k43auf="'+ort+'|'+esc(c.id)+'"><div class="k43-kname"><b>'+esc(c.name)+(aktiv ? ' <em>aktuell</em>' : '')+'</b><small>'+esc(c.untertitel)+'</small></div>'+(auf ? '' : k43FelderHtml(c, 42))+'</div>';
+  if(!auf) return h+'</div>';
+  if(c.pf){ h+='<div class="k43-kinhalt">'+(typeof f15KetteZeilenHtml==='function' ? f15KetteZeilenHtml() : '')+'</div></div>'; return h; }
+  if(tab){ const spaeter=c.offen.filter(k=>k.faelligkeit && k.faelligkeit>heute && c.art==='eigene'), heuteL=c.offen.filter(k=>spaeter.indexOf(k)<0);
+    h+='<div class="k43-kinhalt">'+k43FelderHtml(c, 104)+'<p class="k43-lab">Heute eingeplant · '+heuteL.length+'</p><div class="kl k43-kl">'+(heuteL.length ? heuteL.map(k=>k43ZeileHtml(k, c)).join('') : '<div class="leer">nichts eingeplant</div>')+'</div>'+
+      '<p class="k43-lab">Chat der Kette</p>'+k43KetteChatHtml(c)+
+      (spaeter.length ? '<p class="k43-lab">Später eingeplant · '+spaeter.length+'</p><div class="kl k43-kl">'+spaeter.map(k=>k43ZeileHtml(k, c)).join('')+'</div>' : '')+
+      '<p class="k43-lab">Erledigt · zuletzt zuerst · '+c.erledigt.length+'</p><div class="kl k43-kl">'+(c.erledigt.length ? c.erledigt.map(k=>k43ZeileHtml(k, c, { erl:true })).join('') : '<div class="leer">noch nichts erledigt</div>')+'</div>'+
+      (c.art==='eigene' ? '<div class="k43-kbtn"><button type="button" data-k43inkette="'+esc(c.id)+'">In Kette …</button><button type="button" data-k43ketteweg="'+esc(c.id)+'">Kette entfernen</button></div>' : '')+'</div></div>'; return h; }
+  h+='<div class="k43-kinhalt">'+k43FelderHtml(c, 42)+'<div class="kl k43-kl">'+(c.offen.length ? c.offen.map(k=>k43ZeileHtml(k, c)).join('') : '<div class="leer">keine offene Karte</div>')+'</div>'+
+    (c.erledigt.length ? '<p class="k43-lab">Erledigt · zuletzt zuerst</p><div class="kl k43-kl">'+c.erledigt.map(k=>k43ZeileHtml(k, c, { erl:true })).join('')+'</div>' : '')+
+    '<div class="k43-kbtn"><button type="button" data-k43holen="'+esc(c.id)+'">In den Fokus holen</button><button type="button" data-k43zumtab="'+esc(c.id)+'">Ganze Kette im Ketten-Tab →</button></div></div></div>'; return h; }
+/* Chat der Kette (6.2): das Tagesgespräch des zuständigen Agenten — Themen über f12KartenKanal der ersten Karte, alle anderen der Trainer */
+function k43KetteKanal(c){ try{ if(c.art==='thema' && c.karten.length) return f12KartenKanal(c.karten[0])||f12TrainerKanal(); }catch(e){} return f12TrainerKanal(); }
+function k43KetteChatHtml(c){ const kanal=k43KetteKanal(c); return k43ChatKurzHtml(kanal, f12TagGespraech(), 'An '+(kanal ? f12Name(kanal) : 'den Trainer')+' …', 'Chat · '+c.name.replace(/ · .*$/,'')); }
+/* K8 · gewählte Kette wird die aktuelle (auch berechnete 'k43:…'-Ketten) */
+{ const _alt=tageskettenWahl; tageskettenWahl=function(){ const w=S.ui.tkWahl; if(w && String(w).indexOf('k43:')===0) return w; return _alt(); }; }
+{ const _alt=aktiveKetteKarten; aktiveKetteKarten=function(){ const w=S.ui.tkWahl; if(w && String(w).indexOf('k43:')===0){ const c=k43KetteFinden(w); if(c) return c.karten.slice(); } return _alt(); }; }
+{ const _alt=aktiveKetteName; aktiveKetteName=function(){ const w=S.ui.tkWahl; if(w && String(w).indexOf('k43:')===0){ const c=k43KetteFinden(w); if(c) return c.name; } return _alt(); }; }
+/* K9 · Start außerhalb der aktuellen Kette: aktuelle Kette = Block-Kette der Karte im Plan von heute, sonst ihre Themen-Kette, sonst Familie */
+function k43KetteFuerKarte(k){ if(!k) return null; const K=k43KettenBauen(true); const b=K.block.find(c=>c.karten.some(x=>x.id===k.id)); if(b) return b.id; const t=K.thema.find(c=>c.karten.some(x=>x.id===k.id)); if(t) return t.id; const f=K.familie.find(c=>c.karten.some(x=>x.id===k.id)); return f ? f.id : null; }
+{ const _alt=fokusStarten; fokusStarten=function(kid, quelle, opt){ _alt(kid, quelle, opt); try{ const k=S.karten.find(x=>x.id===kid); if(!k || !(S.fokus && S.fokus.laeuft && S.fokus.karteId===kid) || istSonderRolle(k) || k.rolle) return;
+    if(!aktiveKetteKarten().some(x=>x.id===kid)){ const id=k43KetteFuerKarte(k); if(id && S.ui.tkWahl!==id){ S.ui.tkWahl=id; saveUi(); } } }catch(e){} }; }
+/* K1 · ✓ im Fokus startet die nächste offene Karte der aktuellen Kette (zählt wie ▶) */
+{ const _alt=karteAbhaken; karteAbhaken=function(kid, fromDetail){ _alt(kid, fromDetail); try{ if(kid && K43.hakenImFokus===kid){ K43.hakenImFokus=null; k43NachHaken(kid); } }catch(e){} }; }
+function k43NachHaken(kid){ try{ const k=S.karten.find(x=>x.id===kid); if(!k || k.status!=='erledigt' || (S.fokus && S.fokus.laeuft)) return; const n=aktiveKetteKarten().filter(x=>x.id!==kid && karteUnerledigt(x) && !karteRuht(x) && !istInfoKarte(x) && !k43Blockiert(x))[0]; if(n){ fokusStarten(n.id); renderAlles(); toast('▶ '+String(n.titel||'').slice(0,28)); } }catch(e){} }
+/* 5.4 · der Fokus zeigt statt der Kettenliste die heutigen Ketten nach Art (der übrige Fokusbereich bleibt) */
+function f4NaechstesHtmlAlt(k){ return '<div class="blk kl-blk f4-next"><div class="blk-h">Was als Nächstes kommt</div>'+kettenListeHtml({ karte:k, kontext:'fokus' })+'</div>'; }   // 4.3: abgelöst durch k43KettenansichtHtml('fokus')
+f4NaechstesHtml=function(k){ let inner=''; try{ inner=k43KettenansichtHtml('fokus'); }catch(e){ console.warn('Kettenansicht', e); inner='<div class="leer">Ketten konnten nicht gezeichnet werden</div>'; } return '<div class="blk kl-blk f4-next k43-next"><div class="blk-h">Ketten heute</div>'+inner+'</div>'; };
+/* Routinen-Knopf (Suche-Startseite): abgelöst durch die Kette „Routinen privat“ — der Weg e1 'routinen' bleibt im Code */
+{ const i=F7_AKTIONEN.findIndex(a=>a[0]==='routinen'); if(i>=0) F7_AKTIONEN.splice(i, 1); }   // 4.3: abgelöst durch Kette „Routinen privat“
+/* alle Kettenansichten neu zeichnen (nach Tick, Haken, Start) */
+function k43KettenNeu(){ try{ if(seiteAktuell()==='fokus' && typeof document!=='undefined' && document.querySelector && document.querySelector('.k43-next')) renderFokus(); }catch(e){} try{ if(seiteAktuell()==='ketten' && typeof renderKetten==='function') renderKetten(); }catch(e){} }
+{ const _alt=kettenListenNeu; kettenListenNeu=function(){ _alt(); k43KettenNeu(); }; }
+/* ── Kette neu (F · Eigene): Name und feste Liste oder gespeicherter Filter (Suchtext, Familie, Abteilung) ── */
+function k43KetteNeuSheet(){ const abts=k43AbteilungsNamen();
+  openSheet('＋ Kette neu', '<div class="field"><label>Name</label><input id="k43KnName" placeholder="z. B. Buchhaltung diese Woche" style="min-height:44px"></div>'+
+    '<div class="field"><label>Art</label><select id="k43KnArt" style="min-height:44px"><option value="liste">Feste Liste (Karten über „In Kette“)</option><option value="filter">Gespeicherter Filter</option></select></div>'+
+    '<div id="k43KnFilter" class="field" hidden><input id="k43KnText" placeholder="Suchtext (Titel oder Projekt)" style="min-height:44px"><select id="k43KnFam" style="min-height:44px;margin-top:6px"><option value="">Beide Familien</option><option value="dfm">DFM</option><option value="privat">Privat</option></select>'+
+    '<select id="k43KnAbt" style="min-height:44px;margin-top:6px"><option value="">Alle Abteilungen</option>'+abts.map(a=>'<option value="'+esc(a)+'">'+esc(a)+'</option>').join('')+'</select></div>',
+    '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-k43knanlegen="1">Anlegen</button>'); }
+function k43KetteAnlegen(){ const name=String((el('k43KnName')||{}).value||'').trim(); if(!name){ toast('Name fehlt'); return; } const art=(el('k43KnArt')||{}).value||'liste';
+  const c={ id:'tk43-eigene-'+uuid().slice(0,8), name, art:'eigene', datum:heuteApp(), karten:[], quelle:'pascal' };
+  if(art==='filter') c.filter={ suchtext:String((el('k43KnText')||{}).value||'').trim(), familie:(el('k43KnFam')||{}).value||null, abteilung:(el('k43KnAbt')||{}).value||null };
+  S.tagesketten=tagesketten().concat([c]); DB.set('tagesketten', S.tagesketten); closeSheet(); k43AufSetzen('kettentab', c.id); toast('Kette „'+name.slice(0,24)+'“ angelegt'); k43KettenNeu(); }
+function k43KetteEntfernen(id){ const c=tagesketten().find(x=>x.id===id); if(!c || c.art!=='eigene') return; if(!confirm('Kette „'+(c.name||'')+'“ entfernen? Die Karten bleiben.')) return;
+  if(!Array.isArray(S.meta.kettenArchiv)) S.meta.kettenArchiv=[]; S.meta.kettenArchiv.push(Object.assign({}, c, { entferntTs:jetztIso() })); S.meta.kettenArchiv=S.meta.kettenArchiv.slice(-50); saveMeta();   // nichts löschen: archiviert
+  S.tagesketten=tagesketten().filter(x=>x.id!==id); DB.set('tagesketten', S.tagesketten); if(S.ui.tkWahl===id){ S.ui.tkWahl=null; saveUi(); } k43KettenNeu(); }
+/* Klicks der Kettenansicht */
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
+  if((z=d('data-k43gruppe'))){ e.stopPropagation(); haptik(6); const [ort, g]=String(z.dataset.k43gruppe).split('|'); const k=k43Klapp(ort); k[g]=!k43GruppeOffen(ort, g); saveUi(); k43KettenNeu(); return; }
+  if((z=d('data-k43auf'))){ if(t.closest('.k43-felder')){ /* Felder sind Anzeige */ } e.stopPropagation(); haptik(6); const [ort, id]=String(z.dataset.k43auf).split('|'); k43AufSetzen(ort, id); if(ort==='kettentab' || ort==='fokus'){ const c=k43KetteFinden(id); if(c && S.ui.k43Auf[ort]===id && c.art!=='sammeln'){ S.ui.tkWahl=(c.gespeichert ? c.gespeichert.id : (c.pf ? 'agentenkarten' : c.id)); saveUi(); } }   // K8: die gewählte Kette wird aktuell
+    k43KettenNeu(); return; }
+  if((z=d('data-k43holen'))){ e.stopPropagation(); haptik(8); const c=k43KetteFinden(z.dataset.k43holen); if(!c) return; S.ui.tkWahl=c.gespeichert ? c.gespeichert.id : (c.pf ? 'agentenkarten' : c.id); saveUi(); const n=c.offen.find(k=>!karteRuht(k)); if(n) fokusZeigen(n.id); else renderAlles(); toast('Kette im Fokus: '+c.name.slice(0,28)); return; }
+  if((z=d('data-k43zumtab'))){ e.stopPropagation(); haptik(8); k43Auf('kettentab'); S.ui.k43Auf.kettentab=z.dataset.k43zumtab; S.ui.kettenTab='ketten'; saveUi(); seiteZeigen('ketten'); return; }
+  if(d('data-k43ketteneu')){ e.stopPropagation(); k43KetteNeuSheet(); const a=el('k43KnArt'), f=el('k43KnFilter'); if(a && f) a.addEventListener('change', ()=>{ f.hidden=a.value!=='filter'; }); return; }
+  if(d('data-k43knanlegen')){ e.stopPropagation(); k43KetteAnlegen(); return; }
+  if((z=d('data-k43ketteweg'))){ e.stopPropagation(); k43KetteEntfernen(z.dataset.k43ketteweg); return; }
+  if((z=d('data-k43inkette'))){ e.stopPropagation(); S.ui.tkWahl=z.dataset.k43inkette; saveUi(); e1Oeffnen('plus'); return; }
+  if(t.closest('.k43-kl')) setTimeout(()=>{ try{ k43KettenNeu(); if(e1Art()==='spezial') e1Rendern(); }catch(x){} }, 80);
+}, true);
+/* Ketten normieren beim Laden */
+{ const _alt=migrationRolle421; migrationRolle421=function(){ const r=_alt(); try{ k43KettenNormieren(); }catch(e){} return r; }; }
 
 function init(){
   ladeAlles();
