@@ -150,7 +150,7 @@ body[data-e1] #nav,body[data-e1] #suchFab,body[data-e1] #trainerFab,body[data-e1
 #e1Kopf{position:sticky;top:0;z-index:6;flex:none;padding:calc(var(--sat) + 4px) 8px 6px;background:linear-gradient(180deg,var(--card2),var(--card));border-bottom:1px solid var(--line)}
 #e1Kopf .sb-bar[hidden]{display:none}
 #ebene1 .e1{display:none;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--sab) + 16px)}
-body[data-e1="suche"] #e1-suche,body[data-e1="plus"] #e1-plus,body[data-e1="kettenwahl"] #e1-kettenwahl,body[data-e1="inkette"] #e1-inkette,body[data-e1="tagebuch"] #e1-tagebuch,body[data-e1="durchsuchen"] #e1-durchsuchen,body[data-e1="erfassen"] #e1-erfassen,body[data-e1="routinen"] #e1-routinen,body[data-e1="chat"] #e1-chat,body[data-e1="kontextwahl"] #e1-kontextwahl,body[data-e1="plan"] #e1-plan{display:block}
+body[data-e1="suche"] #e1-suche,body[data-e1="plus"] #e1-plus,body[data-e1="kettenwahl"] #e1-kettenwahl,body[data-e1="inkette"] #e1-inkette,body[data-e1="tagebuch"] #e1-tagebuch,body[data-e1="durchsuchen"] #e1-durchsuchen,body[data-e1="erfassen"] #e1-erfassen,body[data-e1="routinen"] #e1-routinen,body[data-e1="chat"] #e1-chat,body[data-e1="kontextwahl"] #e1-kontextwahl,body[data-e1="plan"] #e1-plan,body[data-e1="spezial"] #e1-spezial{display:block}   /* 4.3: Spezialansichten */
 #ebene1 .an-kopf{padding-top:8px;position:sticky;top:0;z-index:5;background:var(--bg)}
 #ebene1 .an-body{flex:none;overflow:visible;padding-bottom:12px}
 #ebene1 input,#ebene1 textarea,#ebene1 select{font-size:16px}   /* iOS zoomt sonst beim Fokus */
@@ -2939,6 +2939,115 @@ body[data-e1="agentenkarte"] #e1-agentenkarte{display:flex;flex-direction:column
 .kl-z.f15-kr{display:flex;cursor:pointer;border-left:1px solid var(--rand);border-right:1px solid var(--rand);padding:9px 11px}.kl-z.f15-kr .kl-t{flex:1;min-width:0}.kl-z.f15-kr .pf{color:#9a9ca2;font-size:18px;flex:none}
 .f15-lauf{display:flex;gap:8px;align-items:center;background:#1a1d22;border:1px dashed #9a9ca2;border-radius:10px;padding:9px 11px;margin-bottom:6px;color:#9a9ca2;min-height:52px}.f15-lauf .f15-kreis{flex:none;margin:0}.f15-lauf b{display:block;color:#e8e9ec;font-weight:700}.f15-lauf small{display:block;font-size:12px}
 body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4sb .f4n-pl{grid-column:1;grid-row:1}body.breit #f4sb .f4n-kz{grid-column:1;grid-row:2}body.breit #f4sb .f4n-r4{grid-column:2;grid-row:1/4;margin-top:0}
+/* ══ Karten-Standard 4.3 · §3 Projekt oder Abteilung · §4 Spezialansichten (Zielbilder 01–07, 390 px dunkel) ══ */
+.k43-pa{display:flex;flex-direction:column;gap:6px}
+.k43-pa .k43-oder{font-size:11px;color:var(--mut);text-align:center}
+.k43-fehlt{display:flex;align-items:center;gap:8px;margin:6px 0;padding:8px 10px;border-radius:10px;background:#2a1d1d;border:1px solid #5a2a2a;color:#ffb4b4;font-size:12px}
+.k43-fehlt button{margin-left:auto;background:none;border:1px solid #5a2a2a;color:#ffb4b4;border-radius:8px;padding:6px 10px;font-size:12px;min-height:34px}
+body[data-e1="spezial"] #e1-spezial{display:block}
+.k43-body{padding:10px 14px calc(var(--sab) + 90px);display:flex;flex-direction:column;gap:10px;color:var(--fg)}
+.k43-body .leer{color:var(--mut2);font-size:12px;text-align:center;padding:12px 0}
+.k43-kopf{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding-top:6px}
+.k43-kz{display:flex;flex-direction:column;gap:3px}
+.k43-kz h1{margin:0;font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-.01em}
+.k43-klein{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.k43-sub{font-size:12px;color:var(--mut)}
+.k43-zu{flex:none;background:#141e2e;border:1px solid #243349;color:var(--fg);border-radius:10px;min-width:48px;min-height:48px;font-size:14px;padding:0 10px}
+.k43-box{background:#141e2e;border:1px solid #243349;border-radius:14px;padding:12px}
+.k43-lab{margin:0 0 6px;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.k43-z3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.k43-z3>div{display:flex;flex-direction:column;align-items:center;gap:2px;background:#0d1420;border-radius:10px;padding:8px 4px}
+.k43-z3 b{font-size:20px;font-weight:800}
+.k43-z3 span{font-size:10px;color:var(--mut);text-align:center}
+.k43-zeilen{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.k43-zeilen b{font-weight:700}
+.k43-zeilen a{color:#93c5fd}
+.k43-hint{display:block;font-size:12px;color:var(--mut);line-height:1.35;margin-top:4px}
+.k43-fuss{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.k43-btn{width:100%;min-height:52px;border:0;border-radius:14px;background:#3b82f6;color:#fff;font-size:15px;font-weight:700}
+.k43-btn.lila{background:#a855f7}
+.k43-btn.gruen{background:#3ecf8e;color:#08111f}
+.k43-btn:disabled{opacity:.4}
+.k43-woche{display:flex;justify-content:space-between;align-items:flex-end;height:78px;padding:4px 6px 0}
+.k43-woche>div{display:flex;flex-direction:column;align-items:center;gap:4px;width:36px}
+.k43-woche .b{width:22px;border-radius:5px 5px 2px 2px}
+.k43-woche span{font-size:10px;color:var(--mut)}
+.k43-nacht{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.k43-nacht b{font-size:28px;font-weight:800}
+.k43-nacht span{font-size:12px;color:var(--mut)}
+.k43-schuld{margin-top:8px;display:flex;flex-direction:column;gap:4px;font-size:12px}
+.k43-schuld>div:first-child{display:flex;justify-content:space-between;color:var(--mut)}
+.k43-schuld .bar,.k43-zeile .bar{height:6px;border-radius:3px;background:#243349;overflow:hidden}
+.k43-schuld .bar i,.k43-zeile .bar i{display:block;height:100%;border-radius:3px}
+.k43-zeile{display:flex;flex-direction:column;gap:4px;font-size:12px;margin-top:6px}
+.k43-zeile>div:first-child{display:flex;justify-content:space-between}
+.k43-kette{border-radius:12px;overflow:hidden}
+.k43-wecker{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#2a2516;border:1px solid #5a4a1e;color:#f2b84b;border-radius:12px;padding:8px 12px;font-size:12px}
+.k43-wbtn{flex:none;background:none;border:1px solid #5a4a1e;color:#f2b84b;border-radius:8px;min-height:34px;padding:0 10px;font-size:12px}
+.k43-schritte{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.k43-schritte>div{height:4px;border-radius:2px}
+.k43-regler{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.k43-regler label{display:flex;justify-content:space-between;font-size:13px}
+.k43-regler input[type=range]{width:100%;accent-color:#3b82f6;min-height:32px}
+.k43-chips{display:flex;flex-wrap:wrap;gap:6px}
+.k43-chips .chip{background:#141e2e;border:1px solid #243349;color:var(--fg);border-radius:999px;padding:0 12px;min-height:36px;font-size:13px}
+.k43-chips .chip.an{background:#1e3a8a;border-color:#3b82f6;color:#dbeafe}
+.k43-chips .chip.an.gelb{background:#3a3212;border-color:#f2b84b;color:#f2b84b}
+.k43-thema{background:#141e2e;border:1px solid #243349;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.k43-tkopf{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.k43-tkopf .tname{display:block;font-weight:700;font-size:14px}
+.k43-tkopf .tsub{display:block;font-size:11px;color:var(--mut)}
+.k43-akt{display:flex;gap:4px;flex:none}
+.k43-akt .a{background:#0d1420;border:1px solid #243349;color:var(--fg);border-radius:8px;min-height:34px;padding:0 8px;font-size:12px}
+.k43-akt .a.ok{color:#3ecf8e}
+.k43-akt .a.an{background:#1e3a8a;border-color:#3b82f6;color:#dbeafe}
+.k43-akt .a.ok.an{background:#163a2b;border-color:#3ecf8e;color:#3ecf8e}
+.k43-k{display:flex;align-items:center;gap:8px;background:#0d1420;border-left:3px solid #3b82f6;border-radius:10px;padding:8px 10px;flex:1;min-width:0}
+.k43-k.priv{border-left-color:#a855f7}
+.k43-k.on{border-left-color:#3ecf8e}
+.k43-k.blo{border-left-style:dashed;opacity:.75}
+.k43-k.erl{opacity:.55}
+.k43-k.rot{border-left-color:#f66d6d;background:#2a1d1d}
+.k43-k>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.k43-k .kt{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k43-k.rot .kt{color:#ffb4b4}
+.k43-k .km{font-size:11px;color:var(--mut)}
+.k43-k .dauer{font-size:12px;color:var(--mut);flex:none;font-variant-numeric:tabular-nums}
+.k43-start{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:#3ecf8e;color:#08111f;font-size:16px}
+.k43-r{display:flex;align-items:center;gap:8px}
+.k43-zeit{flex:none;width:40px;font-size:11px;color:var(--mut);text-align:right}
+.k43-th{display:block;font-size:12px;font-weight:700;margin:6px 0 2px 48px}
+.k43-th span{font-weight:400;color:var(--mut)}
+.k43-block{border-radius:14px;padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;background:#161b24}
+.k43-block.fokus{background:#13213a}
+.k43-block.senke{background:#21183a}
+.k43-block.over{background:#161b24}
+.k43-block.rest{background:#2a2014}
+.k43-block .bt{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.k43-msg{font-size:12px;color:var(--mut);background:#0d1420;border-radius:10px;padding:8px 10px;line-height:1.35}
+.k43-antwort{display:flex;gap:6px}
+.k43-antwort input,.k43-ein{flex:1;min-width:0;background:#0d1420;border:1px solid #243349;color:var(--fg);border-radius:10px;min-height:44px;padding:0 12px;font-size:16px}
+.k43-ein{width:100%;margin:4px 0 8px}
+.k43-antwort button{flex:none;width:44px;height:44px;border-radius:12px;border:0;background:#3b82f6;color:#fff;font-size:18px}
+.k43-tabs{display:flex;gap:4px;background:#141e2e;border-radius:10px;padding:3px}
+.k43-tabs .tab{flex:1;min-height:36px;border:0;border-radius:8px;background:none;color:var(--mut);font-size:13px}
+.k43-tabs .tab.an{background:#0d1420;color:var(--fg);font-weight:700}
+.k43-nav{display:flex;justify-content:space-between;align-items:center;gap:6px;padding-top:4px}
+.k43-nav>div{display:flex;gap:6px}
+.k43-nav .nav{background:#141e2e;border:1px solid #243349;color:var(--fg);border-radius:10px;min-height:40px;padding:0 12px;font-size:13px}
+.k43-f{margin:6px 0 6px;font-size:13px;font-weight:700}
+.k43-chat{background:#141e2e;border:1px solid #243349;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.k43-chatkopf{display:flex;justify-content:space-between;align-items:center}
+.k43-chatkopf .k43-lab{margin:0}
+.k43-ganz{background:none;border:0;color:#93c5fd;font-size:12px;min-height:32px;padding:0 4px}
+.k43-msgs{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:hidden}
+.k43-m{font-size:13px;line-height:1.35;border-radius:10px;padding:8px 10px;max-width:92%}
+.k43-m small{display:block;font-size:10px;color:var(--mut);margin-bottom:2px}
+.k43-m.t{background:#0d1420;align-self:flex-start}
+.k43-m.p{background:#1e3a8a;align-self:flex-end}
+.k43-leg{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--mut);margin-top:4px}
+.k43-leg i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
+#k43Nacht{width:100%;min-height:64px;background:#0d1420;border:1px solid #243349;color:var(--fg);border-radius:10px;padding:8px 10px;font-size:16px;resize:vertical}
 </style>
 </head>
 <body>
@@ -3062,6 +3171,7 @@ body.breit #f4sb .f4n-band{grid-column:3;grid-row:1;margin-top:0}body.breit #f4s
   <section class="e1" id="e1-plan" data-e1="plan"><div class="an-body" id="planBody"></div></section>
   <!-- Hotfix 15 §5: Karten-Ansicht je Postfach-Karte (Kopf · Verlauf · Karte · Optionen · Antwort · feste Knopfleiste) -->
   <section class="e1" id="e1-agentenkarte" data-e1="agentenkarte"><div class="f15-body" id="akBody"></div><div class="f15-drop" data-f15drop="1" hidden>⬇︎ Datei loslassen zum Anhängen</div></section>
+  <section class="e1" id="e1-spezial" data-e1="spezial"><div class="an-body k43-body" id="spezialBody"></div></section>   <!-- Karten-Standard 4.3 §4: Schlafen · Aufstehen · Tagesplanung · zwischendurch · ADHS Blockade -->
 </div>
 
 <!-- 4.0 · Paket 9: die Spalten links (Suche, Gruppen, Schnellplätze) und rechts (Chat, Erfassen) für iPad quer und Mac -->
@@ -4252,6 +4362,8 @@ const DEFAULT_SETTINGS = {
   // Bonus je Prio, Grenze der Tageslage-Verschiebung (P3, in 4.2.0 immer 0), Rundung des Satzes. Über die Sync-Tür (Bereich engine42) änderbar. ══
   engine42: { barrieren:{ dfmAufgabe:[300,700], dfmRoutine:[300,700], privatAufgabe:[150,350], privatRoutine:[100,250] },
     gewichte:{ prio:0.5, belastung:0.3, matrix:0.2 }, matrixWert:{ ziel:1, werkzeug:0.5, zustand:0 }, bonusJePrio:25, lageMax:0.2, rundung:10 },
+  // ══ Karten-Standard 4.3 §4: Tagesrahmen — feste Morgenketten (App-IDs, Startwert leer), Zustand → Ziel (Startwert keine Verschiebung), Punkte der Tagesplanung (halb DFM, halb Privat wie Routine Prio 3, Belastung 0, Werkzeug), Eckpunkte aus ══
+  engine43: { morgenketten:{ aufstehen:[], aufwachen:[] }, zustandZiel:{ fitness:0, motivation:0, schlaf:0, maxProzent:0 }, tagesplanung:{ anteilDfm:0.5, prio:3, belastung:0, matrix:'werkzeug' }, eckpunkte:false },
   // ══ 4.0 · Paket 4 · Punkte-Engine nach Punkt 5 (alle Werte über die Sync-Tür, Bereich engine4) ══
   leiter: { geldnah:600, kommunikation:400, ohneGeld:300, privatWerkzeug:200, erholung:200, ablenkung:0 },   // 5.3 Stundenleiter, Punkte je Stunde
   tickAktivierung: 10,         // 5.3: Tick = Satz × echte Tick-Minuten ÷ 60 + 10
@@ -4448,6 +4560,9 @@ const EINST_SCHEMA={
   // Karten-Standard 4.2 §3: Punkte-Engine 4.2 — Barrieren als Paare [min, max] je Schlüssel, Gewichte und Matrixwerte als Tabelle, drei Zahlen
   engine42:{ barrieren:{p:'engine42.barrieren', t:'paare'}, gewichte:{p:'engine42.gewichte', t:'tabelle'}, matrixWert:{p:'engine42.matrixWert', t:'tabelle'},
     bonusJePrio:Z('engine42.bonusJePrio',{min:0}), lageMax:Z('engine42.lageMax',{min:0, max:1}), rundung:Z('engine42.rundung',{min:1}) },
+  // Karten-Standard 4.3 §4: Morgenketten als Listen von App-IDs, Zustand→Ziel und Tagesplanung als Tabellen, Eckpunkte als Schalter
+  engine43:{ morgenketten:{ aufstehen:{p:'engine43.morgenketten.aufstehen', t:'texte'}, aufwachen:{p:'engine43.morgenketten.aufwachen', t:'texte'} },
+    zustandZiel:{p:'engine43.zustandZiel', t:'tabelle'}, tagesplanung:{p:'engine43.tagesplanung', t:'tabelle'}, eckpunkte:{p:'engine43.eckpunkte', t:'bool'} },
   // 4.0 · Paket 4: die Punkte-Engine nach Punkt 5 — der Scoring-Spezialist ändert sie nur über das Postfach und ein Paket
   engine4:{ leiter:{p:'leiter', t:'tabelle'}, tickAktivierung:Z('tickAktivierung',{min:0}), startBonus:Z('startBonus',{min:0}), bruecke:{p:'bruecke', t:'tabelle'},
     abhakbonusAbSollMin:Z('abhakbonusAbSollMin',{min:0}), abzugOhneGrund:Z('abzugOhneGrund',{min:0}), wochenserieBonus:Z('wochenserieBonus',{min:0}), chatAgentenMax:Z('chatAgentenMax',{min:1, max:50}),   // Hotfix 16 §4.4
@@ -23493,7 +23608,7 @@ function suFrage(){ return String(S.ui.suFrage||'').trim(); }
    Die Sichtbarkeit hängt per CSS allein an body[data-seite] und body[data-e1]. Ebene 3 (Animationen, e3Spielen) und die
    Dialoge (openSheet/closeSheet) sind flüchtig bzw. eine eigene Klasse und stehen nicht in diesem Zustand. */
 const SEITEN=['fokus','postfach','belohnung','statistik','einst'];   // 4.0 · Paket 7: Postfach
-const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch','durchsuchen','erfassen','routinen','chat','plan','kontextwahl','agentenkarte'];   // 4.0 · Paket 7 · 4.1: kontextwahl · Hotfix 15 §5: agentenkarte
+const E1_ARTEN=['suche','plus','kettenwahl','inkette','tagebuch','durchsuchen','erfassen','routinen','chat','plan','kontextwahl','agentenkarte','spezial'];   // Karten-Standard 4.3 §4: spezial (Schlafen · Aufstehen · Tagesplanung · Blockade)   // 4.0 · Paket 7 · 4.1: kontextwahl · Hotfix 15 §5: agentenkarte
 let _e1=null;
 function seiteAktuell(){ const s=S.ui && S.ui.seite; return SEITEN.indexOf(s)>=0 ? s : 'fokus'; }
 function e1Art(){ return _e1 ? _e1.art : null; }
@@ -27004,6 +27119,415 @@ function k43Thema(k){
   const a=(k.abteilung && String(k.abteilung).trim())||'';
   return { thema:a||'Ohne Abteilung', abteilung:a||'', art:'abteilung' };
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   Karten-Standard 4.3 · §4 · TAGESRAHMEN UND SYSTEMKARTEN (Teil 1 §1–§8, Teil 2 K1–K11, Zielbilder 01–07)
+   Vier Systemkarten mit eigener Ansicht: 🌙 Schlafen (k3-schlafen) · ☀️ Aufstehen (k3-aufstehen) · 📋 Tagesplanung (k3-tagesplanung, neu)
+   · 🧱 ADHS Blockade (bisher Privat-Routine fb014470…). Tagesübergang (k3-tagesuebergang) wird archiviert; sein Code bleibt stehen und
+   läuft im Hintergrund des Aufstehens (f11VortagBuchen = Weg aus Hotfix 24). Eckpunkte entfallen. Alle Spezialansichten laufen in der
+   Ebene-1-Art „spezial“ (eine Ansicht, Unterart in S.ui.spezial.art). Alle Zahlen der Zielbilder sind Beispielwerte.
+   ══════════════════════════════════════════════════════════════════════ */
+const K43={ stillerUebergang:false, protokoll:null, ton:null };
+const K43_BLOCKADE_ID='fb014470';   // Präfix der bisherigen Privat-Routine „ADHS Blockade“ (Auftrag 4.1)
+const K43_MATRIX_MITTE={ ablenkung:[-0.5,0.5], zustand:[-0.5,-0.5], werkzeug:[0.5,0.5], ziel:[0.5,-0.5] };   // Mitte je Feld (x: weg-von/hin-zu, y: außen/innen)
+/* ── Einstellungen engine43 (Startwerte: keine Verschiebung, Ketten leer, Tagesplanung halb DFM halb Privat) ── */
+function k43Einst(){ const d=DEFAULT_SETTINGS.engine43, s=(S.settings && S.settings.engine43)||{};
+  const mk=Object.assign({}, d.morgenketten, s.morgenketten||{});
+  return { morgenketten:{ aufstehen:Array.isArray(mk.aufstehen)?mk.aufstehen:[], aufwachen:Array.isArray(mk.aufwachen)?mk.aufwachen:[] },
+    zustandZiel:Object.assign({}, d.zustandZiel, s.zustandZiel||{}), tagesplanung:Object.assign({}, d.tagesplanung, s.tagesplanung||{}) }; }
+function k43Tag(){ if(!S.tag) return null; if(!S.tag.k43 || typeof S.tag.k43!=='object') S.tag.k43={}; return S.tag.k43; }
+function k43Ui(){ if(!S.ui.spezial || typeof S.ui.spezial!=='object') S.ui.spezial={ art:null, schritt:1 }; return S.ui.spezial; }
+function k43Karte(rolle){ return S.karten.find(k=>k.rolle===rolle && k.status!=='archiviert')||null; }
+function k43TagesplanungKarte(){ return k43Karte('tagesplanung'); }
+function k43BlockadeKarte(){ return k43Karte('blockade'); }
+/* ── 4.1 · Migration karten43 (einmalig, Protokoll in meta.migrationen): Tagesplanung anlegen, Blockade zur Systemkarte, Tagesübergang archivieren ── */
+function migrationKarten43(){
+  if(S.meta.karten43 && S.meta.karten43.ts) return null;
+  const p={ name:'karten43', ts:jetztIso(), version:APP_VERSION, angelegt:[], geaendert:[], archiviert:[] };
+  if(!k43TagesplanungKarte()){ let id='k3-tagesplanung'; if(S.karten.some(x=>x.id===id)) id='k3-tagesplanung-'+uuid().slice(0,8);
+    const k=Object.assign(neueKarte({ titel:'📋 Tagesplanung', domain:'privat' }), { id, status:'offen', rolle:'tagesplanung', std42:true, art:'system', matrixFeld:'werkzeug', immerSichtbar:true, rhythmus:{ typ:'taeglich' }, prio:3, belastung:0, sollMin:0, erstelltTs:jetztIso() });
+    S.karten.push(k); p.angelegt.push(id); }
+  const b=S.karten.find(x=>String(x.id).indexOf(K43_BLOCKADE_ID)===0 && x.status!=='archiviert');
+  if(b && b.rolle!=='blockade'){ b.rolle='blockade'; b.std42=true; b.art='system'; beruehre(b); p.geaendert.push(b.id); }   // Punkte unverändert (Prio, Belastung, Abhakbonus bleiben)
+  S.karten.forEach(k=>{ if(k.rolle==='tagesuebergang' && k.status!=='archiviert'){ k.status='archiviert'; k.archiviertTs=jetztIso(); k.archivGrund='4.3 · aufgegangen in Aufstehen (Hintergrund) und Tagesplanung'; p.archiviert.push(k.id); if(S.fokus && S.fokus.karteId===k.id){ S.fokus=null; saveFokus(); } } });
+  S.meta.karten43=p; if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[]; S.meta.migrationen=S.meta.migrationen.concat([p]).slice(-50);
+  saveKarten(); saveMeta(); return p;
+}
+{ const _alt=f11FesteKarten; f11FesteKarten=function(){ const n=_alt(); try{ let m=0; S.karten.forEach(k=>{ if(k.rolle==='tagesuebergang' && k.status!=='archiviert' && S.meta.karten43){ k.status='archiviert'; k.archiviertTs=jetztIso(); k.archivGrund='4.3 · aufgegangen in Aufstehen (Hintergrund) und Tagesplanung'; m++; } }); if(m) saveKarten(); }catch(e){} return n; }; }   // 4.3: bleibt archiviert, auch nach einem Import
+/* ── Rollen mit eigenem Weg: tagesplanung und blockade dazu; schlafen und aufstehen auf die neuen Ansichten ── */
+ROLLEN_EIGENER_WEG.push('tagesplanung', 'blockade');
+{ const _alt=rollenWegAusloesen; rollenWegAusloesen=function(kid){ const k=S.karten.find(x=>x.id===kid); if(!k) return false;
+    if(k.rolle==='tagesplanung'){ k43TagesplanungOeffnen(); return true; }
+    if(k.rolle==='blockade'){ k43BlockadeOeffnen(); return true; }
+    return _alt(kid); }; }
+{ const _alt=istSonderRolle; istSonderRolle=function(k){ return _alt(k) || !!(k && (k.rolle==='tagesplanung' || k.rolle==='blockade')); }; }
+{ const _alt=oeffneAufstehen; oeffneAufstehen=function(){ return k43Aufstehen(); }; }   // 4.3: kein Akku-Dialog, Aufstehen läuft sofort (Zielbild 02)
+{ const _alt=schlafUmschalten; schlafUmschalten=function(){ if(schlafLaeuft()) return _alt(); k43SchlafenOeffnen(); }; }   // 4.3: Schlafen startet aus der Ansicht (Zielbild 01)
+/* fokusStarten für Rollenkarten: Tagesplanung und Blockade starten über ihre Ansicht; in der Ansicht selbst läuft ihre Uhr (opt.k43) */
+{ const _alt=fokusStarten; fokusStarten=function(kid, quelle, opt){ opt=opt||{}; const zk=S.karten.find(x=>x.id===kid);
+    if(zk && !opt.k43){ if(zk.rolle==='tagesplanung'){ k43TagesplanungOeffnen(); return; } if(zk.rolle==='blockade'){ k43BlockadeOeffnen(); return; } }
+    const vor=fokusKarte(), vorLief=!!(S.fokus && S.fokus.laeuft);
+    _alt(kid, quelle, opt);
+    try{
+      // K2: die Spezialkarte endet, sobald eine andere Karte gestartet wird — egal wo
+      if(vor && vorLief && vor.id!==kid && (vor.rolle==='tagesplanung' || vor.rolle==='blockade')) k43SpezialBeendet(vor);
+      // K3: die Matrix folgt immer der laufenden Karte (bei jedem Start und Kartenwechsel)
+      if(zk && S.fokus && S.fokus.laeuft && S.fokus.karteId===kid && tagOffen()){ const m=K43_MATRIX_MITTE[matrixFeldVon(zk)]; if(m) matrixPosSetzen(m[0], m[1], zk.id, 'start'); }
+    }catch(e){} }; }
+function k43SpezialBeendet(k){
+  const T=k43Tag(); if(!T) return;
+  if(k.rolle==='blockade' && T.blockade && !T.blockade.endeTs){ T.blockade.endeTs=jetztIso(); saveTag(); }
+  if(k.rolle==='tagesplanung' && T.tagesplanung) T.tagesplanung.beendetTs=jetztIso();
+  if(e1Art()==='spezial'){ const u=k43Ui(); if(u.art==='blockade' || u.art==='tagesplanung' || u.art==='zwischendurch') e1Schliessen(); }
+}
+/* Eckpunkte entfallen (Teil 1 §1): die Buchung bleibt im Code, bucht aber nichts mehr */
+{ const _alt=tagesEckpunkteBuchen; tagesEckpunkteBuchen=function(anlass, k){ if(S.settings && S.settings.engine43 && S.settings.engine43.eckpunkte===true) return _alt(anlass, k); return 0; }; }   // 4.3: abgelöst durch die Tagesplanung (normale Punkte beider Familien)
+/* ── Punkte der Tagesplanung (Entscheidung Pascal 03.11.2026): halb DFM, halb Privat; P/h je Hälfte wie eine Routine der Familie mit Prio 3, Belastung 0, Matrix Werkzeug ── */
+function k43TagesplanungSaetze(){
+  const E=k43Einst().tagesplanung, mf=matrixFeldNorm(E.matrix)||'werkzeug', basis={ std42:true, art:'routine', rhythmus:{typ:'taeglich'}, prio:num(E.prio,3), belastung:num(E.belastung,0), matrixFeld:mf, phFest:null };
+  const dfm=e42Satz(Object.assign({ domain:'dfm' }, basis)), privat=e42Satz(Object.assign({ domain:'privat' }, basis)), a=Math.max(0, Math.min(1, num(E.anteilDfm, 0.5)));
+  return { dfm, privat, anteilDfm:a, satzKarte:Math.round(privat*(1-a)), satzBonusDfm:dfm*a };
+}
+function k43TagesplanungSatzSetzen(){ const k=k43TagesplanungKarte(); if(!k) return; const s=k43TagesplanungSaetze(); if(k.phFest!==s.satzKarte){ k.phFest=s.satzKarte; saveKarten(); } }
+{ const _alt=fokusZeitEinbuchen; fokusZeitEinbuchen=function(bisMs){ const k=fokusKarte(), lief=!!(S.fokus && S.fokus.laeuft), start=S.fokus ? num(S.fokus.startMs) : 0;
+    _alt(bisMs);
+    try{ if(k && lief && k.rolle==='tagesplanung' && start){ const ende=(bisMs && bisMs<Date.now()) ? Math.max(start, bisMs) : Date.now(), min=(ende-start)/60000, s=k43TagesplanungSaetze(), p=Math.round(min/60*s.satzBonusDfm*10)/10;
+      if(p>0) e4BonusBuchen(null, p, 'Tagesplanung · DFM-Anteil'); } }catch(e){} }; }   // 4.4: der DFM-Anteil als Bonus ohne Karte (wie die Eckpunkte in 4.0)
+/* ── Spezialansichten (Ebene 1, Art „spezial“) ── */
+function k43SpezialOeffnen(art, schritt){ const u=k43Ui(); u.art=art; if(schritt) u.schritt=schritt; saveUi(); if(e1Art()!=='spezial') e1Oeffnen('spezial'); else e1Rendern(); }
+function renderSpezial(){ const b=el('spezialBody'); if(!b) return; const u=k43Ui(); let h='';
+  try{ h = u.art==='schlafen' ? k43SchlafenHtml() : u.art==='aufstehen' ? k43AufstehenHtml() : u.art==='tagesplanung' ? k43TagesplanungHtml() : u.art==='zwischendurch' ? k43ZwischendurchHtml() : u.art==='blockade' ? k43BlockadeHtml() : '<div class="leer">keine Ansicht</div>'; }
+  catch(e){ console.warn('Spezialansicht', u.art, e); h='<div class="leer">Ansicht konnte nicht gezeichnet werden: '+esc(String((e && e.message)||e))+'</div>'; }
+  b.innerHTML=h; }
+{ const _alt=e1Rendern; e1Rendern=function(){ if(e1Art()==='spezial'){ renderSpezial(); return; } _alt(); }; }
+function k43Kopf(klein, titel, sub, zurueck){ return '<div class="k43-kopf"><div class="k43-kz"><span class="k43-klein">'+klein+'</span><h1>'+titel+'</h1>'+(sub ? '<span class="k43-sub">'+sub+'</span>' : '')+'</div><button type="button" class="k43-zu" data-e1zu="1" aria-label="Schließen">'+(zurueck||'✕')+'</button></div>'; }
+function k43Box(lab, inner, stil){ return '<div class="k43-box"'+(stil?' style="'+stil+'"':'')+'>'+(lab ? '<p class="k43-lab">'+lab+'</p>' : '')+inner+'</div>'; }
+function k43Datum(iso){ const d=new Date((iso||heuteApp())+'T12:00:00'); return ['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]+' '+anKurzDatum(iso||heuteApp())+'.'; }
+function k43Uhr(ts){ return fmtUhr(ts).replace(' Uhr',''); }
+function k43Zahl3(l){ return '<div class="k43-z3">'+l.map(x=>'<div><b class="mono"'+(x.c?' style="color:'+x.c+'"':'')+'>'+x.w+'</b><span>'+x.s+'</span></div>').join('')+'</div>'; }
+/* ── 4.6 · Wecker: Uhrzeit, bis zu der die nächste Aufgabe starten muss ── */
+function k43Wecker(){ const T=k43Tag(); if(!T) return null; if(!T.wecker || typeof T.wecker!=='object') T.wecker={ bis:null, gemeldet:false, text:'' }; return T.wecker; }
+function k43WeckerHtml(text){ const w=k43Wecker(); if(!w) return '';
+  const rest=w.bis ? Math.round((Date.parse(w.bis)-Date.now())/60000) : null;
+  return '<div class="k43-wecker"><span>⏰ '+(w.bis ? esc(text||'Weiter')+' um <b class="mono">'+k43Uhr(w.bis)+'</b> · '+(rest>=0 ? 'noch '+rest+' Min.' : '<span style="color:'+FARBE.ROT+'">vorbei</span>') : 'Wecker nicht gesetzt')+'</span><button type="button" class="k43-wbtn" data-k43wecker="1">Zeit ändern</button></div>'; }
+function k43WeckerSetzen(){ const w=k43Wecker(); if(!w) return; const v=w.bis ? k43Uhr(w.bis) : belUhr(kalStunde(jetztIso())+0.25);
+  openSheet('⏰ Wecker', '<p class="d">Bis wann muss die nächste Aufgabe starten?</p><div class="field"><input type="time" id="k43WeckerZeit" value="'+esc(v)+'" style="min-height:44px"></div><div class="hint">Bei Ablauf: Benachrichtigung (wenn erlaubt) und ein eigener Ton in der App.</div>',
+    '<button class="btn ghost sm" data-k43weckeraus="1">Wecker aus</button><button class="btn prim" data-k43weckergo="1">Setzen</button>'); }
+function k43WeckerUebernehmen(hhmm){ const w=k43Wecker(); if(!w) return; if(!hhmm){ w.bis=null; w.gemeldet=false; saveTag(); e1Rendern(); return; }
+  const t=String(hhmm).split(':'); const d=new Date(); d.setHours(num(t[0]), num(t[1]), 0, 0); if(d.getTime()<Date.now()) d.setDate(d.getDate()+1);
+  w.bis=d.toISOString(); w.gemeldet=false; saveTag(); try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(e){} e1Rendern(); }
+function k43WeckerPruefen(){ const w=k43Wecker(); if(!w || !w.bis || w.gemeldet) return; if(Date.now()<Date.parse(w.bis)) return; w.gemeldet=true; saveTag();
+  let benachrichtigt=false; try{ if('Notification' in window && Notification.permission==='granted'){ new Notification('Weiter geht es', { body:'Die nächste Aufgabe sollte jetzt starten', tag:'fokus-wecker' }); benachrichtigt=true; } }catch(e){}
+  k43Ton(); try{ toast('⏰ Weiter geht es — nächste Aufgabe starten'+(benachrichtigt ? '' : ' (Benachrichtigung nicht erlaubt)')); }catch(e){} try{ if(e1Art()==='spezial') e1Rendern(); }catch(e){} }
+/* eigener In-App-Ton (WebAudio): zwei kurze Töne, unterscheidbar von Benachrichtigungen */
+function k43Ton(){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!K43.ton) K43.ton=new AC(); const c=K43.ton, t0=c.currentTime;
+    [[880,0,0.12],[1319,0.18,0.2]].forEach(([f,ab,d])=>{ const o=c.createOscillator(), g=c.createGain(); o.type='sine'; o.frequency.value=f; g.gain.setValueAtTime(0.0001, t0+ab); g.gain.exponentialRampToValueAtTime(0.25, t0+ab+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0+ab+d); o.connect(g); g.connect(c.destination); o.start(t0+ab); o.stop(t0+ab+d+0.05); }); }catch(e){} }
+/* ── 4.2 · Schlafen (Zielbild 01): startet die Schlafuhr, Nachtnotiz möglich, bucht nichts ── */
+function k43SchlafenOeffnen(){ k43SpezialOeffnen('schlafen'); }
+function k43LaengsterFokus(){ let best=null; const tid=aktuelleTagId(); (S.intraday||[]).forEach(e=>{ if(!e || e.tagId!==tid || (e.typ!=='timer' && e.typ!=='autopause' && e.typ!=='nachtrag')) return; if(!best || num(e.minuten)>num(best.minuten)) best=e; });
+  if(!best) return null; const k=S.karten.find(x=>x.id===best.kartenId); return { min:num(best.minuten), titel:k ? (k.projekt||k.titel||'') : '' }; }
+function k43SerieTagesziel(){ let n=0, d=anVorTage(heuteApp(),1); for(let i=0;i<60;i++){ const sn=tagSnapshot(d); if(!sn) break; const p=sn.punkteDfm!=null ? num(sn.punkteDfm) : null, z=num(sn.zielDfm); if(p==null || !(z>0) || p<z) break; n++; d=anVorTage(d,1); } return n; }
+function k43WocheHtml(){ const heute=heuteApp(), wt=anWochentag(heute), mo=anVorTage(heute, wt), tage=[]; for(let i=0;i<5;i++) tage.push(anVorTage(mo, -i));
+  const werte=tage.map(d=>{ if(d>heute) return { d, p:null, z:null }; if(d===heute){ const g=diaGroessen(); return { d, p:num(g.dfm), z:num(g.zielDfm) }; } const sn=tagSnapshot(d); return { d, p:sn && sn.punkteDfm!=null ? num(sn.punkteDfm) : (sn ? num(sn.punkteBilanz) : null), z:sn ? num(sn.zielDfm) : null }; });
+  const max=Math.max(1, ...werte.map(w=>Math.max(num(w.p), num(w.z))));
+  return '<div class="k43-woche" aria-hidden="true">'+werte.map(w=>'<div><div class="b" style="height:'+(w.p!=null ? Math.max(4, Math.round(num(w.p)/max*58)) : 4)+'px;background:'+(w.p!=null && w.z>0 && w.p>=w.z ? FARBE.BLAU : (w.p!=null ? farbeAlpha(FARBE.BLAU,.45) : '#243349'))+'"></div><span>'+AN_WT[anWochentag(w.d)]+'</span></div>').join('')+'</div>'; }
+function k43SchlafenHtml(){
+  const k=schlafKarte(), z=schlafZustand(), g=diaGroessen(), erl=klErledigtHeute().length, lf=k43LaengsterFokus(), rout=abhakLeisteKarten(), rfertig=rout.filter(x=>kartenStatusHeute(x)==='erledigt').length, serie=k43SerieTagesziel()+(num(g.dfm)>=num(g.zielDfm) && num(g.zielDfm)>0 ? 1 : 0);
+  let h=k43Kopf('Systemkarte · Privat', 'Schlafen', esc(k43Datum(heuteApp()))+' · '+k43Uhr(jetztIso())+' Uhr');
+  h+=k43Box('Geschafft heute', k43Zahl3([{ w:fmtP(g.dfm), s:'DFM-Punkte', c:FARBE.BLAU_HELL },{ w:fmtP(g.privat), s:'Privat-Punkte', c:FARBE.LILA_HELL },{ w:String(erl), s:'Karten erledigt', c:FARBE.GRUEN }])+
+    '<div class="k43-zeilen"><span>Längster Fokus: <b>'+(lf ? fmtDauer(lf.min)+(lf.titel ? ' an '+esc(String(lf.titel).slice(0,30)) : '') : '—')+'</b></span><span>Routinen: <b>'+rfertig+' von '+rout.length+'</b> erledigt</span><span>Serie Tagesziel DFM: <b>'+serie+' Tag'+(serie===1?'':'e')+'</b> in Folge</span></div>');
+  h+=k43Box('Diese Woche', k43WocheHtml()+'<span class="k43-hint">Nur Erreichtes, keine Kritik am Abend.</span>');
+  if(z.laeuft) h+=k43Box('', '<span class="k43-hint">🌙 Schlafen läuft seit '+k43Uhr(z.laeuft.startTs)+' Uhr ('+hMin((Date.now()-Date.parse(z.laeuft.startTs))/60000)+' Std). Es stoppt mit dem Aufstehen.</span>');
+  else h+='<div class="k43-box"><label for="k43Nacht" class="k43-lab">Nachtnotiz für morgen (optional)</label><textarea id="k43Nacht" data-k43nacht="'+esc(k ? k.id : '')+'">'+esc(k ? (k.nachtnotiz||'') : '')+'</textarea></div>';
+  h+='<div class="k43-fuss"><span class="k43-hint" style="text-align:center">Es wird jetzt nichts gebucht. Was du danach noch trackst, zählt zu heute. Abgeschlossen wird beim Aufstehen.</span>'+
+    (z.laeuft ? '<button type="button" class="k43-btn lila" data-k43schlafstopp="1">Schlafen stoppen (Fehltipp)</button>' : '<button type="button" class="k43-btn lila" data-k43schlafstart="1">Schlafen starten</button>')+'</div>';
+  return h;
+}
+function k43SchlafenStarten(){ const k=schlafKarte(); const ta=el('k43Nacht'); if(k && ta){ k.nachtnotiz=String(ta.value||''); saveKarten(); }
+  if(!schlafLaeuft()){ schlafStarten(); const z=schlafZustand(); if(z.laeuft) z.laeuft.schlossTag=false; saveMeta(); }
+  haptik(10); toast('🌙 Gute Nacht — Schlafen läuft'); e1Schliessen(); renderAlles(); }
+/* ── 4.2 · Aufstehen (Zielbild 02): stoppt die Schlafuhr, bucht Schlaf, setzt den Aufstehzeitpunkt; im Hintergrund der Weg aus Hotfix 24 ── */
+function k43Aufstehen(){
+  const tapTs=jetztIso();
+  if(tagOffen() && S.tag.morgen && S.tag.morgen.aufstehTs && !vortagOffen()){ k43SpezialOeffnen('aufstehen'); return; }   // der Tag läuft schon: nur die Ansicht
+  const prot={ ts:tapTs, vortag:S.tag ? S.tag.datum : null, gestoppt:[], routinen:0, nacht:null };
+  let nacht=null;
+  if(schlafLaeuft()){ const n=schlafStoppen(); if(n && !n.verworfen){ nacht=n; schlafZustand().nachtBeimAufstehen=n.endeTs; } saveKarten(); saveMeta(); saveTag(); }
+  if(S.fokus && S.fokus.laeuft){ const lk=fokusKarte(); const bis=jetztIso(); fokusZeitEinbuchen(); if(lk) prot.gestoppt.push({ titel:String(lk.titel||''), bis }); }   // laufende Zeit stoppen, auf gestern gebucht (der alte Tag ist noch offen)
+  K43.protokoll=prot; K43.stillerUebergang=true;
+  try{
+    if(vortagOffen()){ F11.auf={ akku:null, prog:null, tapTs, nacht, ein:'', kom:'' }; f11VortagBuchen(); }   // Hotfix 24: Vortag buchen, Tagesbilanz, Aufstehen, Trainer (Feedback)
+    else { aufstehenBestaetigen(null, { tapTs, nacht, prog:null, kommentar:'' }); }
+  } finally { K43.stillerUebergang=false; }
+  if(nacht) prot.nacht=nacht;
+  const T=k43Tag(); if(T){ T.aufstehen=prot; saveTag(); }
+  k43Morgenketten();
+  try{ closeSheet(); }catch(e){}
+  renderAlles(); haptik(12);
+  k43SpezialOeffnen('aufstehen');
+}
+{ const _alt=oeffneTagesuebergang; oeffneTagesuebergang=function(schritt){ if(K43.stillerUebergang || (S.meta && S.meta.karten43)) return;   // 4.3: das Blatt wird nicht mehr geöffnet (Code bleibt für v50)
+    return _alt(schritt); }; }
+{ const _alt=tagStarten; tagStarten=function(akku, datumTest){ let n=0; try{ n=S.karten.filter(k=>k && k.status!=='archiviert' && (k.rhythmus || (istV3(k) && istWiederkehrend(k)) || k.ticksAktiv)).length; }catch(e){}
+    _alt(akku, datumTest); if(K43.protokoll) K43.protokoll.routinen=n; }; }
+/* feste Ketten am Morgen (4.3): Aufstehen und Aufwachen & Tagesplanung aus engine43.morgenketten (App-IDs), Startwert leer; die Tagesplanung hängt immer am Ende der zweiten Kette */
+function k43Morgenketten(){
+  const E=k43Einst().morgenketten, heute=heuteApp(), tp=k43TagesplanungKarte();
+  const defs=[{ id:'tk43-aufstehen-'+heute, name:'Aufstehen', block:'aufstehen', karten:E.aufstehen.slice() }, { id:'tk43-aufwachen-'+heute, name:'Aufwachen & Tagesplanung', block:'aufwachen', karten:E.aufwachen.slice().concat(tp ? [tp.id] : []) }];
+  if(!Array.isArray(S.tagesketten)) S.tagesketten=[];
+  defs.forEach(d=>{ const karten=d.karten.filter((id,i,a)=>a.indexOf(id)===i && S.karten.some(k=>k.id===id)); let c=S.tagesketten.find(x=>x.id===d.id);
+    if(!c){ c={ id:d.id, name:d.name+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:d.block, karten, quelle:'morgen' }; S.tagesketten.push(c); } else { c.karten=karten; c.art='block'; c.datum=heute; c.block=d.block; c.quelle='morgen'; } });
+  DB.set('tagesketten', S.tagesketten);
+}
+function k43AufstehenHtml(){
+  const T=k43Tag()||{}, a=T.aufstehen||{}, mo=(S.tag && S.tag.morgen)||{}, z=schlafZustand(), bedarf=num(S.settings.schlafBedarfStd,7), min=mo.schlafMin!=null ? num(mo.schlafMin) : null;
+  const l=z.letzte||{}, vor=num(l.schuldVorStd), nach=num(l.schuldNachStd!=null ? l.schuldNachStd : z.schuldStd), maxS=Math.max(1, num(S.settings.schlafSchuldMaxStd,30)), sinkt=nach<vor;
+  let h=k43Kopf('Systemkarte · Privat · '+esc(k43Datum(heuteApp()))+' · '+k43Uhr(a.ts||mo.aufstehTs||jetztIso())+' Uhr', 'Guten Morgen', '', '← Fokus');
+  h+=k43Box('Deine Nacht', '<div class="k43-nacht"><b class="mono" style="color:'+FARBE.GRUEN+'">'+(min!=null ? hMin(min) : '—')+'</b><span>Std. · Bedarf '+hMin(bedarf*60)+(mo.schlafPunkte!=null ? ' · +'+fmtP(mo.schlafPunkte)+' Punkte' : '')+'</span></div>'+
+    '<div class="k43-schuld"><div><span>Schlafschuld 7 Tage</span><span class="mono">'+hMin(vor*60)+' → '+hMin(nach*60)+'</span></div><div class="bar"><i style="width:'+Math.min(100, nach/maxS*100).toFixed(0)+'%;background:'+(sinkt?FARBE.GRUEN:FARBE.ORANGE)+'"></i></div><span style="color:'+(sinkt?FARBE.GRUEN:FARBE.GRAU)+'">'+(min==null ? 'Keine Nacht gebucht (Schlafen lief nicht).' : sinkt ? 'Schuld sinkt.' : nach>vor ? 'Schuld steigt.' : 'Schuld unverändert.')+'</span></div>');
+  const z1=[]; if(a.vortag) z1.push('✓ '+esc(k43Datum(a.vortag))+' abgeschlossen und gebucht'); (a.gestoppt||[]).forEach(g=>z1.push('✓ 1 laufende Zeit gestoppt: „'+esc(String(g.titel).slice(0,40))+'“ (auf gestern, bis '+k43Uhr(g.bis)+')')); z1.push('✓ '+num(a.routinen)+' Routinen zurückgesetzt');
+  h+=k43Box('Im Hintergrund erledigt', '<div class="k43-zeilen">'+z1.map(x=>'<span>'+x+'</span>').join('')+'</div><span class="k43-hint">Details siehst du gleich in der Tagesplanung.</span>');
+  const c=(S.tagesketten||[]).find(x=>x.block==='aufstehen' && x.datum===heuteApp()), ks=c ? c.karten.map(id=>S.karten.find(k=>k.id===id)).filter(Boolean) : [], fertig=ks.filter(k=>kartenStatusHeute(k)==='erledigt').length;
+  h+='<p class="k43-lab" style="margin-top:4px">Kette Aufstehen · '+fertig+' von '+ks.length+'</p>';
+  h+=ks.length ? '<div class="kl k43-kette" data-klliste="1">'+ks.map(k=>kartenZeileHtml(k)).join('')+'</div>' : '<div class="k43-hint">Noch keine Karten zugeordnet (Einstellung engine43.morgenketten.aufstehen: Kaffee machen → Elvanse nehmen → Frühstück machen).</div>';
+  h+='<div class="k43-fuss"><span class="k43-hint" style="text-align:center">Danach am Schreibtisch: Kaffee trinken → Frühstücken → Tagesplanung</span><button type="button" class="k43-btn" data-k43tagesplanung="1">📋 Zur Tagesplanung</button></div>';
+  return h;
+}
+/* ── 4.4 · 📋 Tagesplanung (Zielbilder 03–05) und Tagesplanung zwischendurch (Zielbild 07) ── */
+function k43TP(){ const T=k43Tag(); if(!T) return null; if(!T.tagesplanung || typeof T.tagesplanung!=='object') T.tagesplanung={ morgenTs:null, zustand:null, gestern:{}, themen:[], planTs:null, freigabeTs:null, hinweise:[] }; return T.tagesplanung; }
+function k43TagesplanungOeffnen(){
+  const k=k43TagesplanungKarte(); if(!k){ toast('Karte Tagesplanung fehlt'); return; } const P=k43TP(); if(!P){ toast('Kein offener Tag — erst Aufstehen'); return; }
+  k43TagesplanungSatzSetzen();
+  const morgen=!P.morgenTs;   // K11: die Morgenansicht genau einmal je App-Tag, sonst immer „zwischendurch“
+  if(!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id)) fokusStarten(k.id, null, { k43:true });   // K2/K5: läuft als Karte mit Zeit vom Öffnen bis zum Start der nächsten Karte
+  if(morgen){ P.morgenTs=jetztIso(); saveTag(); k43SpezialOeffnen('tagesplanung', 1); } else k43SpezialOeffnen('zwischendurch');
+}
+function k43Schritte(n){ return '<div class="k43-schritte" aria-hidden="true">'+[1,2,3,4].map(i=>'<div style="background:'+(i<=n?FARBE.GRUEN:'#243349')+'"></div>').join('')+'</div>'; }
+function k43Zustand(){ const P=k43TP(); if(!P) return { fitness:3, motivation:3, schlafStd:null }; if(!P.zustand){ const mo=(S.tag && S.tag.morgen)||{}; P.zustand={ fitness:3, motivation:3, schlafStd:mo.schlafMin!=null ? Math.round(num(mo.schlafMin)/60*10)/10 : null, ts:null }; } return P.zustand; }
+/* Wirkung von Zustand auf das Tagesziel: Einstellung engine43.zustandZiel (Gewichte je Punkt über 3 und Grenze in %), Startwert 0 = keine Verschiebung */
+function k43ZielWirkung(){ const E=k43Einst().zustandZiel, z=k43Zustand(), bedarf=num(S.settings.schlafBedarfStd,7);
+  const w=num(E.fitness)*(num(z.fitness)-3)+num(E.motivation)*(num(z.motivation)-3)+num(E.schlaf)*((z.schlafStd!=null ? num(z.schlafStd) : bedarf)-bedarf);
+  const max=Math.max(0, num(E.maxProzent)), pct=Math.max(-max, Math.min(max, w)); return { aktiv:!!(num(E.fitness)||num(E.motivation)||num(E.schlaf)), prozent:pct }; }
+function k43Gestern(){ const P=k43TP(), a=(k43Tag()||{}).aufstehen||{}; const vortag=a.vortag||anVorTage(heuteApp(),1); const hist=(S.historie||[]).filter(h=>h && h.datum===vortag && !h.luecke), tids=new Set(hist.map(h=>h.tagId));
+  const ids=new Set(); (S.intraday||[]).forEach(e=>{ if(!e || !e.kartenId) return; if(e.tagId ? tids.has(e.tagId) : belFensterDatum(e.ts)===vortag){ if(e.typ==='timer'||e.typ==='autopause'||e.typ==='tick'||e.typ==='abhaken') ids.add(e.kartenId); } });
+  S.karten.forEach(k=>{ if(k.status==='offen' && k.faelligkeit===vortag && !karteRuht(k)) ids.add(k.id); });
+  const karten=[...ids].map(id=>S.karten.find(k=>k.id===id)).filter(k=>k && k.status!=='archiviert' && !karteVerborgen(k) && !istSonderRolle(k) && !k.rolle);
+  const je={}; karten.forEach(k=>{ const t=k43Thema(k), key=t.abteilung+'|'+t.thema; if(!je[key]) je[key]={ key, thema:t.thema, abteilung:t.abteilung, art:t.art, karten:[], min:0 }; je[key].karten.push(k); je[key].min+=k43MinAmTag(k, tids, vortag); });
+  return { vortag, themen:Object.values(je).sort((a,b)=>b.min-a.min), entscheid:(P && P.gestern)||{} }; }
+function k43MinAmTag(k, tids, datum){ let m=0; (S.intraday||[]).forEach(e=>{ if(!e || e.kartenId!==k.id) return; if(e.tagId ? tids.has(e.tagId) : belFensterDatum(e.ts)===datum) m+=Math.max(num(e.minuten), num(e.tickMin)); }); return Math.round(m); }
+function k43LetzteBearbeitung(k, tids){ let best=null; (S.intraday||[]).forEach(e=>{ if(!e || e.kartenId!==k.id || !tids.has(e.tagId)) return; if(!best || String(e.ts)>String(best)) best=e.ts; }); return best; }
+function k43Themen(){ const je={}; S.karten.forEach(k=>{ if(k.status!=='offen' || karteRuht(k) || karteVerborgen(k) || istSonderRolle(k) || k.rolle) return; const t=k43Thema(k), key=t.abteilung+'|'+t.thema; if(!je[key]) je[key]={ key, thema:t.thema, abteilung:t.abteilung, art:t.art, n:0, prio:0 }; je[key].n++; je[key].prio=Math.max(je[key].prio, num(k.prio,3)); });
+  return Object.values(je).sort((a,b)=>(b.prio-a.prio) || (b.n-a.n) || a.thema.localeCompare(b.thema)); }
+function k43ThemenWahl(){ const P=k43TP(); return (P && Array.isArray(P.themen)) ? P.themen : []; }
+/* Tagesplan aus dem Chat: letzte Antwort des Trainers im Tagesgespräch mit einem Codeblock ```tagesplan ``` */
+function k43PlanAusChat(){ const kanal=f12TrainerKanal(); if(!kanal) return { plan:null, grund:'Chat-Kanäle laden …' }; const rows=f12Verlauf(kanal, f12TagGespraech())||[];
+  for(let i=rows.length-1;i>=0;i--){ const r=rows[i]; if(String(r.Von||'')==='Pascal' || String(r.Art||'')==='Hinweis') continue; const t=f12Text(kanal, r); const m=t.match(/```tagesplan\s*([\s\S]*?)```/); if(!m) continue;
+    try{ const p=JSON.parse(m[1]); if(p && Array.isArray(p.bloecke)) return { plan:p, zeile:r, text:t.replace(/```tagesplan[\s\S]*?```/,'').trim() }; }catch(e){ return { plan:null, grund:'Tagesplan-Block nicht lesbar', zeile:r }; } }
+  return { plan:null, grund:null }; }
+function k43BlockTyp(b){ const id=String((b && (b.block||b.name))||'').toLowerCase(); return /senke|privat|erhol/.test(id) ? 'senke' : /over|abend/.test(id) ? 'over' : /rest/.test(id) ? 'rest' : 'fokus'; }
+function k43PlanMin(p){ return (p.bloecke||[]).reduce((a,b)=>a+(b.karten||[]).reduce((x,c)=>x+num(c.min),0),0); }
+function k43Blockiert(k){ const v=k.vorgaengerAppId ? S.karten.find(x=>x.id===k.vorgaengerAppId) : null; return (v && v.status==='offen') ? v : null; }
+function k43PlanPrognose(plan){ let p=0; (plan.bloecke||[]).forEach(b=>(b.karten||[]).forEach(c=>{ const k=S.karten.find(x=>x.id===c.id); if(k){ const satz=leiterSatz(k); p+=num(c.min)/60*satz+e42Bonus(k); } })); return Math.round(p); }
+/* Zeitstrahl nach Zielbild 05: Block als Hintergrundfarbe mit kleiner Überschrift, Thema als Kopf, Karte mit Startuhrzeit und Dauer; opt.start = ▶ je Karte */
+function k43ZeitstrahlHtml(plan, opt){ opt=opt||{}; let h='', unbekannt=0;
+  (plan.bloecke||[]).forEach(b=>{ const typ=k43BlockTyp(b), karten=b.karten||[], dauer=karten.reduce((a,c)=>a+num(c.min),0);
+    let inner='', thema=null; karten.forEach(c=>{ const k=S.karten.find(x=>x.id===c.id);
+      if(!k){ unbekannt++; inner+='<div class="k43-r"><span class="k43-zeit mono">'+esc(c.start||'')+'</span><div class="k43-k rot"><div><span class="kt">Karte nicht gefunden</span><span class="km">'+esc(String(c.id||'').slice(0,12))+'</span></div><span class="dauer">'+num(c.min)+' Min.</span></div></div>'; return; }
+      const t=k43Thema(k), onr=!!c.onramp, bl=k43Blockiert(k), fam=k.domain==='privat' ? 'priv' : '';
+      if(!onr){ const key=t.abteilung+'|'+t.thema; if(key!==thema){ thema=key; const nT=karten.filter(x=>!x.onramp && S.karten.some(y=>y.id===x.id && k43Thema(y).thema===t.thema)).length; inner+='<span class="k43-th">'+esc(t.thema)+' <span>'+esc(t.abteilung)+(nT ? ' · '+nT+' Karte'+(nT===1?'':'n') : '')+'</span></span>'; } }
+      const laeuft=uhrLaeuftAuf(k), erl=kartenStatusHeute(k)==='erledigt';
+      inner+='<div class="k43-r"><span class="k43-zeit mono">'+esc(c.start||'')+'</span><div class="k43-k '+fam+(onr?' on':'')+(bl?' blo':'')+(erl?' erl':'')+'"><div><span class="kt">'+esc(k.titel||'')+'</span><span class="km"'+(onr?' style="color:'+FARBE.GRUEN+'"':bl?' style="color:'+FARBE.GELB+'"':'')+'>'+(onr ? 'Onramp' : bl ? '⏳ frei nach '+esc(String(bl.titel||'').slice(0,28)) : (k.prio ? 'Prio '+num(k.prio)+' · ' : '')+fmtP(leiterSatz(k))+' P/h'+(k43PrioGeerbt(k) ? ' · <span style="color:'+FARBE.BLAU_HELL+'">⬆ Prio '+num(k.prio)+' geerbt</span>' : ''))+'</span></div><span class="dauer">'+(erl ? '✓' : num(c.min)+' Min.')+'</span>'+(opt.start && !erl ? '<button type="button" class="k43-start" data-k43start="'+esc(k.id)+'" aria-label="Starten">'+(laeuft?'⏸':'▶')+'</button>' : '')+'</div></div>'; });
+    h+='<div class="k43-block '+typ+'"><span class="bt">'+esc(b.name||b.block||'Block')+(dauer ? ' · '+hMin(dauer)+' Std.' : '')+(b.von ? ' · ab '+esc(b.von) : '')+'</span>'+(inner||'<div class="k43-r"><span class="k43-zeit mono">'+esc(b.von||'')+'</span><span class="k43-hint" style="padding-top:4px">leer</span></div>')+'</div>'; });
+  return { html:h, unbekannt }; }
+/* T5 · Prio-Vererbung: ein Vorgänger hat mindestens die Prio seines höchsten offenen Nachfolgers (automatisch, Info in der Tagesplanung) */
+function k43PrioVererben(){ const out=[]; S.karten.forEach(n=>{ if(n.status!=='offen' || !n.vorgaengerAppId) return; const v=S.karten.find(x=>x.id===n.vorgaengerAppId); if(!v || v.status!=='offen') return; const np=num(n.prio,3), vp=num(v.prio,3); if(np>vp){ v.prio=np; v.prioGeerbtVon=n.id; beruehre(v); out.push({ karte:v, von:n }); } });
+  if(out.length) saveKarten(); return out; }
+function k43PrioGeerbt(k){ return !!(k && k.prioGeerbtVon && S.karten.some(x=>x.id===k.prioGeerbtVon && x.status==='offen')); }
+function k43TagesplanungHtml(){
+  const u=k43Ui(), P=k43TP(); if(!P) return '<div class="leer">Kein offener Tag</div>'; const st=Math.max(1, Math.min(4, num(u.schritt,1))), k=k43TagesplanungKarte(), wecker=k43WeckerHtml('Fokus 1 startet');
+  if(st===1){ const z=k43Zustand(), w=k43ZielWirkung(), g=diaGroessen(), a=(k43Tag()||{}).aufstehen||{}, G=k43Gestern(), sn=tagSnapshot(G.vortag), zielP=sn && num(sn.zielDfm)>0 ? Math.round(num(sn.punkteDfm!=null?sn.punkteDfm:sn.punkteBilanz)/num(sn.zielDfm)*100) : null, wechsel=k43Themenwechsel(G.vortag), geerbt=k43PrioVererben();
+    let h=wecker+k43Kopf('Systemkarte · Tagesplanung · Schritt 1 von 4', 'Wie startest du heute?')+k43Schritte(1);
+    const regler=(id, lab, val, min, max, step, txt)=>'<div class="k43-regler"><label for="'+id+'"><span>'+lab+'</span><b'+(typeof txt==='string'?' class="mono"':'')+'>'+(txt!=null?txt:val+' / '+max)+'</b></label><input id="'+id+'" type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="'+val+'" data-k43zustand="'+id.slice(3).toLowerCase()+'"></div>';
+    h+=k43Box('Zustand', regler('k43Fitness','Fitness',num(z.fitness,3),1,5,1)+regler('k43Motivation','Motivation',num(z.motivation,3),1,5,1)+regler('k43Schlaf','Schlaf (aus der Schlafuhr)',z.schlafStd!=null?num(z.schlafStd):0,0,12,0.5,hMin((z.schlafStd!=null?num(z.schlafStd):0)*60))+
+      '<span class="k43-hint">Schlafschuld 7 Tage: <b style="color:var(--txt)">'+hMin(num(schlafZustand().schuldStd)*60)+' Std.</b> · Werte von Hand änderbar</span>');
+    h+=k43Box('Wirkung auf dein Ziel heute', w.aktiv ? '<div class="k43-nacht"><span class="mono" style="color:'+FARBE.GRAU+';text-decoration:line-through">'+fmtP(g.zielDfm)+'</span><b class="mono" style="color:'+FARBE.BLAU_HELL+'">'+fmtP(Math.round(num(g.zielDfm)*(1+w.prozent/100)))+'</b><span style="color:'+(w.prozent>=0?FARBE.GRUEN:FARBE.ORANGE)+'">'+(w.prozent>=0?'+':'')+Math.round(w.prozent)+' % DFM</span></div><span class="k43-hint">Privat bleibt bei '+fmtP(g.zielPrivat)+'.</span>' : '<span class="k43-hint">Wirkung auf dein Ziel: noch nicht eingestellt (engine43.zustandZiel).</span>', 'border-color:'+FARBE.BLAU);
+    h+=k43Box('Gestern in Zahlen', k43Zahl3([{ w:zielP!=null ? zielP+' %' : '—', s:'Tagesziel DFM', c:zielP!=null && zielP>=100 ? FARBE.GRUEN : null },{ w:String(G.themen.length), s:'Themen' },{ w:String(wechsel), s:'Themenwechsel' }]));
+    const hw=[]; (a.gestoppt||[]).forEach(x=>hw.push('↺ „'+esc(String(x.titel).slice(0,40))+'“ lief über Nacht und wurde gestoppt.')); geerbt.forEach(x=>hw.push('⬆ „'+esc(String(x.karte.titel).slice(0,40))+'“ hat Prio '+num(x.karte.prio)+' geerbt (von „'+esc(String(x.von.titel).slice(0,30))+'“). <a href="#" data-detail="'+esc(x.karte.id)+'">Ändern</a>')); hw.push('✓ '+num(a.routinen)+' Routinen zurückgesetzt');
+    h+=k43Box('Hinweise · '+hw.length, '<div class="k43-zeilen">'+hw.map(x=>'<span>'+x+'</span>').join('')+'</div>');
+    h+='<div class="k43-fuss"><button type="button" class="k43-btn" data-k43schritt="2">Weiter: Gestern durchgehen</button></div>'; return h; }
+  if(st===2){ const G=k43Gestern(), tids=new Set((S.historie||[]).filter(h=>h && h.datum===G.vortag).map(h=>h.tagId)), offen=G.themen.reduce((a,t)=>a+t.karten.filter(k=>k.status==='offen').length,0);
+    let h=k43Kopf('Tagesplanung · Schritt 2 von 4', 'Gestern nach Themen', offen+' offene Karte'+(offen===1?'':'n')+' aus „heute bearbeitet“ · Was du hier änderst, wird auf gestern gebucht.')+k43Schritte(2);
+    if(!G.themen.length) h+='<div class="leer">Gestern wurde nichts bearbeitet oder geplant.</div>';
+    G.themen.forEach(t=>{ const kn=(id, akt)=>{ const e=G.entscheid[id]||{}; return '<div class="k43-akt">'+[['heute','Heute'],['schieben', e.was==='schieben' && e.datum ? esc(k43Datum(e.datum)) : 'Schieben'],['erledigt','Erledigt']].map(([w,l])=>'<button type="button" class="a'+(w==='erledigt'?' ok':'')+(e.was===w?' an':'')+'" data-k43gestern="'+esc(id)+'" data-k43was="'+w+'">'+l+'</button>').join('')+'</div>'; };
+      h+='<div class="k43-thema"><div class="k43-tkopf"><div><span class="tname">'+esc(t.thema)+'</span><span class="tsub">'+esc(t.abteilung)+' · '+t.karten.length+' Karte'+(t.karten.length===1?'':'n')+(t.min ? ' · gestern '+fmtDauer(t.min) : ' · gestern geplant, nicht begonnen')+'</span></div>'+kn('thema:'+t.key)+'</div>';
+      t.karten.forEach(k=>{ const erl=k.status==='erledigt', bl=k43Blockiert(k), lb=k43LetzteBearbeitung(k, tids);
+        h+='<div class="k43-k'+(k.domain==='privat'?' priv':'')+(bl?' blo':'')+'"><div><span class="kt">'+esc(k.titel||'')+'</span><span class="km"'+(erl?' style="color:'+FARBE.GRUEN+'"':'')+'>'+(erl ? '✓ erledigt'+(lb ? ' · gebucht auf gestern '+k43Uhr(lb) : '') : bl ? '⏳ blockiert, bis „'+esc(String(bl.titel).slice(0,30))+'“ erledigt ist' : (k.prio ? 'Prio '+num(k.prio) : '')+(k.faelligkeit && k.faelligkeit<heuteApp() ? ' · Frist '+esc(anKurzDatum(k.faelligkeit))+'. überschritten' : ''))+'</span></div></div>'+(erl ? '' : kn(k.id)); });
+      h+='</div>'; });
+    h+='<div class="k43-fuss"><button type="button" class="k43-btn" data-k43schritt="3">Weiter: Themen für heute</button></div>'; return h; }
+  const themen=k43Themen(), wahl=k43ThemenWahl(), R=k43PlanAusChat(), plan=R.plan, zs=plan ? k43ZeitstrahlHtml(plan, { start:false }) : null, prog=plan ? k43PlanPrognose(plan) : null, g=diaGroessen();
+  let h=wecker+k43Kopf('Tagesplanung · Schritt '+(st===3?'3':'3–4')+' von 4', 'Dein Tag')+k43Schritte(st);
+  h+='<p class="k43-lab">Themen heute</p><div class="k43-chips">'+themen.map(t=>'<button type="button" class="chip'+(wahl.indexOf(t.key)>=0?' an':'')+'" data-k43thema="'+esc(t.key)+'">'+esc(t.thema)+'</button>').join('')+(wahl.filter(w=>!themen.some(t=>t.key===w)).map(w=>'<button type="button" class="chip an" data-k43thema="'+esc(w)+'">'+esc(w.split('|')[1]||w)+'</button>').join(''))+'<button type="button" class="chip" data-k43themaneu="1">+ Thema</button></div>';
+  if(st===3 || !plan){ h+='<div class="k43-fuss"><span class="k43-hint">Der Trainer bekommt die gewählten Themen im Tagesgespräch und antwortet mit einem Tagesplan (Codeblock tagesplan).</span><button type="button" class="k43-btn" data-k43planan="1"'+(wahl.length?'':' disabled')+'>'+(P.planTs ? 'Themen erneut an den Trainer' : 'Plan beim Trainer anfordern')+'</button></div>'; }
+  if(st===4 || plan){ if(plan){ h+='<p class="k43-lab" style="margin-top:4px">Vorschlag Trainer · Prognose <span class="mono" style="color:'+FARBE.BLAU_HELL+'">'+fmtP(prog)+' / '+fmtP(g.zielDfm)+'</span></p>'+zs.html; if(zs.unbekannt) h+='<div class="k43-hint" style="color:'+FARBE.ROT+'">'+zs.unbekannt+' Karte'+(zs.unbekannt===1?'':'n')+' nicht gefunden — Freigabe gesperrt.</div>'; }
+    else h+='<div class="leer">'+(R.grund ? esc(R.grund) : (P.planTs ? 'Der Trainer ist angefragt — sein Plan erscheint hier und im Chat.' : 'Noch kein Plan angefragt.'))+'</div>';
+    h+=k43ChatAntwortHtml(R.text, 'Antworten oder ändern …');
+    h+='<div class="k43-fuss"><button type="button" class="k43-btn gruen" data-k43freigeben="1"'+(plan && !zs.unbekannt ? '' : ' disabled')+'>Freigeben · Ketten anlegen · Fokus 1 starten</button></div>'; }
+  return h;
+}
+function k43Themenwechsel(datum){ const tids=new Set((S.historie||[]).filter(h=>h && h.datum===datum).map(h=>h.tagId)); let letzte=null, n=0;
+  (S.intraday||[]).filter(e=>e && e.kartenId && (e.tagId ? tids.has(e.tagId) : belFensterDatum(e.ts)===datum) && (e.typ==='timer'||e.typ==='autopause')).sort((a,b)=>String(a.ts)<String(b.ts)?-1:1).forEach(e=>{ const k=S.karten.find(x=>x.id===e.kartenId); if(!k || istSonderRolle(k)) return; const t=k43Thema(k).thema; if(letzte!=null && t!==letzte) n++; letzte=t; }); return n; }
+/* Antwortfeld wie im Chat: die Nachricht geht an den Trainer (Tagesgespräch); die letzte Trainer-Zeile steht darüber */
+function k43ChatAntwortHtml(text, platzhalter){ return (text ? '<div class="k43-msg">Trainer: '+esc(String(text).replace(/\s+/g,' ').slice(0,300))+'</div>' : '')+'<div class="k43-antwort"><input id="k43Antwort" placeholder="'+esc(platzhalter||'Nachricht an den Trainer …')+'"><button type="button" aria-label="Senden" data-k43senden="1">↑</button></div>'; }
+function k43Senden(text, anlass){ const t=String(text||'').trim(); if(!t) return; f12TrainerSenden(t, { anlass:anlass||'Chat' }); haptik(8); toast('An den Trainer gesendet'); }
+function k43PlanAnfordern(){ const P=k43TP(); if(!P) return; const wahl=k43ThemenWahl(); if(!wahl.length){ toast('Erst Themen wählen'); return; }
+  const namen=wahl.map(w=>w.split('|')[1]||w), z=k43Zustand(); P.planTs=jetztIso(); P.zustand=Object.assign(z, { ts:z.ts||jetztIso() }); saveTag();
+  k43Senden('Tagesplanung '+k43Datum(heuteApp())+': Themen heute: '+namen.join(', ')+'. Zustand: Fitness '+num(z.fitness)+'/5, Motivation '+num(z.motivation)+'/5'+(z.schlafStd!=null ? ', Schlaf '+hMin(num(z.schlafStd)*60)+' Std.' : '')+'. Bitte den Tagesplan als Codeblock tagesplan (Blöcke aus den Einstellungen, Startuhrzeit und Dauer je Karte, Onramps vor jedem Themenwechsel).', 'Tagesplan');
+  k43Ui().schritt=4; saveUi(); e1Rendern(); }
+function k43GesternEntscheiden(ziel, was){ const P=k43TP(); if(!P) return; const G=k43Gestern(), tids=new Set((S.historie||[]).filter(h=>h && h.datum===G.vortag).map(h=>h.tagId)); const ids=ziel.indexOf('thema:')===0 ? ((G.themen.find(t=>t.key===ziel.slice(6))||{}).karten||[]).filter(k=>k.status==='offen').map(k=>k.id) : [ziel];
+  const anwenden=(datum)=>{ ids.forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(!k) return;
+      if(was==='heute'){ k.faelligkeit=heuteApp(); beruehre(k); if(!ketteHat(k.id)) ketteToggle(k.id); P.gestern[id]={ was:'heute', ts:jetztIso() }; }
+      else if(was==='schieben'){ k.faelligkeit=datum; k.schiebeZaehler=num(k.schiebeZaehler)+1; beruehre(k); P.gestern[id]={ was:'schieben', datum, ts:jetztIso() }; }
+      else if(was==='erledigt'){ if(k.status==='offen'){ k.status='erledigt'; k.erledigtTs=jetztIso(); k.erledigtAuf=G.vortag; k.tagId=[...tids][0]||k.tagId||null; beruehre(k); } P.gestern[id]={ was:'erledigt', ts:jetztIso(), ohneVerteilung:true }; } });   // ❓ 4.4: kein Karteileichen-Weg in der App — erledigt ohne Punkte und ohne Bonus-Verteilung, gezählt zu gestern
+    if(ziel.indexOf('thema:')===0) P.gestern[ziel]={ was, datum:datum||null, ts:jetztIso() };
+    saveKarten(); saveTag(); if(was==='erledigt') toast('Erledigt — gebucht ohne Bonus-Verteilung auf gestern (kein Karteileichen-Weg vorhanden)'); e1Rendern(); };
+  if(was==='schieben'){ const v=anVorTage(heuteApp(), -1); openSheet('↷ Schieben', '<p class="d">Auf welchen Tag?</p><div class="field"><input type="date" id="k43SchiebDatum" value="'+esc(v)+'" min="'+esc(heuteApp())+'" style="min-height:44px"></div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-k43schiebgo="'+esc(ziel)+'">Schieben</button>'); K43.schiebZiel={ ziel, anwenden }; return; }
+  anwenden(null); }
+/* Freigabe des Tagesplans (4.4): Tagesketten anlegen (5.2), Freigabe-Eintrag (2.2, Quelle tagesplan), Geplant für heute, erste Karte von Fokus 1 starten */
+function k43PlanFreigeben(){ const P=k43TP(), R=k43PlanAusChat(); if(!P || !R.plan){ toast('Kein Plan'); return; } const plan=R.plan, zs=k43ZeitstrahlHtml(plan, {}); if(zs.unbekannt){ toast('Freigabe gesperrt: Karte nicht gefunden'); return; }
+  const heute=heuteApp(), alle=[], kettenIds=[]; if(!Array.isArray(S.tagesketten)) S.tagesketten=[];
+  S.tagesketten=S.tagesketten.filter(c=>!(c.quelle==='tagesplan' && c.datum===heute));   // ein neuer Plan ersetzt die Tagesketten dieses Plans (nie die Morgen- oder eigenen Ketten)
+  (plan.bloecke||[]).forEach((b,i)=>{ const ids=(b.karten||[]).map(c=>c.id).filter(id=>S.karten.some(k=>k.id===id)), planInfo={}; (b.karten||[]).forEach(c=>{ planInfo[c.id]={ start:c.start||null, min:num(c.min), onramp:c.onramp===true }; });
+    const id='tk43-'+String(b.block||('block'+(i+1))).replace(/[^a-z0-9]/gi,'').toLowerCase()+'-'+heute; S.tagesketten.push({ id, name:(b.name||b.block||'Block')+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:String(b.block||''), von:b.von||null, karten:ids, plan:planInfo, quelle:'tagesplan' }); kettenIds.push(id); ids.forEach(x=>{ if(alle.indexOf(x)<0) alle.push(x); }); });
+  S.tagesketten.push({ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:alle.slice(), quelle:'tagesplan' }); kettenIds.push('tk43-tag-'+heute);
+  DB.set('tagesketten', S.tagesketten);
+  alle.forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(k && k.status==='offen'){ k.faelligkeit=heute; beruehre(k); if(!ketteHat(k.id)) ketteToggle(k.id); } }); saveKarten();
+  P.freigabeTs=jetztIso(); P.plan=plan; saveTag();
+  k43FreigabeMelden({ quelle:'tagesplan', titel:'Tagesplan '+anKurzDatum(heute)+'.', grund:'Tagesplanung '+heute+' · '+kettenIds.length+' Ketten', karten:alle.map(id=>({ id, aktion:'geändert' })), ketten:kettenIds.length });
+  // erste Karte von Fokus 1 starten (K2: die Tagesplanung endet damit)
+  const f1=(plan.bloecke||[]).find(b=>/fokus1|fokus 1/i.test(String(b.block||'')+' '+String(b.name||'')))||(plan.bloecke||[])[0]; const erste=f1 ? (f1.karten||[]).map(c=>S.karten.find(x=>x.id===c.id)).find(k=>k && k.status==='offen') : null;
+  if(erste){ const c=S.tagesketten.find(x=>x.quelle==='tagesplan' && x.datum===heute && x.karten.indexOf(erste.id)>=0); if(c){ S.ui.tkWahl=c.id; saveUi(); } fokusStarten(erste.id); toast('✅ Plan freigegeben · '+kettenIds.length+' Ketten · „'+String(erste.titel||'').slice(0,24)+'“ läuft'); }
+  else toast('✅ Plan freigegeben · '+kettenIds.length+' Ketten');
+  e1Schliessen(); renderAlles(); }
+/* Freigabe-Eintrag im Nummernkreis (2.2) über den Dienst; die Nummer kommt zurück und wird am Gespräch bzw. am Tag gemerkt */
+function k43FreigabeMelden(f){ const args={ quelle:f.quelle, titel:String(f.titel||'').slice(0,200), grund:f.grund||null, karten:(f.karten||[]).map(k=>({ id:String(k.id), aktion:k.aktion||'neu' })), gespraech:f.gespraech||null, kanal:f.kanal||null, appVersion:APP_VERSION };
+  if(!S.meta.freigaben || typeof S.meta.freigaben!=='object') S.meta.freigaben={};
+  const lokal={ ts:jetztIso(), quelle:f.quelle, titel:args.titel, karten:args.karten, ketten:f.ketten||null, pfId:f.pfId||null, gespraech:args.gespraech, nummer:null };
+  const key=f.pfId ? 'pf:'+f.pfId : f.quelle+':'+lokal.ts; S.meta.freigaben[key]=lokal; saveMeta();
+  return FSLive.senden('app:freigaben', args, { id:'freigabe-'+key }).then(r=>{ const a=r && r.antwort; if(a && a.id){ lokal.nummer=num(a.id); saveMeta(); try{ if(f.pfId && typeof f12KbNeuZeichnen==='function') f12KbNeuZeichnen(f.pfId); if(seiteAktuell()==='ketten') ebeneRendern(); }catch(e){} } return r; }).catch(()=>null); }
+/* ── Tagesplanung zwischendurch (Zielbild 07, K4): „Heute bis jetzt“, Live-Prognose, offene Karten des vorbeigegangenen Blocks zuerst ── */
+function k43BlockVorbei(){ const heute=heuteApp(), jetzt=belX(jetztIso()); let best=null; (S.tagesketten||[]).forEach(c=>{ if(c.art!=='block' || c.datum!==heute || !c.von) return; const von=kalStundeVonHHMM(c.von); const n=(S.tagesketten||[]).filter(x=>x.art==='block' && x.datum===heute && x.von).map(x=>kalStundeVonHHMM(x.von)).filter(v=>v>von); const bis=n.length ? Math.min(...n) : null; if(bis==null || jetzt<bis) return; const offen=c.karten.map(id=>S.karten.find(k=>k.id===id)).filter(k=>k && k.status==='offen'); if(offen.length && (!best || bis>best.bis)) best={ kette:c, bis, offen }; }); return best; }
+function kalStundeVonHHMM(s){ const t=String(s||'').split(':'); return num(t[0])+num(t[1])/60; }
+function k43ZwischendurchHtml(){
+  const P=k43TP()||{}, g=diaGroessen(), T=tagesprognoseHeute(), bv=k43BlockVorbei(), R=k43PlanAusChat(), plan=(R.plan && R.zeile && String(R.zeile.Zeitstempel||'')>String(P.freigabeTs||'')) ? R.plan : (P.plan||null), heute=heuteApp();
+  const aktuell=(S.tagesketten||[]).filter(c=>c.art==='block' && c.datum===heute), jetztBlock=aktuell.filter(c=>c.von && kalStundeVonHHMM(c.von)<=belX(jetztIso())).sort((a,b)=>kalStundeVonHHMM(b.von)-kalStundeVonHHMM(a.von))[0];
+  const wechsel=k43Themenwechsel(heute), k=k43TagesplanungKarte(), seit=(S.fokus && S.fokus.laeuft && k && S.fokus.karteId===k.id) ? S.fokus.startMs : null;
+  let h=k43WeckerHtml('Weiter')+k43Kopf('Systemkarte · Tagesplanung zwischendurch'+(seit ? ' · läuft seit '+k43Uhr(new Date(seit).toISOString())+' · <span class="mono">'+Math.round((Date.now()-seit)/60000)+' Min.</span>' : ''), bv ? esc(bv.kette.name.replace(/ · .*$/,''))+' ist vorbei' : 'Tagesplanung zwischendurch', bv ? 'Der Trainer hat dich hergeholt: '+bv.offen.length+' Karte'+(bv.offen.length===1?'':'n')+' aus '+esc(bv.kette.name.replace(/ · .*$/,''))+' '+(bv.offen.length===1?'ist':'sind')+' noch offen.' : 'Umplanen im Chat oder direkt starten.', '← Fokus');
+  const bk=jetztBlock ? jetztBlock.karten.map(id=>S.karten.find(x=>x.id===id)).filter(Boolean) : [], bkErl=bk.filter(x=>kartenStatusHeute(x)==='erledigt').length;
+  h+=k43Box('Heute bis jetzt', k43Zahl3([{ w:fmtP(g.dfm), s:'von '+fmtP(g.zielDfm)+' DFM', c:FARBE.BLAU_HELL },{ w:jetztBlock ? bkErl+' / '+bk.length : '—', s:'Karten '+(jetztBlock ? esc(jetztBlock.name.replace(/ · .*$/,'')) : 'Block') },{ w:String(wechsel), s:'Themenwechsel', c:wechsel===0?FARBE.GRUEN:null }])+(k43LaengsterFokus() ? '<span class="k43-hint">'+fmtDauer(k43LaengsterFokus().min)+' am Stück'+(k43LaengsterFokus().titel ? ' an '+esc(String(k43LaengsterFokus().titel).slice(0,30)) : '')+'.</span>' : ''));
+  h+=k43Box('Wirkung auf deinen Tag', '<div class="k43-nacht"><span style="color:'+FARBE.GRAU+'">Prognose</span><b class="mono" style="color:'+FARBE.BLAU_HELL+'">'+fmtP(T.prognose)+'</b><span style="color:'+(T.diff>=0?FARBE.GRUEN:FARBE.ORANGE)+'">'+(T.diff>=0 ? 'Ziel '+fmtP(T.ziel)+' bleibt erreichbar' : fmtP(Math.abs(T.diff))+' unter dem Ziel')+'</span></div><span class="k43-hint">Live aus Ketten und Blöcken (K7).</span>', 'border-color:'+FARBE.BLAU);
+  h+='<div class="k43-tabs"><button type="button" class="tab an">Vorschlag</button><button type="button" class="tab" data-k43kalender="1">Kalender</button></div>';
+  if(bv){ h+='<div class="k43-block rest"><span class="bt">Rest '+esc(bv.kette.name.replace(/ · .*$/,''))+' · '+hMin(bv.offen.reduce((a,x)=>a+Math.max(0, num(x.sollMin)-heuteInvestiertMin(x)),0))+' Std.</span>'+bv.offen.map(x=>'<div class="k43-r"><span class="k43-zeit mono">'+k43Uhr(jetztIso())+'</span><div class="k43-k'+(x.domain==='privat'?' priv':'')+'"><div><span class="kt">'+esc(x.titel||'')+'</span><span class="km">'+(x.prio?'Prio '+num(x.prio)+' · ':'')+fmtP(leiterSatz(x))+' P/h</span></div><span class="dauer">'+Math.round(Math.max(0, num(x.sollMin)-heuteInvestiertMin(x)))+' Min.</span><button type="button" class="k43-start" data-k43start="'+esc(x.id)+'" aria-label="Starten">▶</button></div></div>').join('')+'</div>'; }
+  if(plan){ const rest={ bloecke:(plan.bloecke||[]).map(b=>({ block:b.block, name:b.name, von:b.von, karten:(b.karten||[]).filter(c=>{ const x=S.karten.find(y=>y.id===c.id); return x && x.status==='offen' && !(bv && bv.offen.some(o=>o.id===x.id)); }) })).filter(b=>b.karten.length) }; h+=k43ZeitstrahlHtml(rest, { start:true }).html; }
+  else h+='<div class="leer">Kein Tagesplan für heute. Umplanen im Chat.</div>';
+  h+=k43ChatAntwortHtml(R.text, 'Umplanen im Chat …')+'<span class="k43-hint">Diese Ansicht läuft als Karte mit, bis du irgendwo die nächste Karte startest.</span>';
+  const n=k43NaechsteKarte(bv, plan); h+='<div class="k43-fuss"><span class="k43-lab" style="text-align:center">Nächster Schritt</span>'+(n ? '<button type="button" class="k43-btn gruen" data-k43start="'+esc(n.id)+'">▶ '+esc(String(n.titel||'').slice(0,32))+(num(n.sollMin)>0 ? ' · '+Math.round(num(n.sollMin))+' Min.' : '')+'</button>' : '<button type="button" class="k43-btn" data-e1zu="1">Zurück zum Fokus</button>')+'</div>';
+  return h;
+}
+function k43NaechsteKarte(bv, plan){ if(bv && bv.offen.length) return bv.offen[0]; if(plan){ for(const b of (plan.bloecke||[])){ for(const c of (b.karten||[])){ const k=S.karten.find(x=>x.id===c.id); if(k && k.status==='offen') return k; } } } const o=aktiveKetteKarten().filter(k=>k.status==='offen'); return o[0]||null; }
+/* K4 · Block vorbei: erkannt aus den heutigen Block-Ketten (von-Zeit) und aus der Nachricht des Trainers „<Block> ist vorbei, n Karten offen. Tagesplanung zwischendurch?“ */
+function k43BlockVorbeiPruefen(){ const T=k43Tag(); if(!T || !tagOffen()) return; if(!T.blockVorbei) T.blockVorbei={};
+  let anlass=null; const bv=k43BlockVorbei(); if(bv && !T.blockVorbei[bv.kette.id]) anlass={ key:bv.kette.id, text:bv.kette.name.replace(/ · .*$/,'')+' ist vorbei, '+bv.offen.length+' Karten offen.' };
+  try{ const kanal=f12TrainerKanal(); if(kanal && F12.ungelesen && F12.ungelesen[kanal.id]) F12.ungelesen[kanal.id].forEach(r=>{ const t=String(r.Text||''); if(/ist vorbei, \d+ Karten? offen\. Tagesplanung zwischendurch\?/.test(t) && !T.blockVorbei['chat:'+r.id]) anlass={ key:'chat:'+r.id, text:t.replace(/\s+/g,' ').slice(0,80) }; }); }catch(e){}
+  if(!anlass) return; T.blockVorbei[anlass.key]=jetztIso(); saveTag();
+  if(e1Art()==='spezial' && (k43Ui().art==='blockade' || k43Ui().art==='tagesplanung')) return;   // eine laufende Spezialansicht wird nicht verdrängt
+  toast('⏱ '+anlass.text+' Tagesplanung zwischendurch'); k43Ton(); try{ if('Notification' in window && Notification.permission==='granted') new Notification('Block vorbei', { body:anlass.text+' Tagesplanung zwischendurch?', tag:'fokus-block' }); }catch(e){}
+  k43TagesplanungOeffnen(); }
+/* ── 4.5 · 🧱 ADHS Blockade (Zielbild 06) ── */
+function k43BL(){ const T=k43Tag(); if(!T) return null; if(!T.blockade || typeof T.blockade!=='object' || T.blockade.endeTs) T.blockade={ startTs:null, endeTs:null, antworten:{ q1:{ wahl:'', text:'' }, q2:{ wahl:'', text:'' }, q3:{ wahl:'', text:'' } }, gesendet:false }; return T.blockade; }
+function k43BlockadeOeffnen(){ const k=k43BlockadeKarte(); if(!k){ toast('Karte ADHS Blockade fehlt (Rolle blockade)'); return; } const B=k43BL(); if(!B){ toast('Kein offener Tag'); return; }
+  if(!B.startTs){ B.startTs=jetztIso(); saveTag(); }
+  if(!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id)) fokusStarten(k.id, null, { k43:true });   // die Karte läuft mit Zeit; Punkte unverändert wie bisher
+  k43SpezialOeffnen('blockade'); }
+const K43_FRAGEN=[{ id:'q1', frage:'Was ist passiert?', optionen:['Abgebogen','Pause zu lang','Komme nicht rein','Erschöpft'] },{ id:'q2', frage:'Wo stehst du gerade?', optionen:['Ziel','Werkzeug','Zustand','Ablenkung'] },{ id:'q3', frage:'Was würde jetzt helfen?', optionen:['Kleiner Einstieg','Bewegung','Echte Pause','Anderes Thema'] }];
+function k43Zurueckgeholt(){ const bk=k43BlockadeKarte(); if(!bk) return []; const l=(S.intraday||[]).filter(e=>e && e.kartenId && (e.typ==='timer'||e.typ==='autopause')).sort((a,b)=>String(a.ts)<String(b.ts)?-1:1), je={}; let vorher=null, nBlock=0;
+  l.forEach(e=>{ if(e.kartenId===bk.id){ vorher=e; nBlock++; return; } if(vorher && e.kartenId!==bk.id){ const k=S.karten.find(x=>x.id===e.kartenId); if(k && !istSonderRolle(k) && !k.rolle){ const o=je[k.id]||(je[k.id]={ k, n:0, min:0 }); o.n++; o.min+=num(e.minuten); } vorher=null; } });
+  return Object.values(je).sort((a,b)=>b.n-a.n).slice(0,3).map(o=>Object.assign(o, { gesamt:nBlock })); }
+function k43Insights(){ const g=diaGroessen(), T=tagesprognoseHeute(), erh=f4ErholungMinHeute(), erhZ=f4ErholungZiel(), B=f4Belastung(), r=e4Rang(), auf=Math.max(1, num(S.settings.rangAufstiegTage,7)), z=schlafZustand();
+  const heute=heuteApp(), wt=anWochentag(heute), mo=anVorTage(heute, wt); let wOk=0, wN=0, mOk=0, mN=0; for(let i=0;i<=wt;i++){ const d=anVorTage(mo,-i); const sn=tagSnapshot(d); if(!sn) continue; wN++; if(num(sn.zielDfm)>0 && num(sn.punkteDfm!=null?sn.punkteDfm:sn.punkteBilanz)>=num(sn.zielDfm)) wOk++; }
+  const m1=heute.slice(0,8)+'01'; for(let d=m1; d<=heute; d=anVorTage(d,-1)){ const sn=tagSnapshot(d); if(!sn) continue; mN++; if(num(sn.zielDfm)>0 && num(sn.punkteDfm!=null?sn.punkteDfm:sn.punkteBilanz)>=num(sn.zielDfm)) mOk++; }
+  return { g, T, erh, erhZ, B, rang:r, auf, woche:{ ok:wOk, n:wN }, monat:{ ok:mOk, n:mN }, schuld:num(z.schuldStd), schuldSinkt:!!(z.letzte && num(z.letzte.schuldNachStd)<num(z.letzte.schuldVorStd)) }; }
+function k43EndeSvg(I, neuPlan){ const W=338, H=150, start=num(I.g.startMs)||Date.now()-3600000, ende=Math.max(start+3600000, num(I.g.tagesEndeMs)||Date.now()+3600000), jetzt=Date.now(), x=t=>30+Math.max(0,Math.min(1,(t-start)/(ende-start)))*300;
+  const ist=num(I.g.dfm), ziel=Math.max(1, num(I.g.zielDfm)), geplant=Math.max(ist, num(I.T.endeDfm||I.T.prognose)), neu=neuPlan!=null ? Math.max(ist, neuPlan) : null, max=Math.max(ziel, geplant, neu||0, ist, 1)*1.05, y=v=>130-Math.max(0,Math.min(1,v/max))*110;
+  return '<svg width="100%" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Verläufe der DFM-Punkte bis zum Tagesende"><line x1="30" y1="'+y(ziel).toFixed(1)+'" x2="330" y2="'+y(ziel).toFixed(1)+'" stroke="#243349" stroke-dasharray="3 3"/><text x="0" y="'+(y(ziel)+4).toFixed(1)+'" fill="'+FARBE.GRAU+'" font-size="9">'+fmtP(ziel)+'</text><line x1="30" y1="130" x2="330" y2="130" stroke="#243349"/><text x="30" y="145" fill="'+FARBE.GRAU+'" font-size="9">'+k43Uhr(new Date(start).toISOString())+'</text><text x="296" y="145" fill="'+FARBE.GRAU+'" font-size="9">'+k43Uhr(new Date(ende).toISOString())+'</text>'+
+    '<polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+y(geplant).toFixed(1)+'" fill="none" stroke="'+FARBE.BLAU+'" stroke-width="2.5" stroke-dasharray="5 4"/>'+(neu!=null ? '<polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+y(neu).toFixed(1)+'" fill="none" stroke="'+FARBE.GRUEN+'" stroke-width="3"/>' : '')+'<polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+y(ist).toFixed(1)+'" fill="none" stroke="'+FARBE.GELB+'" stroke-width="2.5"/><polyline points="30,130 '+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+'" fill="none" stroke="'+FARBE.WEISS+'" stroke-width="1.5" stroke-opacity=".6"/><text x="0" y="'+(y(ist)+4).toFixed(1)+'" fill="'+FARBE.GRAU+'" font-size="9">'+fmtP(ist)+'</text></svg>'+
+    '<div class="k43-leg"><span><i style="background:'+FARBE.BLAU+'"></i>wie geplant: '+fmtP(geplant)+'</span>'+(neu!=null ? '<span><i style="background:'+FARBE.GRUEN+'"></i>neuer Plan: '+fmtP(neu)+'</span>' : '')+'<span><i style="background:'+FARBE.GELB+'"></i>nur Blockade/Erholung: '+fmtP(ist)+'</span></div>'; }
+function k43BlockadeHtml(){
+  const B=k43BL(), k=k43BlockadeKarte(), seit=B && B.startTs ? Math.round((Date.now()-Date.parse(B.startTs))/60000) : 0, P=k43TP()||{}, R=k43PlanAusChat(), neuPlan=(R.plan && R.zeile && B && String(R.zeile.Zeitstempel||'')>String(B.startTs||'')) ? R.plan : null, alt=P.plan||null;
+  let h='<div class="k43-nav"><button type="button" class="nav" data-e1zu="1">← Fokus</button><div><button type="button" class="nav" data-k43seite="statistik">Statistik</button><button type="button" class="nav" data-k43seite="belohnung">Shop</button></div></div>'+k43WeckerHtml('Weiter');
+  h+='<div class="k43-kz"><span class="k43-klein">Systemkarte · ADHS Blockade · läuft seit '+(B && B.startTs ? k43Uhr(B.startTs) : '—')+' · <span class="mono" style="color:'+FARBE.GELB+'">'+seit+' Min.</span></span><h1>Ich bin bei dir. Wir finden den Einstieg.</h1><span class="k43-sub">Die Blockade endet, sobald du hier eine Karte startest.</span></div>';
+  h+='<div class="k43-box">'+K43_FRAGEN.map(q=>{ const a=(B && B.antworten && B.antworten[q.id])||{ wahl:'', text:'' }; return '<p class="k43-f">'+q.frage+'</p><div class="k43-chips">'+q.optionen.map(o=>'<button type="button" class="chip'+(a.wahl===o?' an gelb':'')+'" data-k43frage="'+q.id+'" data-k43wahl="'+esc(o)+'">'+esc(o)+'</button>').join('')+'</div><input class="k43-ein" data-k43fragetext="'+q.id+'" value="'+esc(a.text||'')+'" placeholder="In eigenen Worten …">'; }).join('')+'</div>';
+  h+='<p class="k43-lab">Chat mit dem Trainer</p>'+k43ChatKurzHtml(f12TrainerKanal(), f12TagGespraech(), 'Schreib dem Trainer …');
+  const zh=k43Zurueckgeholt(); if(zh.length) h+='<p class="k43-lab" style="margin-top:4px">Was dich zuletzt zurückgeholt hat</p>'+zh.map(o=>'<div class="k43-k'+(o.k.domain==='privat'?' priv':'')+' on"><div><span class="kt">'+esc(o.k.titel||'')+'</span><span class="km">'+o.n+' von '+o.gesamt+' Mal zurück · Ø '+Math.round(o.min/Math.max(1,o.n))+' Min.</span></div><span class="dauer">'+(num(o.k.sollMin)>0 ? Math.round(num(o.k.sollMin))+' Min.' : '')+'</span><button type="button" class="k43-start" data-k43start="'+esc(o.k.id)+'" aria-label="Starten">▶</button></div>').join('');
+  const planZeig=neuPlan||alt; h+='<p class="k43-lab" style="margin-top:4px">'+(neuPlan ? 'Neuer Plan für den Resttag' : 'Plan für den Resttag')+'</p>';
+  if(planZeig){ const rest={ bloecke:(planZeig.bloecke||[]).map(b=>({ block:b.block, name:(neuPlan?'':'')+(b.name||b.block), von:b.von, karten:(b.karten||[]).filter(c=>{ const x=S.karten.find(y=>y.id===c.id); return x && x.status==='offen'; }) })).filter(b=>b.karten.length) }; h+=k43ZeitstrahlHtml(rest, { start:true }).html; } else h+='<div class="leer">Kein Tagesplan — der Trainer plant mit dir im Chat.</div>';
+  h+='<span class="k43-hint">▶ an einer Karte zählt genauso wie der Knopf unten: Zeit läuft, Punkte zählen, Blockade ist beendet. Gibst du vorher keinen neuen Plan frei, läuft der alte Plan weiter.</span>';
+  const I=k43Insights(), neuProg=neuPlan ? num(I.g.dfm)+k43PlanPrognose({ bloecke:(neuPlan.bloecke||[]).map(b=>({ karten:(b.karten||[]).filter(c=>{ const x=S.karten.find(y=>y.id===c.id); return x && x.status==='offen'; }) })) }) : null;
+  h+='<p class="k43-lab" style="margin-top:6px">Insights</p>';
+  h+=k43Box('', '<p class="k43-f">Heute geschafft</p>'+k43Zahl3([{ w:fmtP(I.g.dfm), s:'von '+fmtP(I.g.zielDfm)+' DFM', c:FARBE.BLAU_HELL },{ w:fmtP(I.g.privat), s:'von '+fmtP(I.g.zielPrivat)+' Privat', c:FARBE.LILA_HELL },{ w:Math.round(I.erh)+' Min.', s:'Erholung · Ziel '+Math.round(I.erhZ), c:FARBE.GRUEN }]));
+  h+=k43Box('', '<p class="k43-f">So endet dein Tag</p>'+k43EndeSvg(I, neuProg)+'<span class="k43-hint">'+(neuProg!=null ? (neuProg>=num(I.g.zielDfm) ? 'Mit dem neuen Plan erreichst du das Ziel.' : 'Mit dem neuen Plan fehlen dir noch '+fmtP(Math.max(0, num(I.g.zielDfm)-neuProg))+' Punkte zum Ziel.') : 'Ohne neuen Plan läuft der alte Plan weiter.')+'</span>');
+  const rz=I.rang.rang<10 ? e4RangSchwelle(I.rang.rang+1) : null, rp=rz ? Math.max(0, Math.min(1, num(I.rang.dauerlast)/rz)) : 1;
+  h+=k43Box('', '<p class="k43-f">Warum sich Weitermachen lohnt</p><div class="k43-zeile"><div><span>Rang R'+I.rang.rang+(rz ? ' → R'+(I.rang.rang+1) : '')+'</span><span class="mono">'+(rz ? 'noch '+Math.max(0, I.auf-num(I.rang.tageUeber))+' Tage über Schwelle' : 'höchster Rang')+'</span></div><div class="bar"><i style="width:'+Math.round(rp*100)+'%;background:'+FARBE.GOLD+'"></i></div></div>'+
+    '<div class="k43-zeile"><div><span>Woche: Tagesziel DFM</span><span class="mono">'+I.woche.ok+' von '+I.woche.n+' bisher</span></div><div class="bar"><i style="width:'+Math.round(I.woche.n ? I.woche.ok/I.woche.n*100 : 0)+'%;background:'+FARBE.BLAU+'"></i></div></div>'+
+    '<div class="k43-zeile"><div><span>Monat: Tagesziel DFM</span><span class="mono">'+I.monat.ok+' von '+I.monat.n+' bisher</span></div><div class="bar"><i style="width:'+Math.round(I.monat.n ? I.monat.ok/I.monat.n*100 : 0)+'%;background:'+FARBE.LILA+'"></i></div></div>');
+  h+=k43Box('', '<p class="k43-f">Erholung im Blick</p>'+k43Zahl3([{ w:hMin(I.schuld*60), s:'Schlafschuld'+(I.schuldSinkt?', sinkt':''), c:I.schuldSinkt?FARBE.GRUEN:null },{ w:Math.round(I.erh)+'/'+Math.round(I.erhZ), s:'Erholung heute' },{ w:I.B.ampel===FARBE.GRUEN ? 'grün' : I.B.ampel===FARBE.ROT ? 'rot' : I.B.ampel===FARBE.GRAU ? '—' : 'gelb', s:'Dauerlast 28 Tage', c:I.B.ampel }])+'<span class="k43-hint">'+(I.B.ampel===FARBE.ROT ? 'Die Last ist hoch — Erholung zuerst.' : 'Du bist nicht überlastet. Die Blockade ist ein Einstiegsproblem, kein Energieproblem. Kleiner Start reicht.')+'</span>');
+  const n=k43NaechsteKarte(null, neuPlan||alt); h+='<div class="k43-fuss"><span class="k43-lab" style="text-align:center">Nächster Schritt aus dem Chat</span>'+(n ? '<button type="button" class="k43-btn gruen" data-k43start="'+esc(n.id)+'">▶ '+esc(String(n.titel||'').slice(0,32))+(num(n.sollMin)>0 ? ' · '+Math.round(num(n.sollMin))+' Min.' : '')+'</button>' : '<button type="button" class="k43-btn" data-k43senden="1">Mit dem Trainer planen</button>')+'</div>';
+  return h;
+}
+function k43FrageSetzen(id, wahl, text){ const B=k43BL(); if(!B) return; const a=B.antworten[id]||(B.antworten[id]={ wahl:'', text:'' }); if(wahl!==undefined) a.wahl=(a.wahl===wahl ? '' : wahl); if(text!==undefined) a.text=String(text);
+  if(id==='q2' && wahl!==undefined && a.wahl){ const mf={ 'Ziel':'ziel','Werkzeug':'werkzeug','Zustand':'zustand','Ablenkung':'ablenkung' }[a.wahl]; const m=mf && K43_MATRIX_MITTE[mf]; if(m && tagOffen()) matrixPosSetzen(m[0], m[1], (k43BlockadeKarte()||{}).id, 'blockade'); }   // alles geht in die Matrix
+  saveTag(); if(wahl!==undefined) e1Rendern(); }
+/* beim Ende der Blockade: Antworten als Nachricht ins Tagesgespräch des Trainers (Tagebuch des Trainerstabs) */
+{ const _alt=k43SpezialBeendet; k43SpezialBeendet=function(k){ try{ const T=k43Tag(); if(k && k.rolle==='blockade' && T && T.blockade && !T.blockade.gesendet){ const a=T.blockade.antworten||{}; const txt=K43_FRAGEN.map(q=>{ const x=a[q.id]||{}; return (x.wahl||x.text) ? q.frage+' '+[x.wahl, x.text].filter(Boolean).join(' · ') : null; }).filter(Boolean);
+      if(txt.length){ T.blockade.gesendet=true; f12TrainerSenden('ADHS Blockade '+(T.blockade.startTs ? k43Uhr(T.blockade.startTs) : '')+'–'+k43Uhr(jetztIso())+': '+txt.join(' | '), { anlass:'Reflexion' }); } } }catch(e){} _alt(k); }; }
+/* eingebetteter Chat (K21): höchstens die letzten 4 Nachrichten, wächst nicht; „⤢ ganzer Verlauf“ öffnet den schwebenden Chat */
+function k43ChatKurzHtml(kanal, g, platzhalter, titel){ if(!kanal) return '<div class="leer">Chat-Kanäle laden …</div>'; const rows=(f12Verlauf(kanal, g)||[]).slice(-4);
+  return '<div class="k43-chat"><div class="k43-chatkopf"><span class="k43-lab">'+esc(titel||('Chat · '+f12Name(kanal)))+'</span><button type="button" class="k43-ganz" data-k43chat="'+esc(kanal.id)+'|'+esc(g)+'">⤢ ganzer Verlauf</button></div><div class="k43-msgs">'+(rows.length ? rows.map(r=>{ const p=String(r.Von||'')==='Pascal'; return '<div class="k43-m'+(p?' p':' t')+'"><small>'+esc(p?'Du':f16VonName(r.Von||f12Name(kanal)))+' · '+f12Uhrzeit(r.Zeitstempel)+'</small>'+esc(String(f12Text(kanal, r)||'').replace(/```[\s\S]*?```/g,'[Tagesplan]').replace(/\s+/g,' ').slice(0,280))+'</div>'; }).join('') : '<div class="leer">noch keine Nachricht</div>')+'</div>'+
+    '<div class="k43-antwort"><input placeholder="'+esc(platzhalter||'Nachricht …')+'" data-k43chattext="'+esc(kanal.id)+'|'+esc(g)+'"><button type="button" aria-label="Senden" data-k43chatsenden="'+esc(kanal.id)+'|'+esc(g)+'">↑</button></div></div>'; }
+/* Klicks und Eingaben der Spezialansichten */
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
+  if(d('data-k43wecker')){ e.stopPropagation(); k43WeckerSetzen(); return; }
+  if(d('data-k43weckergo')){ e.stopPropagation(); const v=el('k43WeckerZeit') ? el('k43WeckerZeit').value : ''; closeSheet(); k43WeckerUebernehmen(v); return; }
+  if(d('data-k43weckeraus')){ e.stopPropagation(); closeSheet(); k43WeckerUebernehmen(null); return; }
+  if(d('data-k43schlafstart')){ e.stopPropagation(); k43SchlafenStarten(); return; }
+  if(d('data-k43schlafstopp')){ e.stopPropagation(); const n=schlafStoppen(); saveKarten(); saveMeta(); toast(n && n.verworfen ? 'Fehltipp verworfen' : 'Schlafen gestoppt'); e1Rendern(); return; }
+  if(d('data-k43tagesplanung')){ e.stopPropagation(); k43TagesplanungOeffnen(); return; }
+  if((z=d('data-k43schritt'))){ e.stopPropagation(); haptik(6); const n=num(z.dataset.k43schritt); if(n===2){ const zu=k43Zustand(); zu.ts=jetztIso(); k43ZustandMessen(zu); } k43Ui().schritt=n; saveUi(); e1Rendern(); return; }
+  if((z=d('data-k43gestern'))){ e.stopPropagation(); haptik(6); k43GesternEntscheiden(z.dataset.k43gestern, z.dataset.k43was); return; }
+  if((z=d('data-k43schiebgo'))){ e.stopPropagation(); const v=el('k43SchiebDatum') ? el('k43SchiebDatum').value : ''; closeSheet(); if(K43.schiebZiel && v) K43.schiebZiel.anwenden(v); K43.schiebZiel=null; return; }
+  if((z=d('data-k43thema'))){ e.stopPropagation(); haptik(6); const P=k43TP(); if(!P) return; const w=k43ThemenWahl().slice(), i=w.indexOf(z.dataset.k43thema); if(i>=0) w.splice(i,1); else w.push(z.dataset.k43thema); P.themen=w; saveTag(); e1Rendern(); return; }
+  if(d('data-k43themaneu')){ e.stopPropagation(); const n=prompt('Thema (Projekt oder Abteilung):'); if(n && n.trim()){ const P=k43TP(); if(P){ P.themen=k43ThemenWahl().concat(['|'+n.trim()]); saveTag(); e1Rendern(); } } return; }
+  if(d('data-k43planan')){ e.stopPropagation(); k43PlanAnfordern(); return; }
+  if(d('data-k43freigeben')){ e.stopPropagation(); if(d('data-k43freigeben').disabled) return; k43PlanFreigeben(); return; }
+  if(d('data-k43senden')){ e.stopPropagation(); const inp=el('k43Antwort'); const txt=inp ? inp.value : ''; if(!String(txt).trim()){ f12TrainerOeffnen(''); return; } k43Senden(txt, k43Ui().art==='blockade' ? 'Chat' : 'Tagesplan'); if(inp) inp.value=''; return; }
+  if((z=d('data-k43chatsenden'))){ e.stopPropagation(); const [kid, g]=String(z.dataset.k43chatsenden).split('|'), inp=document.querySelector('[data-k43chattext="'+CSS.escape(z.dataset.k43chatsenden)+'"]'); const txt=inp ? inp.value.trim() : ''; if(!txt) return; const kanal=f12KanalId(kid); if(!kanal) return; f12Senden(kanal, g, txt, { anlass:'Chat' }); inp.value=''; haptik(8); setTimeout(()=>{ try{ e1Rendern(); if(seiteAktuell()==='ketten') ebeneRendern(); }catch(x){} }, 400); return; }
+  if((z=d('data-k43chat'))){ e.stopPropagation(); const [kid, g]=String(z.dataset.k43chat).split('|'); const kanal=f12KanalId(kid); if(!kanal) return; f12Oeffnen({ raum:f12Raum(kanal)||'Trainerstab', kanal:kanal.id, gespraech:g, fokus:false }); setTimeout(()=>{ try{ f12NachUnten(); }catch(x){} }, 350); return; }
+  if((z=d('data-k43start'))){ e.stopPropagation(); haptik(10); const id=z.dataset.k43start; if(uhrLaeuftAuf(S.karten.find(x=>x.id===id))){ fokusZeitEinbuchen(); renderAlles(); e1Rendern(); return; } fokusStarten(id); fokusseiteNachStart(); return; }
+  if((z=d('data-k43frage'))){ e.stopPropagation(); haptik(6); k43FrageSetzen(z.dataset.k43frage, z.dataset.k43wahl); return; }
+  if((z=d('data-k43seite'))){ e.stopPropagation(); seiteZeigen(z.dataset.k43seite); return; }
+  if(d('data-k43kalender')){ e.stopPropagation(); e1Oeffnen('plan'); return; }
+  if(t.closest('.k43-kette')) setTimeout(()=>{ try{ if(e1Art()==='spezial') e1Rendern(); }catch(x){} }, 60);
+}, true);
+document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.dataset) return;
+  if(t.dataset.k43zustand){ const z=k43Zustand(), f=t.dataset.k43zustand, v=num(t.value); if(f==='fitness'||f==='motivation') z[f]=Math.max(1, Math.min(5, Math.round(v))); else if(f==='schlaf') z.schlafStd=Math.max(0, v); const lab=t.previousElementSibling && t.previousElementSibling.querySelector ? t.previousElementSibling.querySelector('b') : null; if(lab) lab.textContent=f==='schlaf' ? hMin(z.schlafStd*60) : z[f]+' / 5'; saveTag(); const w=k43ZielWirkung(); return; }
+  if(t.dataset.k43fragetext){ k43FrageSetzen(t.dataset.k43fragetext, undefined, t.value); return; }
+  if(t.dataset.k43nacht){ const k=S.karten.find(x=>x.id===t.dataset.k43nacht); if(k){ k.nachtnotiz=String(t.value||''); saveKarten(); } } });
+/* Zustand der Tagesplanung als Messung am Tag (Export über den Tages-Snapshot) */
+function k43ZustandMessen(z){ if(!S.tag) return; if(!Array.isArray(S.tag.zustandMessungen43)) S.tag.zustandMessungen43=[]; S.tag.zustandMessungen43.push({ ts:jetztIso(), quelle:'Tagesplanung', fitness:num(z.fitness), motivation:num(z.motivation), schlafStd:z.schlafStd!=null ? num(z.schlafStd) : null }); saveTag(); }   // ❓ der Dienst bucht diese Messung noch nicht (Zustand_Messungen: nur Motivation vorhanden)
+/* Takte: Wecker und Block vorbei, alle 20 s (Ruhetakt) und je Minute im Ticker */
+setInterval(()=>{ try{ if(FSLive.nichtFuehrend()) return; }catch(e){} try{ k43WeckerPruefen(); }catch(e){} try{ k43BlockVorbeiPruefen(); }catch(e){} }, 20000);
+/* Migration und Startwerte beim Laden */
+{ const _alt=migrationRolle421; migrationRolle421=function(){ const r=_alt(); try{ migrationKarten43(); k43TagesplanungSatzSetzen(); }catch(e){ console.warn('karten43', e); } return r; }; }
 
 function init(){
   ladeAlles();
