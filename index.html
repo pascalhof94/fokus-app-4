@@ -5964,7 +5964,8 @@ function f6Leistung(F, dom){
   const med=medianVon(echt), prevMed=medianVon(F.prev.map(e=>tagesRateDetail(e.datum, dom).rate).filter(x=>x!=null));
   // heute: ● bisher, gestrichelt die Prognose (Tempo der letzten 60 Minuten auf den Rest des Tages)
   let prog=null; try{ if(tagOffen()){ const K=diaTagKurve(belFensterDatum(jetztIso()),'alle'), now=belX(jetztIso()), t60=Math.max(0, K.wert(now)-K.wert(now-1));
-    prog=(g.punkteHeute+t60*g.stundenRest)/Math.max(0.25, g.stundenBisher+g.stundenRest); } }catch(e){ prog=null; }
+    // prog=(g.punkteHeute+t60*g.stundenRest)/Math.max(0.25, g.stundenBisher+g.stundenRest);   // Hotfix 25: abgelöst durch tagesprognose43
+    const t43=g.prognose43||tagesprognose43(); prog=num(t43.prognose)/Math.max(0.25, g.stundenBisher+num(t43.restMin)/60); void t60; } }catch(e){ prog=null; }   // Hotfix 25 §3.3: Prognose ÷ (Stunden bisher + geplante Reststunden der Kette)
   let haupt;
   if(labels.length<3) haupt=anSammelt(labels.length,3);
   else{
@@ -13616,7 +13617,9 @@ function punkteleisteZeichnen(pfx, g, k, istHeute){
   { const ld=el(pfx+'LiveD'), lp=el(pfx+'LiveP');
     if(ld){ ld.style.left=pctZ(bD); ld.style.width=(Math.max(0, pz(pDfm)-pz(bD))).toFixed(1)+'%'; ld.style.display=live.dfm>0 ? 'block' : 'none'; }
     if(lp){ lp.style.left='auto'; lp.style.right=pctZ(bP); lp.style.width=(Math.max(0, pz(pPriv)-pz(bP))).toFixed(1)+'%'; lp.style.display=live.privat>0 ? 'block' : 'none'; } }
-  { const ges=Math.max(1e-9, pDfm+pPriv), frei=Math.max(0, zielGes-pDfm-pPriv), progD=Math.min(g.tempoSchnitt*(pDfm/ges)*g.stundenRest, frei), progP=Math.min(g.tempoSchnitt*(pPriv/ges)*g.stundenRest, Math.max(0, frei-progD));
+  { // Hotfix 25 §3.3/§4.1: Prognose je Familie aus der Tageskette (tagesprognose43), nicht mehr aus dem Tempo; Skala bleibt max(Ziel, DFM+Privat), das Segment wird am Rand abgeschnitten (sb-bar overflow hidden)
+    // const ges=Math.max(1e-9, pDfm+pPriv), frei=Math.max(0, zielGes-pDfm-pPriv), progD=Math.min(g.tempoSchnitt*(pDfm/ges)*g.stundenRest, frei), progP=Math.min(g.tempoSchnitt*(pPriv/ges)*g.stundenRest, Math.max(0, frei-progD));   // Hotfix 25: abgelöst durch tagesprognose43
+    const t43=g.prognose43||tagesprognose43(), progD=Math.max(0, num(t43.endeDfm)-pDfm), progP=Math.max(0, num(t43.endePrivat)-pPriv);
     const pd=el(pfx+'ProgD'), pp=el(pfx+'ProgP');
     if(pd){ pd.style.left=pctZ(pDfm); pd.style.width=pctZ(progD); }
     if(pp){ pp.style.left='auto'; pp.style.right=pctZ(pPriv); pp.style.width=pctZ(progP); } }
@@ -24484,7 +24487,7 @@ function stmSpielShop(F,dom){
   return statModul('spielShop','Meilensteine · ab jetzt', haupt, null, ()=>{
     let h='<div class="stm-dh">Rang · Tages-P/h auf Rang-Bändern + Prognose</div>'+rangDiagrammHtml(rm)+rangHistorieHtml(rm);
     try{ h+='<div class="stm-dh">Rang · 8 Wochen</div>'+rang8WochenSvg(belVerlaufDaten().wochen); }catch(e){}
-    try{ const g=diaGroessen(), m=Math.max(0, spielLiveZufluss()), ziel=Math.max(1, zielUndIstHeute().ziel*streakFaktor()), prog=m+(m/g.stundenBisher)*g.stundenRest, pz=v=>Math.max(0,Math.min(100,v/ziel*100));
+    try{ const g=diaGroessen(), m=Math.max(0, spielLiveZufluss()), ziel=Math.max(1, zielUndIstHeute().ziel*streakFaktor()), prog=m+Math.max(0, num((g.prognose43||tagesprognose43()).prognose)-num(g.punkteHeute))*streakFaktor(), pz=v=>Math.max(0,Math.min(100,v/ziel*100));   // Hotfix 25 §3.3: (Prognose − Punkte bisher) × streakFaktor + bisherige Münzen (vorher m/stundenBisher × stundenRest)
       h+='<div class="stm-dh">Münzen heute</div><div class="fbk-bar mitmarke"><i style="width:'+pz(m).toFixed(1)+'%;background:'+verlauf(FARBE.GOLD)+'"></i><i style="left:'+pz(m).toFixed(1)+'%;width:'+Math.max(0,pz(prog)-pz(m)).toFixed(1)+'%;background:'+FARBE.GOLD+';opacity:.3"></i><u style="left:100%"></u></div><div class="dt-s" style="color:'+FARBE.GOLD+'">'+Math.round(m)+' '+MZ+' · Prognose '+Math.round(prog)+' · Ziel '+Math.round(ziel)+'</div>'; }catch(e){}
     try{ h+='<div class="stm-dh">Kulisse</div>'+kulisseKachelHtml(); }catch(e){}
     try{ h+='<div class="stm-dh">Outfit-Sammlung · erstes oben</div>'+outfitSammlungHtml(); }catch(e){}
@@ -26598,7 +26601,7 @@ function anModKonsistenz(F,dom){
   // Schichten, eingefaerbt wie die Statusleiste (Ampel): geschafft kraeftig,
   // realistische Prognose heller darueber, Ziel als gestrichelte Marke.
   const heuteWt=anWochentag(heuteApp());
-  let pg=null; try{ pg=tagOffen()?prognoseHeute():null; }catch(e){ pg=null; }
+  let pg=null; try{ pg=tagOffen()?hf25Normaltag():null; }catch(e){ pg=null; }   // Hotfix 25 §3.4: vorher prognoseHeute() (Normaltag-Hochrechnung, bleibt als Code)
   const ampF=(function(){ try{ return ampelStil(ampelStufe(normalZurUhrzeit('alle').r)); }catch(e){ return ampelStil('grau'); } })();
   if(aktivTage.length>=7 || pg){ const byWt=[[],[],[],[],[],[],[]];
     aktivTage.forEach(c=>byWt[anWochentag(c.datum)].push(c.v||0));
@@ -26620,9 +26623,7 @@ function anModKonsistenz(F,dom){
     }).join('')+'</div>';
     if(pg) wtBars+='<div class="an-hint an-prog">Heute: <b>'+anFmt(pg.ist)+'</b> geschafft'+
       (pg.prognose!=null
-        ? ' · Prognose <b>'+anFmt(pg.prognose)+'</b> = '+anFmt(pg.ist)+' + Rest des Normaltags '+anFmt(pg.rest)+' × k '+
-          (Math.round(pg.k*100)/100).toString().replace('.',',')+
-          (pg.akkuTyp!=null ? ' (Akku '+pg.akkuJetzt+' % ÷ typisch '+pg.akkuTyp+' %'+(pg.kGrund?', '+pg.kGrund:'')+')' : ' — '+pg.kGrund)
+        ? ' · Prognose <b>'+anFmt(pg.prognose)+'</b> = '+anFmt(pg.ist)+' + Rest der heutigen Tageskette '+anFmt(pg.rest)+' ('+num(pg.karten)+' offene Karten, '+Math.round(num(pg.restMin))+' Min.)'
         : ' · keine Prognose: '+pg.kGrund)+
       ' · Ziel <b>'+anFmt(pg.ziel)+'</b> (gestrichelt)'+
       (aktivTage.length<7?' · übrige Wochentage ab 7 aktiven Tagen':'')+'.</div>';
@@ -27521,7 +27522,8 @@ function k43PlanFreigeben(){ const P=k43TP(), R=k43PlanAusChat(); if(!P || !R.pl
   S.tagesketten=S.tagesketten.filter(c=>!(c.quelle==='tagesplan' && c.datum===heute));   // ein neuer Plan ersetzt die Tagesketten dieses Plans (nie die Morgen- oder eigenen Ketten)
   (plan.bloecke||[]).forEach((b,i)=>{ const ids=(b.karten||[]).map(c=>c.id).filter(id=>S.karten.some(k=>k.id===id)), planInfo={}; (b.karten||[]).forEach(c=>{ planInfo[c.id]={ start:c.start||null, min:num(c.min), onramp:c.onramp===true }; });
     const bn=k43BlockNorm(b.block||b.name)||('block'+(i+1)), id=k43KetteId(bn, heute); S.tagesketten.push({ id, name:(b.name||k43BlockName(bn))+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:bn, von:b.von||null, karten:ids, plan:planInfo, quelle:'tagesplan' }); kettenIds.push(id); ids.forEach(x=>{ if(alle.indexOf(x)<0) alle.push(x); }); });
-  S.tagesketten.push({ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:alle.slice(), quelle:'tagesplan' }); kettenIds.push('tk43-tag-'+heute);
+  { const planAlle={}; S.tagesketten.forEach(c=>{ if(c.quelle==='tagesplan' && c.datum===heute && c.art==='block') Object.assign(planAlle, c.plan||{}); });   // Hotfix 25 §3: Plan-Einträge auch an der Tageskette
+    S.tagesketten.push({ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:alle.slice(), plan:planAlle, quelle:'tagesplan' }); kettenIds.push('tk43-tag-'+heute); }
   DB.set('tagesketten', S.tagesketten);
   alle.forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(k && k.status==='offen'){ k.faelligkeit=heute; beruehre(k); if(!ketteHat(k.id)) ketteToggle(k.id); } }); saveKarten();
   P.freigabeTs=jetztIso(); P.plan=plan; saveTag();
@@ -28011,6 +28013,60 @@ function hf25StatusleisteHtml(){
     '<div class="f4n-r4">'+f4nFeld1Html(konto_, pst, akkuLive(), FSLive.zustand())+'<div class="b23" data-f4kurve="1">'+f4nTagesdiagrammSvg(g, pk)+'</div><div class="b4 mx" data-f4matrix="1">'+mv+'</div></div>';
 }
 f4StatusleisteHtml=hf25StatusleisteHtml;   // Hotfix 25 §1.1: abgelöst k43StatusleisteHtml (4.3 §7)
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   Hotfix 25 · §3 PROGNOSE NUR AUS DER HEUTIGEN TAGESKETTE (Regel Pascal 03.11.2026)
+   Prognose = Punkte bisher + was die offenen Karten der Tageskette „Heute gesamt · <Datum>“ (gespeichert aus dem freigegebenen Tagesplan,
+   sonst die berechnete Kette aus 4.3 §5.2) ab jetzt in Kettenreihenfolge bringen: je Karte geplante Minuten (Plan min, sonst Soll − heute
+   gebucht; die laufende Karte mit ihrem Rest) × P/h der Punkte-Engine (leiterSatz) + Bonus beim ✓ (abhakbonusDefault, Mehrmals × Ziel je Tag),
+   Familie aus der Karte, Tagesplanung nach 4.3 halb DFM halb Privat. Zeitpunkte: geplante Startzeit, sonst ab jetzt hintereinander.
+   Kein Tempo, keine aktuelle Kette, kein Vergleichstag. k43PlanPrognose rechnet mit derselben Funktion. Die bisherigen Hochrechnungen
+   (diaGroessen tempoSchnitt × stundenRest, Punkteleiste progD/progP, f6Leistung t60, Münzen heute, prognoseHeute Normaltag) bleiben als Code.
+   ══════════════════════════════════════════════════════════════════════ */
+function hf25PrognoseKarten(liste, abMs){
+  let cursor=num(abMs)||Date.now(), p=0, pDfm=0, pPrivat=0, restMin=0; const verlauf=[];
+  (liste||[]).forEach(e=>{ const k=e && e.k; if(!k) return; const min=Math.max(0, num(e.min)); let satz=0, bonus=0, dfmTeil=0;
+    try{ satz=Math.max(0, num(leiterSatz(k))); }catch(x){ satz=0; }
+    const n=(k.ticksAktiv && num(k.tagesziel)>0) ? num(k.tagesziel) : 1; try{ bonus=Math.max(0, num(abhakbonusDefault(k)))*n; }catch(x){ bonus=0; }
+    if(k.rolle==='tagesplanung'){ try{ dfmTeil=min/60*num(k43TagesplanungSaetze().satzBonusDfm); }catch(x){ dfmTeil=0; } }   // 4.3: DFM-Anteil der Tagesplanung
+    const pk=min/60*satz+bonus, fam=(k.domain==='privat') ? 'privat' : 'dfm';
+    const start=(num(e.startMs)>cursor) ? num(e.startMs) : cursor, ende=start+min*60000; cursor=ende;   // Startzeit in der Vergangenheit → ab jetzt hintereinander
+    p+=pk+dfmTeil; if(fam==='privat'){ pPrivat+=pk; pDfm+=dfmTeil; } else pDfm+=pk+dfmTeil; restMin+=min;
+    verlauf.push({ ts:new Date(ende).toISOString(), p:Math.round(p), pDfm:Math.round(pDfm), pPrivat:Math.round(pPrivat), id:k.id, min, punkte:Math.round(pk+dfmTeil) }); });
+  return { summe:p, dfm:pDfm, privat:pPrivat, restMin, verlauf, endeMs:cursor };
+}
+function tagesprognose43(){
+  const dfm=Math.max(0, belIstDfm()), privat=Math.max(0, tagesPunkteDomain('privat')), ist=dfm+privat;
+  const leer={ prognose:ist, endeDfm:dfm, endePrivat:privat, ist, dfm, privat, verlauf:[], restMin:0, karten:0, karteRest:0, karteFam:null, endeMs:Date.now() };
+  if(!tagOffen()) return leer;
+  let K=null; try{ K=k43KettenBauen(); }catch(e){ return leer; } const tag=K && K.tag ? K.tag[0] : null; if(!tag) return leer;
+  const heute=heuteApp(), plan={}; (K.block||[]).forEach(c=>{ if(c.datum!==heute) return; Object.keys(c.plan||{}).forEach(id=>{ if(!plan[id] || (c.plan[id] && c.plan[id].start)) plan[id]=c.plan[id]; }); });
+  const lk=(S.fokus && S.fokus.laeuft) ? S.karten.find(x=>x.id===S.fokus.karteId) : null;
+  const startMsVon=s=>{ if(!s || !/^\d{1,2}:\d{2}$/.test(String(s))) return null; const d=new Date(heute+'T00:00:00'), t=String(s).split(':'); d.setHours(num(t[0]), num(t[1]), 0, 0); return d.getTime(); };
+  const liste=(tag.offen||[]).filter(k=>k && !istInfoKarte(k) && !karteRuht(k)).map(k=>{ const pl=plan[k.id]||null, gebucht=heuteInvestiertMin(k), laeuft=!!(lk && lk.id===k.id);
+    const basis=(pl && pl.min!=null) ? num(pl.min) : num(k.sollMin), min=Math.max(0, basis-((laeuft || !pl) ? gebucht : 0));
+    return { k, min, startMs:laeuft ? Date.now() : (pl ? startMsVon(pl.start) : null), laeuft }; });
+  // Reihenfolge: die laufende Karte zuerst, dann nach geplanter Startzeit, Karten ohne Plan danach in Kettenreihenfolge (stabil)
+  liste.forEach((e,i)=>{ e.i=i; }); liste.sort((a,b)=>(b.laeuft?1:0)-(a.laeuft?1:0) || ((a.startMs!=null && b.startMs!=null) ? a.startMs-b.startMs : (a.startMs!=null ? -1 : b.startMs!=null ? 1 : a.i-b.i)));
+  const r=hf25PrognoseKarten(liste, Date.now());
+  const le=lk ? r.verlauf.find(v=>v.id===lk.id) : null;
+  return { prognose:ist+r.summe, endeDfm:dfm+r.dfm, endePrivat:privat+r.privat, ist, dfm, privat, verlauf:r.verlauf, restMin:r.restMin, karten:liste.length,
+    karteRest:le ? num(le.punkte) : 0, karteFam:lk ? (lk.domain==='privat' ? 'privat' : 'dfm') : null, endeMs:r.endeMs };
+}
+/* die Teile der Tagesprognose aus tagesprognose43 (Form wie tagesprognoseTeile); §4.1: max nie aus der Prognose, nur Ziel und Ist */
+function tagesprognoseTeile43(t){
+  const g=diaGroessen(), ziel=Math.max(0, num(g.zielHeute)), karte=Math.max(0, num(t.karteRest));
+  const restDfm=Math.max(0, num(t.endeDfm)-num(t.dfm)-(t.karteFam==='dfm' ? karte : 0)), restPrivat=Math.max(0, num(t.endePrivat)-num(t.privat)-(t.karteFam==='privat' ? karte : 0));
+  return { dfm:num(t.dfm), privat:num(t.privat), karte, karteFam:t.karteFam||null, restDfm, restPrivat, prognose:num(t.prognose), ziel, max:Math.max(1, ziel, num(t.dfm)+num(t.privat)), diff:num(t.prognose)-ziel, endeDfm:num(t.endeDfm), endePrivat:num(t.endePrivat), verlauf:t.verlauf||[] };
+}
+{ const _alt=diaGroessen; diaGroessen=function(){ const g=_alt(); try{ const t=tagesprognose43(); g.prognoseAlt=g.prognoseHeute; g.prognoseHeute=t.prognose; g.prognose43=t; }catch(e){} return g; }; }   // Hotfix 25 §3.3: prognoseHeute aus der Tageskette (tempoSchnitt × stundenRest bleibt als prognoseAlt)
+const _tagesprognoseHeute42=tagesprognoseHeute;   // Hotfix 25: abgelöst durch tagesprognose43 (bleibt als Code)
+tagesprognoseHeute=function(){ return tagesprognoseTeile43(tagesprognose43()); };
+/* 4.3 §4.4: Prognose eines Tagesplan-Vorschlags — dieselbe Rechnung (keine zweite Formel) */
+k43PlanPrognose=function(plan){ const liste=[]; (plan && plan.bloecke||[]).forEach(b=>(b.karten||[]).forEach(c=>{ const k=S.karten.find(x=>x.id===c.id); if(k) liste.push({ k, min:num(c.min), startMs:null }); })); return Math.round(hf25PrognoseKarten(liste, Date.now()).summe); };
+/* Ersatz für prognoseHeute() (Normaltag-Hochrechnung, Hotfix 25 §3.4): dieselbe Form, Inhalt aus der Tageskette */
+function hf25Normaltag(){ const t=tagesprognose43(), zi=zielUndIstHeute(); return { ist:t.ist, ziel:zi.ziel, n:0, prognose:t.prognose, rest:Math.max(0, t.prognose-t.ist), k:1, kGrund:'', akkuJetzt:null, akkuTyp:null, kette:true, karten:t.karten, restMin:t.restMin }; }
 
 function init(){
   ladeAlles();
