@@ -4715,6 +4715,7 @@ function neueKarte(f={}){
     notiz: '',
     kommentarClaude: '',              // U6-E: Hinweis an Claude für den nächsten Sync (Freitext, keine App-Logik)
     projekt: null,                    // nur dfm
+    abteilung: null,                  // Karten-Standard 4.3 §3.1: Name der Abteilung, nur DFM, nur ohne projekt (Kern v4.5: Projekt oder Abteilung)
     // §5 (v2.6.0): Geld-Impact ist eine ZAHL 0 … 500 (vorher: geldScore vom
     // Chat). Der Geld-Score wird daraus live gerechnet (geldScoreVon).
     geldImpact: 0,                    // nur dfm
@@ -6728,7 +6729,7 @@ function f7PfKarteLesen(r, text){
   const zeilen=src.split('\n'); let titel=null, i0=-1;
   for(let i=0;i<zeilen.length;i++){ const m=zeilen[i].match(/^\s*(Aufgabe|Karte)\s*:\s*(.+?)\s*$/i); if(m){ titel=m[2]; i0=i; break; } if(zeilen[i].trim()) break; }
   if(!titel) return null;
-  const k={ titel, domain:'dfm', projekt:null, matrixFeld:null, deadline:null, sollMin:30, unteraufgaben:[], notiz:'', karteId:null, gesetzt:{}, felder42:{}, unterDetails:[] };   // Hotfix 9: karteId (Änderung), gesetzt = welche Felder der Entwurf trägt · 4.2 §11: felder42, unterDetails
+  const k={ titel, domain:'dfm', projekt:null, abteilung:null, matrixFeld:null, deadline:null, sollMin:30, unteraufgaben:[], notiz:'', karteId:null, gesetzt:{}, felder42:{}, unterDetails:[] };   // 4.3 §3.3: abteilung   // Hotfix 9: karteId (Änderung), gesetzt = welche Felder der Entwurf trägt · 4.2 §11: felder42, unterDetails
   let modus='felder';
   for(let i=i0+1;i<zeilen.length;i++){ const z=zeilen[i];
     if(modus==='notiz'){ k.notiz+=(k.notiz?'\n':'')+z; continue; }
@@ -6741,6 +6742,7 @@ function f7PfKarteLesen(r, text){
         if(t){ k.unteraufgaben.push(t); k.unterDetails.push(d); } continue; } if(!z.trim()) continue; modus='felder'; }
     if(modus==='felder' && li){ const kv=li[1].match(/^([^:]+):\s*(.*)$/); if(!kv) continue; const key=kv[1].trim().toLowerCase(), wert=kv[2].trim();
       if(key==='projekt'){ k.projekt=wert||null; k.gesetzt.projekt=true; }
+      else if(key==='abteilung'){ k.abteilung=wert||null; k.gesetzt.abteilung=true; }   // Karten-Standard 4.3 §3.3
       else if(key==='familie' || key==='domäne' || key==='domain'){ k.domain=/^priv/i.test(wert) ? 'privat' : 'dfm'; k.gesetzt.domain=true; }
       else if(key==='matrixfeld'){ const f=matrixFeldNorm(wert); if(f){ k.matrixFeld=f; k.gesetzt.matrixFeld=true; } }   // Hotfix 12 §B2.2: über matrixFeldNorm
       else if(key==='deadline' || key==='fällig' || key==='faellig' || key==='termin'){ const d=wert.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(d) k.deadline=d[3]+'-'+d[2].padStart(2,'0')+'-'+d[1].padStart(2,'0'); else if(/^\d{4}-\d{2}-\d{2}$/.test(wert)) k.deadline=wert; if(k.deadline) k.gesetzt.deadline=true; }
@@ -6771,6 +6773,7 @@ function f7PfKarteAnlegen(r, kk){
     return best; }
   const k=Object.assign(neueKarte({ titel:kk.titel, domain:kk.domain, faelligkeit:kk.deadline||heuteApp(), matrixFeld:matrixFeldNorm(kk.matrixFeld)||'werkzeug' }), { status:'offen', sollMin:kk.sollMin, erstelltTs:jetztIso(), postfachId:r.id });   // Hotfix 12 §B2.3: neue Karte ohne Wert → werkzeug
   if(kk.projekt) k.projekt=kk.projekt; if(kk.notiz) k.notiz=kk.notiz;
+  if(k.domain==='dfm' && !kk.projekt && kk.abteilung) k.abteilung=kk.abteilung;   // Karten-Standard 4.3 §3.3
   f7PfFelder42Anwenden(k, kk, true);   // Karten-Standard 4.2 §11: neue Karte nach Standard 4.2 (std42, Art, Prio, Belastung, …)
   S.karten.push(k);
   if(!ketteHat(k.id)) ketteToggle(k.id);   // Hotfix 9 · Abschnitt 2 Punkt 5: sofort ans Ende der Aktuellen Kette
@@ -6806,6 +6809,7 @@ function f7PfVorschlagZeileHtml(o){
     '<button class="kl-play" data-f7pfstart="'+esc(r.id)+'" aria-label="Start">▶</button>'+
     '<div class="kl-t" data-f7pfdetail="'+esc(r.id)+'"><b class="kl-titel">'+(best ? '✏️ Änderung · ' : '')+esc(kk.titel)+'</b><span class="kl-meta">'+meta+'</span></div>'+
     '<button class="kl-check" data-f7pffrei="'+esc(r.id)+'" aria-label="Freigeben">✓</button></div>'+
+    k43PfFehltHtml(r, kk)+   // Karten-Standard 4.3 §3.3
     '<div class="f7-pfmehr" data-f7pfid="'+esc(r.id)+'" data-f7pfauf="1">✗ Ablehnen · 💬 Besprechen</div>';
 }
 /* Entwurf auf eine bestehende Karte anwenden (Punkt 6): nur gesetzte Felder, Notiz angehängt, neue Unteraufgaben dazu, nichts entfernt.
@@ -6813,7 +6817,8 @@ function f7PfVorschlagZeileHtml(o){
 function f7PfEntwurfAnwenden(k, subs, kk){
   const g=kk.gesetzt||{};
   if(kk.titel && kk.titel!==k.titel) k.titel=kk.titel;
-  if(g.sollMin) k.sollMin=kk.sollMin; if(g.matrixFeld && kk.matrixFeld) k.matrixFeld=kk.matrixFeld; if(g.deadline && kk.deadline) k.faelligkeit=kk.deadline; if(g.projekt && kk.projekt) k.projekt=kk.projekt;
+  if(g.sollMin) k.sollMin=kk.sollMin; if(g.matrixFeld && kk.matrixFeld) k.matrixFeld=kk.matrixFeld; if(g.deadline && kk.deadline) k.faelligkeit=kk.deadline; if(g.projekt && kk.projekt){ k.projekt=kk.projekt; k.abteilung=null; }
+  if(g.abteilung && kk.abteilung && k.domain==='dfm' && !(k.projekt && String(k.projekt).trim())) k.abteilung=kk.abteilung;   // Karten-Standard 4.3 §3.3
   f7PfFelder42Anwenden(k, kk, false);   // Karten-Standard 4.2 §11: nur gesetzte Zeilen
   if(kk.notiz){ const d=new Date(); const datum=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); k.notiz=(k.notiz ? String(k.notiz)+'\n' : '')+'['+datum+'] '+kk.notiz; }
   const da=(subs||S.unteraufgaben.filter(u=>u.parentId===k.id)).map(u=>String(u.titel||'').trim().toLowerCase());
@@ -6841,7 +6846,8 @@ function f7PfVorschlagAnnehmen(id, starten){
   const o=f7PfVorschlag(id); if(!o) return null;
   let k=null;
   if(!o.nachholen){ f7PfEntscheiden(id, 'freigegeben'); const m=(S.meta.postfachKarten||{})[id]; k=m ? S.karten.find(x=>x.id===m.karteId) : null; }
-  else { k=f7PfKarteAnlegen(o.r, o.kk);
+  else { if(k43PfFehlt(o.kk)){ k43PfFehltMelden(id, o.r); return null; }   // Karten-Standard 4.3 §3.3
+    k=f7PfKarteAnlegen(o.r, o.kk);
     FSLive.senden('datensatz_aendern', { tabelle:'Postfach', id, felder:{ Entscheidung:'freigegeben', 'Pascals Anpassung':'Karte in der App angelegt: '+k.id } }).catch(e=>toast('Postfach: '+((e && e.message)||'Fehler')));
     const L=F7.lager.postfachNachholen; if(L && Array.isArray(L.daten)) L.daten=L.daten.filter(x=>x.id!==id);
     haptik(10); renderPostfach(); }
@@ -7001,6 +7007,7 @@ function f7PfEntscheiden(id, ent, extra){
   if((ent==='freigegeben' || ent==='angepasst') && !extra.keineKarte){   // Hotfix 7 · Abschnitt 2: Freigeben (auch mit Anpassung) legt die Karte aus dem Entwurf an, nie doppelt · Hotfix 15 §6.1: „↻ Senden“ nicht
     const txt=(ent==='angepasst' && extra.felder && extra.felder['Pascals Anpassung']!=null) ? extra.felder['Pascals Anpassung'] : null;
     const kk=f7PfKarteLesen(r, txt);
+    if(kk && !(S.meta.postfachKarten||{})[id] && k43PfFehlt(kk)){ k43PfFehltMelden(id, r); return; }   // Karten-Standard 4.3 §3.3: DFM-Karte „Neu:“ ohne Projekt und Abteilung wird nicht freigegeben
     if(kk && !(S.meta.postfachKarten||{})[id]){ const k=f7PfKarteAnlegen(r, kk), alt=(extra.felder||{})['Pascals Anpassung'];
       extra.felder=Object.assign({}, extra.felder, { 'Pascals Anpassung':[alt, 'Karte in der App angelegt: '+k.id].filter(Boolean).join('\n') }); } }
   const felder=Object.assign({ Status:'erledigt', Entscheidung:ent, 'Punkte gebucht':10 }, extra.felder||{});
@@ -8082,6 +8089,7 @@ function f12KartenBloeckeHtml(kanal, r){
       '<div class="kl-t" data-f12pfdetail="'+esc(id)+'"><b class="kl-titel">'+(aend ? '✏️ ' : '')+esc(kk.titel)+'</b><span class="kl-meta">'+meta+'</span></div>'+
       '<button class="kl-check'+(frei?' ok':'')+'" data-f12pffrei="'+esc(id)+'" aria-label="Freigeben"'+(erledigt?' disabled':'')+'>✓</button></div>';
     if(aend){ const d=f12PfDiff(kk); const t=d.teile.concat(d.neu.map(n=>'neu: <em>„'+esc(n)+'“</em>')); if(t.length) h+='<div class="f12-diff">'+t.join(' · ')+'</div>'; }
+    if(!erledigt) h+=k43PfFehltHtml(p, kk);   // Karten-Standard 4.3 §3.3
     if(!erledigt) h+='<div class="f12-mehr" data-f12pfablehnen="'+esc(id)+'"><b>✗</b> Ablehnen</div>';
     else if(abgelehnt) h+='<div class="f12-erg no">✗ abgelehnt '+wann+imPf+(p.Ablehnungsgrund ? ' · „'+esc(String(p.Ablehnungsgrund).slice(0,80))+'“' : '')+'</div>';
     else { const m=(S.meta.postfachKarten||{})[id], k=m ? S.karten.find(x=>x.id===m.karteId) : null, platz=k ? tagesKette().indexOf(k.id)+1 : 0;
@@ -14147,7 +14155,7 @@ function kz42UaStand(k, subs){ const l=(subs||untermenge(k.id)).filter(u=>!istTi
 function kz42Datum(iso){ const d=new Date(String(iso).slice(0,10)+'T12:00:00'); return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'; }
 function kz42MetaHtml(k, subs){
   const b=kz42Belastung(k), teile=['<span class="kz42-bel"><i style="background:'+b.farbe+'"></i>'+esc(b.text)+'</span>'];
-  teile.push('<span>'+esc(k.domain==='privat' ? 'Privat' : (k.projekt||'DFM'))+'</span>');
+  teile.push('<span>'+esc(k.domain==='privat' ? 'Privat' : (k.projekt||k.abteilung||'DFM'))+'</span>');   // 4.3 §3.5: ohne Projekt die Abteilung
   if(num(k.sollMin)>0) teile.push('<span>'+Math.round(num(k.sollMin))+' Min.</span>');
   const rh=kz42Rhythmus(k); if(rh) teile.push('<span>↻ '+esc(rh)+'</span>');
   if(k.faelligkeit && !k.sammelkarte){ const ueber=k.status==='offen' && k.faelligkeit<heuteApp(); teile.push('<span'+(ueber?' style="color:'+FARBE.ROT+'"':'')+'>bis '+kz42Datum(k.faelligkeit)+'</span>'); }
@@ -15907,7 +15915,7 @@ function renderDetail42(_scroll){
   h+='<div id="d42live" class="d42-live">'+d42LiveHtml(k)+'</div>';
   const titel='<div class="field"><label>Titel</label><input data-bind="titel" value="'+esc(k.titel)+'" placeholder="Was ist zu tun?"></div>'+(entwurfNeu ? '<div id="detailVorlage">'+wdhVorlageHtml()+'</div>' : '');
   const familie='<div class="field"><label>Familie</label>'+d42Chip('domain', k.domain, [['dfm','DFM'],['privat','Privat']], k.domain==='privat'?'gruen':'')+'</div>';
-  const projekt=istDfm ? '<div class="field"><label>Projekt <small>(Pflicht)</small></label><input data-bind="projekt" value="'+esc(k.projekt||'')+'" placeholder="Projekt aus FocusSystem"></div>' : '';
+  const projekt=istDfm ? k43ProjektOderAbteilungHtml(k) : '';   // Karten-Standard 4.3 §3.2: zwei Felder nebeneinander, Projekt oder Abteilung
   const art=system ? '<div class="field"><label>Kartenart</label><div class="hint" style="margin-top:0">Systemkarte („'+esc(k.rolle||'')+'") — in diesem Update unverändert</div></div>'
     : '<div class="field"><label>Kartenart</label>'+d42Chip('art', k.art||'aufgabe', [['aufgabe','Aufgabe'],['routine','Routine'],['info','Info']], 'lila')+'</div>';
   const soll='<div class="field"><label>Soll-Minuten</label>'+d42Zahl('sollMin', num(k.sollMin), {min:0})+'</div>';
@@ -16009,13 +16017,15 @@ function detailSpeichern(){
   if(!entwurf) return;
   entwurf.titel = (entwurf.titel||'').trim();
   if(!entwurf.titel){ toast('Titel fehlt'); return; }
-  if(entwurf.domain!=='dfm'){ entwurf.projekt=null; entwurf.geldImpact=0; }
+  if(entwurf.domain!=='dfm'){ entwurf.projekt=null; entwurf.geldImpact=0; entwurf.abteilung=null; }   // 4.3 §3.1: privat ohne Abteilung
   // Karten-Standard 4.2 §5: neue Karten tragen std42; Pflichtangaben der Schnellansicht; Sammelkarte ohne Deadline; Routine/Mehrmals wie bisher über rhythmus/ticksAktiv
   if(detail42Gilt(entwurf)){
     entwurf.std42=true;
     if(!KARTENART42_LABEL[entwurf.art]) entwurf.art=entwurf.rolle ? 'system' : 'aufgabe';
     if(entwurfNeu && !istInfoKarte(entwurf) && entwurf.belastung==null){ toast('Belastung fehlt — Regler bewegen oder „neutral" wählen'); return; }
-    if(entwurfNeu && entwurf.domain==='dfm' && !(entwurf.projekt && String(entwurf.projekt).trim())){ toast('Projekt fehlt (Pflicht bei DFM)'); return; }
+    // Karten-Standard 4.3 §3.2: Projekt ODER Abteilung, für neue UND bestehende DFM-Karten; mit Projekt bleibt die Abteilung leer
+    if(entwurf.domain==='dfm' && entwurf.projekt && String(entwurf.projekt).trim()) entwurf.abteilung=null;
+    if(entwurf.domain==='dfm' && !(entwurf.projekt && String(entwurf.projekt).trim()) && !(entwurf.abteilung && String(entwurf.abteilung).trim())){ toast('Projekt oder Abteilung fehlt'); return; }
     if(entwurf.belastung!=null) entwurf.belastung=Math.max(-3, Math.min(3, Math.round(num(entwurf.belastung))));
     if(entwurf.prio!=null) entwurf.prio=Math.max(1, Math.min(5, Math.round(num(entwurf.prio))));
     if(entwurf.sammelkarte){ entwurf.faelligkeit=null; entwurf.immerSichtbar=true; }
@@ -19234,6 +19244,8 @@ function ks42ZielAnwenden(k, z){
   if(z.titel) k.titel=String(z.titel);
   if(z.familie!==undefined){ k.domain=ks42Familie(z); if(k.domain!=='dfm'){ k.projekt=null; k.geldImpact=0; } }
   if(k.domain==='dfm' && z.projekt!==undefined) k.projekt=z.projekt||null;
+  if(k.domain==='dfm' && z.abteilung!==undefined) k.abteilung=z.abteilung||null;   // Karten-Standard 4.3 §3.1
+  if(k.domain!=='dfm' || (k.projekt && String(k.projekt).trim())) k.abteilung=null;
   if(KARTENART42_LABEL[z.art]) k.art=z.art; else if(!KARTENART42_LABEL[k.art]) k.art=k.rolle ? 'system' : (k.rhythmus ? 'routine' : 'aufgabe');
   if(z.sammelkarte!==undefined) k.sammelkarte=z.sammelkarte===true;
   { const mf=matrixFeldNorm(z.matrix); if(mf) k.matrixFeld=mf; }
@@ -19310,7 +19322,10 @@ function kartensetAnwenden(paket){
   const ts=jetztIso(), tid=aktuelleTagId();
   // 1 Sicherung vorher
   DB.set('kartenset42_bak', { ts, karten:JSON.parse(JSON.stringify(S.karten)), unteraufgaben:JSON.parse(JSON.stringify(S.unteraufgaben)), vorlagen:JSON.parse(JSON.stringify(S.vorlagen||[])), gruppen:JSON.parse(JSON.stringify(S.gruppen||[])) });
-  const neuAnlegen=(ziel, extra)=>{ const k=neueKarte(Object.assign({ domain:ks42Familie(ziel), titel:String(ziel.titel||''), matrixFeld:matrixFeldNorm(ziel.matrix)||'werkzeug', std42:true }, extra||{}));
+  // Karten-Standard 4.3 §3.4: eine neue DFM-Karte ohne Projekt und ohne Abteilung wird nicht angelegt, sondern im Ergebnis gelistet (ohneProjekt)
+  const ohneBeides=(ziel)=>ks42Familie(ziel)==='dfm' && !(ziel.projekt && String(ziel.projekt).trim()) && !(ziel.abteilung && String(ziel.abteilung).trim());
+  const neuAnlegen=(ziel, extra)=>{ if(ohneBeides(ziel)){ r.ohneProjekt.push(String(ziel.titel||'?')); return null; }
+    const k=neueKarte(Object.assign({ domain:ks42Familie(ziel), titel:String(ziel.titel||''), matrixFeld:matrixFeldNorm(ziel.matrix)||'werkzeug', std42:true }, extra||{}));
     ks42ZielAnwenden(k, ziel); S.karten.push(k); r.neu++; if(k.domain==='dfm') r.neuDfm++; else r.neuPrivat++; return k; };
   // 3 je Eintrag nach aktion, 4 Sonderfälle laut hinweis
   E.forEach(e=>{
@@ -19320,14 +19335,15 @@ function kartensetAnwenden(paket){
       if(a==='aendern' || a==='behalten'){
         if(!e.ziel){ r.uebersprungen.push({ was:'Karte '+ks42Titel(q.titel), grund:'kein ziel' }); return; }
         if(/^Wechsel Privat → DFM/.test(h) || (k && k.domain==='privat' && ks42Familie(e.ziel)==='dfm')){   // Post hochholen: neue DFM-Karte, Privat-Karte archivieren
-          const n=neuAnlegen(e.ziel); if(Array.isArray(e.unteraufgaben)) ks42SubsErsetzen(n, e.unteraufgaben);
+          const n=neuAnlegen(e.ziel); if(!n) return;   // 4.3 §3.4: ohne Projekt und Abteilung nicht angelegt, Privat-Karte bleibt
+          if(Array.isArray(e.unteraufgaben)) ks42SubsErsetzen(n, e.unteraufgaben);
           if(k){ ks42Archivieren(k, 'Kartenset 4.2: als DFM-Routine neu angelegt („'+n.titel+'")'); r.arch++; }
           return; }
-        if(!k) k=neuAnlegen(e.ziel, { id:(q.id && /^[0-9a-f-]{36}$/i.test(String(q.id))) ? q.id : uuid(), airtableId:q.airtableId||null });   // in FocusSystem, noch nicht in der App
+        if(!k){ k=neuAnlegen(e.ziel, { id:(q.id && /^[0-9a-f-]{36}$/i.test(String(q.id))) ? q.id : uuid(), airtableId:q.airtableId||null }); if(!k) return; }   // in FocusSystem, noch nicht in der App · 4.3 §3.4
         else { ks42ZielAnwenden(k, e.ziel); r.upd++; }
         if(Array.isArray(e.unteraufgaben)) ks42SubsErsetzen(k, e.unteraufgaben);
         r.ergaenzt+=ks42SubsErgaenzen(k, h).length;
-        if(k.domain==='dfm' && !k.projekt && /Projekt beim Paket mit Pascal festlegen/.test(h)) r.ohneProjekt.push(k.titel);
+        if(k.domain==='dfm' && !k.projekt && !k.abteilung && /Projekt beim Paket mit Pascal festlegen/.test(h)) r.ohneProjekt.push(k.titel);   // 4.3 §3.4: ohne Projekt und Abteilung
         { const mv=h.match(/als Vorlage „([^“”"]+)[“”"] speichern/); if(mv){ vorlageAusKarte(k, mv[1]); r.vorlagen++; ks42Archivieren(k, 'Kartenset 4.2: als Vorlage „'+mv[1]+'" gespeichert, Karte archiviert'); r.arch++; } }   // Rewe
         return;
       }
@@ -19346,8 +19362,8 @@ function kartensetAnwenden(paket){
       r.uebersprungen.push({ was:'Karte '+ks42Titel(q.titel), grund:'unbekannte Aktion '+String(a) });
     }catch(x){ r.uebersprungen.push({ was:'Karte '+ks42Titel((e && e.quelle||{}).titel), grund:String((x && x.message)||x) }); }
   });
-  N.forEach(n=>{ try{ if(!n || !n.ziel || !n.ziel.titel) return; const k=neuAnlegen(n.ziel); if(Array.isArray(n.unteraufgaben)) ks42SubsErsetzen(k, n.unteraufgaben);
-    if(k.domain==='dfm' && !k.projekt) r.ohneProjekt.push(k.titel); }catch(x){ r.uebersprungen.push({ was:'Neue Karte '+String((n && n.ziel && n.ziel.titel)||'?'), grund:String((x && x.message)||x) }); } });
+  N.forEach(n=>{ try{ if(!n || !n.ziel || !n.ziel.titel) return; const k=neuAnlegen(n.ziel); if(!k) return;   // 4.3 §3.4: nicht angelegt, in ohneProjekt gelistet
+    if(Array.isArray(n.unteraufgaben)) ks42SubsErsetzen(k, n.unteraufgaben); }catch(x){ r.uebersprungen.push({ was:'Neue Karte '+String((n && n.ziel && n.ziel.titel)||'?'), grund:String((x && x.message)||x) }); } });
   S.meta.kartenset42={ ts, grund:String(paket.grund||''), zahlen:{ neu:r.neu, upd:r.upd, arch:r.arch, erledigt:r.erledigt, vorlagen:r.vorlagen }, rueckgaengig:null };
   saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveVorlagen(); saveMeta(); baueSuchIndex();
   try{ tickerAlleSicherstellen(); }catch(x){}
@@ -19696,6 +19712,9 @@ function syncImport(text, opt){
     else if(!lok.airtableId && recId && lok.domain==='dfm') lok.airtableId=recId;   // §3 (v1.13.1): Bestand heilen
     if(inc.titel!=null) lok.titel=inc.titel;
     if(inc.projekt!==undefined) lok.projekt=inc.projekt;
+    // Karten-Standard 4.3 §3.1: abteilung (Name) reist mit — nur DFM, nur ohne Projekt; ein gesetztes Projekt leert die Abteilung
+    if(inc.abteilung!==undefined) lok.abteilung = (inc.abteilung==null || String(inc.abteilung).trim()==='') ? null : String(inc.abteilung).trim();
+    if(lok.domain!=='dfm' || (lok.projekt && String(lok.projekt).trim())) lok.abteilung=null;
     // §5 (v2.6.0): geldImpact als Zahl 0 … 500 — alte Pakete duerfen die
     // Stufe schicken (hoch/mittel/niedrig → 300/200/100). Ein Altpaket, das
     // nur geldScore traegt, wird wie die Migration zurueckgerechnet
@@ -20076,7 +20095,7 @@ function importErgebnisHtml(res){
       if(res.korrigiert) kz+='<br><span style="color:var(--cyan)">§5.7-Korrekturen angewandt: <b>'+res.korrigiert+'</b> Felder (Protokoll in den Einstellungen).</span>';
       if(res.muenzenKorrekturen && res.muenzenKorrekturen.length) kz+='<br>'+res.muenzenKorrekturen.map(m=>'<span style="color:var(--cyan)">'+muenzenKorrekturZeile(m)+'</span>').join('<br>');   // Hotfix 21 §D.4
       if(res.tuer) kz+='<br><span style="color:var(--cyan)">Sync-Tür: <b>'+res.tuer.einstellungen+'</b> Einstellung(en) · <b>'+res.tuer.statistik+'</b> Statistik-Parameter geändert (Protokoll in den Einstellungen).</span>';
-      if(res.kartenset){ const ks=res.kartenset; kz+='<br><span style="color:var(--cyan)">🗂 Kartenset 4.2: <b>'+num(ks.upd)+'</b> geändert · <b>'+num(ks.arch)+'</b> archiviert · <b>'+num(ks.erledigt)+'</b> erledigt · <b>'+num(ks.neu)+'</b> neu · <b>'+num(ks.vorlagen)+'</b> Vorlage(n)'+((ks.nurFocusSystem||[]).length ? ' · '+ks.nurFocusSystem.length+' nur in FocusSystem' : '')+((ks.ohneProjekt||[]).length ? ' · ohne Projekt: '+ks.ohneProjekt.map(esc).join(', ') : '')+'</span>'; }   // 4.2 §9
+      if(res.kartenset){ const ks=res.kartenset; kz+='<br><span style="color:var(--cyan)">🗂 Kartenset 4.2: <b>'+num(ks.upd)+'</b> geändert · <b>'+num(ks.arch)+'</b> archiviert · <b>'+num(ks.erledigt)+'</b> erledigt · <b>'+num(ks.neu)+'</b> neu · <b>'+num(ks.vorlagen)+'</b> Vorlage(n)'+((ks.nurFocusSystem||[]).length ? ' · '+ks.nurFocusSystem.length+' nur in FocusSystem' : '')+((ks.ohneProjekt||[]).length ? ' · <b>'+ks.ohneProjekt.length+'</b> ohne Projekt und Abteilung (nicht angelegt): '+ks.ohneProjekt.map(esc).join(', ') : '')+'</span>'; }   // 4.2 §9
       if(res.tagNachholen){ const tn=res.tagNachholen; kz+='<br><span style="color:var(--cyan)">☀️ Tag nachgeholt: <b>'+esc(String(tn.nachTagId||''))+'</b> ab '+esc(fmtUhr(tn.aufstehTs))+' · <b>'+num(tn.verschoben)+'</b> Buchungen verschoben.</span>'; }   // Hotfix 24 §4.3
       if(res.subsEntfernt) kz+='<br>Unteraufgaben entfernt: <b>'+res.subsEntfernt+'</b>.';
       if(res.uebersprungen && res.uebersprungen.length)
@@ -25531,6 +25550,7 @@ function detailFeld(bind, input){
   else if(bind==='prio'){ entwurf.prio = v==='' ? null : Math.max(1, Math.min(5, Math.round(num(v)))); }
   else if(bind==='tagesziel'||bind==='vorlaufTage'){ entwurf[bind] = v==='' ? null : Math.max(0, Math.round(num(v))); }
   else if(bind==='wartetAuf'||bind==='wartetSeit'||bind==='eingefrorenBis'){ entwurf[bind] = (v==='' ? null : v); }
+  else if(bind==='abteilung'){ entwurf.abteilung = (v==='' ? null : v); }   // Karten-Standard 4.3 §3.2
   else { entwurf[bind]= (v===''&&(bind==='faelligkeit'||bind==='uhrzeit'||bind==='projekt')) ? null : v; }
 }
 /* Zeitstaffel aus dem DOM in den Entwurf lesen (leere bis-Minute = null „danach"). */
@@ -26925,6 +26945,66 @@ el('analyseOverlay').addEventListener('change', e=>{
 /* ══════════════════════════════════════════════════════════════════════
    18 · Init
    ══════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════
+   Karten-Standard 4.3 · §3 · PFLICHT „PROJEKT ODER ABTEILUNG“ (Kern v4.5, Auftrag 261103)
+   Kartenfeld abteilung (Name der Abteilung, nur DFM, nur ohne projekt). Erstellen-/Bearbeiten-Fenster mit zwei Feldern
+   nebeneinander; Freigabe einer Postfach-Karte liest „Abteilung:“ und gibt eine DFM-Karte „Neu:“ ohne beides nicht frei;
+   Thema einer Karte für die Themen-Ketten (3.5).
+   ══════════════════════════════════════════════════════════════════════ */
+/* Abteilung eines Projekts (Lager f7Projekte, Feld Abteilung) — '' solange nichts geladen ist */
+function k43ProjektAbteilung(projektName){
+  const pn=String(projektName||'').trim().toLowerCase(); if(!pn) return '';
+  const p=(f7Projekte()||[]).find(x=>String(x.Projekt||'').trim().toLowerCase()===pn);
+  return p ? f7LinkName(p.Abteilung) : '';
+}
+/* Namen der Abteilungen (Lager f7Abteilungen), ohne „Privat“ für DFM-Karten */
+function k43AbteilungsNamen(){ return (f7Abteilungen()||[]).map(a=>String(a.Name||'')).filter(n=>n && n!=='Privat'); }
+/* Zwei Felder nebeneinander: Projekt (Vorschläge aus FocusSystem) · Abteilung (Auswahl aus FocusSystem).
+   Mit Projekt steht die Abteilung des Projekts grau und abteilung ist leer. */
+function k43ProjektOderAbteilungHtml(k){
+  const proj=(f7Projekte()||[]).map(p=>String(p.Projekt||'')).filter(Boolean), hatProjekt=!!(k.projekt && String(k.projekt).trim());
+  const pa=hatProjekt ? k43ProjektAbteilung(k.projekt) : '';
+  const abts=k43AbteilungsNamen();
+  const sel=hatProjekt
+    ? '<input value="'+esc(pa||'Abteilung des Projekts')+'" disabled style="color:var(--mut)" aria-label="Abteilung des Projekts">'
+    : '<select data-bind="abteilung" aria-label="Abteilung"><option value="">— Abteilung —</option>'+abts.map(n=>'<option value="'+esc(n)+'"'+(String(k.abteilung||'')===n?' selected':'')+'>'+esc(n)+'</option>').join('')+(k.abteilung && abts.indexOf(k.abteilung)<0 ? '<option value="'+esc(k.abteilung)+'" selected>'+esc(k.abteilung)+'</option>' : '')+'</select>';
+  return '<div class="field"><label>Projekt oder Abteilung <small>(Pflicht bei DFM — eins von beiden)</small></label>'+
+    '<div class="grid2 k43-pa"><div><input data-bind="projekt" list="k43Projekte" value="'+esc(k.projekt||'')+'" placeholder="Projekt aus FocusSystem" autocomplete="off"><datalist id="k43Projekte">'+proj.map(p=>'<option value="'+esc(p)+'">').join('')+'</datalist></div>'+
+    '<div>'+sel+'</div></div>'+
+    '<div class="hint">'+(hatProjekt ? 'Mit Projekt gilt dessen Abteilung; Abteilung direkt bleibt leer.' : 'Ohne Projekt trägt die Karte ihre Abteilung direkt; sie ist dann das Thema in den Ketten.')+'</div></div>';
+}
+/* beim Tippen im Projektfeld das Abteilungsfeld nachziehen (grau mit Projekt, Auswahl ohne) */
+document.addEventListener('input', e=>{ const t=e.target; if(!t || t.dataset.bind!=='projekt' || !entwurf) return;
+  const box=t.closest('.field'); if(!box || !box.parentNode) return; const neu=document.createElement('div'); neu.innerHTML=k43ProjektOderAbteilungHtml(entwurf);
+  const alt=box.querySelector('.k43-pa'), frisch=neu.querySelector('.k43-pa'); if(!alt || !frisch) return;
+  const abtAlt=alt.children[1], abtNeu=frisch.children[1]; if(abtAlt && abtNeu && abtAlt.innerHTML!==abtNeu.innerHTML){ abtAlt.innerHTML=abtNeu.innerHTML; if(entwurf.projekt && String(entwurf.projekt).trim()) entwurf.abteilung=null; }
+  const h1=box.querySelector('.hint'), h2=neu.querySelector('.hint'); if(h1 && h2) h1.textContent=h2.textContent; });
+/* §3.3 · fehlt einer DFM-Karte „Neu:“ Projekt und Abteilung? (Änderungen an bestehenden Karten sind nicht betroffen) */
+function k43PfFehlt(kk){ return !!(kk && !kk.karteId && kk.domain!=='privat' && !(kk.projekt && String(kk.projekt).trim()) && !(kk.abteilung && String(kk.abteilung).trim())); }
+function k43PfFehltHtml(r, kk){ if(!k43PfFehlt(kk)) return '';
+  return '<div class="k43-fehlt"><span>⚠️ Projekt oder Abteilung fehlt</span><button type="button" class="chip" data-k43zurueck="'+esc(r.id)+'">↩︎ Zurück an '+esc(r.Agent||'Agent')+'</button></div>'; }
+function k43PfFehltMelden(id, r){ toast('Projekt oder Abteilung fehlt — nicht freigegeben'); haptik(12);
+  try{ if(!S.meta.pfFehlt || typeof S.meta.pfFehlt!=='object') S.meta.pfFehlt={}; S.meta.pfFehlt[id]=jetztIso(); saveMeta(); }catch(e){}
+  try{ renderPostfach(); }catch(e){} try{ if(typeof f12KbNeuZeichnen==='function') f12KbNeuZeichnen(id); }catch(e){} }
+/* „Zurück an <Agent>“: schreibt in das Gespräch der Karte „Bitte Projekt oder Abteilung ergänzen.“ (Anlass Kommentar); der Agent legt eine neue Runde an */
+function k43PfZurueck(id){
+  const r=f15PfRecord(id) || (f7Postfach()||[]).find(x=>x.id===id) || (typeof f12PfRecord==='function' ? f12PfRecord(id) : null); if(!r){ toast('Karte lädt noch …'); return; }
+  const kan=f12Kanaele()||[], g=f16KarteGespraech(id, kan), kanal=(g && g.kanal) || f12KanalVon(r.Agent) || f12TrainerKanal();
+  if(!kanal){ toast('Chat-Kanäle laden noch …'); return; }
+  const gespraech=g ? g.gespraech : F16_AGENTENKARTEN;
+  f12Senden(kanal, gespraech, 'Bitte Projekt oder Abteilung ergänzen.', { anlass:'Kommentar', id:'k43-zurueck-'+id, titel:g ? null : F16_AGENTENKARTEN });
+  haptik(8); toast('Rückfrage an '+esc(f12Name(kanal)||r.Agent||'Agent')+' gesendet');
+}
+document.addEventListener('click', e=>{ const z=e.target && e.target.closest ? e.target.closest('[data-k43zurueck]') : null; if(!z) return; e.preventDefault(); e.stopPropagation(); k43PfZurueck(z.dataset.k43zurueck); }, true);
+/* §3.5 · Thema einer Karte: Projekt; ohne Projekt die Abteilung; privat: Abteilung Privat, Thema „Privat“ */
+function k43Thema(k){
+  if(!k || k.domain==='privat') return { thema:'Privat', abteilung:'Privat', art:'privat' };
+  const p=k.projekt && String(k.projekt).trim();
+  if(p) return { thema:p, abteilung:k43ProjektAbteilung(p)||'', art:'projekt' };
+  const a=(k.abteilung && String(k.abteilung).trim())||'';
+  return { thema:a||'Ohne Abteilung', abteilung:a||'', art:'abteilung' };
+}
+
 function init(){
   ladeAlles();
   if(DB._schutz) return;   // Hotfix 21 §A.4: angehalten — keine Takte, kein Rendern, nichts weiter
