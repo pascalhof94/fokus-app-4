@@ -3148,6 +3148,10 @@ main{padding-bottom:calc(var(--sab) + 110px + var(--s2))}   /* 4.3 §7: Platz f�
 .k43-sbbar{position:relative;height:6px;border-radius:3px;background:#262a32;overflow:hidden;display:flex}
 .k43-sbbar i{display:block;height:100%}
 #topbar .inner.f4 #f4sb .f4-onr{margin-top:4px}
+/* ══ Karten-Standard 4.3 · §8 (R13): ▶/⏸ und 💬 in jeder Kartenzeile ══ */
+.kl-z.kz42 .kz42-play{flex:none;width:36px;height:36px;border-radius:10px;border:0;background:#23262d;color:#e8e9ec;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0}
+.kl-chat{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid #2a2d33;background:#1a1d22;color:#e8e9ec;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0}
+.kl-z.kz42 .kz42-r{min-width:56px}
 </style>
 </head>
 <body>
@@ -14359,7 +14363,7 @@ function kartenZeileHtml(k, opt){
   return '<div class="kl-z'+(laeuft?' laeuft':'')+(fertig?' fertig':'')+(ueber?' ueber':'')+(opt.erl?' erl':'')+'" style="--fam:'+fam+';--famb:'+farbeAlpha(fam, .18)+';--prio:'+prioFarbe(k)+';--rand:'+(art==='Aufgabe' ? FARBE.ORANGE : KL_RAND_ROUTINE)+'" data-klkarte="'+k.id+'">'+
     '<button class="kl-play" data-klplay="'+k.id+'" aria-label="'+(laeuft?'Pause':'Start')+'"'+(laeuft?' style="background:'+verlauf(fam, 180)+';color:#08111f"':'')+'>'+(laeuft?'⏸':'▶')+'</button>'+
     '<div class="kl-t" data-klfokus="'+k.id+'"><b class="kl-titel">'+(k.erholung ? '<span class="kl-erh" title="Erholung">🌿</span>' : '')+esc(String(k.titel||'?'))+'</b><span class="kl-meta">'+unter+(opt.zusatz ? ' · '+opt.zusatz : '')+'</span></div>'+
-    rechts+haken+'</div>';
+    rechts+haken+(opt.live ? '' : '<button class="kl-chat" data-k43kchat="'+k.id+'" aria-label="Zur Karte schreiben">💬</button>')+'</div>';   // 4.3 §8: 💬 Karten-Chat
 }
 /* ══ Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §4) · DIE EINGEKLAPPTE KARTE für std42-Karten (Mockup V2, Prüfseite Kartenbestand) ══
    Linker Rand 4 px und Verlauf in der Familienfarbe (DFM blau, Privat lila, System cyan; Info gestrichelt) · links rund ✓, bei Mehrmals eckig ➕
@@ -14406,8 +14410,12 @@ function kartenZeile42Html(k, opt){
     ? '<button class="kl-check ok kz42-check'+(hakAktiv('kl-'+k.id)?' hak-neu" style="'+hakStil():'')+'" data-klreopen="'+k.id+'" aria-label="Wieder öffnen">✓</button>'+hakFlugHtml('kl-'+k.id)
     : '<button class="kl-check kz42-check" data-klcheck="'+k.id+'" aria-label="Erledigt">✓</button>';
   const titel='<b class="kl-titel">'+esc(String(k.titel||'?'))+'</b><span class="kl-meta kz42-meta">'+kz42MetaHtml(k, opt.subs)+(opt.zusatz ? ' · '+opt.zusatz : '')+'</span>';
+  // Karten-Standard 4.3 §8 (R13): jede Zeile, die Zeit messen kann, zeigt ▶ und bei laufender Uhr ⏸ (▶ = Tick + Zeit, ➕ nur Bonus, ⏸ Zeit ohne Tick); dazu 💬 zum Karten-Chat.
+  //   Seit 4.2 fehlten ▶/⏸ in dieser Zeile (nur ✓ bzw. ➕) — für alle std42-Karten ohne Rolle, an allen Orten (Fokus-Liste, Suche, „+“, In Kette, Chat-Kasten).
+  const play=(opt.live || info) ? '' : '<button class="kl-play kz42-play" data-klplay="'+k.id+'" aria-label="'+(laeuft?'Pause':'Start')+'"'+(laeuft?' style="background:'+verlauf(fam, 180)+';color:#08111f"':'')+'>'+(laeuft?'⏸':'▶')+'</button>';
+  const chat=opt.live ? '' : '<button class="kl-chat" data-k43kchat="'+k.id+'" aria-label="Zur Karte schreiben">💬</button>';
   return '<div class="kl-z kz42'+(info?' kz42-info':'')+(laeuft?' laeuft':'')+(fertig?' fertig':'')+(ueber?' ueber':'')+(opt.erl?' erl':'')+'" style="--fam:'+fam+';--famb:'+farbeAlpha(fam, .18)+';--prio:'+fam+';--rand:'+farbeAlpha(fam, .55)+'"'+(opt.live ? '' : ' data-klkarte="'+k.id+'"')+'>'+
-    links+(opt.live ? '<div class="kl-t">'+titel+'</div>' : '<div class="kl-t" data-klfokus="'+k.id+'">'+titel+'</div>')+kz42RechtsHtml(k)+'</div>';
+    play+links+(opt.live ? '<div class="kl-t">'+titel+'</div>' : '<div class="kl-t" data-klfokus="'+k.id+'">'+titel+'</div>')+kz42RechtsHtml(k)+chat+'</div>';
 }
 /* heute gebuchte Zeit der laufenden Karte in allen Zeilen sekündlich nachziehen (Ticker) */
 function kartenZeilenZeitLive(){
@@ -14560,6 +14568,7 @@ function kartenMeistgenutztHtml(){ return kartenBlockHtml(null); }
 function kettenListeKlick(e){
   const t=e.target; if(!t || !t.closest) return false;
   if(t.closest('select.kl-sort')) return false;
+  const kc43=t.closest('[data-k43kchat]'); if(kc43){ e.stopPropagation(); haptik(6); f12KartenChat(kc43.dataset.k43kchat); return true; }   // 4.3 §8/§6.2: 💬 öffnet den Karten-Chat der gezeigten Karte
   const tw=t.closest('[data-tkwahl]'); if(tw){ e.stopPropagation(); haptik(6); S.ui.tkWahl=tw.dataset.tkwahl||null; saveUi(); kettenListenNeu(); return true; }
   const kt=t.closest('[data-kltick]'); if(kt){ e.stopPropagation(); haptik(10); kartenListeTick(kt.dataset.kltick); return true; }
   const kg=t.closest('[data-klgruppe]'); if(kg){ e.stopPropagation(); haptik(6); klGruppeUmschalten(kg.dataset.klgruppe); kettenListenNeu(); return true; }
