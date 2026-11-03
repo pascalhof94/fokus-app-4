@@ -354,5 +354,5 @@ S.meta.muenzenGesamt=mG0; S.meta.korrekturProtokoll=S.meta.korrekturProtokoll.fi
 pruef('21 §E.1 Speicher-Karte: „~2,5 MB, mit der alten App geteilt“ an beiden Stellen, kein „~5 MB“ mehr', (function(){ var s=readFile('index.html'); return (s.match(/~2,5 MB, mit der alten App geteilt/g)||[]).length===2 && s.indexOf('(~5 MB)')<0; })());
 pruef('21 §E.2 Rückweg: K.fuehrtJetzt wird im Zweig !standGezeichnet entfernt', (function(){ var s=readFile('index.html'); return s.indexOf("const vorigesGeraet=d.fuehrend;\n          try{ localStorage.removeItem(K.fuehrtJetzt); }catch(e){}")>=0; })());
 
-pruef('§C.1 App 4.2.1 · Build 2026-11-03-51 · sw.js Cache hochgezählt (seit Hotfix 24)', APP_VERSION==='4.2.1' && APP_BUILD==='2026-11-03-51' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.2.1-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('§C.1 App 4.2.1 · Build 2026-11-03-52 · sw.js Cache hochgezählt (seit Hotfix 24)', APP_VERSION==='4.2.1' && APP_BUILD==='2026-11-03-52' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.2.1-2'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 19 und 19.1 · Speicher voll: Verlustschutz, Sicherungen nach FocusSystem, Führung zurück (4.1.8)');

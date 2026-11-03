@@ -1,7 +1,7 @@
 /* Suite 5.0 · Hotfix 24 · Tageswechsel (Auftrag 261103 §5): 1 Zeile der Rollenkarten · 2 ✓ auf k3-aufstehen (std42/System) legt den neuen Tag an und
    schließt den Vortag · 3 Schnellzugriff (Schnellplatz +1, ▶) ebenso · 4 ✓ auf k3-tagesuebergang stößt den Trainer-Lauf an · 5 ✓ auf der Fokus-Seite ·
    6 Kartenset ohne rolle lässt rolle, eingabe, nachtnotiz stehen · 7 Migration rolle421 · 8 tagNachholen setzt den laufenden Tag und ist rückgängig
-   machbar (auch als Paket) · 9 Version 4.2.1, Build 51, sw.js Cache.
+   machbar (auch als Paket) · 9 Version 4.2.1, Build 52, sw.js Cache.
    Aufruf: jsc tests/v50-tageswechsel.js · Geschrieben, im Rahmen des Auftrags nicht ausgeführt. */
 var _toasts=[]; toast=function(m){ _toasts.push(String(m)); }; haptik=function(){}; var confirm=function(){ return true; };
 fsliveStumm();
@@ -114,11 +114,13 @@ var r8=tagNachholen(auf, { einschlafUm:null });
 pruef('8.3 tagNachholen: ok, neuer Tag heute mit Start = Aufstehzeitpunkt, Aufstehen gesetzt', !!r8.ok && S.tag.datum===heuteIso() && S.tag.startTs===auf && S.tag.morgen.aufstehTs===auf && S.tag.aufstehen.ts===auf, JSON.stringify(r8));
 var hAlt=S.historie.filter(function(h){ return h.tagId===g1; })[0];
 pruef('8.4 Vortag in der Historie mit Ende = Aufstehzeitpunkt', !!hAlt && hAlt.endeTs===auf && hAlt.geschlossenTs===auf, hAlt && (hAlt.endeTs+' / '+hAlt.geschlossenTs));
+pruef('8.4b Messung des Vortagsabschlusses (Reflexion) liegt eine Sekunde vor dem Aufstehen — kein gleicher Zeitstempel wie tag.aufstehen.ts', !!hAlt && hAlt.abschluss && hAlt.abschluss.messungTs===new Date(Date.parse(auf)-1000).toISOString() && hAlt.abschluss.messungTs!==S.tag.aufstehen.ts, hAlt && hAlt.abschluss && hAlt.abschluss.messungTs);
 var neuId=S.tag.tagId;
 pruef('8.5 Einträge ab dem Aufstehzeitpunkt tragen den neuen Tag, der davor bleibt auf dem Vortag', S.intraday.filter(function(e){ return e.id==='s-nachher'; })[0].tagId===neuId && S.intraday.filter(function(e){ return e.kartenId==='t-priv' && e.typ==='tick'; })[0].tagId===neuId && S.intraday.filter(function(e){ return e.id==='s-vorher'; })[0].tagId===g1 && r8.verschoben===3, 'verschoben '+r8.verschoben);
 var eck8=S.intraday.filter(function(e){ return e.tagId===neuId && e.eck; });
 pruef('8.6 Eckpunkte Aufstehen und Übergang am Aufstehzeitpunkt, Tick auf k3-aufstehen, Übergang nachgeholt', eck8.filter(function(e){ return e.eck==='aufstehen' && e.ts===auf; }).length===2 && eck8.filter(function(e){ return e.eck==='uebergang'; }).length===2 && tickAnzahlHeute(_k('k3-aufstehen'))===1 && S.tag.uebergang && S.tag.uebergang.nachgeholt===true, eck8.length+' Eck');
 pruef('8.7 Kartenstand: t-priv hat heute 1 Tick, k3-aufstehen ist nicht mehr „abgehakt" vom Vortag', num(_k('t-priv').ticksHeute)===1 && _k('k3-aufstehen').tagId!==g1);
+pruef('8.7b Nachbesserung: kein Ausgleich am neuen Tag, die Zeit nach dem Aufstehen zählt heute (60 Min), der Vortag gleicht nur die Zeit davor aus', S.intraday.filter(function(e){ return e.tagId===neuId && e.typ==='ausgleich'; }).length===0 && Math.round(heuteInvestiertMin(_k('t-dfm')))===60 && !S.intraday.some(function(e){ return e.tagId===g1 && e.kartenId==='t-dfm' && e.typ==='ausgleich' && Math.abs(num(e.punkte))>=200; }), JSON.stringify({ ausgleichNeu:S.intraday.filter(function(e){ return e.tagId===neuId && e.typ==='ausgleich'; }).map(function(e){ return e.kartenId+':'+e.punkte; }), min:heuteInvestiertMin(_k('t-dfm')), vortag:S.intraday.filter(function(e){ return e.tagId===g1 && e.kartenId==='t-dfm' && e.typ==='ausgleich'; }).map(function(e){ return e.punkte; }) }));
 warten();
 pruef('8.8 Tagesbilanz und Trainer-Nachricht gesendet, Protokoll „nachgeholt", meta.tagNachholen gesetzt', _gesendet.some(function(g){ return g.id==='chat-uebergang-'+K.gestern; }) && S.meta.f11Protokoll.some(function(e){ return e.schritt==='nachgeholt'; }) && S.meta.tagNachholen && S.meta.tagNachholen.nachTagId===neuId && !S.meta.tagNachholen.rueckgaengig, _gesendet.map(function(g){ return g.id; }).join(','));
 pruef('8.9 Rückgängig möglich, solange nichts Neues gebucht ist', tagNachholenRueckgaengigMoeglich()===true);
@@ -132,7 +134,20 @@ pruef('8.13 nach Freigabe: Tag nachgeholt (Ergebnis tagNachholen.ok, heute läuf
 S.intraday.push({ ts:jetztIso(), kartenId:'t-priv', domaene:'privat', punkte:10, minuten:0, typ:'tick', tagId:S.tag.tagId, quelle:'tick' });
 pruef('8.14 nach einer neuen Buchung ist Rückgängig nicht mehr möglich', tagNachholenRueckgaengigMoeglich()===false);
 pruef('8.15 ohne offenen Vortag wird ein weiteres Nachholen abgewiesen', !!tagNachholen(auf).fehler);
+// Nachbesserung: Migration nachholen421 trennt eine Kollision Messungszeit = Aufstehzeit in der Historie
+var hx=S.historie.filter(function(h){ return h.tagId===g1; })[0]; hx.abschluss=hx.abschluss||{}; hx.abschluss.messungTs=S.tag.aufstehen.ts; S.meta.nachholen421=null; S.meta.migrationen=[];
+var m9=migrationNachholen421();
+pruef('8.16 Migration nachholen421 zieht die kollidierende Messungszeit um eine Sekunde vor, Protokoll in meta.migrationen, einmalig', hx.abschluss.messungTs===new Date(Date.parse(S.tag.aufstehen.ts)-1000).toISOString() && m9 && m9.korrigiert.length===1 && S.meta.migrationen[0].name==='nachholen421' && migrationNachholen421()===null, JSON.stringify(m9));
+// Nachbesserung: Migration nachholen421b berichtigt einen mit Build 51 nachgeholten Tag (Ausgleich am neuen Tag weg, Vortags-Ausgleich zurück, Ticks nach dem Aufstehen auf den neuen Tag)
+var N0=S.meta.tagNachholen; var nTs=jetztIso(); S.meta.tagNachholen={ ts:nTs, aufstehTs:auf, vonTagId:g1, nachTagId:S.tag.tagId, rueckgaengig:null };
+S.intraday.push({ ts:auf, kartenId:'t-erh', domaene:'privat', punkte:300, minuten:0, typ:'ausgleich', tagId:g1, quelle:'tagesabschluss' });
+S.intraday.push({ ts:nTs, kartenId:'t-erh', domaene:'privat', punkte:-200, minuten:0, typ:'ausgleich', tagId:S.tag.tagId, quelle:'korrektur' });
+var q9=tickQuelle(_k('t-priv'), true); q9.tickLog={ tag:g1, ticks:[{ ts:vorher, nr:1, punkte:10 }, { ts:nachher2, nr:2, punkte:10 }] };
+hx.punkteBilanz=1000; var w0=num(S.meta.wohlstand); S.meta.nachholen421b=null;
+var m10=migrationNachholen421b();
+pruef('8.17 nachholen421b: Ausgleich −200 am neuen Tag entfernt, Vortags-Ausgleich 300 → 100, Bilanz des Vortags −200, Konto nachgezogen, Tick nach dem Aufstehen auf dem neuen Tag, einmalig', m10 && m10.entfernt===1 && !S.intraday.some(function(e){ return e.tagId===S.tag.tagId && e.typ==='ausgleich' && e.kartenId==='t-erh'; }) && S.intraday.filter(function(e){ return e.tagId===g1 && e.kartenId==='t-erh' && e.typ==='ausgleich' && e.ts===auf; })[0].punkte===100 && hx.punkteBilanz===800 && num(S.meta.wohlstand)===w0-200 && q9.tickLog.tag===S.tag.tagId && q9.tickLog.ticks.length===1 && migrationNachholen421b()===null, JSON.stringify(m10)+' · wohlstand '+w0+'→'+S.meta.wohlstand);
+S.meta.tagNachholen=N0;
 
 // ══ 9 · Version ══
-pruef('9.1 App 4.2.1 · Build 2026-11-03-51 · sw.js Cache fokus4-v4.2.1-1 · DATENVERTRAG 2.1.0', APP_VERSION==='4.2.1' && APP_BUILD==='2026-11-03-51' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.2.1-1'")>=0 && DATENVERTRAG==='2.1.0', APP_VERSION+' / '+APP_BUILD);
+pruef('9.1 App 4.2.1 · Build 2026-11-03-52 · sw.js Cache fokus4-v4.2.1-2 · DATENVERTRAG 2.1.0', APP_VERSION==='4.2.1' && APP_BUILD==='2026-11-03-52' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.2.1-2'")>=0 && DATENVERTRAG==='2.1.0', APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 24 · Tageswechsel (4.2.1)');

@@ -3116,7 +3116,7 @@ const APP_VERSION = '4.2.1';
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-11-03-51';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-11-03-52';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -9331,6 +9331,8 @@ function ladeAlles(){
   try{ migration400(); }catch(e){ console.warn('migration400', e); }
   try{ migration401(); }catch(e){ console.warn('migration401', e); }
   try{ migrationRolle421(); }catch(e){ console.warn('rolle421', e); }   // Hotfix 24 §2.2: Rolle der sieben festen Karten wiederherstellen, falls sie fehlt
+  try{ migrationNachholen421(); }catch(e){ console.warn('nachholen421', e); }   // Hotfix 24 · Nachbesserung: Messungszeit eines nachgeholten Vortags vom Aufstehen trennen
+  try{ migrationNachholen421b(); }catch(e){ console.warn('nachholen421b', e); }   // Hotfix 24 · Nachbesserung: Punkte nach dem Aufstehen vom Vortag auf den neuen Tag
   try{ if(S.settings.outfitLeistungPunkte==null) S.settings.outfitLeistungPunkte=900; if(S.settings.outfitErholungPunkte==null) S.settings.outfitErholungPunkte=50; }catch(e){}   // Betriebsbereit 3: Vorgaben für vorhandene Speicher
   try{ f11FesteKarten(); }catch(e){}   // Hotfix 4.0.0-12: Tagesabschluss und Tagesplanung bleiben archiviert, auch nach einem Import vor diesem Build   // 4.0 · Paket 11: feste Karten Tagesübergang, Reflexion, Nacht vorbereiten   // 4.0 · Paket 4: Einstellungen der Punkte-Engine nach Punkt 5
   try{ feldkarten353Start(); }catch(e){}   // §5 (v3.5.3): Ausmal-Stand auf neue Feldkarten uebernehmen (ruht, solange FELDKARTEN_353 = false)
@@ -19422,11 +19424,15 @@ function tagNachholen(aufstehTs, opt){
     if(e.typ==='tick'||e.typ==='pflicht'||e.typ==='unterzaehler') j.ticks++; if(TN_SITZUNG.indexOf(e.typ)>=0) j.min+=num(e.minuten); if(e.typ==='abhaken'||e.typ==='startbonus') j.abhaken=true; if(e.typ==='wiederoffen') j.wiederoffen=true; });
   const stand={};
   Object.keys(je).forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(!k) return; const j=je[id];
-    const tl=(k.tickLog && k.tickLog.tag===alt && Array.isArray(k.tickLog.ticks)) ? k.tickLog.ticks : [];
+    // Nachbesserung 03.11.2026: das Tick-Protokoll liegt bei Karten mit Ticker-Unteraufgabe auf dieser (tickQuelle), nicht auf der Karte;
+    // die Ist-Sekunden der Zeit nach dem Aufstehen werden für die Vortags-Wertung abgezogen (sonst zählte der Vortag die Punkte danach als Ausgleich)
+    const q=tickQuelle(k, true)||k;
+    const tl=(q.tickLog && q.tickLog.tag===alt && Array.isArray(q.tickLog.ticks)) ? q.tickLog.ticks : [];
     const tlSpaeter=tl.filter(t=>t && String(t.ts||'')>=tsAuf), tlVorher=tl.filter(t=>!(t && String(t.ts||'')>=tsAuf));
-    stand[id]={ status:k.status, tickWerte:(k.tickWerteHeute||[]).slice(), tlSpaeter, j };
-    if(tl.length) k.tickLog={ tag:alt, ticks:tlVorher };
+    stand[id]={ status:k.status, tickWerte:(k.tickWerteHeute||[]).slice(), tlSpaeter, j, sekNach:Math.max(0, Math.round(j.min*60)) };
+    if(tl.length) q.tickLog={ tag:alt, ticks:tlVorher };
     if(j.ticks){ k.ticksHeute=Math.max(0, num(k.ticksHeute)-j.ticks); if(Array.isArray(k.tickWerteHeute)) k.tickWerteHeute=k.tickWerteHeute.slice(0, Math.max(0, k.tickWerteHeute.length-j.ticks)); }
+    if(stand[id].sekNach) k.istSek=Math.max(0, num(k.istSek)-stand[id].sekNach);
     if(j.abhaken && k.status==='erledigt' && k.tagId===alt){ k.status='offen'; k.tagId=null; }
   });
   const fokus=S.fokus; S.fokus=null;   // die laufende Uhr zählt weiter (startMs bleibt) und wird später auf den neuen Tag gebucht
@@ -19435,6 +19441,9 @@ function tagNachholen(aufstehTs, opt){
   jetztIso=function(){ return tsAuf; }; heuteIso=function(){ return datumNeu; };
   try{
     S.tag.eckpunkte=Object.assign({}, S.tag.eckpunkte||{}); if(!S.tag.eckpunkte.abschluss) S.tag.eckpunkte.abschluss='4.0 · Tagesübergang';
+    // Nachbesserung 03.11.2026: die Messung des Vortagsabschlusses (Reflexion) liegt eine Sekunde VOR dem Aufstehen — mit demselben Zeitstempel
+    // wie tag.aufstehen.ts wechselte der Dienst die Messung bei jedem Lauf zwischen „Aufstehen" und „Reflexion" (gleicher app_zeitstempel)
+    { const a=abschlussV3Stand(); if(a && !a.messungTs) a.messungTs=new Date(ms-1000).toISOString(); }
     try{ abschlussV3Schliessen(); prot.push('abschluss ok'); }catch(e){ prot.push('abschluss Fehler: '+((e&&e.message)||e)); }
     try{ tagEndgueltigSchliessen(); prot.push('schliessen ok'); }catch(e){ prot.push('schliessen Fehler: '+((e&&e.message)||e)); }
     const h=(S.historie||[]).find(x=>x.tagId===alt)||null;
@@ -19459,11 +19468,11 @@ function tagNachholen(aufstehTs, opt){
   S.tag.log=(S.tag.log||[]).concat(logSpaeter);
   Object.keys(stand).forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(!k) return; const s=stand[id], j=s.j;
     if(j.ticks){ k.ticksHeute=num(k.ticksHeute)+j.ticks; if(!Array.isArray(k.tickWerteHeute)) k.tickWerteHeute=[]; k.tickWerteHeute=k.tickWerteHeute.concat(s.tickWerte.slice(Math.max(0, s.tickWerte.length-j.ticks))); }
-    if(s.tlSpaeter.length){ const tl=tickLogHeute(k); s.tlSpaeter.forEach(t=>tl.push(t)); }
+    if(s.tlSpaeter.length){ const tl=tickLogHeute(k); s.tlSpaeter.forEach(t=>tl.push(t)); }   // tickLogHeute geht über tickQuelle (Ticker-Unteraufgabe)
     if(j.abhaken && s.status==='erledigt' && !j.wiederoffen){ k.status='erledigt'; k.tagId=neu; if(k.rhythmus) k.zuletztRoutine=S.tag.datum; }
-    if(j.min>0 && S.tag.istMinutenStart) S.tag.istMinutenStart[id]=Math.max(0, num(S.tag.istMinutenStart[id])-j.min);   // die Zeit nach dem Aufstehen zählt heute
+    if(s.sekNach) k.istSek=num(k.istSek)+s.sekNach;   // die Zeit nach dem Aufstehen zählt heute (istMinutenStart stammt aus tagStarten ohne sie)
   });
-  try{ tagesAbgleich(); }catch(e){}
+  // kein tagesAbgleich hier: der Weg aus 4.1.14 (Aufstehen) gleicht nicht ab; mit wiederhergestelltem Stand stimmen Beitrag und Stunden-Log überein
   S.tag.letzteAktivitaetTs=jetztIso();
   const letzter=S.intraday.length ? S.intraday[S.intraday.length-1].ts : null;
   S.meta.tagNachholen={ ts:jetztIso(), aufstehTs:tsAuf, vonTagId:alt, nachTagId:neu, verschoben:spaeter.length, einschlafUm:opt.einschlafUm||null, protokoll:prot, intradayLaenge:S.intraday.length, letzterTs:letzter, rueckgaengig:null };
@@ -19477,6 +19486,53 @@ function tagNachholen(aufstehTs, opt){
   }catch(e){ f11Log('chat', 'Fehler: '+((e&&e.message)||e)); }
   f11Log('nachgeholt', 'Tag '+neu+' ab '+tsAuf+' · '+spaeter.length+' Einträge verschoben · '+prot.join(' · '));
   return { ok:true, vonTagId:alt, nachTagId:neu, aufstehTs:tsAuf, verschoben:spaeter.length, protokoll:prot };
+}
+/* Hotfix 24 · Nachbesserung (einmalig): ein schon nachgeholter Vortag trägt dieselbe Messungszeit (abschluss.messungTs) wie das Aufstehen des
+   folgenden Tags; der Dienst wechselte die Messung bei jedem Lauf. Kollisionen in der Historie um eine Sekunde vorziehen, Protokoll in meta.migrationen. */
+function migrationNachholen421(){
+  if(S.meta.nachholen421 && S.meta.nachholen421.ts) return null;
+  const aufsteh=new Set();
+  const merke=t=>{ if(!t) return; if(t.aufstehen && t.aufstehen.ts) aufsteh.add(t.aufstehen.ts); if(t.morgen && t.morgen.aufstehTs) aufsteh.add(t.morgen.aufstehTs); };
+  (S.historie||[]).forEach(merke); merke(S.tag);
+  const korrigiert=[];
+  (S.historie||[]).forEach(h=>{ const a=h && h.abschluss; if(!a || !a.messungTs || !aufsteh.has(a.messungTs)) return;
+    const ms=Date.parse(a.messungTs); if(!Number.isFinite(ms)) return; const neu=new Date(ms-1000).toISOString();
+    korrigiert.push(h.tagId+': '+a.messungTs+' → '+neu); if(a.reflexion && a.reflexion.ts===a.messungTs) a.reflexion.ts=neu; a.messungTs=neu; });
+  const p={ name:'nachholen421', ts:jetztIso(), version:APP_VERSION, korrigiert };
+  S.meta.nachholen421=p;
+  if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[];
+  S.meta.migrationen=S.meta.migrationen.concat([p]).slice(-50);
+  if(korrigiert.length) saveHistorie();
+  saveMeta();
+  return p;
+}
+/* Hotfix 24 · Nachbesserung (einmalig): ein mit Build 51 nachgeholter Tag hat die Punkte der Zeit nach dem Aufstehen dem Vortag als Abschluss-
+   Ausgleich gutgeschrieben und sie am neuen Tag als Ausgleich (quelle korrektur, im Moment des Nachholens) wieder abgezogen; Tick-Protokolle auf
+   Ticker-Unteraufgaben blieben auf dem Vortag. Berichtigen: Ausgleiche des neuen Tags entfernen, die Vortags-Ausgleiche um denselben Betrag
+   zurücknehmen (Bilanz, Konto), Ticks nach dem Aufstehen auf den neuen Tag. Protokoll in meta.migrationen. */
+function migrationNachholen421b(){
+  if(S.meta.nachholen421b && S.meta.nachholen421b.ts) return null;
+  const N=S.meta.tagNachholen, p={ name:'nachholen421b', ts:jetztIso(), version:APP_VERSION, entfernt:0, zurueck:{}, ticks:0, bilanz:0 };
+  if(N && N.ts && N.aufstehTs && !N.rueckgaengig && S.tag && S.tag.tagId===N.nachTagId){
+    const nMs=Date.parse(N.ts), je={};
+    S.intraday=(S.intraday||[]).filter(e=>{ if(e && e.tagId===N.nachTagId && e.typ==='ausgleich' && e.quelle==='korrektur' && e.kartenId && Math.abs(Date.parse(e.ts)-nMs)<=2000){ je[e.kartenId]=logRund(num(je[e.kartenId])+num(e.punkte)); p.entfernt++; return false; } return true; });
+    let summe=0;
+    Object.keys(je).forEach(id=>{ const v=(S.intraday||[]).find(e=>e && e.tagId===N.vonTagId && e.kartenId===id && e.typ==='ausgleich' && e.quelle==='tagesabschluss' && e.ts===N.aufstehTs);
+      if(v){ v.punkte=logRund(num(v.punkte)+je[id]); p.zurueck[id]=je[id]; summe+=je[id]; } });
+    S.karten.forEach(k=>{ const q=tickQuelle(k, false)||k; const t=q.tickLog; if(!t || t.tag!==N.vonTagId || !Array.isArray(t.ticks)) return;
+      const sp=t.ticks.filter(x=>x && String(x.ts||'')>=N.aufstehTs); if(!sp.length) return; q.tickLog={ tag:N.nachTagId, ticks:sp }; p.ticks+=sp.length; });
+    const h=(S.historie||[]).find(x=>x.tagId===N.vonTagId);
+    if(h && summe){ const bil0=num(h.punkteBilanz); h.punkteBilanz=logRund(bil0+summe); p.bilanz=logRund(summe);
+      // Konto nachziehen wie korrekturAnwenden (kontoNachziehen): Lebenswerk um die Punkte, Münzen und Rang mit dem Faktor des Tages
+      const f=(bil0>0 && num(h.spielZufluss)>0) ? Math.max(1, Math.min(3, num(h.spielZufluss)/bil0)) : 1, dM=Math.round(summe*f);
+      S.meta.wohlstand=num(S.meta.wohlstand)+summe; S.meta.muenzenGesamt=Math.max(0, num(S.meta.muenzenGesamt)+dM); S.meta.rangPunkte=Math.max(0, num(S.meta.rangPunkte)+dM); h.spielZufluss=num(h.spielZufluss)+dM; p.muenzen=dM; }
+    DB.set('intraday', S.intraday); saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveHistorie();
+  }
+  S.meta.nachholen421b=p;
+  if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[];
+  S.meta.migrationen=S.meta.migrationen.concat([p]).slice(-50);
+  saveMeta();
+  return p;
 }
 function tagNachholenRueckgaengigMoeglich(){
   const N=S.meta && S.meta.tagNachholen; if(!N || !N.ts || N.rueckgaengig) return false;
