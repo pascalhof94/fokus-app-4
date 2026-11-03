@@ -3152,6 +3152,8 @@ main{padding-bottom:calc(var(--sab) + 110px + var(--s2))}   /* 4.3 §7: Platz f�
 .kl-z.kz42 .kz42-play{flex:none;width:36px;height:36px;border-radius:10px;border:0;background:#23262d;color:#e8e9ec;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0}
 .kl-chat{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid #2a2d33;background:#1a1d22;color:#e8e9ec;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0}
 .kl-z.kz42 .kz42-r{min-width:56px}
+/* ══ Hotfix 25 · §1 Statusleiste 4.2 ohne Ring: Titel ab linkem Rand, ⚙ rechts ══ */
+.f4n-kz .hf25-einst{flex:none;margin-left:6px}
 </style>
 </head>
 <body>
@@ -3206,11 +3208,12 @@ main{padding-bottom:calc(var(--sab) + 110px + var(--s2))}   /* 4.3 §7: Platz f�
 <nav id="nav">
   <!-- Karten-Standard 4.3 §7 (Zielbild 08): Ketten · Suche · Fokus (groß, Ring = Tagesfortschritt, Charakter innen, ohne Beschriftung) · Shop · Statistik.
        Vorher: Fokus · Postfach · Statistik · Shop · Einstellungen. Einstellungen über ⚙ in der Statusleiste, Postfach im Ketten-Tab. -->
-  <button data-seite="ketten"><span class="ic">⛓</span>Ketten</button>
-  <button data-navsuche="1"><span class="ic">⌕</span>Suche</button>
+  <!-- Hotfix 25 §2: Symbole als Emoji wie bis 4.2 (die Zeichen aus 4.3 entfallen) -->
+  <button data-seite="ketten"><span class="ic">🔗</span>Ketten</button>
+  <button data-navsuche="1"><span class="ic">🔍</span>Suche</button>
   <button class="fokus" data-seite="fokus" aria-label="Fokus"><span class="k43-ring" id="navRing"></span></button>
-  <button data-seite="belohnung"><span class="ic">◇</span>Shop</button>
-  <button data-seite="statistik"><span class="ic">▤</span>Statistik</button>
+  <button data-seite="belohnung"><span class="ic">🛍</span>Shop</button>
+  <button data-seite="statistik"><span class="ic">📊</span>Statistik</button>
 </nav>
 
 <!-- ══ C3 (v3.8.0) · EBENE 1 — direktes Kind von <body>, deckt alles; oben NUR die Punkteleiste (#e1Kopf), darunter die Ansicht ══ -->
@@ -27976,15 +27979,38 @@ function k43StatusleisteHtml(){
   return '<div class="k43-sb"><div class="k43-sbz"><span class="l" data-f4kurve="1"><b style="color:'+FARBE.BLAU_HELL+'">'+fmtP(g.dfm)+'</b> / '+fmtP(g.zielDfm)+' DFM · <b style="color:'+FARBE.LILA_HELL+'">'+fmtP(g.privat)+'</b> / '+fmtP(g.zielPrivat)+' Privat</span><span class="r mono">'+hMin(min)+' Std.</span><button type="button" class="k43-einst" data-k43einst="1" aria-label="Einstellungen">⚙</button></div>'+
     '<div class="k43-sbbar" data-f4kurve="1"><i style="width:'+pD.toFixed(1)+'%;background:'+FARBE.BLAU+'"></i><i style="width:'+pP.toFixed(1)+'%;background:'+FARBE.LILA+'"></i></div>'+onr+'</div>';
 }
-f4StatusleisteHtml=function(){ return k43StatusleisteHtml(); };
+// f4StatusleisteHtml=function(){ return k43StatusleisteHtml(); };   // Hotfix 25 §1: abgelöst durch hf25StatusleisteHtml (Statusleiste 4.2 ohne Ring)
 { const _alt=f4StatusleisteRender; f4StatusleisteRender=function(){ const host=el('f4sb'); if(!host) return;
-    if(!S.tag){ if(F4N.key!=='leer43'){ F4N.key='leer43'; host.innerHTML='<div class="k43-sb"><div class="k43-sbz"><span class="l">Kein Tag gestartet</span><button type="button" class="k43-einst" data-k43einst="1" aria-label="Einstellungen">⚙</button></div></div>'; } return; }
-    _alt(); }; }   // 4.3: die bestehende Hülle (Aufbau nur bei Datenänderung) zeichnet f4StatusleisteHtml = schmale Leiste; punkteleisteZeichnen('sBar') kehrt ohne Element zurück
+    // Hotfix 25 §1.2: Zustand „Kein Tag gestartet“ ohne Ring und Avatar, mit ⚙ (vorher 4.3: schmale Leiste k43-sb)
+    if(!S.tag){ if(F4N.key!=='leer25'){ F4N.key='leer25'; host.innerHTML='<div class="f4n-kz"><div class="ti idle">Kein Tag gestartet</div><div class="rz"></div>'+hf25EinstKnopfHtml()+'</div>'; } return; }
+    _alt(); }; }   // 4.3/Hotfix 25: die bestehende Hülle (Aufbau nur bei Datenänderung, F4N.key) zeichnet f4StatusleisteHtml
 /* Tableiste: Suche als Tab (öffnet die Suche; die Leiste bleibt sichtbar), ⚙ → Einstellungen */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
   if(t.closest('[data-navsuche]')){ e.stopPropagation(); haptik(6); if(e1Art()==='suche') e1Schliessen(); else e1Oeffnen('suche'); return; }
   if(t.closest('[data-k43einst]')){ e.stopPropagation(); haptik(6); seiteZeigen('einst'); return; }
 }, true);
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   Hotfix 25 · §1 STATUSLEISTE ZURÜCK AUF 4.2 (ohne Ring und Avatar, ⚙ rechts) · §2 TABLEISTE MIT EMOJI
+   Es gilt wieder genau die Statusleiste 4.2 (_f4StatusleisteHtml42: Bänder, Punkteleiste mit Erholung, Kennzeile, Viererzeile mit Konto,
+   Postfach/Akku, Tagesdiagramm, Matrix). Einzige Änderung in der Kennzeile f4n-kz: das Element .av#tbRing (Ring mit Avatarbild) entfällt,
+   der Titel beginnt am linken Rand, ganz rechts nach .rz das ⚙ (30 × 30 px, data-k43einst → Einstellungen). Die schmale Leiste aus 4.3
+   (k43StatusleisteHtml) bleibt im Code, wird nicht mehr aufgerufen.
+   ══════════════════════════════════════════════════════════════════════ */
+function hf25EinstKnopfHtml(){ return '<button type="button" class="k43-einst hf25-einst" data-k43einst="1" aria-label="Einstellungen">⚙</button>'; }
+function hf25StatusleisteHtml(){
+  const g=diaGroessen(), k=fokusKarte(), konto_=S.belohnung ? konto() : 0, erh=f4ErholungMinHeute(), erhZ=f4ErholungZiel(), pst=f4PostfachStand(), br=e4Bruecke(), W=e4BrueckeWerte(), pk=paceKarte();
+  let rz='', rp=''; if(k){ const r=restzeitAnzeige(k.sollMin, istSekLive(k)); rz='<div class="zt" id="sbZeit" style="color:'+r.farbe+'">'+esc(r.text)+'</div>'; rp='<div class="f4n-pp" id="sbPkt" style="color:'+famHell(k)+'">+'+fmtP(Math.round(kartePunkte(k)))+'</div>'; }
+  const erhP=Math.max(0, Math.min(100, erh/erhZ*100));
+  const mv=matrixVerlaufSvg(matrixSpur().filter(p=>p && p.ts && Date.parse(p.ts)>=Date.now()-5*3600000), {klein:true});
+  return f4nBandHtml(br, W, pst)+
+    '<div class="f4n-pl"><div class="sb-bar" id="sBar">'+punkteleisteGeruest('sBar')+'</div><div class="erh"><div class="f" style="width:'+erhP.toFixed(1)+'%"><em>'+Math.round(erhP)+' %</em></div></div></div>'+
+    '<div class="f4n-kz" data-f4titel="1">'+   // Hotfix 25 §1.2: ohne <div class="av" id="tbRing">…</div>
+      '<div class="ti'+(k?'':' idle')+'">'+(k ? esc(k.titel||'(ohne Titel)') : 'Kein Fokus aktiv')+'</div><div class="rz">'+rz+rp+'</div>'+hf25EinstKnopfHtml()+'</div>'+   // §1.3: ⚙ nach .rz
+    '<div class="f4n-r4">'+f4nFeld1Html(konto_, pst, akkuLive(), FSLive.zustand())+'<div class="b23" data-f4kurve="1">'+f4nTagesdiagrammSvg(g, pk)+'</div><div class="b4 mx" data-f4matrix="1">'+mv+'</div></div>';
+}
+f4StatusleisteHtml=hf25StatusleisteHtml;   // Hotfix 25 §1.1: abgelöst k43StatusleisteHtml (4.3 §7)
 
 function init(){
   ladeAlles();
