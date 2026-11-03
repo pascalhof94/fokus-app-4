@@ -1,6 +1,6 @@
 /* Suite 4.9 · Karten-Standard 4.2 (Auftrag 261102 §12): 1 e42Satz · 2 e42Bonus · 3 Mehrmals = Bonus je Tick · 4 Karte ohne std42 rechnet wie 4.1.14 ·
    5 optionale Unteraufgabe → keine Folgeaufgabe · 6 Kartenset auf einem Testbestand (Zahlen, Sicherung, Rückgängig exakt) · 7 Statistik eines Tages
-   vor und nach dem Update gleich · 8 Eingefroren bis gestern → heute aufgetaut · 9 Version 4.2.1, Build 52, sw.js Cache (seit Hotfix 24).
+   vor und nach dem Update gleich · 8 Eingefroren bis gestern → heute aufgetaut · 9 Version 4.3.0, Build 53, sw.js Cache (Karten-Standard 4.3) (seit Hotfix 24).
    Aufruf: jsc tests/v49-karten42.js · Geschrieben, im Rahmen des Auftrags nicht ausgeführt. */
 var _toasts=[]; toast=function(m){ _toasts.push(String(m)); }; haptik=function(){};
 fsliveStumm();
@@ -104,5 +104,5 @@ pruef('12.8 wartet: karteRuht true (nicht vorgeschlagen), ohne wartetAuf false; 
 pruef('12.8 Kartenzeile 4.2: ⏳ wartet, ❄︎ eingefroren, P/h und Bonus rechts, Info-Badge', /⏳ wartet auf Rückmeldung/.test(kartenZeile42Html(W)) && /❄︎ eingefroren/.test(kartenZeile42Html(H)) && /P\/h/.test(kartenZeile42Html(W)) && /kz42-badge">Info/.test(kartenZeile42Html(k42({ art:'info' }))) && kartenZeileHtml(W).indexOf('kz42')>=0);
 
 // ══ 9 · Version ══
-pruef('12.9 App 4.2.1 · Build 2026-11-03-52 · sw.js Cache fokus4-v4.2.1-2 · DATENVERTRAG 2.1.0', APP_VERSION==='4.2.1' && APP_BUILD==='2026-11-03-52' && DATENVERTRAG==='2.1.0' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.2.1-2'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('12.9 App 4.3.0 · Build 2026-11-03-53 · sw.js Cache fokus4-v4.3.0-1 (seit Karten-Standard 4.3) · DATENVERTRAG 2.1.0', APP_VERSION==='4.3.0' && APP_BUILD==='2026-11-03-53' && DATENVERTRAG==='2.1.0' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Karten-Standard 4.2 · Punkte-Engine 4.2, Kartenset, Status, Unteraufgaben (4.2.1)');

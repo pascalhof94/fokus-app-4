@@ -1,7 +1,7 @@
 /* Suite 5.0 · Hotfix 24 · Tageswechsel (Auftrag 261103 §5): 1 Zeile der Rollenkarten · 2 ✓ auf k3-aufstehen (std42/System) legt den neuen Tag an und
    schließt den Vortag · 3 Schnellzugriff (Schnellplatz +1, ▶) ebenso · 4 ✓ auf k3-tagesuebergang stößt den Trainer-Lauf an · 5 ✓ auf der Fokus-Seite ·
    6 Kartenset ohne rolle lässt rolle, eingabe, nachtnotiz stehen · 7 Migration rolle421 · 8 tagNachholen setzt den laufenden Tag und ist rückgängig
-   machbar (auch als Paket) · 9 Version 4.2.1, Build 52, sw.js Cache.
+   machbar (auch als Paket) · 9 Version 4.3.0, Build 53, sw.js Cache (Karten-Standard 4.3).
    Aufruf: jsc tests/v50-tageswechsel.js · Geschrieben, im Rahmen des Auftrags nicht ausgeführt. */
 var _toasts=[]; toast=function(m){ _toasts.push(String(m)); }; haptik=function(){}; var confirm=function(){ return true; };
 fsliveStumm();
@@ -27,44 +27,43 @@ pruef('1.4 eine std42-Karte ohne Rolle bekommt weiter die 4.2-Zeile', /class="kl
 
 // ══ 2 · ✓ auf k3-aufstehen als std42-/System-Karte: Dialog statt Abhaken, danach neuer Tag und geschlossener Vortag ══
 kartenListeCheck('k3-aufstehen');
-pruef('2.1 ✓ öffnet den Aufstehen-Dialog (aufstehenTmp), kein Abhaken, Karte bleibt offen', !!aufstehenTmp && _abhaken('k3-aufstehen')===0 && _k('k3-aufstehen').status==='offen', JSON.stringify({ tmp:!!aufstehenTmp, abh:_abhaken('k3-aufstehen'), st:_k('k3-aufstehen').status }));
-aufstehenBestaetigenUI();
-pruef('2.2 … mit offenem Vortag in den Tagesübergang (Schritt 1, Angaben gemerkt)', F11.schritt===1 && !!F11.auf, 'Schritt '+F11.schritt);
-f11VortagBuchen();
+// Karten-Standard 4.3 §4.2: kein Akku-Dialog mehr — ✓ läuft sofort über k43Aufstehen (Vortag im Hintergrund über f11VortagBuchen, Hotfix-24-Weg)
+pruef('2.1 ✓ startet das Aufstehen sofort (4.3: kein Dialog), kein Abhaken, Karte bleibt offen, Ansicht Aufstehen', !aufstehenTmp && _abhaken('k3-aufstehen')===0 && _k('k3-aufstehen').status==='offen' && S.ui.spezial && S.ui.spezial.art==='aufstehen', JSON.stringify({ tmp:!!aufstehenTmp, abh:_abhaken('k3-aufstehen'), st:_k('k3-aufstehen').status, e1:e1Art() }));
+pruef('2.2 … der offene Vortag wurde im Hintergrund gebucht (F11.auf wieder leer, kein offener Vortag)', F11.auf===null && !vortagOffen(), 'auf '+JSON.stringify(F11.auf));
 pruef('2.3 neuer Tag ist heute, Start und Aufstehzeitpunkt gesetzt', S.tag && S.tag.datum===heuteIso() && !!S.tag.startTs && !!(S.tag.morgen && S.tag.morgen.aufstehTs), S.tag && S.tag.datum);
 pruef('2.4 Vortag in der Historie mit Ende und endgültig geschlossen', S.historie.some(function(h){ return h.datum===K.gestern && h.endeTs && h.geschlossenTs; }));
 var eck=S.intraday.filter(function(e){ return e.tagId===S.tag.tagId && e.eck; });
-pruef('2.5 Stunden-Log heute: je zwei Eck-Zeilen Aufstehen und Übergang, ein Tick auf k3-aufstehen, Messung (tag.aufstehen)', eck.filter(function(e){ return e.eck==='aufstehen'; }).length===2 && eck.filter(function(e){ return e.eck==='uebergang'; }).length===2 && tickAnzahlHeute(_k('k3-aufstehen'))===1 && !!(S.tag.aufstehen && S.tag.aufstehen.ts), eck.length+' Eck · Ticks '+tickAnzahlHeute(_k('k3-aufstehen')));
+pruef('2.5 Stunden-Log heute: keine Eck-Zeilen mehr (4.3: Eckpunkte entfallen), ein Tick auf k3-aufstehen, Messung (tag.aufstehen)', eck.length===0 && tickAnzahlHeute(_k('k3-aufstehen'))===1 && !!(S.tag.aufstehen && S.tag.aufstehen.ts), eck.length+' Eck · Ticks '+tickAnzahlHeute(_k('k3-aufstehen')));
 warten();
 pruef('2.6 Tagesbilanz und Trainer-Nachricht (Feedback zum Vortag) gesendet', _gesendet.some(function(g){ return g.id==='bilanz-'+K.gestern; }) && _gesendet.some(function(g){ return g.id==='chat-uebergang-'+K.gestern; }), _gesendet.map(function(g){ return g.id; }).join(','));
 
 // ══ 3 · Schnellzugriff: Schnellplatz (+1 über kartenListeTick) und ▶ (leistePlay) öffnen den Dialog ebenso ══
 K=vortag();
 kartenListeTick('k3-aufstehen');
-pruef('3.1 Schnellplatz +1 (kartenListeTick) öffnet den Aufstehen-Dialog, kein Tick, kein Abhaken', !!aufstehenTmp && tickAnzahlHeute(_k('k3-aufstehen'))===0 && _abhaken('k3-aufstehen')===0);
-aufstehenTmp=null; closeSheet();
+// 4.3: jeder Weg startet das Aufstehen sofort (kein Dialog); der eine Tick auf k3-aufstehen kommt aus aufstehenBestaetigen
+pruef('3.1 Schnellplatz +1 (kartenListeTick) startet das Aufstehen (4.3): neuer Tag, kein Abhaken', S.tag && S.tag.datum===heuteIso() && _abhaken('k3-aufstehen')===0 && !aufstehenTmp);
+K=vortag();
 leistePlay('k3-aufstehen');
-pruef('3.2 ▶ (leistePlay) öffnet den Aufstehen-Dialog, keine Uhr auf der Karte', !!aufstehenTmp && !(S.fokus && S.fokus.laeuft && S.fokus.karteId==='k3-aufstehen'));
-aufstehenTmp=null; closeSheet();
+pruef('3.2 ▶ (leistePlay) startet das Aufstehen (4.3), keine Uhr auf der Karte', S.tag && S.tag.datum===heuteIso() && !(S.fokus && S.fokus.laeuft && S.fokus.karteId==='k3-aufstehen'));
+K=vortag();
 // Onramp-Band und Fokus-Seite gehen über kartenListeCheck bzw. karteAbhakenAuto
 karteAbhakenAuto('k3-aufstehen', false);
-pruef('3.3 ✓ auf der Fokus-Seite (karteAbhakenAuto) öffnet den Aufstehen-Dialog, kein Abhaken', !!aufstehenTmp && _abhaken('k3-aufstehen')===0 && _k('k3-aufstehen').status==='offen');
-aufstehenTmp=null; closeSheet();
-// über den Dialog den Tag starten, damit 4 auf einem laufenden Tag prüft
-kartenListeCheck('k3-aufstehen'); aufstehenBestaetigenUI(); f11VortagBuchen(); warten();
+pruef('3.3 ✓ auf der Fokus-Seite (karteAbhakenAuto) startet das Aufstehen (4.3), kein Abhaken', S.tag && S.tag.datum===heuteIso() && _abhaken('k3-aufstehen')===0 && _k('k3-aufstehen').status==='offen');
+warten();
 pruef('3.4 danach läuft der heutige Tag', S.tag && S.tag.datum===heuteIso() && tagOffen());
 
 // ══ 4 · ✓ auf k3-tagesuebergang stößt den Trainer-Lauf an (Tagesübergang-Blatt, Nachricht Feedback) ══
 S.tag.uebergang=null; F7.blattNeu=null; _gesendet.length=0;
 kartenListeCheck('k3-tagesuebergang');
-pruef('4.1 ✓ auf dem Tagesübergang (std42/System) öffnet das Übergangs-Blatt statt abzuhaken', F7.blattNeu===renderTagesuebergang && _abhaken('k3-tagesuebergang')===0 && _k('k3-tagesuebergang').status==='offen', String(F7.blattNeu && F7.blattNeu.name));
+// 4.3 §4.1: der Tagesübergang ist archiviert; sein Blatt öffnet sich nicht mehr (oeffneTagesuebergang bleibt im Code, wird bei meta.karten43 nicht mehr gezeigt)
+pruef('4.1 ✓ auf dem Tagesübergang (4.3): kein Abhaken, das Übergangs-Blatt öffnet nicht mehr', F7.blattNeu!==renderTagesuebergang && _abhaken('k3-tagesuebergang')===0, String(F7.blattNeu && F7.blattNeu.name));
 pruef('4.2 die Trainer-Nachricht des Übergangs (chat-uebergang-<Vortag>, Anlass Feedback) ist beim Tag-Start gegangen', S.meta.f11Protokoll.some(function(e){ return e.schritt==='chat'; }) || !!(S.meta.f11Ausstehend===null || true));
 // mit offenem Vortag führt der ✓ auf den Tagesübergang zuerst zum Aufstehen
 K=vortag();
 kartenListeCheck('k3-tagesuebergang');
-pruef('4.3 mit offenem Vortag: ✓ auf dem Tagesübergang öffnet den Aufstehen-Dialog (wie 4.1.14 über fokusStarten)', !!aufstehenTmp && _abhaken('k3-tagesuebergang')===0);
-aufstehenTmp=null; closeSheet();
-_gesendet.length=0; kartenListeCheck('k3-aufstehen'); aufstehenBestaetigenUI(); f11VortagBuchen(); warten();
+pruef('4.3 mit offenem Vortag: ✓ auf dem Tagesübergang führt über fokusStarten zum Aufstehen (4.3: sofort, kein Dialog)', S.tag && S.tag.datum===heuteIso() && _abhaken('k3-tagesuebergang')===0, S.tag && S.tag.datum);
+K=vortag();
+_gesendet.length=0; kartenListeCheck('k3-aufstehen'); warten();
 pruef('4.4 Trainer-Lauf angestoßen: Nachricht chat-uebergang-<Vortag> gesendet, Protokoll chat', _gesendet.some(function(g){ return g.id==='chat-uebergang-'+K.gestern && g.args && g.args.anlass==='Feedback'; }) || _gesendet.some(function(g){ return g.id==='chat-uebergang-'+K.gestern; }), _gesendet.map(function(g){ return g.id; }).join(','));
 
 // ══ 5 · der Abhak-Weg aus 4.2 bleibt für Karten ohne Rolle unverändert ══
@@ -118,7 +117,7 @@ pruef('8.4b Messung des Vortagsabschlusses (Reflexion) liegt eine Sekunde vor de
 var neuId=S.tag.tagId;
 pruef('8.5 Einträge ab dem Aufstehzeitpunkt tragen den neuen Tag, der davor bleibt auf dem Vortag', S.intraday.filter(function(e){ return e.id==='s-nachher'; })[0].tagId===neuId && S.intraday.filter(function(e){ return e.kartenId==='t-priv' && e.typ==='tick'; })[0].tagId===neuId && S.intraday.filter(function(e){ return e.id==='s-vorher'; })[0].tagId===g1 && r8.verschoben===3, 'verschoben '+r8.verschoben);
 var eck8=S.intraday.filter(function(e){ return e.tagId===neuId && e.eck; });
-pruef('8.6 Eckpunkte Aufstehen und Übergang am Aufstehzeitpunkt, Tick auf k3-aufstehen, Übergang nachgeholt', eck8.filter(function(e){ return e.eck==='aufstehen' && e.ts===auf; }).length===2 && eck8.filter(function(e){ return e.eck==='uebergang'; }).length===2 && tickAnzahlHeute(_k('k3-aufstehen'))===1 && S.tag.uebergang && S.tag.uebergang.nachgeholt===true, eck8.length+' Eck');
+pruef('8.6 keine Eckpunkte mehr (4.3), Tick auf k3-aufstehen, Übergang nachgeholt', eck8.length===0 && tickAnzahlHeute(_k('k3-aufstehen'))===1 && S.tag.uebergang && S.tag.uebergang.nachgeholt===true, eck8.length+' Eck');   // 4.3: Eckpunkte entfallen
 pruef('8.7 Kartenstand: t-priv hat heute 1 Tick, k3-aufstehen ist nicht mehr „abgehakt" vom Vortag', num(_k('t-priv').ticksHeute)===1 && _k('k3-aufstehen').tagId!==g1);
 pruef('8.7b Nachbesserung: kein Ausgleich am neuen Tag, die Zeit nach dem Aufstehen zählt heute (60 Min), der Vortag gleicht nur die Zeit davor aus', S.intraday.filter(function(e){ return e.tagId===neuId && e.typ==='ausgleich'; }).length===0 && Math.round(heuteInvestiertMin(_k('t-dfm')))===60 && !S.intraday.some(function(e){ return e.tagId===g1 && e.kartenId==='t-dfm' && e.typ==='ausgleich' && Math.abs(num(e.punkte))>=200; }), JSON.stringify({ ausgleichNeu:S.intraday.filter(function(e){ return e.tagId===neuId && e.typ==='ausgleich'; }).map(function(e){ return e.kartenId+':'+e.punkte; }), min:heuteInvestiertMin(_k('t-dfm')), vortag:S.intraday.filter(function(e){ return e.tagId===g1 && e.kartenId==='t-dfm' && e.typ==='ausgleich'; }).map(function(e){ return e.punkte; }) }));
 warten();
@@ -149,5 +148,5 @@ pruef('8.17 nachholen421b: Ausgleich −200 am neuen Tag entfernt, Vortags-Ausgl
 S.meta.tagNachholen=N0;
 
 // ══ 9 · Version ══
-pruef('9.1 App 4.2.1 · Build 2026-11-03-52 · sw.js Cache fokus4-v4.2.1-2 · DATENVERTRAG 2.1.0', APP_VERSION==='4.2.1' && APP_BUILD==='2026-11-03-52' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.2.1-2'")>=0 && DATENVERTRAG==='2.1.0', APP_VERSION+' / '+APP_BUILD);
-suiteEnde('Hotfix 24 · Tageswechsel (4.2.1)');
+pruef('9.1 App 4.3.0 · Build 2026-11-03-53 · sw.js Cache fokus4-v4.3.0-1 (seit Karten-Standard 4.3) · DATENVERTRAG 2.1.0', APP_VERSION==='4.3.0' && APP_BUILD==='2026-11-03-53' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.0-1'")>=0 && DATENVERTRAG==='2.1.0', APP_VERSION+' / '+APP_BUILD);
+suiteEnde('Hotfix 24 · Tageswechsel (4.3.0)');
