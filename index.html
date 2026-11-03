@@ -3154,6 +3154,10 @@ main{padding-bottom:calc(var(--sab) + 110px + var(--s2))}   /* 4.3 §7: Platz f�
 .kl-z.kz42 .kz42-r{min-width:56px}
 /* ══ Hotfix 25 · §1 Statusleiste 4.2 ohne Ring: Titel ab linkem Rand, ⚙ rechts ══ */
 .f4n-kz .hf25-einst{flex:none;margin-left:6px}
+/* ══ Hotfix 25 · §4.1 Prognose-Segmente werden am Balkenrand abgeschnitten (Skala ohne Prognose) ══ */
+.pbar{overflow:hidden}
+.f4-prog .bar{overflow:hidden}
+.an-wt .an-bar .track i.prog{max-width:100%}
 </style>
 </head>
 <body>
@@ -5574,13 +5578,13 @@ function f4Bewertung(r){ return bewertungDiskret(r); }
 function f4MiniKurveSvg(g){
   const W=250, H=44, heute=belFensterDatum(jetztIso()), now=belX(jetztIso());
   const von=belX(new Date(g.startMs).toISOString()), bis=Math.max(von+1, belX(new Date(g.tagesEndeMs).toISOString()), now+0.25);
-  const K=diaTagKurve(heute,'alle'), max=Math.max(1, g.zielHeute, g.prognoseHeute, g.punkteHeute);
-  const X=x=>(x-von)/(bis-von)*W, Y=v=>H-2-Math.max(0,Math.min(1, v/max))*(H-6);
+  const K=diaTagKurve(heute,'alle'), max=Math.max(1, g.zielHeute, g.punkteHeute);   // Hotfix 25 §4.1: Skala ohne Prognose (vorher auch g.prognoseHeute)
+  const X=x=>(x-von)/(bis-von)*W, Y=v=>H-2-Math.max(0,Math.min(1, v/max))*(H-6), Yp=v=>H-2-(v/max)*(H-6);   // Yp: ungeklemmt für die Prognoselinie (das SVG schneidet ab)
   const pts=[]; for(let x=von; x<now; x+=Math.max(0.1,(now-von)/40)) pts.push({x:X(x), y:Y(K.wert(x))}); pts.push({x:X(now), y:Y(g.punkteHeute)});
   const p=pts.length>1 ? '<path d="'+glattPfad(pts)+'" stroke="'+FARBE.WEISS+'" stroke-width="2.5" fill="none" stroke-linejoin="round"/>' : '';
-  const prog=g.prognoseHeute>g.punkteHeute ? '<path d="M'+X(now).toFixed(1)+','+Y(g.punkteHeute).toFixed(1)+' L'+W+','+Y(g.prognoseHeute).toFixed(1)+'" stroke="'+FARBE.WEISS+'" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>' : '';
+  const prog=g.prognoseHeute>g.punkteHeute ? '<path d="M'+X(now).toFixed(1)+','+Y(g.punkteHeute).toFixed(1)+' L'+W+','+Yp(g.prognoseHeute).toFixed(1)+'" stroke="'+FARBE.WEISS+'" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>' : '';   // Hotfix 25 §4.1: abgeschnitten, nicht geklemmt
   const soll='<path d="M0,'+Y(0).toFixed(1)+' L'+W+','+Y(g.zielHeute).toFixed(1)+'" stroke="#fff" stroke-width="1" stroke-dasharray="2 3" opacity=".7" fill="none"/>';
-  return '<svg width="100%" height="44" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+soll+p+prog+'</svg>';
+  return '<svg width="100%" height="44" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="overflow:hidden" aria-hidden="true">'+soll+p+prog+'</svg>';
 }
 /* ── 01 · STATUSLEISTE ─────────────────────────────────────────────── */
 function f4StufenleisteHtml(o, klein){
@@ -5777,7 +5781,7 @@ function f4TempoZeichnen(sc, D){
 function f4PrognoseHtml(){
   const t=tagesprognoseHeute(), g=diaGroessen(), erh=f4ErholungMinHeute(), erhZ=f4ErholungZiel(), erhPlan=f4ErholungGeplant();
   const zeile=(name, hell, voll, ist, karte, plan, ziel, einheit, sub)=>{
-    const max=Math.max(1, ist+karte+plan, ziel), P=v=>Math.max(0, Math.min(100, v/max*100)), ende=ist+karte+plan, d=ende-ziel, ok=d>=0;
+    const max=Math.max(1, ist, ziel), P=v=>Math.max(0, Math.min(100, v/max*100)), ende=ist+karte+plan, d=ende-ziel, ok=d>=0;   // Hotfix 25 §4.1: Skala aus Ist und Ziel (vorher ist+karte+plan); Segmente am Rand abgeschnitten (P klemmt die Breite, .bar overflow hidden)
     const diffTxt=(ok?'+':'−')+(einheit==='min' ? fmtDauer(Math.abs(d)) : fmtP(Math.abs(d)))+(ok ? ' ✓' : '');
     const c=ok ? FARBE.GRUEN : f4Bewertung(ende/Math.max(1,ziel));
     return '<div class="r"><span class="lb" style="color:'+hell+'">'+name+'</span><div class="bar">'+
@@ -5970,9 +5974,9 @@ function f6Leistung(F, dom){
   if(labels.length<3) haupt=anSammelt(labels.length,3);
   else{
     // Skala aus den Tageswerten; liegt „nötig" weit darüber, steht die Linie am oberen Rand (die Kurve bleibt lesbar)
-    const W=360, H=210, pL=30, pR=10, pT=16, pB=26, hiDaten=Math.max(1, Math.max.apply(null, echt.concat([prog||0, med||0])))*1.1, hi=(noetig>0 && noetig<=hiDaten*1.6) ? Math.max(hiDaten, noetig*1.08) : hiDaten, noetigY=Math.min(noetig, hi*0.97);
+    const W=360, H=210, pL=30, pR=10, pT=16, pB=26, hiDaten=Math.max(1, Math.max.apply(null, echt.concat([med||0])))*1.1,   /* Hotfix 25 §4.1: Skala ohne prog */ hi=(noetig>0 && noetig<=hiDaten*1.6) ? Math.max(hiDaten, noetig*1.08) : hiDaten, noetigY=Math.min(noetig, hi*0.97);
     const A=f6Achse(labels.length, W, H, pL, pR, pT, pB, 0, hi), pts=[]; ph.forEach((v,i)=>{ if(v!=null) pts.push({x:A.X(i), y:A.Y(v), v, i}); });
-    let s='';
+    const clipId=svgId('f6c'); let s='<defs><clipPath id="'+clipId+'"><rect x="'+pL+'" y="'+pT+'" width="'+(W-pL-pR)+'" height="'+(H-pT-pB)+'"/></clipPath></defs>';   // Hotfix 25 §4.1
     [0, hi/3, 2*hi/3, hi].forEach(v=>{ s+='<line x1="'+pL+'" y1="'+A.Y(v).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(v).toFixed(1)+'" stroke="rgba(255,255,255,.08)"/><text x="'+(pL-4)+'" y="'+(A.Y(v)+3).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">'+fmtP(Math.round(v))+'</text>'; });
     if(pts.length>1){ const gid=svgId('f6l');
       s+=diaAmpelVerlaufDef(gid, pts, q=>diaAmpel(q.v, noetig))+'<defs><linearGradient id="'+gid+'f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.10)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient></defs>';
@@ -5982,7 +5986,7 @@ function f6Leistung(F, dom){
     if(med!=null) s+='<line x1="'+pL+'" y1="'+A.Y(med).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(med).toFixed(1)+'" stroke="'+FARBE.GRAU+'" stroke-dasharray="5 4"/><text x="'+(W-pR-70)+'" y="'+(A.Y(med)-4).toFixed(1)+'" font-size="10" fill="'+FARBE.GRAU+'" text-anchor="end">Median '+fmtP(Math.round(med))+'</text>';
     if(noetig>0) s+='<line x1="'+pL+'" y1="'+A.Y(noetigY).toFixed(1)+'" x2="'+(W-pR)+'" y2="'+A.Y(noetigY).toFixed(1)+'" stroke="#fff" stroke-dasharray="2 3"/><text x="'+(W-pR-2)+'" y="'+(A.Y(noetigY)-4).toFixed(1)+'" font-size="10" fill="#e8e9ec" text-anchor="end">nötig ≈ '+fmtP(Math.round(noetig))+(noetigY<noetig ? ' ↑' : '')+'</text>';
     const iH=labels.indexOf(heute); if(iH>=0 && ph[iH]!=null){ const x=A.X(iH), y=A.Y(ph[iH]);
-      if(prog!=null && Math.abs(prog-ph[iH])>1) s+='<path d="M'+x.toFixed(1)+','+y.toFixed(1)+' L'+x.toFixed(1)+','+A.Y(prog).toFixed(1)+'" stroke="'+diaAmpel(prog, noetig)+'" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/><circle cx="'+x.toFixed(1)+'" cy="'+A.Y(prog).toFixed(1)+'" r="3" fill="none" stroke="#e8e9ec" stroke-dasharray="2 2"/>';
+      if(prog!=null && Math.abs(prog-ph[iH])>1) s+='<g clip-path="url(#'+clipId+')"><path d="M'+x.toFixed(1)+','+y.toFixed(1)+' L'+x.toFixed(1)+','+A.Y(prog).toFixed(1)+'" stroke="'+diaAmpel(prog, noetig)+'" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/><circle cx="'+x.toFixed(1)+'" cy="'+A.Y(prog).toFixed(1)+'" r="3" fill="none" stroke="#e8e9ec" stroke-dasharray="2 2"/></g>';   // Hotfix 25 §4.1: abgeschnitten
       s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="6" fill="rgba(255,255,255,.2)"/><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3" fill="#fff"/>'; }
     s+=f6XLabels(labels, A.X, H-6, heute);
     haupt='<svg class="an-svg" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+s+'</svg>';
@@ -11226,7 +11230,7 @@ function ketteVornIn(kid, tkId){
   if(!tkId) return ketteNachVorn(kid);
   const c=tagesketten().find(x=>x.id===tkId); if(!c) return false;
   c.karten=(c.karten||[]).filter(x=>x!==kid); c.karten.unshift(kid);
-  DB.set('tagesketten', S.tagesketten); return true;
+  DB.set('tagesketten', S.tagesketten); K43K.cache=null; return true;
 }
 /* Kettenauswahl (Ebene 1): aktuelle Kette + alle Tagesketten (keine Tagesblöcke). zweck 'wahl' = aktive Kette wechseln
    (S.ui.tkWahl — Kettenliste und „nächste ▶" folgen ihr, die Karte wird nicht verschoben) · 'vorn' = Karte an Position 1 */
@@ -11646,10 +11650,10 @@ function rangDiagrammHtml(rm){
   const progMed=pr ? pr.mediane.slice(0, schritte) : [];
   const werte=tage.map(t=>t.r.rate);
   const lo=Math.floor(Math.min(ab-0.2*sp, werte.length?Math.min.apply(null,werte)*0.9:Infinity)/50)*50;
-  const hi=Math.ceil(Math.max((auf!=null?auf:ab)+0.2*sp, werte.length?Math.max.apply(null,werte)*1.1:-Infinity, progMed.length?Math.max.apply(null,progMed):-Infinity)/50)*50;
+  const hi=Math.ceil(Math.max((auf!=null?auf:ab)+0.2*sp, werte.length?Math.max.apply(null,werte)*1.1:-Infinity)/50)*50;   // Hotfix 25 §4.1: Skala ohne progMed (die Rang-Prognose bleibt, wird abgeschnitten)
   const W=320, H=130, pL=28, pR=34, pT=12, pB=10, n=tage.length, slots=Math.max(1, n-1+schritte);
   const X=i=>pL+(n+schritte>1 ? i/slots : 0.5)*(W-pL-pR), Y=v=>pT+(1-(v-lo)/Math.max(1e-9, hi-lo))*(H-pT-pB);
-  let g='';
+  const clipId=svgId('rgc'); let g='<defs><clipPath id="'+clipId+'"><rect x="'+pL+'" y="'+pT+'" width="'+(W-pL-pR)+'" height="'+(H-pT-pB)+'"/></clipPath></defs>';   // Hotfix 25 §4.1
   [lo,(lo+hi)/2,hi].forEach(v=>{ g+='<text x="'+(pL-4)+'" y="'+(Y(v)+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="'+DIA_FARBE.grau+'">'+Math.round(v)+'</text>'; });
   // v3.4.8 §1: ein Band je Rang [Schwelle(r), Schwelle(r+1)) im Hintergrund, Kuerzel rechts; aktueller Rang und Ziel mit Schwelle
   const zielR=Math.min(RANG_MAX, rang+1);
@@ -11672,7 +11676,7 @@ function rangDiagrammHtml(rm){
   // §D.4: Median-Prognose — gelb gestrichelt ab dem heutigen Median
   if(pr && n){ const x0=X(n-1), pts=[{x:x0, y:Y(rm.median)}].concat(progMed.map((m,i)=>({x:X(n+i), y:Y(m)})));
     // §5.3 (v3.5.0): Prognose ab heute gestrichelt WEISS 70 %
-    if(pts.length>1) g+='<path d="'+glattPfad(pts)+'" fill="none" stroke="'+FARBE.WEISS+'" stroke-opacity=".7" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>';
+    if(pts.length>1) g+='<path d="'+glattPfad(pts)+'" fill="none" stroke="'+FARBE.WEISS+'" stroke-opacity=".7" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#'+clipId+')"/>';   // Hotfix 25 §4.1: abgeschnitten
     g+='<circle cx="'+x0.toFixed(1)+'" cy="'+Y(rm.median).toFixed(1)+'" r="2.5" fill="'+FARBE.WEISS+'" fill-opacity=".7"/>';
     if(pr.N!=null && pts.length>1){ const e=pts[pts.length-1];
       g+='<circle cx="'+e.x.toFixed(1)+'" cy="'+e.y.toFixed(1)+'" r="3" fill="'+FARBE.WEISS+'" fill-opacity=".7"/>'+
@@ -12032,12 +12036,12 @@ function tvZeichnen(sc, D){
   const Wpx=Math.max(1, fl.offsetWidth), H=D.H, pT=12, pB=20, span=Math.max(1e-9, D.bis-D.von);
   const x0=D.von+sc.scrollLeft/Wpx*span, x1=x0+sc.clientWidth/Wpx*span;
   let mn=Infinity, mx=-Infinity;
-  D.serien.forEach(se=>se.pts.forEach(q=>{ if(q.x>=x0-1e-9 && q.x<=x1+1e-9){ if(q.p<mn) mn=q.p; if(q.p>mx) mx=q.p; } }));
+  D.serien.forEach(se=>{ if(se.prognose) return; se.pts.forEach(q=>{ if(q.x>=x0-1e-9 && q.x<=x1+1e-9){ if(q.p<mn) mn=q.p; if(q.p>mx) mx=q.p; } }); });   // Hotfix 25 §4.1: Prognose-Serien zählen nicht zur Skala
   if(!Number.isFinite(mn)){ mn=0; mx=100; }
   (D.ziele||[]).forEach(z=>{ if(z.y>mx) mx=z.y; });   // §3 (v3.5.3): die Tagesziele je Familie bleiben im Bild
   const lo=Math.max(0, Math.floor(mn*0.9/100)*100); let hi=Math.ceil(mx*1.1/100)*100; if(hi<=lo) hi=lo+100;
-  const X=x=>(x-D.von)/span*Wpx, Y=v=>pT+(1-(Math.max(lo, Math.min(hi, v))-lo)/(hi-lo))*(H-pT-pB);
-  let g='';
+  const X=x=>(x-D.von)/span*Wpx, Y=v=>pT+(1-(Math.max(lo, Math.min(hi, v))-lo)/(hi-lo))*(H-pT-pB), Yu=v=>pT+(1-(v-lo)/(hi-lo))*(H-pT-pB);   // Yu: ungeklemmt (Prognose)
+  const clipId=svgId('tvc'); let g='<defs><clipPath id="'+clipId+'"><rect x="0" y="'+pT+'" width="'+Wpx+'" height="'+(H-pT-pB)+'"/></clipPath></defs>';   // Hotfix 25 §4.1: Zeichenfläche als Clip für die Prognose
   for(let i=0;i<4;i++){ const y=Y(lo+(hi-lo)*i/3).toFixed(1); g+='<line x1="0" y1="'+y+'" x2="'+Wpx+'" y2="'+y+'" stroke="'+FARBE.RASTER+'" stroke-width="1"/>'; }
   const schritt=D.dauer>8 ? 2 : 1;
   for(let hh=Math.ceil(D.von); hh<=D.bis+1e-9; hh+=schritt){ const x=X(hh).toFixed(1);
@@ -12047,9 +12051,9 @@ function tvZeichnen(sc, D){
   const xr=X(x1)-4;   // rechter Rand des sichtbaren Fensters
   (D.ziele||[]).forEach(z=>{ if(!(z.y>=lo && z.y<=hi)) return; const y=Y(z.y).toFixed(1);   // Ziel-Grenze je Familie WEISS gepunktet, Name rechts
     g+='<line x1="0" y1="'+y+'" x2="'+Wpx+'" y2="'+y+'" stroke="'+FARBE.WEISS+'" stroke-opacity=".6" stroke-width="1" stroke-dasharray="2 3"/><text x="'+xr.toFixed(1)+'" y="'+(Y(z.y)<pT+22 ? Y(z.y)+10 : Y(z.y)-3).toFixed(1)+'" text-anchor="end" font-size="9" fill="'+FARBE.GRAU+'">'+z.label+'</text>'; });   // oben am Rand: Name unter die Linie (dort steht die Ziel-Uhrzeit)
-  const pfad=se=>glattPfad(se.pts.map(q=>({x:X(q.x), y:Y(q.p)})));
+  const pfad=se=>glattPfad(se.pts.map(q=>({x:X(q.x), y:(se.prognose ? Yu : Y)(q.p)})));
   D.serien.forEach(se=>{ if(se.pts.length<2) return; const st=se.st;
-    g+='<path d="'+pfad(se)+'" fill="none" stroke="'+st.c+'" stroke-opacity="'+st.o+'" stroke-width="'+st.w+'"'+(st.dash?' stroke-dasharray="'+st.dash+'"':'')+' stroke-linejoin="round" stroke-linecap="round"/>';
+    g+='<path d="'+pfad(se)+'" fill="none" stroke="'+st.c+'" stroke-opacity="'+st.o+'" stroke-width="'+st.w+'"'+(st.dash?' stroke-dasharray="'+st.dash+'"':'')+' stroke-linejoin="round" stroke-linecap="round"'+(se.prognose ? ' clip-path="url(#'+clipId+')"' : '')+'/>';
     if(se.kopf && !D.istHeute){ const e=se.pts[se.pts.length-1]; g+='<circle cx="'+X(e.x).toFixed(1)+'" cy="'+Y(e.p).toFixed(1)+'" r="3" fill="'+st.c+'"/>'; } });
   if(D.istHeute){ const enden=D.serien.filter(se=>se.haupt && se.pts.length).map(se=>se.pts[se.pts.length-1]);
     g+=diaJetztSvg(X(D.nowX), pT, H-pB, enden.length ? Y(enden[0].p) : null)+enden.slice(1).map(e=>'<circle cx="'+X(D.nowX).toFixed(1)+'" cy="'+Y(e.p).toFixed(1)+'" r="3" fill="#fff"/>').join('')+'<text x="'+X(D.nowX).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="8" fill="#fff" stroke="#000" stroke-width="3" style="paint-order:stroke">jetzt</text>';
@@ -13537,7 +13541,7 @@ function ampelKurveSvg(a){
   const W=200, H=34, P=2, g=diaGroessen(), heute=belFensterDatum(jetztIso());   // §1 (v3.5.2): halbe Hoehe, volle Spaltenbreite
   const endeX=Math.max(a.nowX+0.25, belX(new Date(g.tagesEndeMs).toISOString()));
   const bis=Math.max(a.bis, endeX), span=Math.max(0.5, bis-a.von);
-  const maxY=Math.max(10, a.ist, g.prognoseHeute, g.zielHeute)*1.05;
+  const maxY=Math.max(10, a.ist, g.zielHeute)*1.05;   // Hotfix 25 §4.1: Skala ohne Prognose (vorher auch g.prognoseHeute); Y klemmt oben nicht, das SVG schneidet ab
   const X=x=>((Math.max(a.von,Math.min(bis,x))-a.von)/span)*W, Y=p=>H-P-(Math.max(0,p)/maxY)*(H-2*P);
   const heuteP=a.kHeute.filter(q=>q.x<=a.nowX+0.001), letzt=heuteP[heuteP.length-1];
   const af=paceFarbe(g.tempoSchnitt, g.tempoZiel);   // §1 (v3.5.3): Farbe der Zone, in der der weisse Strich (Ø heute) liegt
@@ -13546,7 +13550,7 @@ function ampelKurveSvg(a){
   if(!soll.length) soll=[{x:a.von,p:0},{x:bis,p:g.zielHeute}];
   const pf=pts=>pts.map((q,i)=>(i?'L':'M')+X(q.x).toFixed(1)+' '+Y(q.p).toFixed(1)).join(' ');
   const ip=heuteP.length>1 ? glattPfad(heuteP.map(q=>({x:X(q.x), y:Y(q.p)}))) : '';
-  return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'+
+  return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="overflow:hidden" aria-hidden="true">'+
     (ip ? '<path d="'+ip+' L'+X(letzt.x).toFixed(1)+' '+H+' L'+X(a.von).toFixed(1)+' '+H+'Z" fill="'+af+'" opacity=".22"/>' : '')+
     '<path d="'+pf(soll)+'" fill="none" stroke="'+FARBE.WEISS+'" stroke-width="1" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/>'+
     (letzt ? '<path d="M'+X(letzt.x).toFixed(1)+' '+Y(letzt.p).toFixed(1)+' L'+X(endeX).toFixed(1)+' '+Y(g.prognoseHeute).toFixed(1)+'" fill="none" stroke="'+af+'" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>' : '')+
@@ -14124,7 +14128,7 @@ function tagesprognoseTeile(e){
   const prognose=Math.max(ist, num(e.prognose)), restGes=prognose-ist;
   const karte=Math.max(0, Math.min(restGes, num(e.karteRest))), rest=restGes-karte;
   const anteilD = ist>0 ? dfm/ist : (num(e.zielDfm)>0 && ziel>0 ? Math.min(1, num(e.zielDfm)/ziel) : 0.5);
-  const restDfm=rest*anteilD, restPrivat=rest-restDfm, max=Math.max(1, prognose, ziel);
+  const restDfm=rest*anteilD, restPrivat=rest-restDfm, max=Math.max(1, ist, ziel);   // Hotfix 25 §4.1: Skala ohne Prognose (vorher max(prognose, ziel))
   return { dfm, privat, karte, karteFam:e.karteFam||null, restDfm, restPrivat, prognose, ziel, max, diff:prognose-ziel,
     endeDfm:dfm+restDfm+(e.karteFam==='dfm'?karte:0), endePrivat:privat+restPrivat+(e.karteFam==='privat'?karte:0) };
 }
@@ -14639,7 +14643,7 @@ function ikEinfuegen(ziel, info, kid, index){
     c.karten=(c.karten||[]).filter(x=>x!==kid);
     const sicht=c.karten.map(id=>by[id]).filter(x=>x && offen(x)), nach=sicht[index], j=nach ? c.karten.indexOf(nach.id) : -1;
     if(j>=0) c.karten.splice(j, 0, kid); else c.karten.push(kid);
-    DB.set('tagesketten', S.tagesketten); return true;
+    DB.set('tagesketten', S.tagesketten); K43K.cache=null; return true;
   }
   if(ziel==='block'){
     k.block=info.block||null; k.blockTag=info.block ? heuteApp() : null; beruehre(k);
@@ -22502,7 +22506,7 @@ function belTagesDiagramm(opt){
   let mitPrognose=false;
   if(istHeute && !urlaubHeute()){ try{ const t=tagesprognoseHeute(), g=diaGroessen(), eX=Math.max(nowX+0.1, belX(new Date(g.tagesEndeMs).toISOString()));
     [[zeigD,'dfm',t.endeDfm-t.dfm],[zeigP,'privat',t.endePrivat-t.privat]].forEach(([z,d,plus])=>{ if(!z || !(plus>0)) return; const p0=K[d].wert(nowX);
-      serien.push({pts:[{x:nowX, p:p0},{x:eX, p:p0+plus}], st:DIA_LINIE.prognose}); mitPrognose=true; }); }catch(e){} }
+      serien.push({pts:[{x:nowX, p:p0},{x:eX, p:p0+plus}], st:DIA_LINIE.prognose, prognose:true}); mitPrognose=true; }); }catch(e){} }   // Hotfix 25 §4: prognose:true → nicht in der Skala, abgeschnitten
   [[zeigD,'dfm'],[zeigP,'privat']].forEach(([z,d])=>{ if(z) serien.push({pts:serie(K[d]), st:DIA_LINIE[d].heute, kopf:istHeute, haupt:true}); });
   // Tagesziele je Familie, weiss gepunktet
   const ziele=[]; if(zeigD) ziele.push({y:belZielDfm(), label:'Ziel DFM'}); if(zeigP) ziele.push({y:tagesZielDomain('privat'), label:'Ziel Privat'});
@@ -26607,7 +26611,7 @@ function anModKonsistenz(F,dom){
     aktivTage.forEach(c=>byWt[anWochentag(c.datum)].push(c.v||0));
     const avgs=byWt.map(a=>anMean(a)||0);
     const wtAvg=anMean(avgs.filter(v=>v>0));
-    const mx=Math.max.apply(null,avgs.concat([1], pg?[pg.ist, pg.prognose||0, pg.ziel]:[]))*1.04;
+    const mx=Math.max.apply(null,avgs.concat([1], pg?[pg.ist, pg.ziel]:[]))*1.04;   // Hotfix 25 §4.1: Skala ohne pg.prognose; das Prognose-Segment ist auf 100 % begrenzt (CSS max-width)
     wtBars='<div class="an-bars an-wt" style="margin-top:10px">'+avgs.map((v,i)=>{
       if(i===heuteWt && pg){
         return '<div class="an-bar heute amp" style="'+ampF+'"><span class="nm">'+AN_WT[i]+' ·&nbsp;heute</span><span class="track">'+
@@ -27401,7 +27405,7 @@ function k43Morgenketten(){
   if(!Array.isArray(S.tagesketten)) S.tagesketten=[];
   defs.forEach(d=>{ const karten=d.karten.filter((id,i,a)=>a.indexOf(id)===i && S.karten.some(k=>k.id===id)); let c=S.tagesketten.find(x=>x.id===d.id);
     if(!c){ c={ id:d.id, name:d.name+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:d.block, karten, quelle:'morgen' }; S.tagesketten.push(c); } else { c.karten=karten; c.art='block'; c.datum=heute; c.block=d.block; c.quelle='morgen'; } });
-  DB.set('tagesketten', S.tagesketten);
+  DB.set('tagesketten', S.tagesketten); K43K.cache=null;
 }
 function k43AufstehenHtml(){
   const T=k43Tag()||{}, a=T.aufstehen||{}, mo=(S.tag && S.tag.morgen)||{}, z=schlafZustand(), bedarf=num(S.settings.schlafBedarfStd,7), min=mo.schlafMin!=null ? num(mo.schlafMin) : null;
@@ -27524,7 +27528,7 @@ function k43PlanFreigeben(){ const P=k43TP(), R=k43PlanAusChat(); if(!P || !R.pl
     const bn=k43BlockNorm(b.block||b.name)||('block'+(i+1)), id=k43KetteId(bn, heute); S.tagesketten.push({ id, name:(b.name||k43BlockName(bn))+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:bn, von:b.von||null, karten:ids, plan:planInfo, quelle:'tagesplan' }); kettenIds.push(id); ids.forEach(x=>{ if(alle.indexOf(x)<0) alle.push(x); }); });
   { const planAlle={}; S.tagesketten.forEach(c=>{ if(c.quelle==='tagesplan' && c.datum===heute && c.art==='block') Object.assign(planAlle, c.plan||{}); });   // Hotfix 25 §3: Plan-Einträge auch an der Tageskette
     S.tagesketten.push({ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:alle.slice(), plan:planAlle, quelle:'tagesplan' }); kettenIds.push('tk43-tag-'+heute); }
-  DB.set('tagesketten', S.tagesketten);
+  DB.set('tagesketten', S.tagesketten); K43K.cache=null;
   alle.forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(k && k.status==='offen'){ k.faelligkeit=heute; beruehre(k); if(!ketteHat(k.id)) ketteToggle(k.id); } }); saveKarten();
   P.freigabeTs=jetztIso(); P.plan=plan; saveTag();
   k43FreigabeMelden({ quelle:'tagesplan', titel:'Tagesplan '+anKurzDatum(heute)+'.', grund:'Tagesplanung '+heute+' · '+kettenIds.length+' Ketten', karten:alle.map(id=>({ id, aktion:'geändert' })), ketten:kettenIds.length });
@@ -27582,9 +27586,9 @@ function k43Insights(){ const g=diaGroessen(), T=tagesprognoseHeute(), erh=f4Erh
   const m1=heute.slice(0,8)+'01'; for(let d=m1; d<=heute; d=anVorTage(d,-1)){ const sn=tagSnapshot(d); if(!sn) continue; mN++; if(num(sn.zielDfm)>0 && num(sn.punkteDfm!=null?sn.punkteDfm:sn.punkteBilanz)>=num(sn.zielDfm)) mOk++; }
   return { g, T, erh, erhZ, B, rang:r, auf, woche:{ ok:wOk, n:wN }, monat:{ ok:mOk, n:mN }, schuld:num(z.schuldStd), schuldSinkt:!!(z.letzte && num(z.letzte.schuldNachStd)<num(z.letzte.schuldVorStd)) }; }
 function k43EndeSvg(I, neuPlan){ const W=338, H=150, start=num(I.g.startMs)||Date.now()-3600000, ende=Math.max(start+3600000, num(I.g.tagesEndeMs)||Date.now()+3600000), jetzt=Date.now(), x=t=>30+Math.max(0,Math.min(1,(t-start)/(ende-start)))*300;
-  const ist=num(I.g.dfm), ziel=Math.max(1, num(I.g.zielDfm)), geplant=Math.max(ist, num(I.T.endeDfm||I.T.prognose)), neu=neuPlan!=null ? Math.max(ist, neuPlan) : null, max=Math.max(ziel, geplant, neu||0, ist, 1)*1.05, y=v=>130-Math.max(0,Math.min(1,v/max))*110;
+  const ist=num(I.g.dfm), ziel=Math.max(1, num(I.g.zielDfm)), geplant=Math.max(ist, num(I.T.endeDfm||I.T.prognose)), neu=neuPlan!=null ? Math.max(ist, neuPlan) : null, max=Math.max(ziel, ist, 1)*1.05, y=v=>130-Math.max(0,Math.min(1,v/max))*110, yp=v=>130-(v/max)*110, clipId=svgId('k43c');   // Hotfix 25 §4.1: Skala ohne geplant/neu; Prognosen ungeklemmt (yp) und abgeschnitten
   return '<svg width="100%" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Verläufe der DFM-Punkte bis zum Tagesende"><line x1="30" y1="'+y(ziel).toFixed(1)+'" x2="330" y2="'+y(ziel).toFixed(1)+'" stroke="#243349" stroke-dasharray="3 3"/><text x="0" y="'+(y(ziel)+4).toFixed(1)+'" fill="'+FARBE.GRAU+'" font-size="9">'+fmtP(ziel)+'</text><line x1="30" y1="130" x2="330" y2="130" stroke="#243349"/><text x="30" y="145" fill="'+FARBE.GRAU+'" font-size="9">'+k43Uhr(new Date(start).toISOString())+'</text><text x="296" y="145" fill="'+FARBE.GRAU+'" font-size="9">'+k43Uhr(new Date(ende).toISOString())+'</text>'+
-    '<polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+y(geplant).toFixed(1)+'" fill="none" stroke="'+FARBE.BLAU+'" stroke-width="2.5" stroke-dasharray="5 4"/>'+(neu!=null ? '<polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+y(neu).toFixed(1)+'" fill="none" stroke="'+FARBE.GRUEN+'" stroke-width="3"/>' : '')+'<polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+y(ist).toFixed(1)+'" fill="none" stroke="'+FARBE.GELB+'" stroke-width="2.5"/><polyline points="30,130 '+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+'" fill="none" stroke="'+FARBE.WEISS+'" stroke-width="1.5" stroke-opacity=".6"/><text x="0" y="'+(y(ist)+4).toFixed(1)+'" fill="'+FARBE.GRAU+'" font-size="9">'+fmtP(ist)+'</text></svg>'+
+    '<defs><clipPath id="'+clipId+'"><rect x="30" y="0" width="300" height="130"/></clipPath></defs><g clip-path="url(#'+clipId+')"><polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+yp(geplant).toFixed(1)+'" fill="none" stroke="'+FARBE.BLAU+'" stroke-width="2.5" stroke-dasharray="5 4"/>'+(neu!=null ? '<polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+yp(neu).toFixed(1)+'" fill="none" stroke="'+FARBE.GRUEN+'" stroke-width="3"/>' : '')+'</g>'+'<polyline points="'+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+' 330,'+y(ist).toFixed(1)+'" fill="none" stroke="'+FARBE.GELB+'" stroke-width="2.5"/><polyline points="30,130 '+x(jetzt).toFixed(1)+','+y(ist).toFixed(1)+'" fill="none" stroke="'+FARBE.WEISS+'" stroke-width="1.5" stroke-opacity=".6"/><text x="0" y="'+(y(ist)+4).toFixed(1)+'" fill="'+FARBE.GRAU+'" font-size="9">'+fmtP(ist)+'</text></svg>'+
     '<div class="k43-leg"><span><i style="background:'+FARBE.BLAU+'"></i>wie geplant: '+fmtP(geplant)+'</span>'+(neu!=null ? '<span><i style="background:'+FARBE.GRUEN+'"></i>neuer Plan: '+fmtP(neu)+'</span>' : '')+'<span><i style="background:'+FARBE.GELB+'"></i>nur Blockade/Erholung: '+fmtP(ist)+'</span></div>'; }
 function k43BlockadeHtml(){
   const B=k43BL(), k=k43BlockadeKarte(), seit=B && B.startTs ? Math.round((Date.now()-Date.parse(B.startTs))/60000) : 0, P=k43TP()||{}, R=k43PlanAusChat(), neuPlan=(R.plan && R.zeile && B && String(R.zeile.Zeitstempel||'')>String(B.startTs||'')) ? R.plan : null, alt=P.plan||null;
@@ -27677,7 +27681,7 @@ function k43KetteId(block, datum){ return 'tk43-'+block+'-'+datum; }
 function k43KettenNormieren(){ if(!Array.isArray(S.tagesketten)) S.tagesketten=[]; let dirty=false;
   S.tagesketten.forEach(c=>{ if(!c || typeof c!=='object') return; if(!Array.isArray(c.karten)) { c.karten=[]; dirty=true; }
     if(!c.art){ c.art='eigene'; c.quelle=c.quelle||'pascal'; dirty=true; } if(!c.quelle){ c.quelle=c.art==='eigene' ? 'pascal' : 'tagesplan'; dirty=true; } });
-  if(dirty) DB.set('tagesketten', S.tagesketten); return dirty; }
+  if(dirty) DB.set('tagesketten', S.tagesketten); K43K.cache=null; return dirty; }
 /* Ketten aus einem Paket (syncImport): tk-* werden auf die Block-Ketten von heute abgebildet (Onramp-Gruppen als Plan-Einträge), tk-abschluss entfällt,
    andere Ketten des Pakets werden Eigene (quelle tagesplan). Morgenketten (quelle morgen) und Pascals eigene (quelle pascal) bleiben stehen. */
 function k43KettenAusPaket(liste, aufl){ const heute=heuteApp(), alt=tagesketten(), bleibt=alt.filter(c=>c.quelle==='morgen' || c.quelle==='pascal' || (c.art==='eigene' && c.quelle!=='tagesplan')), neu=[], abb=[];
@@ -27687,10 +27691,13 @@ function k43KettenAusPaket(liste, aufl){ const heute=heuteApp(), alt=tagesketten
     if(id in K43_TK_ABBILDUNG){ if(!m){ entfallen+=karten.length; abb.push({ id, nach:null, n:karten.length }); return; } const z=blockKette(m.block); karten.forEach(kid=>{ if(z.karten.indexOf(kid)<0) z.karten.push(kid); if(m.onramp) z.plan[kid]=Object.assign({}, z.plan[kid], { onramp:true, gruppe:m.onramp }); }); abb.push({ id, nach:z.id, n:karten.length, onramp:m.onramp||null }); return; }
     const b=k43BlockNorm(c.block||null); if(b && K43_BLOECKE.some(x=>x[0]===b)){ const z=blockKette(b); karten.forEach(kid=>{ if(z.karten.indexOf(kid)<0) z.karten.push(kid); }); if(c.von) z.von=String(c.von); abb.push({ id, nach:z.id, n:karten.length }); return; }
     neu.push({ id, name:String(c.name||('Kette '+(i+1))), art:'eigene', datum:heute, karten, quelle:'tagesplan' }); });
-  S.tagesketten=bleibt.concat(neu); DB.set('tagesketten', S.tagesketten); return { ketten:neu.length, entfallen, abbildung:abb }; }
+  S.tagesketten=bleibt.concat(neu); DB.set('tagesketten', S.tagesketten); K43K.cache=null; return { ketten:neu.length, entfallen, abbildung:abb }; }
 /* ── Kette finden (gespeichert oder berechnet, 'k43:…'-IDs) ── */
 const K43K={ cache:null, ts:0 };
-function k43KettenBauen(frisch){ if(!frisch && K43K.cache && Date.now()-K43K.ts<800) return K43K.cache; const K=k43KettenBerechnen(); K43K.cache=K; K43K.ts=Date.now(); return K; }
+function k43KettenSignatur(){ let offen=0; for(const k of S.karten){ if(k && k.status==='offen') offen++; } return S.karten.length+'|'+offen+'|'+tagesketten().length+'|'+(S.fokus ? S.fokus.karteId : '')+'|'+aktuelleTagId(); }   // Hotfix 25 §3: billige Kennung, der Zwischenspeicher verfällt bei Änderungen
+function k43KettenBauen(frisch){ const sig=k43KettenSignatur(); if(!frisch && K43K.cache && K43K.sig===sig && Date.now()-K43K.ts<800) return K43K.cache; const K=k43KettenBerechnen(); K43K.cache=K; K43K.sig=sig; K43K.ts=Date.now(); return K; }
+function k43KettenVergessen(){ K43K.cache=null; }   // Hotfix 25 §3: der Zwischenspeicher verfällt bei jeder Änderung an Karten, Tag oder Ketten (tagesprognose43 liest ihn)
+
 function k43KetteFinden(id){ if(!id) return null; const K=k43KettenBauen(); for(const g of Object.keys(K)){ const c=K[g].find(x=>x.id===id); if(c) return c; } return null; }
 function k43Sichtbar(k){ return !!(k && k.status!=='archiviert' && !karteVerborgen(k)); }
 function k43HeuteIds(){ const heute=heuteApp(), ids=[]; const add=id=>{ if(id && ids.indexOf(id)<0) ids.push(id); };
@@ -27809,10 +27816,10 @@ function k43KetteNeuSheet(){ const abts=k43AbteilungsNamen();
 function k43KetteAnlegen(){ const name=String((el('k43KnName')||{}).value||'').trim(); if(!name){ toast('Name fehlt'); return; } const art=(el('k43KnArt')||{}).value||'liste';
   const c={ id:'tk43-eigene-'+uuid().slice(0,8), name, art:'eigene', datum:heuteApp(), karten:[], quelle:'pascal' };
   if(art==='filter') c.filter={ suchtext:String((el('k43KnText')||{}).value||'').trim(), familie:(el('k43KnFam')||{}).value||null, abteilung:(el('k43KnAbt')||{}).value||null };
-  S.tagesketten=tagesketten().concat([c]); DB.set('tagesketten', S.tagesketten); closeSheet(); k43AufSetzen('kettentab', c.id); toast('Kette „'+name.slice(0,24)+'“ angelegt'); k43KettenNeu(); }
+  S.tagesketten=tagesketten().concat([c]); DB.set('tagesketten', S.tagesketten); K43K.cache=null; closeSheet(); k43AufSetzen('kettentab', c.id); toast('Kette „'+name.slice(0,24)+'“ angelegt'); k43KettenNeu(); }
 function k43KetteEntfernen(id){ const c=tagesketten().find(x=>x.id===id); if(!c || c.art!=='eigene') return; if(!confirm('Kette „'+(c.name||'')+'“ entfernen? Die Karten bleiben.')) return;
   if(!Array.isArray(S.meta.kettenArchiv)) S.meta.kettenArchiv=[]; S.meta.kettenArchiv.push(Object.assign({}, c, { entferntTs:jetztIso() })); S.meta.kettenArchiv=S.meta.kettenArchiv.slice(-50); saveMeta();   // nichts löschen: archiviert
-  S.tagesketten=tagesketten().filter(x=>x.id!==id); DB.set('tagesketten', S.tagesketten); if(S.ui.tkWahl===id){ S.ui.tkWahl=null; saveUi(); } k43KettenNeu(); }
+  S.tagesketten=tagesketten().filter(x=>x.id!==id); DB.set('tagesketten', S.tagesketten); K43K.cache=null; if(S.ui.tkWahl===id){ S.ui.tkWahl=null; saveUi(); } k43KettenNeu(); }
 /* Klicks der Kettenansicht */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
   if((z=d('data-k43gruppe'))){ e.stopPropagation(); haptik(6); const [ort, g]=String(z.dataset.k43gruppe).split('|'); const k=k43Klapp(ort); k[g]=!k43GruppeOffen(ort, g); saveUi(); k43KettenNeu(); return; }

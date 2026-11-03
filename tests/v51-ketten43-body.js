@@ -168,7 +168,8 @@ pruef('D-C4 Freigabe im Postfach meldet die Nummer mit Quelle postfach', _gesend
 // ══ E · Tableiste und Statusleiste (4.3 §7) ══
 var K=testTag();
 renderStatusbar(); var sb=el('f4sb').innerHTML;
-pruef('E-L1 schmale Statusleiste: P DFM / Ziel DFM · P Privat / Ziel Privat, Std., ⚙, Balken; kein Ring, keine Figur', /DFM · /.test(sb) && /Privat<\/span>/.test(sb) && /Std\./.test(sb) && /data-k43einst/.test(sb) && /k43-sbbar/.test(sb) && !/f4-ring/.test(sb) && !/<img/.test(sb), sb.slice(0,300));
+// Hotfix 25 §1: die schmale Leiste aus 4.3 ist abgelöst — es gilt die Statusleiste 4.2 ohne Ring und Avatar, mit ⚙ rechts
+pruef('E-L1 Statusleiste 4.2 (Hotfix 25): Punkteleiste, Kennzeile ohne Ring/Avatar, ⚙, Viererzeile; keine schmale Leiste', /id="sBar"/.test(sb) && /f4n-kz/.test(sb) && !/tbRing/.test(sb) && !/<img/.test(sb) && /data-k43einst/.test(sb) && /f4n-r4/.test(sb) && !/k43-sbbar/.test(sb), sb.slice(0,300));
 var r=k43NavRingHtml(); pruef('E-L2 Fokus-Ring: SVG-Kreis 84 und Charakterbild, Fortschritt aus Tagesziel', /viewBox="0 0 84 84"/.test(r) && /<img src=/.test(r));
 var src=readFile('index.html'); var nav=src.slice(src.indexOf('<nav id="nav">'), src.indexOf('</nav>'));
 pruef('E-L3 Tableiste: Reihenfolge Ketten · Suche · Fokus · Shop · Statistik, Fokus ohne Beschriftung mit aria-label', nav.indexOf('data-seite="ketten"')<nav.indexOf('data-navsuche') && nav.indexOf('data-navsuche')<nav.indexOf('class="fokus" data-seite="fokus" aria-label="Fokus"') && nav.indexOf('aria-label="Fokus"')<nav.indexOf('data-seite="belohnung"') && nav.indexOf('data-seite="belohnung"')<nav.indexOf('data-seite="statistik"') && !/aria-label="Fokus">[^<]*Fokus/.test(nav) && !/data-seite="einst"/.test(nav) && !/data-seite="postfach"/.test(nav));
