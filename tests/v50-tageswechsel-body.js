@@ -148,5 +148,5 @@ pruef('8.17 nachholen421b: Ausgleich −200 am neuen Tag entfernt, Vortags-Ausgl
 S.meta.tagNachholen=N0;
 
 // ══ 9 · Version ══
-pruef('9.1 App 4.3.0 · Build 2026-11-03-53 · sw.js Cache fokus4-v4.3.0-1 (seit Karten-Standard 4.3) · DATENVERTRAG 2.1.0', APP_VERSION==='4.3.0' && APP_BUILD==='2026-11-03-53' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.0-1'")>=0 && DATENVERTRAG==='2.1.0', APP_VERSION+' / '+APP_BUILD);
+pruef('9.1 App 4.3.1 · Build 2026-11-03-54 · sw.js Cache fokus4-v4.3.1-1 (seit Hotfix 25) · DATENVERTRAG 2.1.0', APP_VERSION==='4.3.1' && APP_BUILD==='2026-11-03-54' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.1-1'")>=0 && DATENVERTRAG==='2.1.0', APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 24 · Tageswechsel (4.3.0)');

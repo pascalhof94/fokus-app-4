@@ -135,5 +135,5 @@ S.meta.farbeReset={ ts:'2026-11-02T10:00:00.000Z', basis:123.6 }; paket=syncExpo
 pruef('6.1.13 Export-Objekt mit Marke: farbeReset { ts, basis gerundet }', !!paket.farbeReset && paket.farbeReset.ts==='2026-11-02T10:00:00.000Z' && paket.farbeReset.basis===124, JSON.stringify(paket.farbeReset));
 
 // ══ 14 · Version ══
-pruef('6.1.14 App 4.3.0 · Build 2026-11-03-53 · sw.js Cache 4.3.0-1 (seit Karten-Standard 4.3)', APP_VERSION==='4.3.0' && APP_BUILD==='2026-11-03-53' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('6.1.14 App 4.3.1 · Build 2026-11-03-54 · sw.js Cache 4.3.0-1 (seit Hotfix 25)', APP_VERSION==='4.3.1' && APP_BUILD==='2026-11-03-54' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.1-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 23 · Spiel zurücksetzen: Shop und Kulisse, je mit oder ohne Währung (4.1.14)');
