@@ -7436,7 +7436,7 @@ function f7PlanHtml(){
   const aend=datum===heute ? f12TrainerZeilenHeute('Planänderung') : [];   // 4.1 §9.5: aus dem Trainer-Kanal
   bl.forEach(b=>{ const ist=datum===heute ? f7PlanIst(b) : null, fertig=datum===heute && b.bis<=now && !(lb && lb.id===b.id), jetzt=lb && lb.id===b.id, karten=f7PlanKarten(b, datum), typ=b.typ==='dfm'?'d':b.typ==='privat'?'p':b.typ==='pause'?'e':'s';
     const name=(ICON[b.typ]||'📦')+' '+esc(b.name||BLOCK_TYP_NAME[b.typ]||'Block');
-    h+='<div class="f7-b"><div class="tm'+(jetzt?' jetzt':'')+'">'+anFmtUhr(b.von)+(jetzt ? '<br>jetzt' : '')+'</div><div class="bx '+typ+(fertig?' done':'')+(jetzt?' now':'')+'">';
+    h+='<div class="f7-b"><div class="tm'+(jetzt?' jetzt':'')+'">'+anFmtUhr(b.von)+(jetzt ? ' <br>jetzt' : '')+'</div><div class="bx '+typ+(fertig?' done':'')+(jetzt?' now':'')+'">';   // Hotfix 27 §7.1: Leerzeichen vor dem Umbruch (Standard-Blöcke füllen den Zeitstrahl; Harness liest den Text ohne <br>)
     if(fertig){ h+='<div class="bh">'+name+'<span>'+(ist && ist.erl ? ist.erl+' ✓' : '')+(ist && ist.gesch ? ' · '+ist.gesch+' geschoben' : '')+(!ist || (!ist.erl && !ist.gesch) ? '✓' : '')+'</span></div>';
       if(ist && ist.von!=null){ const abw=Math.round((ist.von-b.von)*60); h+='<div class="ist">Ist '+anFmtUhr(ist.von)+'–'+anFmtUhr(ist.bis)+' Uhr · '+fmtDauer((ist.bis-ist.von)*60)+(abw ? ' · <span class="'+(abw>0?'o':'g')+'">'+(abw>0?'+':'−')+Math.abs(abw)+' Min.</span>' : '')+'</div>'; } else h+='<div class="ist">keine Sitzung</div>'; }
     else { h+='<div class="bh">'+name+'<span>'+(jetzt ? 'bis '+anFmtUhr(b.bis)+' Uhr' : fmtDauer((b.bis-b.von)*60))+'</span></div>';
