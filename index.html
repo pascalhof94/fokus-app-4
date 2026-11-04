@@ -3158,6 +3158,29 @@ main{padding-bottom:calc(var(--sab) + 110px + var(--s2))}   /* 4.3 §7: Platz f�
 .pbar{overflow:hidden}
 .f4-prog .bar{overflow:hidden}
 .an-wt .an-bar .track i.prog{max-width:100%}
+/* ══ Hotfix 26 (04.11.2026) · §2.2 💬-FAB in jeder Ebene-1-Ansicht außer dem Chat · §2.3 Tableiste als Fuß der Such-Ebene · §6.4/§6.5 Tag nach Blöcken, Blockleiste ══ */
+body:not(.breit)[data-e1]:not([data-e1="chat"]) #trainerFab{display:flex;z-index:210}   /* Hotfix 26 §2.2: sichtbar über der Ebene 1 (z-index 200), nicht im Chat */
+#ebene1 #nav{position:relative;left:auto;right:auto;bottom:auto;flex:none;z-index:1}   /* Hotfix 26 §2.3: dasselbe #nav als Fuß der Such-Ebene (folgt --vvH, über der Tastatur) */
+body[data-e1="suche"] #e1-suche{padding-bottom:calc(var(--sab) + 48px)}   /* Hotfix 26 §2.3: wie 4.2.1 plus Platz für den Fokus-Kreis (abgelöst: 110 px) */
+.hf26-bllab{margin:4px 0 2px}
+.hf26-bl{margin:0 0 2px;padding:2px 0 4px;gap:6px}
+.kl-chip.hf26-bc{height:auto;min-height:58px;padding:2px 0;align-items:stretch}
+.kl-chip.hf26-bc span{height:auto;line-height:1.25;padding:7px 10px;border-radius:12px;min-width:92px;display:flex;flex-direction:column;justify-content:center;gap:2px;text-align:left;white-space:normal;background:#141e2e;border:1px solid #243349}
+.kl-chip.hf26-bc span b{font-size:12.5px;display:block;color:var(--fg)}
+.kl-chip.hf26-bc span small{font-size:10.5px;color:var(--mut);display:block;white-space:nowrap}
+.kl-chip.hf26-bc.jetzt span{border:2px solid #3b82f6;background:#1c2d4d}
+.kl-chip.hf26-bc.fertig span{opacity:.6}
+.kl-chip.hf26-bc.fertig span small{color:#3ecf8e}
+.hf26-hint{font-size:11px;color:var(--mut);text-align:center;margin:0 0 4px}
+.hf26-bh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-top:1px solid #243349;padding-top:8px;margin-top:4px;cursor:pointer;min-height:32px}
+.hf26-bh b{font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.hf26-bh span{font-size:11px;color:var(--mut);white-space:nowrap}
+.hf26-bh.jetzt b{color:#93c5fd}
+.hf26-zu{background:#141e2e;border:1px solid #243349;border-radius:12px;padding:9px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:600;min-height:44px;cursor:pointer}
+.hf26-zu span{font-size:11px;color:var(--mut);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hf26-zu.leer-block{color:var(--mut);font-weight:400;font-size:12px;min-height:36px;cursor:default}
+.hf26-tag .k43-abt{margin-top:6px}
+.hf26-chat .k43-antwort input{cursor:pointer}
 </style>
 </head>
 <body>
@@ -3336,11 +3359,11 @@ main{padding-bottom:calc(var(--sab) + 110px + var(--s2))}   /* 4.3 §7: Platz f�
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '4.3.1';   // Hotfix 25 (03.11.2026) · Karten-Standard 4.3
+const APP_VERSION = '4.3.2';   // Hotfix 26 (04.11.2026) · Hotfix 25 · Karten-Standard 4.3
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-11-03-54';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-11-04-55';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -5887,10 +5910,10 @@ function f4KartenKernHtml(k){
   const titel='<div class="ktitel fk-haupttitel" data-detail="'+k.id+'">'+esc(k.titel||'(ohne Titel)')+'</div>'+ketteKnopf+
     '<div class="kmeta"><b style="color:'+famH+'">'+(k.domain==='dfm'?'DFM':'Privat')+'</b> · '+MX_FELD_NAME[matrixFeldVon(k)]+' · '+E4_ART_NAME[leiterArt(k)].replace(/^DFM[ -]?/,'').replace('Privat-','')+'</div>';
   const aufgabeErledigt='<div class="taufgabe"><div class="tsub">✓ erledigt'+(k.tagId?' am '+esc(String(k.tagId).slice(0,10)):'')+' · ⏱ <b>'+tZeitKurz(istSekLive(k)/60)+'</b> · <b>'+fmtP(kartePunkte(k))+' P</b> gebucht</div>'+zaehlerZeileHtml(k)+
-    '<div class="kbed"><button class="kbtn breit" data-detail="'+k.id+'">✎ Punkte anpassen</button><button class="kbtn" data-fkchat="'+k.id+'" aria-label="Zur Karte schreiben" title="Zur Karte schreiben">💬</button><button class="kbtn breit" style="margin-left:auto" data-wiederholen="'+k.id+'">↻ Wiederholen</button></div></div>';
+    '<div class="kbed"><button class="kbtn breit" data-detail="'+k.id+'">✎ Punkte anpassen</button><button class="kbtn" data-fkchat="'+k.id+'" aria-label="'+hf26ChatLabel(k)+'" title="'+hf26ChatLabel(k)+'">💬</button><button class="kbtn breit" style="margin-left:auto" data-wiederholen="'+k.id+'">↻ Wiederholen</button></div></div>';
   const aufgabe='<div class="taufgabe">'+zaehlerZeileHtml(k)+'<div class="kbed">'+
     '<button class="kbtn pp tpp" data-fktoggle="'+k.id+'" aria-label="Play/Pause" style="background:linear-gradient(180deg,'+famH+','+famK+')">'+(uhrLaeuftAuf(k)?'⏸':'▶')+'</button>'+
-    '<button class="kbtn tedit" data-detail="'+k.id+'" aria-label="Bearbeiten">✎</button><button class="kbtn tedit" data-fkchat="'+k.id+'" aria-label="Zur Karte schreiben" title="Zur Karte schreiben">💬</button><button class="kbtn tedit" data-fkschieben="'+k.id+'" aria-label="Schieben">⏭</button>'+   // Hotfix 9 · 3.2
+    '<button class="kbtn tedit" data-detail="'+k.id+'" aria-label="Bearbeiten">✎</button><button class="kbtn tedit" data-fkchat="'+k.id+'" aria-label="'+hf26ChatLabel(k)+'" title="'+hf26ChatLabel(k)+'">💬</button><button class="kbtn tedit" data-fkschieben="'+k.id+'" aria-label="Schieben">⏭</button>'+   // Hotfix 9 · 3.2
     (istAufgabeKarte(k) ? '<button class="kbtn ok tcheck" data-fkcheck="'+k.id+'" aria-label="Erledigt">✓</button>' : '')+'</div></div>';
   const nv=fokusNavHtml(k), einflug=_fokusEinflug ? ' von-'+_fokusEinflug : ''; _fokusEinflug=null;
   return '<div id="fokusAktiv" class="blk kern tkern f4kern '+(laeuft?'laeuft ':'')+(k.status==='erledigt'?'erledigt ':'')+(nv.imVerlauf?'imverlauf ':'')+einflug+'" style="--famk:'+famK+';--famh:'+famH+';border-left:4px solid '+famK+'">'+
@@ -7455,7 +7478,7 @@ function f7Klick(e){
   if((z=d('data-f7onramp'))){ const [on,ziel]=z.dataset.f7onramp.split(':'); e4BrueckeSetzen(on, ziel, 'manuell'); closeSheet(); toast('🚀 Onramp gesetzt'); renderAlles(); return true; }
   if((z=d('data-f7mic'))){ f7Mikro(z.dataset.f7mic); return true; }
   // Chat
-  if((z=d('data-fkchat'))){ haptik(6); try{ closeSheet(); }catch(x){} f12KartenChat(z.dataset.fkchat); return true; }   // 💬 Zur Karte schreiben (Fokusansicht, Karteneinstellungen) · 4.1 §9.4: Karten-Gespräch
+  if((z=d('data-fkchat'))){ haptik(6); try{ closeSheet(); }catch(x){} k43KarteOeffnen(z.dataset.fkchat); return true; }   // 💬 Zur Karte schreiben (Fokusansicht, Karteneinstellungen) · 4.1 §9.4: Karten-Gespräch · Hotfix 26 §3.1: über k43KarteOeffnen (abgelöst f12KartenChat direkt)
   if(d('data-f7pfoeffnen')){ haptik(6); e1Schliessen(); seiteZeigen('postfach'); return true; }   // 3.4: „Änderung im Postfach" öffnet das Postfach
   // Postfach
   if((z=d('data-f7pffrei'))){ haptik(12); f7PfVorschlagAnnehmen(z.dataset.f7pffrei, false); return true; }   // Hotfix 9 · Abschnitt 2: Kartenzeile ✓
@@ -8034,7 +8057,7 @@ function f12Klick(e){
   if(d('data-f3nunten')){ f12NachUnten(); return true; }
   if(d('data-f12link')) return false;   // ↗ öffnet den Claude-Raum in einem neuen Fenster (Link selbst)
   if((z=d('data-f7akt')) && z.dataset.f7akt==='chat'){ haptik(6); f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null }); return true; }
-  if((z=d('data-fkchat'))){ haptik(6); try{ closeSheet(); }catch(x){} f12KartenChat(z.dataset.fkchat); return true; }
+  if((z=d('data-fkchat'))){ haptik(6); try{ closeSheet(); }catch(x){} k43KarteOeffnen(z.dataset.fkchat); return true; }   // Hotfix 26 §3.1: über k43KarteOeffnen (abgelöst f12KartenChat direkt)
   if(d('data-f7planchat')){ f12TrainerOeffnen('Plan heute ändern: '); return true; }
   if(d('data-f11chat')){ e.stopPropagation(); closeSheet(); F7.blattNeu=null; f12TrainerOeffnen(''); return true; }
   // Kontextwahl
@@ -14373,7 +14396,7 @@ function kartenZeileHtml(k, opt){
   return '<div class="kl-z'+(laeuft?' laeuft':'')+(fertig?' fertig':'')+(ueber?' ueber':'')+(opt.erl?' erl':'')+'" style="--fam:'+fam+';--famb:'+farbeAlpha(fam, .18)+';--prio:'+prioFarbe(k)+';--rand:'+(art==='Aufgabe' ? FARBE.ORANGE : KL_RAND_ROUTINE)+'" data-klkarte="'+k.id+'">'+
     '<button class="kl-play" data-klplay="'+k.id+'" aria-label="'+(laeuft?'Pause':'Start')+'"'+(laeuft?' style="background:'+verlauf(fam, 180)+';color:#08111f"':'')+'>'+(laeuft?'⏸':'▶')+'</button>'+
     '<div class="kl-t" data-klfokus="'+k.id+'"><b class="kl-titel">'+(k.erholung ? '<span class="kl-erh" title="Erholung">🌿</span>' : '')+esc(String(k.titel||'?'))+'</b><span class="kl-meta">'+unter+(opt.zusatz ? ' · '+opt.zusatz : '')+'</span></div>'+
-    rechts+haken+(opt.live ? '' : '<button class="kl-chat" data-k43kchat="'+k.id+'" aria-label="Zur Karte schreiben">💬</button>')+'</div>';   // 4.3 §8: 💬 Karten-Chat
+    rechts+haken+(opt.live ? '' : '<button class="kl-chat" data-k43kchat="'+k.id+'" aria-label="'+hf26ChatLabel(k)+'">💬</button>')+'</div>';   // 4.3 §8: 💬 Karten-Chat · Hotfix 26 §3.3: Beschriftung je Karte
 }
 /* ══ Karten-Standard 4.2 (App 4.2.0, Auftrag 261102 §4) · DIE EINGEKLAPPTE KARTE für std42-Karten (Mockup V2, Prüfseite Kartenbestand) ══
    Linker Rand 4 px und Verlauf in der Familienfarbe (DFM blau, Privat lila, System cyan; Info gestrichelt) · links rund ✓, bei Mehrmals eckig ➕
@@ -14423,7 +14446,7 @@ function kartenZeile42Html(k, opt){
   // Karten-Standard 4.3 §8 (R13): jede Zeile, die Zeit messen kann, zeigt ▶ und bei laufender Uhr ⏸ (▶ = Tick + Zeit, ➕ nur Bonus, ⏸ Zeit ohne Tick); dazu 💬 zum Karten-Chat.
   //   Seit 4.2 fehlten ▶/⏸ in dieser Zeile (nur ✓ bzw. ➕) — für alle std42-Karten ohne Rolle, an allen Orten (Fokus-Liste, Suche, „+“, In Kette, Chat-Kasten).
   const play=(opt.live || info) ? '' : '<button class="kl-play kz42-play" data-klplay="'+k.id+'" aria-label="'+(laeuft?'Pause':'Start')+'"'+(laeuft?' style="background:'+verlauf(fam, 180)+';color:#08111f"':'')+'>'+(laeuft?'⏸':'▶')+'</button>';
-  const chat=opt.live ? '' : '<button class="kl-chat" data-k43kchat="'+k.id+'" aria-label="Zur Karte schreiben">💬</button>';
+  const chat=opt.live ? '' : '<button class="kl-chat" data-k43kchat="'+k.id+'" aria-label="'+hf26ChatLabel(k)+'">💬</button>';   // Hotfix 26 §3.3: Beschriftung je Karte
   return '<div class="kl-z kz42'+(info?' kz42-info':'')+(laeuft?' laeuft':'')+(fertig?' fertig':'')+(ueber?' ueber':'')+(opt.erl?' erl':'')+'" style="--fam:'+fam+';--famb:'+farbeAlpha(fam, .18)+';--prio:'+fam+';--rand:'+farbeAlpha(fam, .55)+'"'+(opt.live ? '' : ' data-klkarte="'+k.id+'"')+'>'+
     play+links+(opt.live ? '<div class="kl-t">'+titel+'</div>' : '<div class="kl-t" data-klfokus="'+k.id+'">'+titel+'</div>')+kz42RechtsHtml(k)+chat+'</div>';
 }
@@ -14578,7 +14601,7 @@ function kartenMeistgenutztHtml(){ return kartenBlockHtml(null); }
 function kettenListeKlick(e){
   const t=e.target; if(!t || !t.closest) return false;
   if(t.closest('select.kl-sort')) return false;
-  const kc43=t.closest('[data-k43kchat]'); if(kc43){ e.stopPropagation(); haptik(6); f12KartenChat(kc43.dataset.k43kchat); return true; }   // 4.3 §8/§6.2: 💬 öffnet den Karten-Chat der gezeigten Karte
+  const kc43=t.closest('[data-k43kchat]'); if(kc43){ e.stopPropagation(); haptik(6); k43KarteOeffnen(kc43.dataset.k43kchat); return true; }   // 4.3 §8/§6.2: 💬 öffnet den Karten-Chat der gezeigten Karte · Hotfix 26 §3.1: über k43KarteOeffnen (Systemkarte → Ansicht)
   const tw=t.closest('[data-tkwahl]'); if(tw){ e.stopPropagation(); haptik(6); S.ui.tkWahl=tw.dataset.tkwahl||null; saveUi(); kettenListenNeu(); return true; }
   const kt=t.closest('[data-kltick]'); if(kt){ e.stopPropagation(); haptik(10); kartenListeTick(kt.dataset.kltick); return true; }
   const kg=t.closest('[data-klgruppe]'); if(kg){ e.stopPropagation(); haptik(6); klGruppeUmschalten(kg.dataset.klgruppe); kettenListenNeu(); return true; }
@@ -27320,7 +27343,7 @@ function k43TagesplanungSatzSetzen(){ const k=k43TagesplanungKarte(); if(!k) ret
 { const _alt=fokusZeitEinbuchen; fokusZeitEinbuchen=function(bisMs){ const k=fokusKarte(), lief=!!(S.fokus && S.fokus.laeuft), start=S.fokus ? num(S.fokus.startMs) : 0;
     _alt(bisMs);
     try{ if(k && lief && k.rolle==='tagesplanung' && start){ const ende=(bisMs && bisMs<Date.now()) ? Math.max(start, bisMs) : Date.now(), min=(ende-start)/60000, s=k43TagesplanungSaetze(), p=Math.round(min/60*s.satzBonusDfm*10)/10;
-      if(p>0) e4BonusBuchen(null, p, 'Tagesplanung · DFM-Anteil'); } }catch(e){} }; }   // 4.4: der DFM-Anteil als Bonus ohne Karte (wie die Eckpunkte in 4.0)
+      if(p>0 && !hf26Aktiv()) e4BonusBuchen(null, p, 'Tagesplanung · DFM-Anteil'); } }catch(e){} }; }   // 4.4: der DFM-Anteil als Bonus ohne Karte (wie die Eckpunkte in 4.0) · Hotfix 26 §4.3: abgelöst durch die Teilung der Sitzung (Karte „Tagesplanung DFM“)
 /* ── Spezialansichten (Ebene 1, Art „spezial“) ── */
 function k43SpezialOeffnen(art, schritt){ const u=k43Ui(); u.art=art; if(schritt) u.schritt=schritt; saveUi(); if(e1Art()!=='spezial') e1Oeffnen('spezial'); else e1Rendern(); }
 function renderSpezial(){ const b=el('spezialBody'); if(!b) return; const u=k43Ui(); let h='';
@@ -27426,9 +27449,9 @@ function k43TP(){ const T=k43Tag(); if(!T) return null; if(!T.tagesplanung || ty
 function k43TagesplanungOeffnen(){
   const k=k43TagesplanungKarte(); if(!k){ toast('Karte Tagesplanung fehlt'); return; } const P=k43TP(); if(!P){ toast('Kein offener Tag — erst Aufstehen'); return; }
   k43TagesplanungSatzSetzen();
-  const morgen=!P.morgenTs;   // K11: die Morgenansicht genau einmal je App-Tag, sonst immer „zwischendurch“
+  const morgen=!P.freigabeTs;   // Hotfix 26 §4.1: Morgenansicht bis zur Freigabe des Tagesplans (abgelöst K11: !P.morgenTs, genau einmal je App-Tag)
   if(!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id)) fokusStarten(k.id, null, { k43:true });   // K2/K5: läuft als Karte mit Zeit vom Öffnen bis zum Start der nächsten Karte
-  if(morgen){ P.morgenTs=jetztIso(); saveTag(); k43SpezialOeffnen('tagesplanung', 1); } else k43SpezialOeffnen('zwischendurch');
+  if(morgen){ const schritt=P.morgenTs ? Math.max(1, num(k43Ui().schritt,1)) : 1; if(!P.morgenTs) P.morgenTs=jetztIso(); saveTag(); k43SpezialOeffnen('tagesplanung', schritt); } else k43SpezialOeffnen('zwischendurch');   // Hotfix 26 §4.1: der zuletzt erreichte Schritt bleibt
 }
 function k43Schritte(n){ return '<div class="k43-schritte" aria-hidden="true">'+[1,2,3,4].map(i=>'<div style="background:'+(i<=n?FARBE.GRUEN:'#243349')+'"></div>').join('')+'</div>'; }
 function k43Zustand(){ const P=k43TP(); if(!P) return { fitness:3, motivation:3, schlafStd:null }; if(!P.zustand){ const mo=(S.tag && S.tag.morgen)||{}; P.zustand={ fitness:3, motivation:3, schlafStd:mo.schlafMin!=null ? Math.round(num(mo.schlafMin)/60*10)/10 : null, ts:null }; } return P.zustand; }
@@ -27523,11 +27546,11 @@ function k43GesternEntscheiden(ziel, was){ const P=k43TP(); if(!P) return; const
 /* Freigabe des Tagesplans (4.4): Tagesketten anlegen (5.2), Freigabe-Eintrag (2.2, Quelle tagesplan), Geplant für heute, erste Karte von Fokus 1 starten */
 function k43PlanFreigeben(){ const P=k43TP(), R=k43PlanAusChat(); if(!P || !R.plan){ toast('Kein Plan'); return; } const plan=R.plan, zs=k43ZeitstrahlHtml(plan, {}); if(zs.unbekannt){ toast('Freigabe gesperrt: Karte nicht gefunden'); return; }
   const heute=heuteApp(), alle=[], kettenIds=[]; if(!Array.isArray(S.tagesketten)) S.tagesketten=[];
-  S.tagesketten=S.tagesketten.filter(c=>!(c.quelle==='tagesplan' && c.datum===heute));   // ein neuer Plan ersetzt die Tagesketten dieses Plans (nie die Morgen- oder eigenen Ketten)
+  S.tagesketten.forEach(c=>{ if(c && c.quelle==='tagesplan' && c.datum===heute && (c.art==='block' || c.art==='tag')){ c.karten=[]; c.plan={}; c.quelle='standard'; } });   // Hotfix 26 §6.1: ein neuer Plan füllt die Block-Ketten neu und legt sie nicht doppelt an (abgelöst: Ketten entfernen; nie die Morgen- oder eigenen Ketten)
   (plan.bloecke||[]).forEach((b,i)=>{ const ids=(b.karten||[]).map(c=>c.id).filter(id=>S.karten.some(k=>k.id===id)), planInfo={}; (b.karten||[]).forEach(c=>{ planInfo[c.id]={ start:c.start||null, min:num(c.min), onramp:c.onramp===true }; });
-    const bn=k43BlockNorm(b.block||b.name)||('block'+(i+1)), id=k43KetteId(bn, heute); S.tagesketten.push({ id, name:(b.name||k43BlockName(bn))+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:bn, von:b.von||null, karten:ids, plan:planInfo, quelle:'tagesplan' }); kettenIds.push(id); ids.forEach(x=>{ if(alle.indexOf(x)<0) alle.push(x); }); });
+    const bn=k43BlockNorm(b.block||b.name)||('block'+(i+1)), id=k43KetteId(bn, heute); hf26KetteSetzen({ id, name:(b.name||k43BlockName(bn))+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:bn, von:b.von||null, karten:ids, plan:planInfo, quelle:'tagesplan' }); kettenIds.push(id); ids.forEach(x=>{ if(alle.indexOf(x)<0) alle.push(x); }); });   // Hotfix 26 §6.1: hf26KetteSetzen füllt die vorhandene Kette (k43KetteId)
   { const planAlle={}; S.tagesketten.forEach(c=>{ if(c.quelle==='tagesplan' && c.datum===heute && c.art==='block') Object.assign(planAlle, c.plan||{}); });   // Hotfix 25 §3: Plan-Einträge auch an der Tageskette
-    S.tagesketten.push({ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:alle.slice(), plan:planAlle, quelle:'tagesplan' }); kettenIds.push('tk43-tag-'+heute); }
+    hf26KetteSetzen({ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:alle.slice(), plan:planAlle, quelle:'tagesplan' }); kettenIds.push('tk43-tag-'+heute); }   // Hotfix 26 §6.1
   DB.set('tagesketten', S.tagesketten); K43K.cache=null;
   alle.forEach(id=>{ const k=S.karten.find(x=>x.id===id); if(k && k.status==='offen'){ k.faelligkeit=heute; beruehre(k); if(!ketteHat(k.id)) ketteToggle(k.id); } }); saveKarten();
   P.freigabeTs=jetztIso(); P.plan=plan; saveTag();
@@ -27675,7 +27698,7 @@ const K43_GRUPPEN=[['tag','Tag'],['block','Blöcke'],['thema','Themen'],['famili
 function k43BlockName(b){ const e=K43_BLOECKE.find(x=>x[0]===b); return e ? e[1] : (b||'Block'); }
 function k43BlockNorm(s){ const t=String(s||'').toLowerCase().replace(/[^a-z0-9äöü]/g,''); if(!t) return null;
   if(/aufsteh/.test(t)) return 'aufstehen'; if(/aufwach|morgen|tagesplan/.test(t)) return 'aufwachen'; if(/fokus1|vormittag/.test(t)) return 'fokus1'; if(/fokus2|nachmittag/.test(t)) return 'fokus2';
-  if(/senke|erhol|mittag/.test(t)) return 'senke'; if(/over/.test(t)) return 'overload'; if(/abend/.test(t)) return 'abendroutine'; return t; }
+  if(/senke|erhol|mittag/.test(t)) return 'senke'; if(/over/.test(t)) return 'overload'; if(/abend/.test(t)) return 'abendroutine'; if(/^(fokusheute|heute|tag)\d*$/.test(t)) return 'tag'; return t; }   // Hotfix 26 §6.2: „Fokus heute“, „heute“, „Tag“ → Tag-Kette
 function k43KetteId(block, datum){ return 'tk43-'+block+'-'+datum; }
 /* Normierung der gespeicherten Ketten (idempotent, bei jedem Laden und nach jedem Import): art, quelle, datum */
 function k43KettenNormieren(){ if(!Array.isArray(S.tagesketten)) S.tagesketten=[]; let dirty=false;
@@ -28036,7 +28059,7 @@ function hf25PrognoseKarten(liste, abMs){
   (liste||[]).forEach(e=>{ const k=e && e.k; if(!k) return; const min=Math.max(0, num(e.min)); let satz=0, bonus=0, dfmTeil=0;
     try{ satz=Math.max(0, num(leiterSatz(k))); }catch(x){ satz=0; }
     const n=(k.ticksAktiv && num(k.tagesziel)>0) ? num(k.tagesziel) : 1; try{ bonus=Math.max(0, num(abhakbonusDefault(k)))*n; }catch(x){ bonus=0; }
-    if(k.rolle==='tagesplanung'){ try{ dfmTeil=min/60*num(k43TagesplanungSaetze().satzBonusDfm); }catch(x){ dfmTeil=0; } }   // 4.3: DFM-Anteil der Tagesplanung
+    if(k.rolle==='tagesplanung' && !hf26Aktiv()){ try{ dfmTeil=min/60*num(k43TagesplanungSaetze().satzBonusDfm); }catch(x){ dfmTeil=0; } }   // 4.3: DFM-Anteil der Tagesplanung · Hotfix 26 §4.3: abgelöst, die DFM-Hälfte ist die Karte „Tagesplanung DFM“
     const pk=min/60*satz+bonus, fam=(k.domain==='privat') ? 'privat' : 'dfm';
     const start=(num(e.startMs)>cursor) ? num(e.startMs) : cursor, ende=start+min*60000; cursor=ende;   // Startzeit in der Vergangenheit → ab jetzt hintereinander
     p+=pk+dfmTeil; if(fam==='privat'){ pPrivat+=pk; pDfm+=dfmTeil; } else pDfm+=pk+dfmTeil; restMin+=min;
@@ -28074,6 +28097,293 @@ tagesprognoseHeute=function(){ return tagesprognoseTeile43(tagesprognose43()); }
 k43PlanPrognose=function(plan){ const liste=[]; (plan && plan.bloecke||[]).forEach(b=>(b.karten||[]).forEach(c=>{ const k=S.karten.find(x=>x.id===c.id); if(k) liste.push({ k, min:num(c.min), startMs:null }); })); return Math.round(hf25PrognoseKarten(liste, Date.now()).summe); };
 /* Ersatz für prognoseHeute() (Normaltag-Hochrechnung, Hotfix 25 §3.4): dieselbe Form, Inhalt aus der Tageskette */
 function hf25Normaltag(){ const t=tagesprognose43(), zi=zielUndIstHeute(); return { ist:t.ist, ziel:zi.ziel, n:0, prognose:t.prognose, rest:Math.max(0, t.prognose-t.ist), k:1, kGrund:'', akkuJetzt:null, akkuTyp:null, kette:true, karten:t.karten, restMin:t.restMin }; }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   Hotfix 26 (04.11.2026) · EINE ANSICHT JE FUNKTION · 💬 AN DER KARTE · TAGESPLANUNG · SCHLAFEN · POSTFACH-VOLLTEXT · KETTEN NACH TAGESBLÖCKEN
+   Auftrag 261104_Auftrag_ClaudeCode_Hotfix26_Eine_Ansicht_Ketten_Tagesplanung.md (Zielbild 11). Regel „Eine Ansicht je Funktion“ (Pascal 04.11.2026):
+   das Postfach gibt es einmal (Umschalter „Postfach“ im Ketten-Tab, f16PostfachHtml), den Chat gibt es einmal (Ebene-1-Chat, f12Oeffnen); jeder
+   andere Einstieg ruft diese Ansichten auf. Abgelöster Code bleibt stehen (Kommentar „Hotfix 26: abgelöst durch …“). Alle neuen Funktionen heißen hf26….
+   ══════════════════════════════════════════════════════════════════════ */
+const HF26={ voll:{}, pfLade:{}, migLaeuft:false };
+const HF26_UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function hf26Aktiv(){ return !!(S.meta && S.meta.karten43b && S.meta.karten43b.ts); }   // Migration karten43b gelaufen (§4.2/§4.3)
+function hf26Std(hhmm){ if(!hhmm) return null; const s=kalStundeVonHHMM(hhmm); return s<5 ? s+24 : s; }   // Tagesfenster 5..29 wie belX
+
+/* ── §2.1 · Postfach gibt es einmal: der Umschalter „Postfach“ im Ketten-Tab (Inhalt f16PostfachHtml, Zeile ~27882, unverändert) ── */
+oeffnePostfach=function(){ k43TabSetzen('postfach'); };   // Hotfix 26 §2.1: abgelöst seiteZeigen('postfach') (Zeile 7410)
+{ const _alt=seiteZeigen; seiteZeigen=function(s){ if(s==='postfach'){ S.ui.kettenTab='postfach'; saveUi(); return _alt('ketten'); } return _alt(s); }; }   // Hotfix 26 §2.1: die Seite postfach leitet auf den Ketten-Tab um (data-f7pfoeffnen 7459/8064, Badge, Statusleiste)
+{ const _alt=renderPostfach; renderPostfach=function(){   // Hotfix 26 §2.1: die Seite postfach zeichnet nichts Eigenes mehr (abgelöst: #postfachBody über f16PostfachHtml, 4.3 §6.4)
+    try{ const host=el('postfachBody'); if(host) host.innerHTML='<div class="leer">Das Postfach steht im Ketten-Tab.</div>'; }catch(e){}
+    if(seiteAktuell()==='postfach'){ S.ui.seite='ketten'; S.ui.kettenTab='postfach'; saveUi(); try{ ebeneDarstellen(); }catch(e){} }
+    try{ if(seiteAktuell()==='ketten' && k43Tab()==='postfach') renderKetten(); }catch(e){} }; }
+{ const _alt=f7NavBadge; f7NavBadge=function(){ _alt(); try{ const f=el('suchFab'); const q=(f && f.querySelector) ? f.querySelector('.badge') : null; if(q && q.remove) q.remove(); }catch(e){} }; }   // Hotfix 26 §2.1: Badge nur am Tab Ketten und am Umschalter Postfach (4.3-Hülle); der 🔍-FAB trägt keins mehr
+
+/* ── §2.2 · Chat gibt es einmal: der Ebene-1-Chat (f12Oeffnen 7999, im breiten Layout #srChat). Umschalter „Trainer heute ↗“ und „Abteilungen ↗“ rufen ihn auf;
+   die eingebetteten Gespräche (k43TrainerHeuteHtml 27867, k43AbteilungenHtml 27872, .k43-chatseite, k43ChatTakt 27878) sind abgeschaltet, ihr Code bleibt. ── */
+K43_TABS[0][1]='Trainer heute ↗'; K43_TABS[2][1]='Abteilungen ↗';   // Zielbild 11: das Zeichen ↗ hinter den beiden Umschaltern
+{ const _alt=k43Tab; k43Tab=function(){ const t=_alt(); return (t==='trainer' || t==='abteilungen') ? 'ketten' : t; }; }   // Hotfix 26 §2.2: nie mehr eingebettet
+function hf26TrainerHeuteOeffnen(){ const kanal=f12TrainerKanal(); if(!kanal){ toast('Chat-Kanäle laden noch …'); f12Oeffnen({ raum:'Trainerstab', kanal:null, gespraech:null }); return; }
+  f12Oeffnen({ raum:'Trainerstab', kanal:kanal.id, gespraech:f12TagGespraech(), fokus:true }); }
+k43TrainerHeuteOeffnen=function(){ hf26TrainerHeuteOeffnen(); };   // Hotfix 26 §2.2: abgelöst (Ketten-Tab → Umschalter trainer, 4.3 §6/§7); 💬-FAB (26185) öffnet so den Ebene-1-Chat
+{ const _alt=k43TabSetzen; k43TabSetzen=function(t){ if(t==='trainer'){ hf26TrainerHeuteOeffnen(); return; } if(t==='abteilungen'){ f12Oeffnen({ kanal:null, gespraech:null }); return; } _alt(t); }; }   // Raum-Stufe
+/* Ketten-Chat (K21): Darstellung bleibt (Kopf, letzte vier Nachrichten, Eingabezeile); ein Tipp auf Nachrichten, „⤢ ganzer Verlauf“ oder die Eingabe öffnet
+   den Ebene-1-Chat in diesem Gespräch mit Tastatur-Fokus. Die Kurzansicht sendet nichts mehr (data-k43chatsenden/-chattext abgelöst, Handler 27641 bleibt). */
+const k43ChatKurzHtml43=k43ChatKurzHtml;   // Hotfix 26 §2.2: abgelöst durch die Fassung unten (sendet nichts mehr selbst)
+k43ChatKurzHtml=function(kanal, g, platzhalter, titel){ if(!kanal) return '<div class="leer">Chat-Kanäle laden …</div>'; const rows=(f12Verlauf(kanal, g)||[]).slice(-4), ref=esc(kanal.id)+'|'+esc(g);
+  return '<div class="k43-chat hf26-chat" data-hf26chat="'+ref+'" role="button"><div class="k43-chatkopf"><span class="k43-lab">'+esc(titel||('Chat · '+f12Name(kanal)))+'</span><button type="button" class="k43-ganz" data-hf26chat="'+ref+'">⤢ ganzer Verlauf</button></div><div class="k43-msgs">'+(rows.length ? rows.map(r=>{ const p=String(r.Von||'')==='Pascal'; return '<div class="k43-m'+(p?' p':' t')+'"><small>'+esc(p?'Du':f16VonName(r.Von||f12Name(kanal)))+' · '+f12Uhrzeit(r.Zeitstempel)+'</small>'+esc(String(f12Text(kanal, r)||'').replace(/```[\s\S]*?```/g,'[Tagesplan]').replace(/\s+/g,' ').slice(0,280))+'</div>'; }).join('') : '<div class="leer">noch keine Nachricht</div>')+'</div>'+
+    '<div class="k43-antwort"><input readonly placeholder="'+esc(platzhalter||'Nachricht …')+'" data-hf26chat="'+ref+'|fokus" aria-label="Im Chat schreiben"><button type="button" aria-label="Im Chat schreiben" data-hf26chat="'+ref+'|fokus">↑</button></div></div>'; };
+function hf26ChatOeffnen(ref){ const t=String(ref||'').split('|'), kanal=f12KanalId(t[0]); if(!kanal) return; f12Oeffnen({ raum:f12Raum(kanal)||'Trainerstab', kanal:kanal.id, gespraech:t[1], fokus:t[2]==='fokus' }); setTimeout(()=>{ try{ f12NachUnten(); }catch(x){} }, 350); }
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const z=t.closest('[data-hf26chat]'); if(!z) return; e.stopPropagation(); haptik(6); hf26ChatOeffnen(z.dataset.hf26chat); }, true);
+
+/* ── §2.3 · Suche: Scrollen und Tastatur wie 4.2.1 (Ebene über dem Visual Viewport, Liste scrollt in #e1-suche). Die sichtbare Tableiste aus 4.3 bleibt:
+   dasselbe Element #nav wird in die Such-Ebene gehängt (Fuß der Ebene, nicht nachgebaut) und beim Schließen zurückgestellt; abgelöst: 110-px-Polster (3138). ── */
+const HF26_NAV={ platz:null };
+function hf26NavInSuche(){ try{ const nav=el('nav'), eb=el('ebene1'); if(!nav || !eb || !nav.parentNode || !eb.appendChild) return;
+    if(e1Art()==='suche'){ if(nav.parentNode!==eb){ HF26_NAV.platz={ parent:nav.parentNode, next:nav.nextSibling||null }; eb.appendChild(nav); } }
+    else if(nav.parentNode===eb && HF26_NAV.platz){ const p=HF26_NAV.platz; HF26_NAV.platz=null; if(p.next && p.next.parentNode===p.parent) p.parent.insertBefore(nav, p.next); else p.parent.appendChild(nav); } }catch(e){} }
+{ const _alt=ebeneDarstellen; ebeneDarstellen=function(){ _alt(); hf26NavInSuche(); }; }
+
+/* ── §3 · Der 💬-Knopf an der Karte öffnet die passende Ansicht: EINE Funktion für data-fkchat (5890/5893, Handler 7458/8037) und data-k43kchat (14376/14426, Handler 14581).
+   Systemkarte (rolle): ihre Spezialansicht ohne Uhr; normale Karte: der Kartenchat (f12KartenChat 8456). Beschriftung hf26ChatLabel. ── */
+function hf26ChatLabel(k){ return (k && k.rolle) ? 'Ansicht öffnen' : 'Zur Karte schreiben'; }
+function hf26BlockadeAnsicht(){ const k=k43BlockadeKarte(); if(!k){ toast('Karte ADHS Blockade fehlt (Rolle blockade)'); return; } if(!k43BL()){ toast('Kein offener Tag'); return; } k43SpezialOeffnen('blockade'); }   // wie k43BlockadeOeffnen (27576), aber ohne startTs und ohne fokusStarten
+function k43KarteOeffnen(kid){ const k=S.karten.find(x=>x.id===kid); if(!k) return; try{ closeSheet(); }catch(e){}
+  if(!k.rolle){ f12KartenChat(kid); return; }
+  const r=k.rolle;
+  if(r==='schlafen'){ k43SpezialOeffnen('schlafen'); return; }
+  if(r==='aufstehen'){ k43SpezialOeffnen('aufstehen'); return; }
+  if(r==='tagesplanung' || r==='tagesplanungDfm'){ const P=k43TP(); if(!P){ toast('Kein offener Tag — erst Aufstehen'); return; } if(!P.freigabeTs) k43SpezialOeffnen('tagesplanung', P.morgenTs ? Math.max(1, num(k43Ui().schritt,1)) : 1); else k43SpezialOeffnen('zwischendurch'); return; }
+  if(r==='blockade'){ hf26BlockadeAnsicht(); return; }
+  if(r==='tagesabschluss'){ oeffneAbschlussV3(1); return; }   // bestehende Ansicht aus leisteTicken (12648); die Uhr startet erst in der Ansicht selbst
+  if(r==='tagebuch'){ oeffneTagebuch(); return; }   // bestehender Tagebuch-Dialog aus leisteTicken
+  if(r==='reflexion'){ oeffneReflexion(); return; }   // bestehendes Reflexions-Blatt (7853); rollenWegAusloesen ginge über fokusStarten (Uhr)
+  f12KartenChat(kid);   // ❓ position (verborgen, keine Ansicht) sowie archivierte Rollen (tagesuebergang, sync, erholung): Kartenchat
+}
+
+/* ── §4.1 · Tagesplanung nach zu frühem Start: Morgenansicht bis zur Freigabe (k43TagesplanungOeffnen 27426 geändert). Ursache „gar keine Ansicht beim zweiten Start“:
+   jeder Start aus Liste, Kette, Fokusleiste oder Fokus-Seite läuft über leistePlay → fokusStarten (öffnet die Ansicht) und danach fokusseiteNachStart (23802) bzw.
+   kettenListeKlick (14588: „direkt gestartet → fokusseiteNachStart“), das die Ebene 1 schließt (p.e1=null). Beim ersten Start kam der Weg aus der Aufstehen-Ansicht
+   (data-k43tagesplanung) ohne fokusseiteNachStart. Behebung: die Spezialansicht der laufenden Tagesplanung/Blockade bleibt offen. ── */
+{ const _alt=fokusseiteNachStart; fokusseiteNachStart=function(){ try{ const k=fokusKarte(); if(e1Art()==='spezial' && k && S.fokus && S.fokus.laeuft && (k.rolle==='tagesplanung' || k.rolle==='blockade')){ ebeneSetzen({ seite:'fokus', anzeige:{ pos:0, frei:null } }); return; } }catch(e){} _alt(); }; }
+
+/* ── §4.2 · UUID für die Systemkarte Tagesplanung (Migration karten43b, Protokoll in meta.migrationen); §4.3 · zweite Systemkarte „📋 Tagesplanung DFM“ (rolle tagesplanungDfm) ── */
+function hf26DfmKarte(){ return S.karten.find(k=>k.rolle==='tagesplanungDfm' && k.status!=='archiviert')||null; }
+function hf26IdUmziehen(alt, neu){ const z={ fokus:0, tagesketten:0, plan:0, intraday:0, tagLog:0, historieLog:0, freigaben:0, unteraufgaben:0, ui:0, tagFelder:0 };
+  if(S.fokus && S.fokus.karteId===alt){ S.fokus.karteId=neu; z.fokus++; }
+  (S.tagesketten||[]).forEach(c=>{ if(!c) return; if(Array.isArray(c.karten)) c.karten=c.karten.map(id=>{ if(id===alt){ z.tagesketten++; return neu; } return id; }); if(c.plan && c.plan[alt]!==undefined){ c.plan[neu]=c.plan[alt]; delete c.plan[alt]; z.plan++; } });
+  (S.intraday||[]).forEach(e=>{ if(e && e.kartenId===alt){ e.kartenId=neu; z.intraday++; } });
+  if(S.tag && Array.isArray(S.tag.log)) S.tag.log.forEach(l=>{ if(l && l.itemId===alt){ l.itemId=neu; z.tagLog++; } });
+  (S.historie||[]).forEach(h=>{ if(h && Array.isArray(h.log)) h.log.forEach(l=>{ if(l && l.itemId===alt){ l.itemId=neu; z.historieLog++; } }); });
+  const F=(S.meta && S.meta.freigaben)||{}; Object.keys(F).forEach(k=>{ const f=F[k]; if(f && Array.isArray(f.karten)) f.karten.forEach(x=>{ if(x && x.id===alt){ x.id=neu; z.freigaben++; } }); });
+  (S.unteraufgaben||[]).forEach(u=>{ if(u && u.parentId===alt){ u.parentId=neu; z.unteraufgaben++; } });
+  if(S.ui && S.ui.fokusAnzeige && S.ui.fokusAnzeige.frei===alt){ S.ui.fokusAnzeige.frei=neu; z.ui++; }
+  if(S.tag){ ['istMinutenStart','nurZeitSek'].forEach(f=>{ if(S.tag[f] && S.tag[f][alt]!==undefined){ S.tag[f][neu]=S.tag[f][alt]; delete S.tag[f][alt]; z.tagFelder++; } }); }
+  return z; }
+function hf26DfmKarteAnlegen(){ if(hf26DfmKarte()) return null;
+  const k=Object.assign(neueKarte({ titel:'📋 Tagesplanung DFM', domain:'dfm' }), { id:uuid(), status:'offen', rolle:'tagesplanungDfm', std42:true, art:'system', matrixFeld:'werkzeug', abteilung:'Geschäftsführung', projekt:null, prio:3, belastung:0, sollMin:0, rhythmus:{ typ:'taeglich' }, immerSichtbar:true, erstelltTs:jetztIso() });   // Abteilung direkt Geschäftsführung (20f83f8a…), kein Projekt, Owner setzt der Dienst (DFM-Karte)
+  S.karten.push(k); return k; }
+/* §4.4 · Boni „Tagesplanung · DFM-Anteil“ eines Tages ablösen: dieselben Punkte kommen über die Korrektur-Karte (Hotfix 22) als Sitzungen auf „Tagesplanung DFM“;
+   die Boni bleiben im Log (markiert abgeloest), ein Ausgleich art korrektur (Log) und korrektur-tag (Stunden-Log, DFM) nimmt sie aus der Bilanz. Spur in meta.migrationen. */
+const HF26_BONUS_GRUND='Tagesplanung · DFM-Anteil';
+function hf26BoniAbloesen(datum){ const heute=!!(S.tag && S.tag.datum===datum), h=heute ? null : (S.historie||[]).filter(x=>x && x.datum===datum && !x.luecke).pop(); const log=heute ? (S.tag.log=S.tag.log||[]) : (h ? (h.log=h.log||[]) : null); if(!log) return { datum, boni:0, punkte:0, grund:'kein Tag' };
+  const boni=log.filter(l=>l && l.art==='bonus' && l.grund===HF26_BONUS_GRUND && !l.abgeloest); const p=Math.round(boni.reduce((a,l)=>a+num(l.punkte),0)*10)/10; if(!(p>0)) return { datum, boni:boni.length, punkte:0 };
+  const ts=jetztIso(), grund='Hotfix 26 §4.4: DFM-Anteil der Tagesplanung als Sitzung auf „Tagesplanung DFM“ (Korrektur-Karte), Bonus abgelöst';
+  boni.forEach(l=>{ l.abgeloest=ts; });
+  log.push({ itemId:'korrektur', titel:'Korrektur: '+grund.slice(0,40), domain:'dfm', art:'korrektur', punkte:-p, ts, grund });
+  (S.intraday=S.intraday||[]).push({ ts, kartenId:null, domaene:'dfm', punkte:-p, minuten:0, typ:'korrektur-tag', datum, quelle:'korrektur', grund, tagId:(heute ? S.tag.tagId : h.tagId) });
+  if(!heute){ h.punkteBilanz=Math.round((num(h.punkteBilanz)-p)*10)/10; if(h.punkteDfm!=null) h.punkteDfm=Math.round((num(h.punkteDfm)-p)*10)/10; }
+  return { datum, boni:boni.length, punkte:p }; }
+function migrationKarten43b(){
+  if(S.meta.karten43b && S.meta.karten43b.ts) return null;
+  const p={ name:'karten43b', ts:jetztIso(), version:APP_VERSION, tagesplanung:null, verweise:null, dfmKarte:null, phFestGeleert:false };
+  const tp=S.karten.find(k=>k.rolle==='tagesplanung' && k.status!=='archiviert');
+  if(tp && !HF26_UUID.test(String(tp.id))){ const alt=tp.id, neu=uuid(); tp.id=neu; tp.idVorher=alt; p.tagesplanung={ alt, neu }; p.verweise=hf26IdUmziehen(alt, neu); }   // UUID (Muster uuid()), rolle bleibt; alle Verweise ziehen mit
+  else if(tp) p.tagesplanung={ alt:tp.id, neu:tp.id, unveraendert:true };
+  const d=hf26DfmKarteAnlegen(); if(d) p.dfmKarte=d.id; else { const v=hf26DfmKarte(); p.dfmKarte=v ? v.id : null; p.dfmVorhanden=true; }
+  if(tp && tp.phFest!=null && tp.phFest!==''){ tp.phFest=null; p.phFestGeleert=true; }   // §4.3: phFest der Privat-Karte wird wieder leer
+  try{ p.boniAbgeloest=hf26BoniAbloesen('2026-11-04'); }catch(e){ p.boniAbgeloest={ fehler:String((e && e.message)||e) }; }   // §4.4: der 04.11.2026 (Auftrag), Gegenstück zur Korrektur-Karte
+  S.meta.karten43b=p; if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[]; S.meta.migrationen=S.meta.migrationen.concat([p]).slice(-50);
+  saveKarten(); saveFokus(); saveTag(); saveMeta(); saveUi(); try{ saveHistorie(); }catch(e){} try{ DB.set('intraday', S.intraday); DB.set('tagesketten', S.tagesketten); }catch(e){} K43K.cache=null;
+  return p;
+}
+ROLLEN_EIGENER_WEG.push('tagesplanungDfm');
+{ const _alt=rollenWegAusloesen; rollenWegAusloesen=function(kid){ const k=S.karten.find(x=>x.id===kid); if(k && k.rolle==='tagesplanungDfm'){ k43TagesplanungOeffnen(); return true; } return _alt(kid); }; }
+{ const _alt=istSonderRolle; istSonderRolle=function(k){ return _alt(k) || !!(k && k.rolle==='tagesplanungDfm'); }; }
+{ const _alt=fokusStarten; fokusStarten=function(kid, quelle, opt){ const zk=S.karten.find(x=>x.id===kid); if(zk && zk.rolle==='tagesplanungDfm' && !(opt && opt.k43)){ k43TagesplanungOeffnen(); return; } return _alt(kid, quelle, opt); }; }   // die DFM-Karte wird nie direkt gestartet: ihre Zeit kommt aus der Teilung
+/* §4.3 · Punkte: jede Hälfte mit dem normalen Satz ihrer Familie (e42Satz einer Routine mit Prio 3, Belastung 0, Werkzeug = k43TagesplanungSaetze); phFest leer */
+{ const _alt=e42Satz; e42Satz=function(k){ if(k && (k.rolle==='tagesplanung' || k.rolle==='tagesplanungDfm') && hf26Aktiv() && !(k.phFest!=null && k.phFest!=='' && Number.isFinite(Number(k.phFest)))){ const s=k43TagesplanungSaetze(); return k.rolle==='tagesplanungDfm' ? s.dfm : s.privat; } return _alt(k); }; }   // Hotfix 26 §4.3 (Systemkarten hätten sonst keinen Satz)
+{ const _alt=k43TagesplanungSatzSetzen; k43TagesplanungSatzSetzen=function(){ if(!hf26Aktiv()) return _alt(); const k=k43TagesplanungKarte(); if(k && k.phFest!=null && k.phFest!==''){ k.phFest=null; saveKarten(); } }; }   // Hotfix 26 §4.3: abgelöst phFest = Privat-Satz × (1 − Anteil)
+/* §4.3 · Teilung jeder Sitzung der Tagesplanung beim Einbuchen: Anteil anteilDfm (Standard 0,5) der Minuten als Sitzung auf „Tagesplanung DFM“, der Rest auf „Tagesplanung“ (Privat).
+   Punkte je Hälfte über buchungAbgleich (Beitrag der Karte heute); die Ist-Minuten des Tages zählen die Zeit einmal. Abgelöst: der Bonus ohne Karte (4.3-Hülle, 27320). */
+{ const _alt=fokusZeitEinbuchen; fokusZeitEinbuchen=function(bisMs){ const k=fokusKarte(), lief=!!(S.fokus && S.fokus.laeuft), nurZeit=!!(S.fokus && S.fokus.nurZeit);
+    _alt(bisMs);
+    try{ if(!hf26Aktiv() || !k || !lief || nurZeit || k.rolle!=='tagesplanung') return; const d=hf26DfmKarte(); if(!d) return;
+      const a=Math.max(0, Math.min(1, num(k43TagesplanungSaetze().anteilDfm))); if(!(a>0)) return;
+      const e=(S.intraday||[]).slice().reverse().find(x=>x && x.kartenId===k.id && x.typ==='timer' && !x.teilung); if(!e) return;
+      const min=num(e.minuten), minD=Math.round(min*a*10)/10, minP=Math.round((min-minD)*10)/10; if(!(minD>0)) return;
+      e.minuten=minP; e.teilung={ anteilDfm:a, dfmKarte:d.id, gesamtMin:min }; k.istSek=Math.max(0, num(k.istSek)-minD*60); buchungAbgleich(k, e);
+      d.istSek=num(d.istSek)+minD*60; beruehre(d); const e2=logIntraday(d, { minuten:minD, typ:'timer' }); e2.ts=e.ts; if(e.tagId) e2.tagId=e.tagId; if(e.anker) e2.anker=true; e2.teilung={ anteilDfm:a, privatKarte:k.id, gesamtMin:min }; buchungAbgleich(d, e2);
+      saveKarten(); DB.set('intraday', S.intraday); saveTag(); }catch(x){ console.warn('Hotfix 26 Teilung', x); } }; }
+
+/* ── §4.5 · Schlafen: jeder Start (▶ Liste, Kette, Fokus, schlafUmschalten 12678) beendet die laufende Karte zum Tipp-Zeitpunkt (fokusZeitEinbuchen), startet die Schlafuhr
+   ab diesem Zeitpunkt (schlafStarten 17388), macht Schlafen zur Karte im Fokus und öffnet die Ansicht Schlafen (k43SchlafenHtml 27362). Abgelöst: die 4.3-Hülle (27311),
+   die nur die Ansicht öffnete, und k43SchlafenStarten (27374), das nur die Uhr startete und schloss — die laufende Karte lief weiter (Befund Postfach bc23b53b). ── */
+function hf26SchlafenStarten(){ const k=schlafKarte(), lk=fokusKarte();
+  if(S.fokus && S.fokus.laeuft && !(lk && lk.rolle==='schlafen')) fokusZeitEinbuchen();   // die laufende Karte endet jetzt
+  if(!schlafLaeuft()){ schlafStarten(); const z=schlafZustand(); if(z.laeuft) z.laeuft.schlossTag=false; }
+  if(k){ S.fokus={ karteId:k.id, laeuft:false, startMs:0, sessionSek:0, quelle:null }; S.ui.fokusAnzeige={ pos:0, frei:null }; }   // Schlafen im Fokus; die Uhr ist die Schlafuhr (uhrLaeuftAuf 10082)
+  saveKarten(); saveMeta(); saveFokus(); saveUi(); renderAlles(); haptik(10); k43SpezialOeffnen('schlafen'); }
+{ const _alt=schlafUmschalten; schlafUmschalten=function(){ if(schlafLaeuft()) return _alt(); hf26SchlafenStarten(); }; }
+k43SchlafenStarten=function(){ const k=schlafKarte(), ta=el('k43Nacht'); if(k && ta && typeof ta.value==='string'){ k.nachtnotiz=String(ta.value||''); saveKarten(); } hf26SchlafenStarten(); };   // Hotfix 26 §4.5: abgelöst (Knopf „Schlafen starten“ in der Ansicht, falls sie ohne Start geöffnet wurde)
+function hf26GuteNacht(){ const k=schlafKarte(), ta=el('k43Nacht'); if(k && ta && typeof ta.value==='string'){ k.nachtnotiz=String(ta.value||''); saveKarten(); } haptik(10); toast('🌙 Gute Nacht'); e1Schliessen(); renderAlles(); }
+const k43SchlafenHtml43=k43SchlafenHtml;   // Hotfix 26 §4.5: Darstellung übernommen, nur Fuß und Nachtnotiz bei laufender Uhr geändert
+k43SchlafenHtml=function(){ let h=k43SchlafenHtml43(); const z=schlafZustand(), k=schlafKarte();
+  if(z.laeuft){ const ta='<div class="k43-box"><label for="k43Nacht" class="k43-lab">Nachtnotiz für morgen (optional)</label><textarea id="k43Nacht" data-k43nacht="'+esc(k ? k.id : '')+'">'+esc(k ? (k.nachtnotiz||'') : '')+'</textarea></div>';
+    h=h.replace('<div class="k43-fuss">', ta+'<div class="k43-fuss">').replace('<button type="button" class="k43-btn lila" data-k43schlafstopp="1">Schlafen stoppen (Fehltipp)</button>', '<button type="button" class="k43-btn lila" data-hf26gutenacht="1">Gute Nacht</button><button type="button" class="k43-btn" data-k43schlafstopp="1">Schlafen stoppen (Fehltipp)</button>'); }
+  return h; };
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; if(t.closest('[data-hf26gutenacht]')){ e.stopPropagation(); hf26GuteNacht(); } }, true);
+
+/* ── §5 · Freigabe liest die volle Postfach-Karte: f7Postfach (6957) liefert über datensaetze_auflisten gekürzte Texte („… (N Zeichen)“), f7PfKarteLesen (6963) las daraus.
+   §5.2: vor jeder Freigabe (Postfach f7PfVorschlagAnnehmen 7081, Chat f12PfFreigeben 8346, Kartenvorschau f15Entscheiden 8606 — alle über f7PfEntscheiden 7240)
+   wird der Datensatz einzeln gelesen (datensatz_lesen); bleibt der Text gekürzt, keine Freigabe, Meldung „Text unvollständig, bitte neu laden“. ── */
+function hf26Gekuerzt(t){ return /… \(\d+ Zeichen\)$/.test(String(t||'')); }
+function hf26PfVollLesen(id){ return FSLive.lesen('datensatz_lesen', { tabelle:'Postfach', id }).then(d=>{ const r=d && (d.datensatz||d); if(!(r && r.id)) throw new Error('kein Datensatz'); if(r['Output/Entwurf']==null && r.felder && r.felder['Output/Entwurf']!=null) r['Output/Entwurf']=r.felder['Output/Entwurf']; return r; }); }
+function hf26PfTextSetzen(id, txt){ [F7.lager.postfach, F7.lager.postfachNachholen].forEach(L=>{ if(L && Array.isArray(L.daten)){ const z=L.daten.find(x=>x && x.id===id); if(z) z['Output/Entwurf']=txt; } });
+  try{ if(F12.pf[id] && F12.pf[id].r) F12.pf[id].r['Output/Entwurf']=txt; }catch(e){} try{ if(F15.pf[id] && F15.pf[id].r) F15.pf[id].r['Output/Entwurf']=txt; }catch(e){} }
+function hf26PfVorlesen(id){ if(!id || HF26.voll[id]!=null || HF26.pfLade[id] || !FSLive.gekoppelt()) return; HF26.pfLade[id]=true;   // Einzel-Lesen im Hintergrund, sobald eine gekürzte Zeile gezeichnet wird
+  hf26PfVollLesen(id).then(r=>{ const txt=String(r['Output/Entwurf']||''); HF26.voll[id]=txt; hf26PfTextSetzen(id, txt); try{ renderPostfach(); if(e1Art()==='agentenkarte' && typeof f15KarteRendern==='function') f15KarteRendern(); }catch(e){} }).catch(()=>{}).then(()=>{ HF26.pfLade[id]=false; }); }
+{ const _alt=f16KarteZeileHtml; f16KarteZeileHtml=function(r){ try{ if(r && hf26Gekuerzt(r['Output/Entwurf'])) hf26PfVorlesen(r.id); }catch(e){} return _alt(r); }; }   // Hotfix 26 §5.2: Zeile im Postfach → Volltext vorlesen
+{ const _alt=f15PfLaden; f15PfLaden=function(id){ _alt(id); try{ const o=(F7.lager.postfach && Array.isArray(F7.lager.postfach.daten)) ? F7.lager.postfach.daten.find(x=>x.id===id) : null; if(o && hf26Gekuerzt(o['Output/Entwurf'])) hf26PfVorlesen(id); }catch(e){} }; }   // Kartenvorschau: der Lager-Datensatz hat Vorrang (f15PfRecord), darum vorlesen
+{ const _alt=f7PfEntscheiden; f7PfEntscheiden=function(id, ent, extra){ extra=extra||{};
+    if(!(ent==='freigegeben' || ent==='angepasst') || extra.keineKarte || extra.hf26Voll) return _alt(id, ent, extra);
+    const r0=(f7Postfach()||[]).find(x=>x.id===id) || (f7PostfachOhneKarte()||[]).find(x=>x.id===id) || extra.datensatz || (typeof f12PfRecord==='function' ? f12PfRecord(id) : null);
+    if(!r0 || String(r0.Art||'')==='Korrektur') return _alt(id, ent, extra);
+    const voll=HF26.voll[id]!=null ? HF26.voll[id] : null, txt0=voll!=null ? voll : String(r0['Output/Entwurf']||'');
+    if(!hf26Gekuerzt(txt0)){ if(voll!=null) hf26PfTextSetzen(id, voll); return _alt(id, ent, Object.assign({}, extra, { hf26Voll:true })); }   // vollständiger Text (Einzel-Lesen oder ungekürzte Liste): sofort
+    if(!FSLive.gekoppelt()){ toast('Text unvollständig, bitte neu laden'); return; }
+    if(HF26.pfLade[id]){ toast('Karte wird vollständig gelesen …'); return; } HF26.pfLade[id]=true; toast('Karte wird vollständig gelesen …');
+    hf26PfVollLesen(id).then(r=>{ HF26.pfLade[id]=false; const txt=String(r['Output/Entwurf']||''); HF26.voll[id]=txt;
+      if(hf26Gekuerzt(txt)){ toast('Text unvollständig, bitte neu laden'); return; }
+      hf26PfTextSetzen(id, txt);
+      _alt(id, ent, Object.assign({}, extra, { hf26Voll:true, datensatz:Object.assign({}, extra.datensatz||r0, r) }));
+      try{ renderPostfach(); if(e1Art()) e1Rendern(); }catch(e){} })
+    .catch(e=>{ HF26.pfLade[id]=false; HF26.fehler=String((e && e.stack)||e); try{ console.warn('Hotfix 26 Postfach lesen', e); }catch(x){} toast('Text unvollständig, bitte neu laden'); }); }; }
+/* §5.3 · Migration pfVoll26: Karten aus Postfach-Karten, deren Unteraufgabe auf „… (N Zeichen)“ endet, werden einmal aus dem vollen Datensatz nachgezogen:
+   Notiz gesetzt, gekürzte Unteraufgabe archiviert (meta.entfernteUnteraufgaben mit ersetztDurch), richtige Unteraufgaben angelegt. Protokoll in meta.pfVoll26 und meta.migrationen. */
+function hf26KarteNachziehen(karteId, pfId, kk){ const k=S.karten.find(x=>x.id===karteId); const alt=(S.unteraufgaben||[]).filter(u=>u.parentId===karteId), gek=alt.filter(u=>hf26Gekuerzt(u.titel));
+  const e={ karteId, pfId, ts:jetztIso(), notizVorher:String(k.notiz||'').length, notizNachher:0, uaVorher:alt.length, uaArchiviert:0, uaNeu:0, uaNachher:0 };
+  if(!String(k.notiz||'').trim() && kk.notiz) k.notiz=kk.notiz; e.notizNachher=String(k.notiz||'').length;
+  if(!Array.isArray(S.meta.entfernteUnteraufgaben)) S.meta.entfernteUnteraufgaben=[];
+  const neu=[]; kk.unteraufgaben.forEach((t,i)=>{ if(alt.some(u=>!hf26Gekuerzt(u.titel) && String(u.titel||'').trim()===String(t).trim())) return; neu.push(neueUnteraufgabe(karteId, Object.assign({ titel:t, bonusPunkte:0 }, f7PfUnterDetail(kk, i)))); });
+  gek.forEach(u=>{ S.meta.entfernteUnteraufgaben.push({ id:u.id, parentId:u.parentId, titel:u.titel||'', airtableId:u.airtableId||null, ts:jetztIso(), ersetztDurch:neu.map(n=>n.id), grund:'Hotfix 26 §5.3: gekürzter Text aus der Postfach-Liste' }); S.unteraufgaben=S.unteraufgaben.filter(x=>x.id!==u.id); e.uaArchiviert++; });
+  neu.forEach(n=>{ S.unteraufgaben.push(n); e.uaNeu++; }); e.uaNachher=(S.unteraufgaben||[]).filter(u=>u.parentId===karteId).length; beruehre(k); saveKarten(); saveMeta(); return e; }
+function hf26PfVollKandidaten(){ const m=(S.meta && S.meta.postfachKarten)||{}; return Object.keys(m).map(pfId=>({ pfId, karteId:m[pfId] && m[pfId].karteId })).filter(x=>x.karteId && S.karten.some(k=>k.id===x.karteId) && (S.unteraufgaben||[]).some(u=>u.parentId===x.karteId && hf26Gekuerzt(u.titel))); }
+function hf26PfVollMigration(){ if(!S.meta || (S.meta.pfVoll26 && S.meta.pfVoll26.fertig) || HF26.migLaeuft || !FSLive.gekoppelt()) return;
+  const p=(S.meta.pfVoll26 && !S.meta.pfVoll26.fertig) ? S.meta.pfVoll26 : { name:'pfVoll26', ts:jetztIso(), version:APP_VERSION, karten:[], fehler:[], fertig:false };
+  const offen=hf26PfVollKandidaten().filter(x=>!p.karten.some(y=>y.karteId===x.karteId) && !p.fehler.some(y=>y.karteId===x.karteId && y.endgueltig));
+  if(!offen.length){ p.fertig=true; p.fertigTs=jetztIso(); S.meta.pfVoll26=p; if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[]; if(!S.meta.migrationen.some(x=>x && x.name==='pfVoll26')) S.meta.migrationen=S.meta.migrationen.concat([p]).slice(-50); saveMeta(); return; }
+  HF26.migLaeuft=true;
+  (function naechste(i){ if(i>=offen.length){ HF26.migLaeuft=false; S.meta.pfVoll26=p; saveMeta(); hf26PfVollMigration(); try{ kettenListenNeu(); renderAlles(); }catch(e){} return; } const x=offen[i];
+    hf26PfVollLesen(x.pfId).then(r=>{ const txt=String(r['Output/Entwurf']||''); if(hf26Gekuerzt(txt)){ p.fehler.push({ karteId:x.karteId, pfId:x.pfId, grund:'Volltext weiter gekürzt' }); return; }
+        const kk=f7PfKarteLesen(r, txt); if(!kk){ p.fehler.push({ karteId:x.karteId, pfId:x.pfId, grund:'kein Kartenformat', endgueltig:true }); return; } p.karten.push(hf26KarteNachziehen(x.karteId, x.pfId, kk)); })
+      .catch(e=>{ p.fehler.push({ karteId:x.karteId, pfId:x.pfId, grund:String((e && e.message)||e) }); })
+      .then(()=>{ S.meta.pfVoll26=p; saveMeta(); naechste(i+1); }); })(0); }
+setTimeout(()=>{ try{ hf26PfVollMigration(); }catch(e){} }, 12000); setInterval(()=>{ try{ hf26PfVollMigration(); }catch(e){} }, 300000);
+
+/* ── §6 · Ketten: der Tag nach Tagesblöcken (besonderer Fokus Pascal) ── */
+/* §6.1 · Standard-Block-Ketten: an Werktagen jeden Tag die Block-Ketten aller Blöcke aus den Tagesblöcken der Einstellungen (tagesBloecke 13884), mindestens Fokus 1 und Fokus 2,
+   auch ohne Tagesplan und auch leer, mit von aus den Einstellungen (Fokus 1: F4_SOLL.fokus1). Am Wochenende nur Blöcke mit Karten. Dieselbe Kennung k43KetteId: ein Tagesplan oder Paket füllt sie. */
+function hf26Wochenende(d){ const g=new Date((d||heuteApp())+'T12:00:00').getDay(); return g===0 || g===6; }
+function hf26StandardBloecke(){ const out=[]; const add=(b, name, von)=>{ if(!b || out.some(x=>x.block===b)) return; out.push({ block:b, name:name||k43BlockName(b), von:von||null }); };
+  (tagesBloecke()||[]).forEach(x=>{ if(!x || x.parent) return; const b=k43BlockNorm(x.name||x.id); if(!b || b==='tag') return; add(b, K43_BLOECKE.some(y=>y[0]===b) ? k43BlockName(b) : String(x.name||b), Number.isFinite(Number(x.von)) ? belUhr(num(x.von)) : null); });
+  add('fokus1', k43BlockName('fokus1'), (typeof F4_SOLL==='object' && F4_SOLL.fokus1) ? F4_SOLL.fokus1 : null); add('fokus2', k43BlockName('fokus2'), null);   // ❓ Fokus 2 ohne Startzeit in den Einstellungen
+  return out; }
+function hf26KetteSetzen(c){ if(!Array.isArray(S.tagesketten)) S.tagesketten=[]; const v=S.tagesketten.find(x=>x && x.id===c.id); if(v){ Object.assign(v, c); return v; } S.tagesketten.push(c); return c; }
+function hf26StandardKetten(datum){ const heute=datum||heuteApp(); if(hf26Wochenende(heute)) return 0; if(!Array.isArray(S.tagesketten)) S.tagesketten=[]; let n=0;
+  hf26StandardBloecke().forEach(d=>{ const id=k43KetteId(d.block, heute), c=S.tagesketten.find(x=>x && x.id===id);
+    if(!c){ S.tagesketten.push({ id, name:d.name+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:d.block, von:d.von, karten:[], plan:{}, quelle:'standard' }); n++; }
+    else if(!c.von && d.von){ c.von=d.von; n++; } });
+  if(n){ DB.set('tagesketten', S.tagesketten); K43K.cache=null; } return n; }
+/* §6.3 · Altbestand: Ketten art eigene mit quelle tagesplan werden archiviert (meta.ketten43Archiv, Grund und Datum); Karten einer Kette von heute gehen in die Tag-Kette von heute */
+function hf26TagKette(heute){ return hf26KetteSetzen(Object.assign((S.tagesketten||[]).find(x=>x && x.id==='tk43-tag-'+heute)||{ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:[], plan:{}, quelle:'paket' }, {})); }
+function hf26KettenAltbestand(){ if(!Array.isArray(S.tagesketten)) return 0; const heute=heuteApp(), alt=S.tagesketten.filter(c=>c && c.art==='eigene' && c.quelle==='tagesplan'); if(!alt.length) return 0;
+  if(!Array.isArray(S.meta.ketten43Archiv)) S.meta.ketten43Archiv=[]; let inTag=0;
+  alt.forEach(c=>{ S.meta.ketten43Archiv.push(Object.assign({}, c, { archiviertTs:jetztIso(), grund:'Hotfix 26 §6.3: Eigene aus Tagesplan/Paket entfallen', kartenInTag:(c.datum===heute ? c.karten.length : 0) }));
+    if(c.datum===heute && c.karten.length){ const t=hf26TagKette(heute); c.karten.forEach(id=>{ if(t.karten.indexOf(id)<0){ t.karten.push(id); inTag++; } }); } });
+  S.meta.ketten43Archiv=S.meta.ketten43Archiv.slice(-200); S.tagesketten=S.tagesketten.filter(c=>alt.indexOf(c)<0);
+  if(S.ui.tkWahl && alt.some(c=>c.id===S.ui.tkWahl)){ S.ui.tkWahl=null; saveUi(); }
+  const p={ name:'ketten26', ts:jetztIso(), version:APP_VERSION, archiviert:alt.map(c=>({ id:c.id, name:c.name, datum:c.datum||null, karten:c.karten.length })), kartenInTag:inTag };
+  if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[]; S.meta.migrationen=S.meta.migrationen.concat([p]).slice(-50);
+  saveMeta(); DB.set('tagesketten', S.tagesketten); K43K.cache=null; return alt.length; }
+{ const _alt=k43KettenNormieren; k43KettenNormieren=function(){ const r=_alt(); try{ hf26KettenAltbestand(); hf26StandardKetten(heuteApp()); }catch(e){ console.warn('Hotfix 26 Ketten', e); } return r; }; }   // bei jedem Laden und nach jedem Import
+{ const _alt=k43Morgenketten; k43Morgenketten=function(){ _alt(); try{ hf26StandardKetten(heuteApp()); }catch(e){} }; }   // beim Aufstehen: die Standard-Blöcke des neuen Tags
+/* §6.2 · Nie mehr „Eigene“ aus Plan oder Paket: tk-* wie K43_TK_ABBILDUNG; sonst nach block oder Name über k43BlockNorm (Fokus heute · heute · Tag → Tag-Kette);
+   alles Übrige → Tag-Kette „Heute gesamt“ (Block je Karte über die Startzeit im Plan, sonst „Ohne Block“). Eigene Ketten entstehen nur über „＋ Kette neu“ (quelle pascal). */
+const k43KettenAusPaket43=k43KettenAusPaket;   // Hotfix 26 §6.2: abgelöst durch die Fassung unten
+k43KettenAusPaket=function(liste, aufl){ const heute=heuteApp(); k43KettenNormieren(); const abb=[]; let entfallen=0, neu=0;
+  (S.tagesketten||[]).forEach(c=>{ if(c && c.quelle==='tagesplan' && c.datum===heute && (c.art==='block' || c.art==='tag')){ c.karten=[]; c.plan={}; c.quelle='standard'; } });   // ein neues Paket ersetzt die Tagesplan-Ketten von heute (sie bleiben als leere Standard-Ketten)
+  const blockKette=(b, von)=>{ const id=k43KetteId(b, heute); let c=(S.tagesketten||[]).find(x=>x && x.id===id); if(!c){ c={ id, name:k43BlockName(b)+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:b, von:von||null, karten:[], plan:{}, quelle:'tagesplan' }; S.tagesketten.push(c); neu++; } else { if(von) c.von=String(von); c.quelle='tagesplan'; if(!c.plan) c.plan={}; } return c; };
+  const tagKette=()=>{ const c=hf26TagKette(heute); c.quelle='tagesplan'; if(!c.plan) c.plan={}; return c; };
+  const legen=(z, kid, planEintrag)=>{ if(z.karten.indexOf(kid)<0) z.karten.push(kid); if(planEintrag && typeof planEintrag==='object') z.plan[kid]=Object.assign({}, z.plan[kid], planEintrag); };
+  (liste||[]).forEach((c,i)=>{ if(!c || !(c.id || c.name)) return; const id=String(c.id||('tk'+(i+1))), karten=(Array.isArray(c.karten)?c.karten:[]).map(aufl).filter(Boolean), m=K43_TK_ABBILDUNG[id], plan=(c.plan && typeof c.plan==='object') ? c.plan : {};
+    if(id in K43_TK_ABBILDUNG){ if(!m){ entfallen+=karten.length; abb.push({ id, nach:null, n:karten.length }); return; } const z=blockKette(m.block, c.von); karten.forEach(kid=>legen(z, kid, Object.assign({}, plan[kid]||null, m.onramp ? { onramp:true, gruppe:m.onramp } : null))); abb.push({ id, nach:z.id, n:karten.length, onramp:m.onramp||null }); return; }
+    const b=k43BlockNorm(c.block||null) || k43BlockNorm(c.name||null);
+    if(b && b!=='tag' && K43_BLOECKE.some(x=>x[0]===b)){ const z=blockKette(b, c.von); karten.forEach(kid=>legen(z, kid, plan[kid]||null)); abb.push({ id, nach:z.id, n:karten.length }); return; }
+    const t=tagKette(); karten.forEach(kid=>legen(t, kid, plan[kid]||null)); abb.push({ id, nach:t.id, n:karten.length }); });
+  if(abb.some(x=>x.nach && x.nach.indexOf('tk43-tag-')!==0)){ const t=hf26TagKette(heute); (S.tagesketten||[]).forEach(c=>{ if(c && c.art==='block' && c.datum===heute) c.karten.forEach(kid=>{ if(t.karten.indexOf(kid)<0) t.karten.push(kid); }); }); }   // die Tag-Kette trägt alle Karten der Block-Ketten (wie k43PlanFreigeben)
+  DB.set('tagesketten', S.tagesketten); K43K.cache=null; return { ketten:neu, entfallen, abbildung:abb }; };
+/* Wochenende: Block-Ketten nur mit Karten */
+{ const _alt=k43KettenBerechnen; k43KettenBerechnen=function(){ const K=_alt(); try{ if(hf26Wochenende(heuteApp())) K.block=(K.block||[]).filter(c=>c.karten.length); }catch(e){} return K; }; }
+/* §6.4 · „Heute gesamt“ gruppiert (Zielbild 11): Abschnitte je Block in Tagesreihenfolge (Name, „ab HH:MM“, offen/erledigt; der laufende Block blau mit „jetzt“),
+   darin Unterköpfe je Thema (k43-abt, k43Thema), am Ende „Ohne Block“. Vergangene und künftige Blöcke eingeklappt („▸ n Karten in m Themen“), der laufende offen.
+   Reihenfolge je Block wie k43KetteFertig. Gleich in Fokus-Seite und Ketten-Tab (beide über k43KettenansichtHtml → k43KetteHtml). */
+function hf26HeutigeBloecke(K){ const heute=heuteApp(); const l=((K||k43KettenBauen()).block||[]).filter(c=>c && (c.datum===heute || !c.datum)).slice();
+  const v=c=>hf26Std(c.von); l.forEach((c,i)=>{ c._i=i; }); l.sort((a,b)=>{ const va=v(a), vb=v(b); if(va!=null && vb!=null && va!==vb) return va-vb; if(va!=null && vb==null) return -1; if(vb!=null && va==null) return 1; return a._i-b._i; }); return l; }
+function hf26LaufenderBlockId(bloecke){ const jetzt=belX(jetztIso()); let best=null; bloecke.forEach(c=>{ const v=hf26Std(c.von); if(v!=null && v<=jetzt && (!best || v>=hf26Std(best.von))) best=c; });
+  if(best) return best.id; try{ const lb=laufenderBlock(tagesBloecke()); if(lb){ const b=k43BlockNorm(lb.name||lb.id); const c=bloecke.find(x=>x.block===b); if(c) return c.id; } }catch(e){} return null; }
+function hf26TagAbschnitte(c){ const K=k43KettenBauen(), bloecke=hf26HeutigeBloecke(K), jetztId=hf26LaufenderBlockId(bloecke), plan=c.plan||{};
+  const abschnitte=bloecke.map(b=>({ id:b.id, block:b.block, name:String(b.name||'').replace(/ · .*$/,''), von:b.von||null, jetzt:b.id===jetztId, karten:[] })), ohne={ id:'ohne', block:null, name:'Ohne Block', von:null, jetzt:false, karten:[] };
+  c.karten.forEach(k=>{ let a=abschnitte.find(x=>{ const b=bloecke.find(y=>y.id===x.id); return b && b.karten.some(y=>y.id===k.id); });
+    if(!a && plan[k.id] && plan[k.id].start){ const s=hf26Std(plan[k.id].start); const mit=abschnitte.filter(x=>x.von!=null && hf26Std(x.von)<=s); a=mit.length ? mit[mit.length-1] : null; }
+    (a||ohne).karten.push(k); });
+  abschnitte.forEach(a=>{ a.offen=a.karten.filter(k=>k.status==='offen' && kartenStatusHeute(k)!=='erledigt').length; a.erl=a.karten.length-a.offen; }); ohne.offen=ohne.karten.filter(k=>k.status==='offen' && kartenStatusHeute(k)!=='erledigt').length; ohne.erl=ohne.karten.length-ohne.offen;
+  return abschnitte.concat([ohne]); }
+function hf26BlockAuf(ort){ if(!S.ui.hf26BlockAuf || typeof S.ui.hf26BlockAuf!=='object') S.ui.hf26BlockAuf={}; if(!S.ui.hf26BlockAuf[ort]) S.ui.hf26BlockAuf[ort]={}; return S.ui.hf26BlockAuf[ort]; }
+function hf26ThemaName(t){ return (t.abteilung && t.abteilung!==t.thema) ? t.abteilung+' · '+t.thema : t.thema; }
+function hf26Themen(karten){ const je=[]; karten.forEach(k=>{ const t=k43Thema(k), key=t.abteilung+'|'+t.thema; let g=je.find(x=>x.key===key); if(!g){ g={ key, t, karten:[] }; je.push(g); } g.karten.push(k); }); return je; }
+function hf26TagKetteInhaltHtml(c, ort){ const A=hf26TagAbschnitte(c), auf=hf26BlockAuf(ort); let h='';
+  A.forEach(a=>{ if(a.id==='ohne' && !a.karten.length) return; const offen=(auf[a.id]!=null) ? !!auf[a.id] : (a.jetzt || a.id==='ohne'), themen=hf26Themen(a.karten);
+    h+='<div class="hf26-bh'+(a.jetzt?' jetzt':'')+'" data-hf26block="'+ort+'|'+esc(a.id)+'" role="button" aria-expanded="'+(offen?'true':'false')+'"><b>'+esc(a.name)+(a.jetzt?' · jetzt':'')+'</b><span>'+[a.von ? 'ab '+esc(a.von) : '', a.offen+' offen', a.erl ? a.erl+' erledigt' : ''].filter(Boolean).join(' · ')+'</span></div>';
+    if(!a.karten.length){ h+='<div class="hf26-zu leer-block">keine Karte</div>'; return; }
+    if(!offen){ h+='<div class="hf26-zu" data-hf26block="'+ort+'|'+esc(a.id)+'" role="button">▸ '+a.karten.length+' Karte'+(a.karten.length===1?'':'n')+(themen.length>1 ? ' in '+themen.length+' Themen' : '')+' <span>'+esc(themen.map(g=>g.t.thema).slice(0,3).join(' · '))+'</span></div>'; return; }
+    themen.forEach(g=>{ h+='<div class="k43-abt">'+esc(hf26ThemaName(g.t))+'</div><div class="kl k43-kl">'+g.karten.map(k=>k43ZeileHtml(k, c, (k.status==='offen' && kartenStatusHeute(k)!=='erledigt') ? {} : { erl:true })).join('')+'</div>'; }); });
+  return h; }
+function hf26TagKetteHtml(c, ort, aktiv){ const tab=ort==='kettentab';
+  let h='<div class="k43-kette auf'+(aktiv?' aktiv':'')+' art-tag hf26-tag" data-k43kette="'+esc(c.id)+'"><div class="k43-kzeile" data-k43auf="'+ort+'|'+esc(c.id)+'"><div class="k43-kname"><b>▾ '+esc(c.name)+(aktiv ? ' <em>aktuell</em>' : '')+'</b><small>nach Block, darin Thema · '+esc(c.untertitel)+'</small></div></div>';
+  h+='<div class="k43-kinhalt">'+k43FelderHtml(c, tab ? 104 : 42)+hf26TagKetteInhaltHtml(c, ort);
+  if(tab) h+='<p class="k43-lab">Chat der Kette</p>'+k43KetteChatHtml(c)+'</div></div>';
+  else h+='<div class="k43-kbtn"><button type="button" data-k43holen="'+esc(c.id)+'">In den Fokus holen</button><button type="button" data-k43zumtab="'+esc(c.id)+'">Ganze Kette im Ketten-Tab →</button></div></div></div>';
+  return h; }
+{ const _alt=k43KetteHtml; k43KetteHtml=function(c, ort, auf, aktiv){ if(c && c.art==='tag' && auf){ try{ return hf26TagKetteHtml(c, ort, aktiv); }catch(e){ console.warn('Hotfix 26 Tag-Kette', e); } } return _alt(c, ort, auf, aktiv); }; }
+/* §6.5 · Tagesblöcke prominent (Zielbild 11): über der Kettenansicht (beide Orte) die Leiste „Tagesblöcke · <Wochentag> <Datum>“ mit einer Kachel je Block-Kette von heute,
+   auf den bestehenden Chips kl-chip (tageskettenChipsHtml 14113) aufgebaut, Tippfläche ≥ 44 px, waagrecht scrollbar, laufender Block sichtbar. Ein Tipp klappt die Block-Kette auf
+   (k43AufSetzen) und macht sie zur aktuellen Kette (S.ui.tkWahl wie K8). */
+function hf26BlockleisteHtml(ort){ const K=k43KettenBauen(), bl=hf26HeutigeBloecke(K); if(!bl.length) return ''; const jetztId=hf26LaufenderBlockId(bl);
+  return '<p class="k43-lab hf26-bllab">Tagesblöcke · '+esc(k43Datum(heuteApp()))+'</p><div class="kl-chips hf26-bl" role="list" data-wischfrei="1">'+bl.map(c=>{ const jetzt=c.id===jetztId, fertig=!jetzt && c.karten.length>0 && !c.offen.length;
+    return '<button type="button" class="kl-chip hf26-bc'+(jetzt?' jetzt':'')+(fertig?' fertig':'')+'" data-hf26bc="'+ort+'|'+esc(c.id)+'" role="listitem"'+(jetzt?' aria-current="true"':'')+'><span><b>'+esc(String(c.name||'').replace(/ · .*$/,''))+(jetzt?' · jetzt':'')+'</b><small>'+(fertig ? '✓ fertig' : [c.von ? 'ab '+esc(c.von) : '', c.offen.length+' offen'].filter(Boolean).join(' · '))+'</small></span></button>'; }).join('')+'</div><div class="hf26-hint">Tippen: Block-Kette aufklappen und zur aktuellen Kette machen</div>'; }
+{ const _alt=k43KettenansichtHtml; k43KettenansichtHtml=function(ort){ ort=ort||'fokus'; let bl=''; try{ bl=hf26BlockleisteHtml(ort); }catch(e){ console.warn('Hotfix 26 Blockleiste', e); } return bl+_alt(ort); }; }
+function hf26BlockleisteScrollen(){ try{ if(typeof document==='undefined' || !document.querySelectorAll) return; document.querySelectorAll('.hf26-bl').forEach(l=>{ const j=l.querySelector ? l.querySelector('.hf26-bc.jetzt') : null; if(!j || !Number.isFinite(j.offsetLeft)) return; l.scrollLeft=Math.max(0, j.offsetLeft-(l.clientWidth-j.offsetWidth)/2); }); }catch(e){} }
+{ const _alt=renderKetten; renderKetten=function(){ _alt(); hf26BlockleisteScrollen(); }; }
+{ const _alt=renderFokus; renderFokus=function(){ _alt(); hf26BlockleisteScrollen(); }; }
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; let z;
+  if((z=t.closest('[data-hf26bc]'))){ e.stopPropagation(); haptik(6); const [ort, id]=String(z.dataset.hf26bc).split('|'); const c=k43KetteFinden(id); if(!c) return;
+    k43Auf(ort); S.ui.k43Auf[ort]=id; k43Klapp(ort).block=true; S.ui.tkWahl=c.gespeichert ? c.gespeichert.id : c.id; saveUi(); k43KettenNeu(); return; }
+  if((z=t.closest('[data-hf26block]'))){ e.stopPropagation(); haptik(6); const [ort, id]=String(z.dataset.hf26block).split('|'); const a=hf26BlockAuf(ort); const offen=z.getAttribute ? z.getAttribute('aria-expanded')==='true' : false; a[id]=z.classList && z.classList.contains('hf26-zu') ? true : !offen; saveUi(); k43KettenNeu(); return; }
+}, true);
+
+/* ── Migration und Startwerte beim Laden (nach karten43) ── */
+{ const _alt=migrationRolle421; migrationRolle421=function(){ const r=_alt(); try{ migrationKarten43b(); k43TagesplanungSatzSetzen(); }catch(e){ console.warn('karten43b', e); } return r; }; }
 
 function init(){
   ladeAlles();
