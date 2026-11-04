@@ -43,6 +43,7 @@ syncImport(JSON.stringify({ appVersion:'4.3.4', karten:[{ id:'kl-28', archivAusF
 pruef('C2 läuft die Uhr der Karte, wartet das Archiv (meta.archivWartend), Karte bleibt offen', kL.status==='offen' && S.meta.archivWartend && S.meta.archivWartend['kl-28']==='2026-11-04T12:40:00.000Z' && S.fokus.laeuft);
 fokusZeitEinbuchen();
 pruef('C3 nach dem Stopp der Uhr wird das Archiv übernommen; die Sitzung bleibt im Stunden-Log', kL.status==='archiviert' && /Archiv aus FocusSystem/.test(kL.archivGrund) && !(S.meta.archivWartend && S.meta.archivWartend['kl-28']) && (S.intraday||[]).some(function(e){ return e.typ==='timer' && e.kartenId==='kl-28'; }));
+pruef('C0 meta.appVersion wird beim Start gesetzt (Spiegel; der Dienst schickt Archiv-Pakete nur an eine App ab 4.3.4)', (function(){ S.meta.appVersion=null; migrationKarten43b(); return S.meta.appVersion===APP_VERSION; })());
 pruef('C4 Archiv bleibt Archiv: ein zweites Paket ändert nichts (schon)', (function(){ var r=syncImport(JSON.stringify({ appVersion:'4.3.4', karten:[{ id:'ka-28', archivAusFocussystem:'2026-11-04T12:30:00.000Z' }] })); return r && JSON.stringify(r.archivAusFocussystem)==='["schon"]' && kA.status==='archiviert'; })());
 S.fokus={ laeuft:false };
 

@@ -28573,7 +28573,7 @@ function migrationUa27(){ if(!S.meta || (S.meta.ua27 && S.meta.ua27.ts)) return 
   (S.karten||[]).forEach(k=>{ if(!k || k.status!=='offen') return; const vorher=untermenge(k.id).filter(u=>!u.ungeprueft).map(u=>u.id); const n=hf27UaVerteilen(k); if(n){ p.karten++; p.unteraufgaben+=n; untermenge(k.id).forEach(u=>{ if(u.ungeprueft && vorher.indexOf(u.id)>=0) p.ids.push(u.id); }); } });
   p.ids=p.ids.slice(0,500); S.meta.ua27=p; if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[]; S.meta.migrationen=S.meta.migrationen.concat([{ name:'ua27', ts:p.ts, version:APP_VERSION, karten:p.karten, unteraufgaben:p.unteraufgaben }]).slice(-50);
   saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveMeta(); return p; }
-{ const _alt=migrationKarten43b; migrationKarten43b=function(){ const r=_alt(); try{ migrationUa27(); }catch(e){} return r; }; }
+{ const _alt=migrationKarten43b; migrationKarten43b=function(){ const r=_alt(); try{ migrationUa27(); }catch(e){} try{ if(S.meta && S.meta.appVersion!==APP_VERSION){ S.meta.appVersion=APP_VERSION; saveMeta(); } }catch(e){} return r; }; }   // Hotfix 28 §3.2: meta.appVersion im Spiegel — der Dienst schickt Archiv-Pakete nur an eine App ab 4.3.4
 /* ── §5 · Postfach-Zeit entfällt; Korrektur-Paket mit bonusAusgleich; Abweisungsgründe je Schritt; keine Überlappung beim Nachtrag und beim Start ── */
 const f7PostfachVerlassen26=f7PostfachVerlassen;   // Hotfix 27 §5.1: abgelöst — der Bonus „Postfach-Zeit“ (400 P/h) entfällt dauerhaft; Zeit im Postfach zählt nur über die laufende Karte
 f7PostfachVerlassen=function(){ F7.pfSeit=null; };
