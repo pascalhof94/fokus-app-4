@@ -157,5 +157,5 @@ var ah=k43ChatAntwortHtml('Plan steht', 'Antworten …');
 pruef('M1 Antwortzeile: Hotfix 27 (readonly, data-hf26chat) bleibt als k43ChatAntwortHtml27; seit Hotfix 28 §4.4 die Kurzansicht des Ketten-Chats (k43ChatKurzHtml), Tipp öffnet den Ebene-1-Chat, kein data-k43senden', /Trainer: Plan steht/.test(k43ChatAntwortHtml27('Plan steht', 'Antworten …')) && /<input id="k43Antwort" readonly/.test(k43ChatAntwortHtml27('x', 'y')) && /data-hf26chat="kan-trainer\|tag-[0-9-]+\|fokus"/.test(ah) && /hf26-chat/.test(ah) && !/data-k43senden/.test(ah) && typeof k43ChatAntwortHtml43==='function');
 
 // ══ N · Version ══
-pruef('N1 App 4.3.4 · Build 2026-11-04-57 · sw.js Cache fokus4-v4.3.4-1', APP_VERSION==='4.3.4' && APP_BUILD==='2026-11-04-57' && /const CACHE = 'fokus4-v4.3.4-1'/.test(readFile('sw.js')));
+pruef('N1 App 4.3.4 · Build 2026-11-04-58 · sw.js Cache fokus4-v4.3.4-2', APP_VERSION==='4.3.4' && APP_BUILD==='2026-11-04-58' && /const CACHE = 'fokus4-v4.3.4-2'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 27 · Volltext überall, Infokarten, Unteraufgaben mit Punkten, Korrektur, Tastatur, stille Benachrichtigung, Standard-Tagesblöcke (4.3.3)');

@@ -66,5 +66,5 @@ pruef('E3 Änderung: Kurzfassung ersetzt, Infos ersetzt; ohne Zeile bleibt alles
 pruef('F1 body.hf27-tastatur #nav{visibility:hidden} (zusätzlich zur translateY-Regel)', /body\.hf27-tastatur #nav\{visibility:hidden\}/.test(src) && /#nav\{transform:translateY\(var\(--vvTop,0px\)\)\}/.test(src));
 
 // ══ G · Version ══
-pruef('G1 App 4.3.4 · Build 2026-11-04-57 · sw.js Cache fokus4-v4.3.4-1', APP_VERSION==='4.3.4' && APP_BUILD==='2026-11-04-57' && /const CACHE = 'fokus4-v4\.3\.4-1'/.test(readFile('sw.js')));
+pruef('G1 App 4.3.4 · Build 2026-11-04-58 · sw.js Cache fokus4-v4.3.4-2', APP_VERSION==='4.3.4' && APP_BUILD==='2026-11-04-58' && /const CACHE = 'fokus4-v4.3.4-2'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 28 · Themen-Ketten aufklappen, Blöcke in Heute gesamt, Archiv aus FocusSystem, Restpunkte (4.3.4)');
