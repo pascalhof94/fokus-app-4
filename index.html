@@ -3212,6 +3212,21 @@ body[data-e1="suche"] #e1-suche{padding-bottom:calc(var(--sab) + 110px)}   /* Ho
 /* ══ Hotfix 28 (04.11.2026) · §4.7 Tastatur: bei offener Tastatur (body.hf27-tastatur aus vvSync) ist die Tableiste unsichtbar · §2 Blockkopf zugeklappt ══ */
 body.hf27-tastatur #nav{visibility:hidden}
 .hf26-bh.zu{opacity:.85}
+/* ══ Fokus App 4.4 · §5 Postfach „🔄 Automatisch“ (Zielbild 13) ══ */
+.hf44-hint{display:block;font-size:11px;color:#5d6d88;margin:2px 0 6px}
+.hf44-ag{background:#141e2e;border:1px solid #243349;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:9px}
+.hf44-agk{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:700;min-height:32px}
+.hf44-agk span{font-size:11px;color:#8fa1b8;font-weight:600}
+.hf44-ae{background:#0d1420;border:1px solid #243349;border-left:4px solid #5eead4;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:3px}
+.hf44-ae.arch{border-left-color:#f2b84b}
+.hf44-ae.rg{border-left-color:#8fa1b8;opacity:.7}
+.hf44-ae .z{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.hf44-ae b{font-size:13px}
+.hf44-ae small{font-size:11px;color:#8fa1b8}
+.hf44-diff{font-size:11.5px;display:grid;grid-template-columns:auto 1fr;gap:2px 8px;color:#c5d0de}
+.hf44-diff .alt{color:#f87171;text-decoration:line-through}
+.hf44-diff .neu{color:#3ecf8e}
+.hf44-rk{min-height:32px;padding:0 10px;border-radius:9px;border:1px solid #2f4260;background:#182438;color:#e8eef7;font:inherit;font-size:12px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -3390,11 +3405,11 @@ body.hf27-tastatur #nav{visibility:hidden}
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '4.3.4';   // Hotfix 28 (04.11.2026) · Hotfix 27 · Hotfix 26 · Hotfix 25 · Karten-Standard 4.3
+const APP_VERSION = '4.4.0';   // Fokus App 4.4 Zwei-Wege-Abgleich (04.11.2026) · Hotfix 28 · Hotfix 27 · Hotfix 26 · Hotfix 25 · Karten-Standard 4.3
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-11-04-58';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-11-04-59';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -25186,10 +25201,10 @@ el('fokusView').addEventListener('click', e=>{
 });
 el('fokusView').addEventListener('change', e=>{
   // (v1.6.0) Stapel-Auswahl auf der Fokusseite entfällt — Ebene 1–3 ersetzen sie.
-  const um=e.target.closest('[data-uamin]'); if(um){ const u=S.unteraufgaben.find(x=>x.id===um.dataset.uamin); if(u){ u.sollMin=num(e.target.value); u.ungeprueft=false;   // Hotfix 27 §4.3: Pascal hat den Wert geändert oder bestätigt
+  const um=e.target.closest('[data-uamin]'); if(um){ const u=S.unteraufgaben.find(x=>x.id===um.dataset.uamin); if(u){ u.sollMin=num(e.target.value); u.ungeprueft=false; hf44UaTs(u, 'sollMin');   // Hotfix 27 §4.3: Pascal hat den Wert geändert oder bestätigt · 4.4: Zeitstempel je Feld
     const k=S.karten.find(x=>x.id===u.parentId); if(k){ k.sollMin=untermenge(k.id).reduce((s,x)=>s+num(x.sollMin),0); saveKarten(); }   // Karten-Sollzeit = Σ Unteraufgaben
     DB.set('unteraufgaben', S.unteraufgaben); renderFokus(); } return; }
-  const ub=e.target.closest('[data-uabonus]'); if(ub){ const u=S.unteraufgaben.find(x=>x.id===ub.dataset.uabonus); if(u){ u.bonusPunkte = e.target.value===''?null:num(e.target.value); u.ungeprueft=false; DB.set('unteraufgaben', S.unteraufgaben); renderFokus(); } return; }
+  const ub=e.target.closest('[data-uabonus]'); if(ub){ const u=S.unteraufgaben.find(x=>x.id===ub.dataset.uabonus); if(u){ u.bonusPunkte = e.target.value===''?null:num(e.target.value); u.ungeprueft=false; hf44UaTs(u, 'bonusPunkte'); DB.set('unteraufgaben', S.unteraufgaben); renderFokus(); } return; }
 });
 el('fokusView').addEventListener('keydown', e=>{
   if((e.target.id==='fkUaNeu'||e.target.id==='fkUaMin'||e.target.id==='fkUaP') && e.key==='Enter'){   // §4 · Hotfix 27 §4.2: + Feld P
@@ -25321,7 +25336,7 @@ function karteRowClick(t, e){
   const arc=t.closest('[data-archiv]'); if(arc){ if(e) e.stopPropagation();
     const ak=S.karten.find(x=>x.id===arc.dataset.archiv);
     if(ak && confirm('„'+(ak.titel||'(ohne Titel)')+'" archivieren? Die Karte verschwindet aus allen Listen, bleibt aber im Datenbestand und im Export.')){
-      ak.status='archiviert'; beruehre(ak); saveKarten(); renderAlles(); toast('Archiviert'); }
+      ak.status='archiviert'; beruehre(ak); try{ hf44FeldTs(ak, ['status']); }catch(x){} saveKarten(); renderAlles(); toast('Archiviert'); }   // 4.4 §3.3: Zeitstempel des Status
     return true; }
   const frz=t.closest('[data-freeze]'); if(frz){ if(e) e.stopPropagation(); toggleFreeze(frz.dataset.freeze); return true; }   // A4
   // A8: Quick-Leiste-Direktaktionen (ohne Ansichtswechsel)
@@ -27961,13 +27976,14 @@ function f16PostfachHtml(){
   if(!F7.pfSeit) F7.pfSeit=Date.now();
   const Z=f16PostfachDaten(), filter=k43PfFilter();
   let h='<div class="f7-pkopf"><span>📥 Postfach</span><small>'+((Z.chats.length+Z.freigaben.karten) ? (Z.chats.length+Z.freigaben.karten)+' offen' : (f12Kanaele() ? '' : 'lädt aus FocusSystem …'))+'</small></div>';
-  h+='<div class="f16-filter">'+[['freigegeben','🗂️ Freigegeben', null],['freigaben','📬 Offen', Z.freigaben.karten],['chats','💬 Chats', Z.chats.length]].map(f=>'<div class="f16-chip'+(filter===f[0]?' an':'')+'" data-f16filter="'+f[0]+'">'+(filter===f[0]?'✓ ':'')+f[1]+(f[2]!=null ? ' <span class="n">'+f[2]+'</span>' : '')+'</div>').join('')+'</div>';
+  h+='<div class="f16-filter">'+[['freigegeben','🗂️ Freigegeben', null],['freigaben','📬 Offen', Z.freigaben.karten],['chats','💬 Chats', Z.chats.length],['automatisch','🔄 Automatisch', (S.meta.automatisch||[]).length]].map(f=>'<div class="f16-chip'+(filter===f[0]?' an':'')+'" data-f16filter="'+f[0]+'">'+(filter===f[0]?'✓ ':'')+f[1]+(f[2]!=null ? ' <span class="n">'+f[2]+'</span>' : '')+'</div>').join('')+'</div>';
   if(filter==='chats') h+=f16ChatsHtml(Z);
   else if(filter==='freigaben') h+=f16FreigabenHtml(Z);
+  else if(filter==='automatisch') h+=hf44AutomatischHtml();   // 4.4 §5
   else h+=k43FreigegebenHtml();
   return h;
 }
-function k43PfFilter(){ const f=F16.pfFilter; if(f==='chats' || f==='freigaben' || f==='freigegeben') return f; F16.pfFilter='freigegeben'; return 'freigegeben'; }   // 4.3: Standard 🗂️ Freigegeben (der Start-Filter aus Hotfix 16 entfällt)
+function k43PfFilter(){ const f=F16.pfFilter; if(f==='chats' || f==='freigaben' || f==='freigegeben' || f==='automatisch') return f; /* 4.4 §5: + automatisch */ F16.pfFilter='freigegeben'; return 'freigegeben'; }   // 4.3: Standard 🗂️ Freigegeben (der Start-Filter aus Hotfix 16 entfällt)
 { const _alt=renderPostfach; renderPostfach=function(){ const host=el('postfachBody'); if(host){ try{ host.innerHTML=f16PostfachHtml(); }catch(e){ console.warn('Postfach', e); } } try{ if(seiteAktuell()==='ketten' && k43Tab()==='postfach') renderKetten(); }catch(e){} }; }
 /* Historie aller Freigaben: GET /api/app/freigaben (Lager 60 s) plus lokale Einträge, die noch auf ihre Nummer warten */
 function k43Freigaben(){ return f7Lager('freigaben43', 60000, ()=>FSLive.appLesen('freigaben?limit=200').then(d=>(d && d.freigaben)||[])); }
@@ -28688,6 +28704,111 @@ function hf28KartenfeldeAnwenden(k, kk){ if(!k || !kk) return; const g=kk.gesetz
   if(g.infos){ const ids=(kk.infos||[]).map(String); k.infos=ids.filter(id=>{ const x=S.karten.find(y=>y.id===id); return x && x.domain===k.domain && istInfoKarte(x) && x.id!==k.id; }); } }
 { const _alt=f7PfKarteAnlegen; f7PfKarteAnlegen=function(r, kk){ const k=_alt(r, kk); try{ if(k && kk) { hf28KartenfeldeAnwenden(k, kk); saveKarten(); } }catch(e){} return k; }; }
 { const _alt=f7PfEntwurfAnwenden; f7PfEntwurfAnwenden=function(k, subs, kk){ const r=_alt(k, subs, kk); try{ hf28KartenfeldeAnwenden(k, kk); }catch(e){} return r; }; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Fokus App 4.4 (04.11.2026) · Zwei-Wege-Abgleich Karten ohne Freigabe · Auftrag 261104_Auftrag_ClaudeCode_4-4_Zwei-Wege-Abgleich.md
+   FocusSystem → App: GET /api/app/aenderungen (Dienst liest das Protokoll der Datenbank) · App → FocusSystem: Spiegel wie bisher, dazu je Feld ein Zeitstempel
+   (k.feldTs, u.feldTs; ohne Eintrag gilt letzteBearbeitung) · Konflikt: der jüngere Stand gewinnt · Postfach-Filter „🔄 Automatisch“ mit Rückgängig (Gegenbuchung mit Spur).
+   Eine Ansicht je Funktion, No-delete.
+   ══════════════════════════════════════════════════════════════════════ */
+const HF44={ laeuft:false, letzte:0 };
+const HF44_LABELS={ titel:'Titel', notiz:'Notiz', status:'Status', sollMin:'Soll-Minuten', matrixFeld:'Matrixfeld', art:'Kartenart', belastung:'Belastung', prio:'Prio', phFest:'P/h fest', ticksAktiv:'Mehrmals', tagesziel:'Ziel je Tag',
+  immerSichtbar:'Immer sichtbar', sammelkarte:'Sammelkarte', freeze:'Eingefroren', eingefrorenBis:'Eingefroren bis', wartetAuf:'Wartet auf', wartetSeit:'Wartet seit', kurzfassung:'Kurzfassung', abhakbonus:'Bonus', tickWert:'Tickwert',
+  festMin:'Feste Minuten', faelligkeit:'Deadline', geldImpact:'Geld-Impact', fristExtern:'Frist extern', projekt:'Projekt', abteilung:'Abteilung', infos:'Infos', bonusPunkte:'Punkte', optional:'Optional', entfernt:'Entfernt' };
+const HF44_DB={ titel:'Titel', notiz:'Notiz', sollMin:'Soll-Minuten', matrixFeld:'Matrixfeld', kurzfassung:'Kurzfassung', prio:'Prio', belastung:'Belastung', phFest:'P/h fest', abhakbonus:'Abhakbonus', art:'Kartenart', ticksAktiv:'Mehrmals',
+  tagesziel:'Ziel je Tag', immerSichtbar:'Immer sichtbar', sammelkarte:'Sammelkarte', freeze:'Eingefroren', eingefrorenBis:'Eingefroren bis', wartetAuf:'Wartet auf', wartetSeit:'Wartet seit', geldImpact:'Geld-Impact Wert', fristExtern:'Frist extern',
+  tickWert:'Tickwert', festMin:'Feste Minuten', bonusPunkte:'Bonus', optional:'Optional' };
+const HF44_VERGLEICH=['titel','notiz','sollMin','matrixFeld','art','belastung','prio','phFest','ticksAktiv','tagesziel','immerSichtbar','sammelkarte','freeze','eingefrorenBis','wartetAuf','wartetSeit','kurzfassung','abhakbonus','tickWert','festMin','faelligkeit','geldImpact','fristExtern','projekt','abteilung','infos','status','domain','rhythmus'];
+/* ── §3.3 · Zeitstempel je Feld ── */
+function hf44FeldTs(k, felder){ if(!k) return; if(!k.feldTs || typeof k.feldTs!=='object') k.feldTs={}; const ts=jetztIso(); (felder||[]).forEach(f=>{ k.feldTs[f]=ts; }); }
+function hf44FeldStand(k, f){ const t=k && k.feldTs && k.feldTs[f]; const v=Date.parse(t||(k && k.letzteBearbeitung)||''); return Number.isFinite(v) ? v : 0; }   // ohne feldTs: letzteBearbeitung (Migration der Bestandskarten)
+{ const _alt=detailSpeichern; detailSpeichern=function(){ const id=entwurf ? entwurf.id : null; let vor=null; try{ const k0=id ? S.karten.find(x=>x.id===id) : null; vor=k0 ? JSON.parse(JSON.stringify(k0)) : null; }catch(e){}
+    const r=_alt();
+    try{ const k=id ? S.karten.find(x=>x.id===id) : null; if(k){ const ge=vor ? HF44_VERGLEICH.filter(f=>JSON.stringify(vor[f]===undefined?null:vor[f])!==JSON.stringify(k[f]===undefined?null:k[f])) : HF44_VERGLEICH.slice(); if(ge.length){ hf44FeldTs(k, ge); saveKarten(); } } }catch(e){} return r; }; }   // Bearbeiten-Fenster: nur die geänderten Felder
+function hf44StatusHuelle(fn){ return function(kid){ const k=S.karten.find(x=>x.id===(typeof kid==='string' ? kid : (kid && kid.id))); const vor=k ? { status:k.status, freeze:k.freeze } : null; const r=fn.apply(this, arguments);
+    try{ if(k && vor){ const ge=[]; if(k.status!==vor.status) ge.push('status'); if(k.freeze!==vor.freeze) ge.push('freeze'); if(ge.length){ hf44FeldTs(k, ge); saveKarten(); } } }catch(e){} return r; }; }
+karteAbhaken=hf44StatusHuelle(karteAbhaken); karteAbhakenAuto=hf44StatusHuelle(karteAbhakenAuto); karteWiederOeffnen=hf44StatusHuelle(karteWiederOeffnen); toggleFreeze=hf44StatusHuelle(toggleFreeze);
+function hf44UaTs(u, f){ if(!u) return; if(!u.feldTs || typeof u.feldTs!=='object') u.feldTs={}; u.feldTs[f]=jetztIso(); }
+/* ── §3 · FocusSystem → App: Änderungen aus dem Protokoll holen und je Feld übernehmen ── */
+function hf44Stand(){ if(!S.meta.aenderungenStand || typeof S.meta.aenderungenStand!=='object') S.meta.aenderungenStand={ dfm:null, privat:null }; return S.meta.aenderungenStand; }
+function hf44Wartend(){ if(!S.meta.statusWartend || typeof S.meta.statusWartend!=='object') S.meta.statusWartend={}; return S.meta.statusWartend; }
+function hf44Eintrag(e){ if(!Array.isArray(S.meta.automatisch)) S.meta.automatisch=[]; const x=Object.assign({ id:uuid(), ts:jetztIso() }, e); S.meta.automatisch=S.meta.automatisch.concat([x]).slice(-300); return x; }
+function hf44KarteFinden(a){ return S.karten.find(k=>k.id===a.appId) || S.karten.find(k=>k.id===a.dbId || (k.airtableId && k.airtableId===a.dbId)) || null; }
+function hf44FeldSetzen(k, f, v){ if(f==='matrixFeld'){ const m=matrixFeldNorm(v); if(m) k.matrixFeld=m; return; } if(f==='infos'){ k.infos=Array.isArray(v) ? v.map(String) : []; return; } if(f==='art'){ if(KARTENART42_LABEL[v]) k.art=v; return; }
+  if(f==='projekt'){ k.projekt=v||null; if(k.projekt) k.abteilung=null; return; } if(f==='abteilung'){ k.abteilung=v||null; return; } if(f==='sammelkarte'){ k.sammelkarte=v===true; if(k.sammelkarte){ k.faelligkeit=null; k.immerSichtbar=true; } return; }
+  if(f==='wartetAuf'){ k.wartetAuf=v||null; if(!k.wartetAuf) k.wartetSeit=null; return; } k[f]=v; }
+function hf44StatusSetzen(k, status, a){ const laeuft=!!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id);
+  if(laeuft && (status==='archiviert' || status==='erledigt')){ const W=hf44Wartend(); W[k.id]={ status, ts:a.zeitpunkt||jetztIso(), quelle:a.quelle||null, akteur:a.akteur||null, dbId:a.dbId||null, tabelle:a.tabelle||null, bereich:a.bereich||null }; saveMeta(); return 'wartet'; }   // §3.4: erst nach dem Stopp
+  if(status==='archiviert'){ hf28ArchivUebernehmen(k, a.zeitpunkt||jetztIso()); return 'archiviert'; }   // §3.5: aus allen Ketten, Zeiten und Punkte bleiben
+  if(status==='erledigt'){ k.status='erledigt'; k.tagId=aktuelleTagId(); k.erledigtTs=jetztIso(); if(S.fokus && !S.fokus.laeuft && S.fokus.karteId===k.id){ S.fokus=null; saveFokus(); } return 'erledigt'; }
+  if(status==='offen'){ k.status='offen'; k.archiviertTs=null; k.archivGrund=null; return 'offen'; } return null; }
+function hf44UaAnwenden(a){ const K=a.karte||{}; let u=(S.unteraufgaben||[]).find(x=>x.id===a.appId || x.id===a.dbId); const eltern=K.eltern ? S.karten.find(x=>x.id===K.eltern) : (u ? S.karten.find(x=>x.id===u.parentId) : null);
+  if(!u){ if(!eltern || K.entfernt) return false; u=neueUnteraufgabe(eltern.id, { id:a.appId, titel:K.titel||'Teilschritt', sollMin:num(K.sollMin), bonusPunkte:K.bonusPunkte==null ? null : num(K.bonusPunkte), optional:K.optional===true, done:false }); hf27UaErgaenzen(u, eltern); S.unteraufgaben.push(u); DB.set('unteraufgaben', S.unteraufgaben);
+    hf44Eintrag({ art:'erstellt', titel:(eltern.titel||'?')+' · '+(u.titel||''), appId:u.id, dbId:a.dbId, tabelle:a.tabelle, bereich:a.bereich, zeitpunkt:a.zeitpunkt, quelle:a.quelle, akteur:a.akteur, unteraufgabe:true }); return true; }
+  const felder=[], ts=Date.parse(a.zeitpunkt)||Date.now();
+  (a.felder||[]).forEach(f=>{ if(['titel','sollMin','bonusPunkte','optional'].indexOf(f.feld)<0) return; const fts=Date.parse(f.zeitpunkt)||ts; const st=u.feldTs && u.feldTs[f.feld] ? Date.parse(u.feldTs[f.feld]) : (eltern ? hf44FeldStand(eltern, '__') : 0); if(st>=fts) return;
+    const neu=(f.feld in K) ? K[f.feld] : f.neu, alt=u[f.feld]; if(JSON.stringify(alt===undefined?null:alt)===JSON.stringify(neu===undefined?null:neu)) return; u[f.feld]=(f.feld==='sollMin' || f.feld==='bonusPunkte') ? (neu==null ? neu : num(neu)) : (f.feld==='optional' ? neu===true : neu); if(f.feld==='sollMin' || f.feld==='bonusPunkte') u.ungeprueft=false; felder.push({ feld:f.feld, alt, neu }); });
+  if(K.entfernt===true){ if(!Array.isArray(S.meta.entfernteUnteraufgaben)) S.meta.entfernteUnteraufgaben=[]; S.meta.entfernteUnteraufgaben.push({ id:u.id, parentId:u.parentId, titel:u.titel||'', airtableId:u.airtableId||null, ts:jetztIso(), grund:'4.4: in FocusSystem entfernt ('+(a.akteur||'')+')' }); S.unteraufgaben=S.unteraufgaben.filter(x=>x!==u); felder.push({ feld:'entfernt', alt:false, neu:true }); }
+  if(felder.length){ DB.set('unteraufgaben', S.unteraufgaben); saveMeta(); hf44Eintrag({ art:'geaendert', titel:((eltern && eltern.titel)||'?')+' · '+(u.titel||''), appId:u.id, dbId:a.dbId, tabelle:a.tabelle, bereich:a.bereich, zeitpunkt:a.zeitpunkt, quelle:a.quelle, akteur:a.akteur, felder, unteraufgabe:true }); return true; }
+  return false; }
+function hf44Anwenden(liste){ let n=0;
+  (liste||[]).forEach(a=>{ try{
+    if(!a || !a.appId) return;
+    if(a.art==='unteraufgabe'){ if(hf44UaAnwenden(a)) n++; return; }
+    const K=a.karte||{}; let k=hf44KarteFinden(a);
+    if(!k){ if(K.status==='archiviert' && !a.neu) return;   // archivierte Zeile, die die App nie hatte: nichts anlegen
+      k=neueKarte({ titel:K.titel||'(ohne Titel)', domain:a.familie==='privat' ? 'privat' : 'dfm', faelligkeit:K.faelligkeit||heuteApp(), matrixFeld:matrixFeldNorm(K.matrixFeld)||'werkzeug' }); k.id=a.appId; k.status='offen'; k.std42=true; k.art=KARTENART42_LABEL[K.art] ? K.art : 'aufgabe';
+      Object.keys(K).forEach(f=>{ if(['id','dbId','status','domain','eltern'].indexOf(f)>=0 || K[f]===null || K[f]===undefined) return; hf44FeldSetzen(k, f, K[f]); }); if(k.belastung==null) k.belastung=0; if(k.prio==null) k.prio=e42PrioVorschlag(k);
+      S.karten.push(k); if(K.status==='erledigt' || K.status==='archiviert') hf44StatusSetzen(k, K.status, a); saveKarten();
+      hf44Eintrag({ art:'erstellt', titel:k.titel, appId:k.id, dbId:a.dbId, tabelle:a.tabelle, bereich:a.bereich, zeitpunkt:a.zeitpunkt, quelle:a.quelle, akteur:a.akteur }); n++; return; }
+    const felder=[], ts=Date.parse(a.zeitpunkt)||Date.now(); let archiviert=false;
+    (a.felder||[]).forEach(f=>{ if(f.feld==='status' || f.feld==='eltern' || f.feld==='entfernt') return; const fts=Date.parse(f.zeitpunkt)||ts; if(hf44FeldStand(k, f.feld)>=fts) return;   // §3.3: der jüngere Stand gewinnt
+      const neu=(f.feld in K) ? K[f.feld] : f.neu, alt=k[f.feld]; if(JSON.stringify(alt===undefined?null:alt)===JSON.stringify(neu===undefined?null:neu)) return; hf44FeldSetzen(k, f.feld, neu); felder.push({ feld:f.feld, alt:(alt===undefined?null:alt), neu }); });
+    const sf=(a.felder||[]).find(f=>f.feld==='status');
+    if(sf && K.status && K.status!==k.status && hf44FeldStand(k, 'status')<(Date.parse(sf.zeitpunkt)||ts)){ const r=hf44StatusSetzen(k, K.status, a); if(r==='archiviert') archiviert=true; else if(r && r!=='wartet') felder.push({ feld:'status', alt:sf.alt, neu:K.status }); }
+    if(felder.length || archiviert){ saveKarten(); hf44Eintrag({ art:archiviert ? 'archiviert' : 'geaendert', titel:k.titel, appId:k.id, dbId:a.dbId, tabelle:a.tabelle, bereich:a.bereich, zeitpunkt:a.zeitpunkt, quelle:a.quelle, akteur:a.akteur, felder:archiviert ? felder : felder }); n++; }
+  }catch(e){ try{ console.warn('4.4 Änderung', e); }catch(x){} } });
+  if(n){ try{ kettenListenNeu(); }catch(e){} }
+  return n; }
+function hf44Holen(){ if(HF44.laeuft || !FSLive.gekoppelt() || FSLive.nichtFuehrend()) return Promise.resolve(null); HF44.laeuft=true; const st=hf44Stand();
+  const q=['dfm','privat'].filter(b=>st[b]!=null).map(b=>b+'='+encodeURIComponent(st[b])).join('&');
+  return FSLive.appLesen('aenderungen'+(q ? '?'+q : '')).then(d=>{ if(!d || !d.stand || d.fuehrend===false) return d; const n=hf44Anwenden(d.aenderungen||[]); if(d.stand.dfm!=null) st.dfm=d.stand.dfm; if(d.stand.privat!=null) st.privat=d.stand.privat; HF44.letzte=Date.now(); saveMeta(); if(n){ try{ renderAlles(); }catch(e){} } return d; })
+    .catch(()=>null).then(d=>{ HF44.laeuft=false; return d; }); }
+setTimeout(()=>{ try{ hf44Holen(); }catch(e){} }, 20000); setInterval(()=>{ try{ hf44Holen(); }catch(e){} }, 60000);
+{ const _alt=fokusZeitEinbuchen; fokusZeitEinbuchen=function(bisMs){ const kid=S.fokus ? S.fokus.karteId : null, lief=!!(S.fokus && S.fokus.laeuft); _alt(bisMs);
+    try{ const W=hf44Wartend(); if(lief && kid && W[kid]){ const w=W[kid]; delete W[kid]; const k=S.karten.find(x=>x.id===kid); if(k){ const r=hf44StatusSetzen(k, w.status, { zeitpunkt:w.ts, quelle:w.quelle, akteur:w.akteur, dbId:w.dbId, tabelle:w.tabelle, bereich:w.bereich }); if(r && r!=='wartet'){ saveKarten(); hf44Eintrag({ art:r==='archiviert' ? 'archiviert' : 'geaendert', titel:k.titel, appId:k.id, dbId:w.dbId, tabelle:w.tabelle, bereich:w.bereich, zeitpunkt:w.ts, quelle:w.quelle, akteur:w.akteur, felder:r==='archiviert' ? [] : [{ feld:'status', alt:'offen', neu:w.status }] }); } } saveMeta(); try{ kettenListenNeu(); renderAlles(); }catch(e){} } }catch(e){} }; }   // §3.4
+/* §3.6 · Ketten-Pakete (Claude Chat, Trainer) laufen schon ohne Freigabe (syncImport, tagesketten); sie erscheinen unter „Automatisch geändert“ */
+{ const _alt=syncImport; syncImport=function(text, opt){ const res=_alt(text, opt); try{ if(res && !res.fehler && !res.freigabeNoetig){ const p=JSON.parse(String(text)); const n=Array.isArray(p.tagesketten) ? p.tagesketten.length : 0; if(n) hf44Eintrag({ art:'geaendert', titel:'Ketten-Paket · '+n+' Kette'+(n===1?'':'n'), appId:'', dbId:null, tabelle:'paket', bereich:'dfm', zeitpunkt:jetztIso(), quelle:'claude_chat', akteur:'Paket-Eingang', felder:p.tagesketten.map(c=>({ feld:'infos', alt:null, neu:(c.name||c.id)+' · '+((c.karten||[]).length)+' Karten' })), keinRueckgaengig:true }); } }catch(e){} return res; }; }
+/* ── §5 · Postfach: Filter „🔄 Automatisch“ mit drei Gruppen und Rückgängig (Gegenbuchung mit Spur) ── */
+function hf44Auto(){ return (S.meta.automatisch||[]).slice().reverse(); }
+function hf44AutoZu(){ if(!S.ui.hf44Auto || typeof S.ui.hf44Auto!=='object') S.ui.hf44Auto={ erstellt:true, geaendert:true, archiviert:true }; return S.ui.hf44Auto; }
+function hf44Fmt(v){ if(v==null || v==='') return '—'; if(v===true) return 'ja'; if(v===false) return 'nein'; if(Array.isArray(v)) return v.map(x=>String(x).slice(0,8)).join(', ')||'—'; if(typeof v==='object') return JSON.stringify(v).slice(0,40); const s=String(v); return s.length>70 ? s.slice(0,70)+'…' : s; }
+function hf44Quelle(e){ return e.quelle==='claude_chat' ? 'Claude Chat' : e.quelle==='dienst' ? 'Dienst' : String(e.akteur||'?'); }
+function hf44EintragHtml(e){ const rg=e.rueckgaengigTs;
+  return '<div class="hf44-ae'+(rg ? ' rg' : '')+(e.art==='archiviert' ? ' arch' : '')+'" data-hf44e="'+esc(e.id)+'"><div class="z"><div><b>'+esc(e.titel||'?')+'</b><br><small>'+esc(hf44Quelle(e))+' · '+esc(k43Uhr(e.zeitpunkt||e.ts))+(e.appId ? ' · App-ID '+esc(String(e.appId).slice(0,8)) : '')+(rg ? ' · rückgängig gemacht '+esc(k43Uhr(rg)) : '')+'</small></div>'+
+    ((rg || e.keinRueckgaengig) ? '' : '<button type="button" class="hf44-rk" data-hf44rg="'+esc(e.id)+'">↶ Rückgängig</button>')+'</div>'+
+    ((e.felder||[]).length ? '<div class="hf44-diff">'+e.felder.map(f=>'<span>'+esc(HF44_LABELS[f.feld]||f.feld)+'</span><span><span class="alt">'+esc(hf44Fmt(f.alt))+'</span> → <span class="neu">'+esc(hf44Fmt(f.neu))+'</span></span>').join('')+'</div>' : '')+
+    (e.grund ? '<small>Grund: '+esc(e.grund)+'</small>' : '')+'</div>'; }
+function hf44AutomatischHtml(){ const L=hf44Auto(), zu=hf44AutoZu();
+  const grp=(key, titel)=>{ const l=L.filter(e=>e.art===key); return '<div class="hf44-ag"><div class="hf44-agk" data-hf44grp="'+key+'" role="button">'+(zu[key] ? '▸' : '▾')+' '+titel+' <span>'+l.length+'</span></div>'+((zu[key] || !l.length) ? '' : l.slice(0,50).map(hf44EintragHtml).join(''))+'</div>'; };
+  return '<span class="hf44-hint">Was Claude Chat oder der Dienst direkt in FocusSystem geschrieben hat und die App ohne Freigabe übernommen hat. Neueste zuerst.</span>'+grp('erstellt', 'Automatisch erstellt')+grp('geaendert', 'Automatisch geändert')+grp('archiviert', 'Automatisch archiviert'); }
+function hf44StatusDb(tabelle, s){ const privat=/^privat/.test(String(tabelle||'')); return privat ? (s==='archiviert' ? 'archiviert' : s==='erledigt' ? 'erledigt' : 'offen') : (s==='archiviert' ? 'Archiv' : s==='erledigt' ? 'Erledigt' : 'Offen'); }
+function hf44DbWert(f, v){ if(f==='matrixFeld') return v ? String(v).charAt(0).toUpperCase()+String(v).slice(1) : null; if(f==='art') return v ? (KARTENART42_LABEL[v]||null) : null; return v===undefined ? null : v; }
+function hf44Rueckgaengig(id){ const e=(S.meta.automatisch||[]).find(x=>x.id===id); if(!e || e.rueckgaengigTs || e.keinRueckgaengig) return false;
+  const tab=e.tabelle==='aufgaben' ? 'Aufgaben' : e.tabelle==='privat_karten' ? 'Privat_Karten' : e.tabelle==='unteraufgaben' ? 'Unteraufgaben' : e.tabelle==='privat_unteraufgaben' ? 'Privat_Unteraufgaben' : null; const felder={};
+  const k=e.unteraufgabe ? null : S.karten.find(x=>x.id===e.appId), u=e.unteraufgabe ? (S.unteraufgaben||[]).find(x=>x.id===e.appId) : null;
+  if(e.art==='geaendert'){ (e.felder||[]).forEach(f=>{ if(f.feld==='status'){ if(k) hf44StatusSetzen(k, f.alt||'offen', { zeitpunkt:jetztIso() }); felder.Status=hf44StatusDb(e.tabelle, f.alt||'offen'); return; }
+      if(k) hf44FeldSetzen(k, f.feld, f.alt); if(u && f.feld!=='entfernt'){ u[f.feld]=f.alt; hf44UaTs(u, f.feld); }
+      const db=f.feld==='faelligkeit' ? (e.tabelle==='privat_karten' ? 'Geplant für' : 'Deadline') : HF44_DB[f.feld]; if(db) felder[db]=hf44DbWert(f.feld, f.alt); }); if(k) hf44FeldTs(k, (e.felder||[]).map(f=>f.feld)); }
+  else if(e.art==='archiviert'){ if(k){ k.status='offen'; k.archiviertTs=null; k.archivGrund=null; hf44FeldTs(k, ['status']); } felder.Status=hf44StatusDb(e.tabelle, 'offen'); }
+  else if(e.art==='erstellt'){ if(k){ hf28ArchivUebernehmen(k, jetztIso()); k.archivGrund='Rückgängig: automatisch erstellt ('+hf44Quelle(e)+')'; hf44FeldTs(k, ['status']); } if(u){ if(!Array.isArray(S.meta.entfernteUnteraufgaben)) S.meta.entfernteUnteraufgaben=[]; S.meta.entfernteUnteraufgaben.push({ id:u.id, parentId:u.parentId, titel:u.titel||'', ts:jetztIso(), grund:'4.4 Rückgängig: automatisch erstellt' }); S.unteraufgaben=S.unteraufgaben.filter(x=>x!==u); } felder.Status=u ? undefined : hf44StatusDb(e.tabelle, 'archiviert'); if(u) felder.Entfernt=true; }
+  if(felder.Status===undefined) delete felder.Status;
+  e.rueckgaengigTs=jetztIso(); saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveMeta();
+  if(tab && e.dbId && Object.keys(felder).length){ try{ FSLive.senden('datensatz_aendern', { tabelle:tab, id:e.dbId, felder, quelle:'app_rueckgaengig' }).catch(()=>{}); }catch(x){} }   // Gegenbuchung mit Spur (Akteur Fokus App · Rückgängig)
+  try{ kettenListenNeu(); renderAlles(); }catch(x){} toast('Rückgängig gemacht'); return true; }
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
+  const g=t.closest('[data-hf44grp]'); if(g){ e.stopPropagation(); const zu=hf44AutoZu(); zu[g.dataset.hf44grp]=!zu[g.dataset.hf44grp]; saveUi(); haptik(6); try{ renderPostfach(); }catch(x){} return; }
+  const r=t.closest('[data-hf44rg]'); if(r){ e.stopPropagation(); haptik(10); hf44Rueckgaengig(r.dataset.hf44rg); return; } }, true);
 
 function init(){
   ladeAlles();
