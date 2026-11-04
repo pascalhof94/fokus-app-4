@@ -293,7 +293,7 @@ pruef('§5.3 · Stufe Gespräch: ‹ trägt die Zahl der anderen Gespräche (ohn
 pruef('§5.3 · Stufe Agent: ‹ trägt alle ungelesenen (7)', (function(){ f12Ui().gespraech=null; var h=f12AgentHtml(KP); return h.indexOf('‹<i class="bd">7</i>')>=0; })());
 pruef('§5.3 · Tipp auf die Zeile springt in die Stufe Raum', klick13('data-f12ungelesen')===true && f12Stufe()==='raum');
 pruef('§5.2 · Trainer-Knopf öffnet die Stufe Raum Trainerstab (Block oben)', /f12Oeffnen\(\{ raum:'Trainerstab', kanal:null, gespraech:null \}\)/.test(src));
-pruef('§5.4 · Badge-Runde liefert Gespräch, Gesprächstitel und Text der ungelesenen Zeilen, limit 20, keine zweite Runde', src.indexOf("felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel','Art','Anlass','Status','Postfach']")>=0 && /limit:20 \}\)[^\n]*\n\s*\.then\(d=>\{ sum\[k\.id\]=num\(d && d\.gesamt\); zeilen\[k\.id\]=/.test(src));
+pruef('§5.4 · Badge-Runde liefert Gespräch, Gesprächstitel und Text der ungelesenen Zeilen, limit 20, keine zweite Runde', src.indexOf("felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel','Art','Anlass','Status','Postfach','Still']")>=0 && /limit:20 \}\)[^\n]*\n\s*\.then\(d=>\{ const alle=\(d && d\.datensaetze\)\|\|\[\]; zeilen\[k\.id\]=alle\.filter\(r=>!hf27Still\(r\)\); sum\[k\.id\]=/.test(src)   /* Hotfix 27 §6: Feld Still, stille Zeilen zählen nicht */);
 F12.ungelesen={}; F12.badge={}; e1Schliessen();
 // §6 · kurze Entscheidungen als Knöpfe
 pruef('§6 · 2 kurze Zeilen am Ende → Knöpfe', JSON.stringify(f12Knoepfe('Zwei Wege.\n- Freigeben\n- Ablehnen'))==='{"body":"Zwei Wege.","optionen":["Freigeben","Ablehnen"]}');

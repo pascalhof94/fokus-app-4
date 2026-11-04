@@ -103,12 +103,12 @@ pruef('G3 Zeile im Postfach löst das Vorlesen gekürzter Datensätze aus (f16Ka
 // Migration pfVoll26: Karte aus einer Postfach-Karte mit gekürzter Unteraufgabe
 var kAlt=Object.assign(neueKarte({ titel:'Bug-Karte', domain:'dfm' }), { id:'bc23b53b-test', status:'offen', std42:true, art:'aufgabe', projekt:'Fokus App', notiz:'' }); S.karten.push(kAlt);
 var uAlt=neueUnteraufgabe(kAlt.id, { titel:'Erste Unteraufgabe und… (1153 Zeichen)' }); S.unteraufgaben.push(uAlt); saveKarten();
-S.meta.postfachKarten['pf-bug']={ karteId:kAlt.id, ts:jetztIso(), titel:'Bug' }; S.meta.pfVoll26=null; S.meta.entfernteUnteraufgaben=[]; HF26.migLaeuft=false;
+S.meta.postfachKarten['pf-bug']={ karteId:kAlt.id, ts:jetztIso(), titel:'Bug' }; S.meta.pfVoll26=null; S.meta.volltext27=null; S.meta.entfernteUnteraufgaben=[]; HF26.migLaeuft=false; HF27.migLaeuft=false; HF27.voll={};   // Hotfix 27 §2.5: volltext27 löst pfVoll26 ab
 var _vollBug=VOLL.replace('Karte aus dem Postfach', 'Bug-Karte'); FSLive.lesen=function(w, a){ if(w==='datensatz_lesen' && a && a.tabelle==='Postfach' && a.id==='pf-bug') return Promise.resolve({ datensatz:{ id:'pf-bug', Titel:'Neu: Bug-Karte', 'Output/Entwurf':_vollBug } }); if(w==='datensatz_lesen' && a && a.tabelle==='Postfach') return Promise.resolve({ datensatz:Object.assign({}, pfr, { 'Output/Entwurf':VOLL }) }); return Promise.resolve({ datensaetze:[] }); };
-hf26PfVollMigration(); for(var i=0;i<6;i++) warten();
+hf27VolltextMigration(); for(var i=0;i<8;i++) warten();   // Hotfix 27 §2.5
 var uNeu=untermenge(kAlt.id), ent=entfernteUnteraufgaben().find(function(e){ return e.id===uAlt.id; });
-pruef('G4 pfVoll26: Notiz gesetzt, gekürzte Unteraufgabe archiviert (ersetzt durch), drei richtige Unteraufgaben, Protokoll fertig in meta.migrationen', kAlt.notiz==='Die ganze Notiz aus dem vollen Datensatz.' && uNeu.length===3 && uNeu.every(function(u){ return !hf26Gekuerzt(u.titel); }) && !!ent && Array.isArray(ent.ersetztDurch) && ent.ersetztDurch.length===3 && S.meta.pfVoll26 && S.meta.pfVoll26.fertig && S.meta.pfVoll26.karten.length===1 && S.meta.migrationen.some(function(m){ return m.name==='pfVoll26'; }), JSON.stringify(S.meta.pfVoll26));
-pruef('G5 pfVoll26 läuft kein zweites Mal (fertig)', (function(){ var n=S.unteraufgaben.length; hf26PfVollMigration(); warten(); return S.unteraufgaben.length===n; })());
+pruef('G4 volltext27 (Hotfix 27, löst pfVoll26 ab): Notiz gesetzt, gekürzte Unteraufgabe archiviert (ersetzt durch), drei richtige Unteraufgaben, Protokoll fertig in meta.migrationen', kAlt.notiz==='Die ganze Notiz aus dem vollen Datensatz.' && uNeu.length===3 && uNeu.every(function(u){ return !hf26Gekuerzt(u.titel); }) && !!ent && Array.isArray(ent.ersetztDurch) && ent.ersetztDurch.length===3 && S.meta.volltext27 && S.meta.volltext27.fertig && S.meta.volltext27.karten.length===1 && S.meta.migrationen.some(function(m){ return m.name==='volltext27'; }), JSON.stringify(S.meta.volltext27));
+pruef('G5 volltext27 läuft kein zweites Mal (fertig)', (function(){ var n=S.unteraufgaben.length; hf27VolltextMigration(); warten(); return S.unteraufgaben.length===n; })());
 
 // ══ H · Ketten: Standard-Blöcke, Paket, Altbestand (§6.1–§6.3) ══
 S.tagesketten=[]; var n5=hf26StandardKetten('2026-11-05'); var ids5=S.tagesketten.map(function(c){ return c.id; });
@@ -125,6 +125,7 @@ pruef('H6 Standard-Blöcke von heute nach dem Paket vorhanden (Fokus 2 leer), Ta
 pruef('H7 k43PlanFreigeben: Block-Ketten werden gefüllt, nicht doppelt angelegt (hf26KetteSetzen, keine Entfernung)', /hf26KetteSetzen\(\{ id, name:\(b\.name\|\|k43BlockName\(bn\)\)/.test(src) && /hf26KetteSetzen\(\{ id:'tk43-tag-'\+heute/.test(src) && !/S\.tagesketten=S\.tagesketten\.filter\(c=>!\(c\.quelle==='tagesplan' && c\.datum===heute\)\);/.test(src));
 
 // ══ I · Heute gesamt nach Block und Thema, Blockleiste (§6.4/§6.5) ══
+S.settings.engine43=Object.assign({}, S.settings.engine43, { tagesbloecke:[{ block:'fokus1', von:'09:45', bis:'12:45' },{ block:'fokus2', von:'14:30', bis:'17:00' }] });   // Hotfix 27 §7.1: Prüfung mit zwei Standard-Blöcken (sonst alle acht)
 S.tagesketten=[{ id:k43KetteId('fokus1', heute), name:'Fokus 1 · x', art:'block', datum:heute, block:'fokus1', von:'05:00', karten:['t-dfm','t-priv'], plan:{ 't-dfm':{ start:'05:00', min:30 } }, quelle:'tagesplan' },{ id:k43KetteId('fokus2', heute), name:'Fokus 2 · x', art:'block', datum:heute, block:'fokus2', von:'28:50', karten:['t-erh'], plan:{}, quelle:'tagesplan' },{ id:'tk43-tag-'+heute, name:'Heute gesamt · x', art:'tag', datum:heute, karten:['t-dfm','t-priv','t-erh',K.a.id], plan:{}, quelle:'tagesplan' }];
 var kO=Object.assign(neueKarte({ titel:'Ohne Block Karte', domain:'dfm' }), { id:'t-ohne', status:'offen', faelligkeit:heute, projekt:'Projekt B', std42:true, art:'aufgabe', matrixFeld:'werkzeug' }); S.karten.push(kO); K.d.projekt='Projekt A'; saveKarten(); DB.set('tagesketten', S.tagesketten); K43K.cache=null; S.fokus={ laeuft:false };
 var Kb=k43KettenBauen(true); var tagK=Kb.tag[0]; var A=hf26TagAbschnitte(tagK);
@@ -140,5 +141,5 @@ pruef('I7 Tipp auf eine Kachel: Block-Kette aufgeklappt (k43Auf) und aktuelle Ke
 pruef('I8 laufender Block aus den Startzeiten der Block-Ketten (hf26LaufenderBlockId), Tagesfenster 5..29', hf26LaufenderBlockId(hf26HeutigeBloecke(Kb))===k43KetteId('fokus1', heute) && hf26Std('02:00')===26 && hf26Std('09:30')===9.5);
 
 // ══ J · Version ══
-pruef('J1 App 4.3.2 · Build 2026-11-04-55 · sw.js Cache fokus4-v4.3.2-1', APP_VERSION==='4.3.2' && APP_BUILD==='2026-11-04-55' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.2-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('J1 App 4.3.3 · Build 2026-11-04-56 · sw.js Cache fokus4-v4.3.3-1', APP_VERSION==='4.3.3' && APP_BUILD==='2026-11-04-56' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.3-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 26 · Eine Ansicht je Funktion, 💬 an der Karte, Tagesplanung, Schlafen, Postfach-Volltext, Ketten nach Tagesblöcken (4.3.2)');
