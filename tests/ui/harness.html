@@ -279,8 +279,9 @@ function bestandSchreiben(){
               "F12.ungelesen={ 'k-tr':[{ id:'u1', 'Gespräch':'g1', 'Gesprächstitel':'Plan morgen', Von:'Trainer', Art:'Antwort', Anlass:'Chat', Status:'offen', Zeitstempel:new Date().toISOString(), Text:'Freitag: Steuer zuerst, dann RiSe …', Postfach:[] }], 'k-erf':[{ id:'u2', 'Gespräch':'g2', Von:'Erfassungs-Agent', Art:'Hinweis', Anlass:'Postfach', Status:'offen', Zeitstempel:new Date().toISOString(), Text:'📬 Neue Agenten-Karte: Pruefkarte · Klärung', Postfach:[{ id:'pf-plan-1', anzeige:'Pruefkarte' }] }] }; F12.badge={ 'k-tr':1, 'k-erf':1 };");
       fw.seiteZeigen('postfach');
       fw.eval("F16.pfFilter='freigaben'; renderPostfach();");   /* Karten-Standard 4.3 §6.4: Standard-Filter ist 🗂️ Freigegeben (Historie); hier wird 📬 Offen gewählt · Hotfix 26 §2.1: das Postfach steht im Ketten-Tab (#kettenBody), seiteZeigen('postfach') leitet um */
-      /* Hotfix 16 §5: drei Filter; Kartenfreigaben (2 offene Karten), je Gespräch eine Kopfzeile, Karten eingerückt; keine Kette, keine Karten-Knöpfe */
-      fw.eval("var n=document.querySelectorAll('#kettenBody .f16-filter .f16-chip').length; if(n!==3) throw new Error('Hotfix 16 §5: '+n+' statt 3 Filter');"+
+      /* Hotfix 16 §5: drei Filter (4.4 §5: vier, dazu 🔄 Automatisch); Kartenfreigaben (2 offene Karten), je Gespräch eine Kopfzeile, Karten eingerückt; keine Kette, keine Karten-Knöpfe */
+      fw.eval("var n=document.querySelectorAll('#kettenBody .f16-filter .f16-chip').length; if(n!==4) throw new Error('Hotfix 16 §5 / 4.4 §5: '+n+' statt 4 Filter');"+
+              "if(!document.querySelector('#kettenBody .f16-chip[data-f16filter=\"automatisch\"]')) throw new Error('4.4 §5: Filter Automatisch fehlt');"+
               "if(!document.querySelector('#kettenBody .f16-chip.an[data-f16filter=\"freigaben\"]')) throw new Error('Hotfix 16 §5: Filter Offen (Kartenfreigaben) nicht gewaehlt');"+
               "var k=document.querySelectorAll('#kettenBody [data-f15karte]').length; if(k!==2) throw new Error('Hotfix 16 §5: '+k+' statt 2 Karten unter Kartenfreigaben');"+
               "if(document.querySelector('#kettenBody [data-f15kette]')) throw new Error('Hotfix 16 §5: Zeile zur Kette darf nicht mehr im Postfach stehen');"+
