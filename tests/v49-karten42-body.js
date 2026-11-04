@@ -104,5 +104,5 @@ pruef('12.8 wartet: karteRuht true (nicht vorgeschlagen), ohne wartetAuf false; 
 pruef('12.8 Kartenzeile 4.2: ⏳ wartet, ❄︎ eingefroren, P/h und Bonus rechts, Info-Badge', /⏳ wartet auf Rückmeldung/.test(kartenZeile42Html(W)) && /❄︎ eingefroren/.test(kartenZeile42Html(H)) && /P\/h/.test(kartenZeile42Html(W)) && /kz42-badge">Info/.test(kartenZeile42Html(k42({ art:'info' }))) && kartenZeileHtml(W).indexOf('kz42')>=0);
 
 // ══ 9 · Version ══
-pruef('12.9 App 4.3.4 · Build 2026-11-04-58 · sw.js Cache fokus4-v4.3.4-2 (seit Hotfix 26) · DATENVERTRAG 2.1.0', APP_VERSION==='4.3.4' && APP_BUILD==='2026-11-04-58' && DATENVERTRAG==='2.1.0' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.4-2'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('12.9 App 4.4.0 · Build 2026-11-04-59 · sw.js Cache fokus4-v4.4.0-1 (seit Hotfix 26) · DATENVERTRAG 2.1.0', APP_VERSION==='4.4.0' && APP_BUILD==='2026-11-04-59' && DATENVERTRAG==='2.1.0' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.4.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Karten-Standard 4.2 · Punkte-Engine 4.2, Kartenset, Status, Unteraufgaben (4.2.1)');
