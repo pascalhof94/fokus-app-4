@@ -65,6 +65,15 @@ pruef('E3 Änderung: Kurzfassung ersetzt, Infos ersetzt; ohne Zeile bleibt alles
 // ══ F · Tastatur-CSS (§4.7) ══
 pruef('F1 body.hf27-tastatur #nav{visibility:hidden} (zusätzlich zur translateY-Regel)', /body\.hf27-tastatur #nav\{visibility:hidden\}/.test(src) && /#nav\{transform:translateY\(var\(--vvTop,0px\)\)\}/.test(src));
 
+// ══ H · ungeplant (Pascal 04.11. 14:16 Uhr): Einstellungen leer nach Korrektur mit reinem Bonusausgleich ══
+(function(){ var kp0=(S.meta.korrekturProtokoll||[]).length; S.historie.push(Object.assign(neuerTag('2026-10-20', 1), { startTs:'2026-10-20T06:00:00.000Z', endeTs:'2026-10-20T21:00:00.000Z', punkteBilanz:100, luecke:false, log:[{ art:'bonus', domain:'dfm', punkte:10, ts:'2026-10-20T10:00:00.000Z', grund:'Probe-Bonus' }] })); saveHistorie();
+  syncImport(JSON.stringify({ appVersion:APP_VERSION, karten:[], korrekturen:[{ datum:'2026-10-20', grund:'Probe', bonusAusgleich:[{ tag:'2026-10-20', ts:'2026-10-20T10:00:00.000Z', grund:'Probe-Bonus', punkte:-10, familie:'dfm' }] }] }));
+  var kp=S.meta.korrekturProtokoll||[], e=kp[kp.length-1];
+  pruef('H1 Protokolleintrag eines reinen Bonusausgleichs trägt vorher und nachher (Form wie korrekturAnwenden)', kp.length===kp0+1 && e && e.vorher && e.vorher.matrix && e.nachher && e.nachher.matrix && e.schritte.length===1);
+  S.meta.korrekturProtokoll=kp.concat([{ ts:jetztIso(), datum:'2026-11-03', grund:'Alt', aenderungen:['x'], schritte:[] }]);
+  var ok=true; try{ renderEinst(); }catch(x){ ok=false; }
+  pruef('H2 Einstellungen zeichnen auch einen Alt-Eintrag ohne vorher/nachher (Code: Bedingung e.vorher && e.vorher.matrix)', ok && /e\.vorher && e\.vorher\.matrix \? /.test(src) && /e\.nachher && e\.nachher\.matrix \? /.test(src)); })();
+
 // ══ G · Version ══
 pruef('G1 App 4.3.4 · Build 2026-11-04-58 · sw.js Cache fokus4-v4.3.4-2', APP_VERSION==='4.3.4' && APP_BUILD==='2026-11-04-58' && /const CACHE = 'fokus4-v4.3.4-2'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 28 · Themen-Ketten aufklappen, Blöcke in Heute gesamt, Archiv aus FocusSystem, Restpunkte (4.3.4)');

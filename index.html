@@ -20903,9 +20903,9 @@ function renderEinst(){
         '<span>'+esc(String(e.ts).slice(0,16).replace('T',' '))+'</span></div>'+
         '<ul>'+(e.aenderungen||[]).map(z=>'<li>'+esc(z)+'</li>').join('')+'</ul></div>') : ('<div class="korr-e">'+
         '<div class="korr-k"><b>'+esc(e.datum)+'</b> · '+esc(e.grund)+'<span>'+esc(String(e.ts).slice(0,16).replace('T',' '))+'</span></div>'+
-        '<div class="korr-z"><span>vorher</span>'+esc(st(e.vorher))+'<br><span></span>'+esc(mx(e.vorher.matrix))+'</div>'+
-        '<div class="korr-z"><span>nachher</span>'+esc(st(e.nachher))+'<br><span></span>'+esc(mx(e.nachher.matrix))+'</div>'+
-        '<ul>'+e.aenderungen.map(z=>'<li>'+esc(z)+'</li>').join('')+'</ul></div>')).join('')
+        (e.vorher && e.vorher.matrix ? '<div class="korr-z"><span>vorher</span>'+esc(st(e.vorher))+'<br><span></span>'+esc(mx(e.vorher.matrix))+'</div>' : '')+   // Hotfix 28 (ungeplant): ein Eintrag ohne vorher/nachher (Bonusausgleich 03.11.) ließ die Seite leer
+        (e.nachher && e.nachher.matrix ? '<div class="korr-z"><span>nachher</span>'+esc(st(e.nachher))+'<br><span></span>'+esc(mx(e.nachher.matrix))+'</div>' : '')+
+        '<ul>'+(e.aenderungen||[]).map(z=>'<li>'+esc(z)+'</li>').join('')+'</ul></div>')).join('')
         +(kp.length>15?'<p class="d" style="color:var(--mut2)">… und '+(kp.length-15)+' ältere.</p>':'')
         : '<p class="d" style="color:var(--mut2)">Noch keine Korrektur eingespielt.</p>')+
     '</div>'; }
@@ -28596,13 +28596,15 @@ function hf27BonusAusgleich(kx, abgewiesen, schritte){ const liste=Array.isArray
     zeilen.push('Bonus ausgeglichen: „'+String(b.grund)+'“ '+(p>=0?'+':'')+fmtP(p)+' P ('+(fam==='dfm'?'DFM':'Privat')+', '+tagD+')'); });
   return zeilen; }
 { const _alt=korrekturAnwenden; korrekturAnwenden=function(kx, abgewiesen){ abgewiesen=abgewiesen||[]; const vorher=abgewiesen.length, datum=String((kx && kx.datum)||''), schritte=[];
+    let standVorher=null; try{ if(kx && !Array.isArray(kx.sitzungen) && Array.isArray(kx.bonusAusgleich)) standVorher=korrTagStand(datum); }catch(x){}   // Hotfix 28 (ungeplant, Pascal 04.11. 14:16 Uhr): Stand vorher für einen reinen Bonusausgleich
     const e=_alt(kx, abgewiesen);
     (Array.isArray(kx && kx.sitzungen) ? kx.sitzungen : []).forEach((sz,i)=>{ sz=sz||{}; const was='Korrektur '+datum+' · Sitzung '+(i+1)+(sz.id ? ' ('+sz.id+')' : ''); const a=abgewiesen.slice(vorher).find(x=>x && x.was===was);
       schritte.push({ nr:schritte.length+1, aktion:String(sz.aktion||''), was, status:a ? 'abgewiesen' : 'angewendet', grund:a ? String(a.grund||'') : '' }); });
     const zeilen=hf27BonusAusgleich(kx||{}, abgewiesen, schritte);
     if(e && zeilen.length){ e.aenderungen=(e.aenderungen||[]).concat(zeilen); }
     if(e) e.schritte=schritte; HF27.korrSchritte=HF27.korrSchritte.concat(schritte);
-    if(!e && zeilen.length){ try{ if(!Array.isArray(S.meta.korrekturProtokoll)) S.meta.korrekturProtokoll=[]; S.meta.korrekturProtokoll=S.meta.korrekturProtokoll.concat([{ ts:jetztIso(), datum, grund:String(kx.grund||''), aenderungen:zeilen, schritte }]).slice(-200); saveMeta(); }catch(x){} }
+    if(!e && zeilen.length){ try{ if(!Array.isArray(S.meta.korrekturProtokoll)) S.meta.korrekturProtokoll=[]; let standNachher=null; try{ standNachher=korrTagStand(datum); }catch(x){}
+        S.meta.korrekturProtokoll=S.meta.korrekturProtokoll.concat([{ ts:jetztIso(), datum, grund:String(kx.grund||''), vorher:standVorher||standNachher, nachher:standNachher||standVorher, aenderungen:zeilen, schritte }]).slice(-200); saveMeta(); }catch(x){} }   // Eintrag in derselben Form wie korrekturAnwenden (vorher/nachher), damit die Einstellungen ihn zeichnen
     try{ rangInvalidieren(); }catch(x){}
     return e || (zeilen.length ? { datum, aenderungen:zeilen, schritte } : e); }; }
 function hf27KorrErgebnis(){ const s=HF27.korrSchritte; HF27.korrSchritte=[]; return s.length ? { ergebnis:{ schritte:s } } : {}; }   // §5.3: paketMelden hängt die Schritte an die Rückmeldung
