@@ -3209,6 +3209,9 @@ body[data-e1="suche"] #e1-suche{padding-bottom:calc(var(--sab) + 110px)}   /* Ho
 .hf27-voll p{margin:0 0 6px}
 .hf27-fehlt{color:#8fa1b8}
 #hf27InfosFeld input[type=search]{margin-top:6px}
+/* ══ Hotfix 28 (04.11.2026) · §4.7 Tastatur: bei offener Tastatur (body.hf27-tastatur aus vvSync) ist die Tableiste unsichtbar · §2 Blockkopf zugeklappt ══ */
+body.hf27-tastatur #nav{visibility:hidden}
+.hf26-bh.zu{opacity:.85}
 </style>
 </head>
 <body>
@@ -3387,11 +3390,11 @@ body[data-e1="suche"] #e1-suche{padding-bottom:calc(var(--sab) + 110px)}   /* Ho
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '4.3.3';   // Hotfix 27 (04.11.2026) · Hotfix 26 · Hotfix 25 · Karten-Standard 4.3
+const APP_VERSION = '4.3.4';   // Hotfix 28 (04.11.2026) · Hotfix 27 · Hotfix 26 · Hotfix 25 · Karten-Standard 4.3
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-11-04-56';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-11-04-57';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -7022,7 +7025,7 @@ function f7PfKarteLesen(r, text){
   const zeilen=src.split('\n'); let titel=null, i0=-1;
   for(let i=0;i<zeilen.length;i++){ const m=zeilen[i].match(/^\s*(Aufgabe|Karte)\s*:\s*(.+?)\s*$/i); if(m){ titel=m[2]; i0=i; break; } if(zeilen[i].trim()) break; }
   if(!titel) return null;
-  const k={ titel, domain:'dfm', projekt:null, abteilung:null, matrixFeld:null, deadline:null, sollMin:30, unteraufgaben:[], notiz:'', karteId:null, gesetzt:{}, felder42:{}, unterDetails:[] };   // 4.3 §3.3: abteilung   // Hotfix 9: karteId (Änderung), gesetzt = welche Felder der Entwurf trägt · 4.2 §11: felder42, unterDetails
+  const k={ titel, domain:'dfm', projekt:null, abteilung:null, matrixFeld:null, deadline:null, sollMin:30, unteraufgaben:[], notiz:'', karteId:null, gesetzt:{}, felder42:{}, unterDetails:[], kurzfassung:null, infos:[] };   // Hotfix 28 §4.5: kurzfassung, infos   // 4.3 §3.3: abteilung   // Hotfix 9: karteId (Änderung), gesetzt = welche Felder der Entwurf trägt · 4.2 §11: felder42, unterDetails
   let modus='felder';
   for(let i=i0+1;i<zeilen.length;i++){ const z=zeilen[i];
     if(modus==='notiz'){ k.notiz+=(k.notiz?'\n':'')+z; continue; }
@@ -7041,6 +7044,8 @@ function f7PfKarteLesen(r, text){
       else if(key==='deadline' || key==='fällig' || key==='faellig' || key==='termin'){ const d=wert.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(d) k.deadline=d[3]+'-'+d[2].padStart(2,'0')+'-'+d[1].padStart(2,'0'); else if(/^\d{4}-\d{2}-\d{2}$/.test(wert)) k.deadline=wert; if(k.deadline) k.gesetzt.deadline=true; }
       else if(key==='soll-minuten' || key==='sollminuten' || key==='soll' || key==='minuten'){ const n=parseInt(wert,10); if(Number.isFinite(n) && n>0){ k.sollMin=n; k.gesetzt.sollMin=true; } }
       else if(key==='karte-id' || key==='karteid' || key==='app-id' || key==='karten-id'){ k.karteId=wert||null; }   // Hotfix 9 · Abschnitt 2 Punkt 6: Änderung an einer bestehenden Karte
+      else if(key==='kurzfassung'){ k.kurzfassung=wert||null; k.gesetzt.kurzfassung=true; }   // Hotfix 28 §4.5
+      else if(key==='infos'){ k.infos=wert.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean); k.gesetzt.infos=true; }   // Hotfix 28 §4.5: App-IDs verlinkter Infokarten
       // Karten-Standard 4.2 §11: Kartenart · Prio · Belastung · Matrix · P/h fest · Bonus · Mehrmals (Ziel je Tag) · Status wartet/eingefroren
       else if(key==='kartenart' || key==='art'){ const a=wert.toLowerCase(); if(KARTENART42_LABEL[a] && a!=='system'){ k.felder42.art=a; k.gesetzt.art=true; } }
       else if(key==='prio' || key==='priorität' || key==='prioritaet'){ const n=parseInt(wert,10); if(Number.isFinite(n)){ k.felder42.prio=Math.max(1, Math.min(5, n)); k.gesetzt.prio=true; } }
@@ -7875,7 +7880,8 @@ async function f11Nachsenden(){
       // Gespräch = Tagesgespräch des Übergangstags und Text = A.chat.text steht (bis Hotfix 15 wurde in Agenten-Aufträge gesucht — dort kam seit 4.1.0 nichts mehr an)
       const kanal=f12TrainerKanal(), tabelle=(kanal && kanal.Tabelle)||F12_TRAINER_TABELLE, g=A.chat.gespraech||f12TagGespraech(anVorTage(A.chat.tag, -1));
       const d=await FSLive.lesen('datensaetze_auflisten', { tabelle, felder:['Text'], filter:[{ feld:'Von', operator:'gleich', wert:'Pascal' },{ feld:'Art', operator:'gleich', wert:'Nachricht' },{ feld:'Gespräch', operator:'gleich', wert:g },{ feld:'Text', operator:'gleich', wert:A.chat.text }], limit:1 });
-      if(d && d.datensaetze && d.datensaetze.length){ delete A.chat; saveMeta(); f11Log('chat', 'beim Dienst bestätigt'); }
+      if(d && d.datensaetze && d.datensaetze.length){ try{ const z0=d.datensaetze[0]; if(z0 && z0.id && hf27Gekuerzt(z0.Text)) await fsVolltext(tabelle, z0.id, ['Text']); }catch(x){}   // Hotfix 28 §4.3: Pascals Nachricht über fsVolltext (nie gekürzt weiterverwenden)
+        delete A.chat; saveMeta(); f11Log('chat', 'beim Dienst bestätigt'); }
       else if(num(A.chat.versuche)>=F11_NACHSENDEN_MAX){ delete A.chat; saveMeta(); f11Log('chat', 'aufgegeben nach '+F11_NACHSENDEN_MAX+' Versuchen'); toast('Feedback-Anfrage an den Trainer nicht bestätigt — bitte im Chat nachfragen'); }   // Hotfix 16 §1.3
       else { A.chat.versuche=num(A.chat.versuche)+1; saveMeta(); f11Log('chat', 'nachsenden ('+A.chat.versuche+'/'+F11_NACHSENDEN_MAX+')');
         const p=f12TrainerSenden(A.chat.text, { anlass:A.chat.art||'Feedback', id:'chat-uebergang-'+A.chat.tag }); if(p && p.then) p.then(r=>f11ChatBestaetigt(r)).catch(()=>{}); } }   // 4.1 §9.2
@@ -27892,8 +27898,8 @@ function k43KetteEntfernen(id){ const c=tagesketten().find(x=>x.id===id); if(!c 
   S.tagesketten=tagesketten().filter(x=>x.id!==id); DB.set('tagesketten', S.tagesketten); K43K.cache=null; if(S.ui.tkWahl===id){ S.ui.tkWahl=null; saveUi(); } k43KettenNeu(); }
 /* Klicks der Kettenansicht */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
-  if((z=d('data-k43gruppe'))){ e.stopPropagation(); haptik(6); const [ort, g]=String(z.dataset.k43gruppe).split('|'); const k=k43Klapp(ort); k[g]=!k43GruppeOffen(ort, g); saveUi(); k43KettenNeu(); return; }
-  if((z=d('data-k43auf'))){ if(t.closest('.k43-felder')){ /* Felder sind Anzeige */ } e.stopPropagation(); haptik(6); const [ort, id]=String(z.dataset.k43auf).split('|'); k43AufSetzen(ort, id); if(ort==='kettentab' || ort==='fokus'){ const c=k43KetteFinden(id); if(c && S.ui.k43Auf[ort]===id && c.art!=='sammeln'){ S.ui.tkWahl=(c.gespeichert ? c.gespeichert.id : (c.pf ? 'agentenkarten' : c.id)); saveUi(); } }   // K8: die gewählte Kette wird aktuell
+  if((z=d('data-k43gruppe'))){ e.stopPropagation(); haptik(6); const [ort, g]=hf28Teilen(z.dataset.k43gruppe); const k=k43Klapp(ort);   /* Hotfix 28 §1.2 */ k[g]=!k43GruppeOffen(ort, g); saveUi(); k43KettenNeu(); return; }
+  if((z=d('data-k43auf'))){ if(t.closest('.k43-felder')){ /* Felder sind Anzeige */ } e.stopPropagation(); haptik(6); const [ort, id]=hf28Teilen(z.dataset.k43auf); k43AufSetzen(ort, id);   // Hotfix 28 §1.2: nur am ersten Strich trennen (Themen-Kette k43:thema:<Abteilung>|<Thema>) if(ort==='kettentab' || ort==='fokus'){ const c=k43KetteFinden(id); if(c && S.ui.k43Auf[ort]===id && c.art!=='sammeln'){ S.ui.tkWahl=(c.gespeichert ? c.gespeichert.id : (c.pf ? 'agentenkarten' : c.id)); saveUi(); } }   // K8: die gewählte Kette wird aktuell
     k43KettenNeu(); return; }
   if((z=d('data-k43holen'))){ e.stopPropagation(); haptik(8); const c=k43KetteFinden(z.dataset.k43holen); if(!c) return; S.ui.tkWahl=c.gespeichert ? c.gespeichert.id : (c.pf ? 'agentenkarten' : c.id); saveUi(); const n=c.offen.find(k=>!karteRuht(k)); if(n) fokusZeigen(n.id); else renderAlles(); toast('Kette im Fokus: '+c.name.slice(0,28)); return; }
   if((z=d('data-k43zumtab'))){ e.stopPropagation(); haptik(8); k43Auf('kettentab'); S.ui.k43Auf.kettentab=z.dataset.k43zumtab; S.ui.kettenTab='ketten'; saveUi(); seiteZeigen('ketten'); return; }
@@ -28424,9 +28430,9 @@ function hf26BlockleisteScrollen(){ try{ if(typeof document==='undefined' || !do
 { const _alt=renderKetten; renderKetten=function(){ _alt(); hf26BlockleisteScrollen(); }; }
 { const _alt=renderFokus; renderFokus=function(){ _alt(); hf26BlockleisteScrollen(); }; }
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; let z;
-  if((z=t.closest('[data-hf26bc]'))){ e.stopPropagation(); haptik(6); const [ort, id]=String(z.dataset.hf26bc).split('|'); const c=k43KetteFinden(id); if(!c) return;
+  if((z=t.closest('[data-hf26bc]'))){ e.stopPropagation(); haptik(6); const [ort, id]=hf28Teilen(z.dataset.hf26bc); const c=k43KetteFinden(id); if(!c) return;   // Hotfix 28 §1.2
     k43Auf(ort); S.ui.k43Auf[ort]=id; k43Klapp(ort).block=true; S.ui.tkWahl=c.gespeichert ? c.gespeichert.id : c.id; saveUi(); k43KettenNeu(); return; }
-  if((z=t.closest('[data-hf26block]'))){ e.stopPropagation(); haptik(6); const [ort, id]=String(z.dataset.hf26block).split('|'); const a=hf26BlockAuf(ort); const offen=z.getAttribute ? z.getAttribute('aria-expanded')==='true' : false; a[id]=z.classList && z.classList.contains('hf26-zu') ? true : !offen; saveUi(); k43KettenNeu(); return; }
+  if((z=t.closest('[data-hf26block]'))){ e.stopPropagation(); haptik(6); const [ort, id]=hf28Teilen(z.dataset.hf26block); const a=hf26BlockAuf(ort);   /* Hotfix 28 §1.2 */ const offen=z.getAttribute ? z.getAttribute('aria-expanded')==='true' : false; a[id]=z.classList && z.classList.contains('hf26-zu') ? true : !offen; saveUi(); k43KettenNeu(); return; }
 }, true);
 
 /* ── Migration und Startwerte beim Laden (nach karten43) ── */
@@ -28631,6 +28637,55 @@ const k43ChatAntwortHtml43=k43ChatAntwortHtml;   // Hotfix 27 §7.4: abgelöst �
 k43ChatAntwortHtml=function(text, platzhalter){ const kanal=f12TrainerKanal(), ref=(kanal ? esc(kanal.id) : '')+'|'+esc(f12TagGespraech())+'|fokus';
   return (text ? '<div class="k43-msg">Trainer: '+esc(String(text).replace(/\s+/g,' ').slice(0,300))+'</div>' : '')+
     '<div class="k43-antwort hf27-antwort" data-hf26chat="'+ref+'"><input id="k43Antwort" readonly placeholder="'+esc(platzhalter||'Antwort …')+'" data-hf26chat="'+ref+'" aria-label="Im Chat schreiben"><button type="button" data-hf26chat="'+ref+'" aria-label="Im Chat schreiben">↑</button></div>'; };   // ein Tipp öffnet den Ebene-1-Chat im Tagesgespräch mit Tastatur-Fokus (hf26ChatOeffnen, wie der Ketten-Chat aus Hotfix 26 §2.2)
+
+/* ══════════════════════════════════════════════════════════════════════
+   Hotfix 28 (04.11.2026, App 4.3.4) · Themen-Ketten klappen auf, Blöcke in „Heute gesamt“ klappbar mit Startzeit, Archiv aus FocusSystem wird übernommen,
+   Restpunkte aus Hotfix 27 · Auftrag 261104_Auftrag_ClaudeCode_Hotfix28_Ketten_aufklappen_Archiv.md · Eine Ansicht je Funktion, No-delete.
+   ══════════════════════════════════════════════════════════════════════ */
+/* §1.2 · EINE Trennfunktion für „Ort|Kennung“: nur am ersten Strich trennen, der Rest ist die Kennung (Themen-Ketten heißen k43:thema:<Abteilung>|<Thema>) */
+function hf28Teilen(s){ s=String(s||''); const i=s.indexOf('|'); return i<0 ? [s, ''] : [s.slice(0,i), s.slice(i+1)]; }
+/* §2 · „Heute gesamt“: jeder Block klappbar (auch der laufende), zugeklappt nur der Kopf mit Name, „· jetzt“, Startzeit der ersten Karte, offen/erledigt.
+   Zustand je Ort und Block in S.ui.hf26BlockAuf (hf26BlockAuf); Standard: laufender Block offen, alle anderen zu. Abgelöst: hf26TagKetteInhaltHtml (Zeile „▸ n Karten in m Themen“). */
+function hf28BlockStart(a, c, K){ const b=(K.block||[]).find(x=>x.id===a.id); const plan=Object.assign({}, c.plan||(c.gespeichert&&c.gespeichert.plan)||{}, (b && (b.plan||(b.gespeichert&&b.gespeichert.plan)))||{});   /* Plan-Startzeiten aus Tag- und Block-Kette */ const reihe=b ? b.karten.map(id=>a.karten.find(k=>k.id===id)).filter(Boolean) : [];
+  const erste=reihe.concat(a.karten.filter(k=>reihe.indexOf(k)<0)).find(k=>k.status==='offen' && kartenStatusHeute(k)!=='erledigt');
+  if(erste && plan[erste.id] && plan[erste.id].start) return String(plan[erste.id].start); if(a.von) return String(a.von); return '—'; }
+const hf26TagKetteInhaltHtml26=hf26TagKetteInhaltHtml;   // Hotfix 28 §2: abgelöst durch hf28TagKetteInhaltHtml
+function hf28TagKetteInhaltHtml(c, ort){ const K=k43KettenBauen(), A=hf26TagAbschnitte(c), auf=hf26BlockAuf(ort); let h='';
+  A.forEach(a=>{ if(a.id==='ohne' && !a.karten.length) return; const offen=(auf[a.id]!=null) ? !!auf[a.id] : !!a.jetzt, themen=hf26Themen(a.karten), start=hf28BlockStart(a, c, K);
+    h+='<div class="hf26-bh'+(a.jetzt?' jetzt':'')+(offen?'':' zu')+'" data-hf26block="'+ort+'|'+esc(a.id)+'" role="button" aria-expanded="'+(offen?'true':'false')+'"><b>'+(offen?'▾ ':'▸ ')+esc(a.name)+(a.jetzt?' · jetzt':'')+'</b><span>'+['ab '+esc(start), a.offen+' offen', a.erl ? a.erl+' erledigt' : ''].filter(Boolean).join(' · ')+'</span></div>';
+    if(!offen) return;
+    if(!a.karten.length){ h+='<div class="hf26-zu leer-block">keine Karte</div>'; return; }
+    themen.forEach(g=>{ h+='<div class="k43-abt">'+esc(hf26ThemaName(g.t))+'</div><div class="kl k43-kl">'+g.karten.map(k=>k43ZeileHtml(k, c, (k.status==='offen' && kartenStatusHeute(k)!=='erledigt') ? {} : { erl:true })).join('')+'</div>'; }); });
+  return h; }
+hf26TagKetteInhaltHtml=function(c, ort){ return hf28TagKetteInhaltHtml(c, ort); };   // hf26TagKetteHtml (28408) ruft weiter diesen Namen — eine Funktion für Fokusseite und Ketten-Tab
+/* §3 · Archiv aus FocusSystem: Paket { karten:[{ id, archivAusFocussystem:<Zeitpunkt> }] } (Dienst, Hotfix 28 §3.2). Die Karte wird archiviert (status, archiviertTs, archivGrund),
+   verschwindet aus allen Ketten; Zeiten, Punkte, Statistik bleiben. Läuft ihre Uhr, wartet das Archiv in meta.archivWartend bis zum Stopp (fokusZeitEinbuchen). */
+function hf28ArchivUebernehmen(k, ts){ if(!k || k.status==='archiviert') return 'schon';
+  if(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id){ if(!S.meta.archivWartend || typeof S.meta.archivWartend!=='object') S.meta.archivWartend={}; S.meta.archivWartend[k.id]=String(ts||jetztIso()); saveMeta(); return 'wartet'; }
+  k.status='archiviert'; k.archiviertTs=jetztIso(); k.archivGrund='Archiv aus FocusSystem ('+String(ts||'')+')'; beruehre(k);   // wie der Archivieren-Knopf (data-archiv 25315): status archiviert + beruehre
+  try{ (S.tagesketten||[]).forEach(c=>{ if(c && Array.isArray(c.karten) && c.karten.indexOf(k.id)>=0) c.karten=c.karten.filter(id=>id!==k.id); }); DB.set('tagesketten', S.tagesketten); K43K.cache=null; }catch(e){}
+  try{ const st=ketteState(); if(st && Array.isArray(st.ids) && st.ids.indexOf(k.id)>=0){ st.ids=st.ids.filter(id=>id!==k.id); saveMeta(); } }catch(e){}
+  if(S.fokus && !S.fokus.laeuft && S.fokus.karteId===k.id){ S.fokus=null; saveFokus(); }
+  if(S.meta.archivWartend && S.meta.archivWartend[k.id]){ delete S.meta.archivWartend[k.id]; }
+  if(!Array.isArray(S.meta.archivAusFs)) S.meta.archivAusFs=[]; S.meta.archivAusFs=S.meta.archivAusFs.concat([{ id:k.id, ts:String(ts||''), archiviertTs:k.archiviertTs }]).slice(-200);
+  saveKarten(); saveMeta(); return 'archiviert'; }
+{ const _alt=syncImport; syncImport=function(text, opt){ let archiv=[], rest=text;
+    try{ const p=JSON.parse(String(text)); if(p && Array.isArray(p.karten) && p.karten.some(c=>c && c.archivAusFocussystem!==undefined)){ archiv=p.karten.filter(c=>c && c.archivAusFocussystem!==undefined); p.karten=p.karten.filter(c=>!(c && c.archivAusFocussystem!==undefined)); rest=JSON.stringify(p); } }catch(e){ archiv=[]; rest=text; }
+    let res; if(archiv.length){ let leer=false; try{ const q=JSON.parse(String(rest)); leer=Object.keys(q).every(k=>k==='appVersion' || (k==='karten' && !q.karten.length)); }catch(e){} res=leer ? { ok:true, nurArchiv:true } : _alt(rest, opt); } else res=_alt(rest, opt);   // ein reines Archiv-Paket geht nicht durch den Import („Keine Karten im Paket“)
+    if(archiv.length && res && !res.fehler && !res.freigabeNoetig){ const z=[]; archiv.forEach(c=>{ const k=S.karten.find(x=>x.id===c.id); if(!k){ z.push('unbekannt'); return; } z.push(hf28ArchivUebernehmen(k, c.archivAusFocussystem)); });
+      res.archivAusFocussystem=z; try{ kettenListenNeu(); renderAlles(); }catch(e){} }
+    return res; }; }
+{ const _alt=fokusZeitEinbuchen; fokusZeitEinbuchen=function(bisMs){ const kid=S.fokus ? S.fokus.karteId : null, lief=!!(S.fokus && S.fokus.laeuft); _alt(bisMs);
+    try{ if(lief && kid && S.meta.archivWartend && S.meta.archivWartend[kid]){ const k=S.karten.find(x=>x.id===kid); const ts=S.meta.archivWartend[kid]; if(k) hf28ArchivUebernehmen(k, ts); try{ kettenListenNeu(); renderAlles(); }catch(e){} } }catch(e){} }; }   // §3.2: nach dem Stopp der Uhr
+/* §4.4 · Antwortzeile der Tagesplanung = Kurzansicht des Ketten-Chats für das Tagesgespräch (k43ChatKurzHtml 27691); abgelöst: k43ChatAntwortHtml aus Hotfix 27 (Trainer-Zeile mit 300 Zeichen) */
+const k43ChatAntwortHtml27=k43ChatAntwortHtml;
+k43ChatAntwortHtml=function(text, platzhalter){ void text; return k43ChatKurzHtml(f12TrainerKanal(), f12TagGespraech(), platzhalter||'Antwort …', 'Chat · Trainer heute'); };
+/* §4.5 · Kartenformat: Zeilen „- Kurzfassung: …“ und „- Infos: <id>, <id>“ (f7PfKarteLesen liest sie) kommen bei Anlage und Änderung auf die Karte */
+function hf28KartenfeldeAnwenden(k, kk){ if(!k || !kk) return; const g=kk.gesetzt||{};
+  if(g.kurzfassung) k.kurzfassung=kk.kurzfassung ? String(kk.kurzfassung) : null;
+  if(g.infos){ const ids=(kk.infos||[]).map(String); k.infos=ids.filter(id=>{ const x=S.karten.find(y=>y.id===id); return x && x.domain===k.domain && istInfoKarte(x) && x.id!==k.id; }); } }
+{ const _alt=f7PfKarteAnlegen; f7PfKarteAnlegen=function(r, kk){ const k=_alt(r, kk); try{ if(k && kk) { hf28KartenfeldeAnwenden(k, kk); saveKarten(); } }catch(e){} return k; }; }
+{ const _alt=f7PfEntwurfAnwenden; f7PfEntwurfAnwenden=function(k, subs, kk){ const r=_alt(k, subs, kk); try{ hf28KartenfeldeAnwenden(k, kk); }catch(e){} return r; }; }
 
 function init(){
   ladeAlles();
