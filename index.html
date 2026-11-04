@@ -3181,6 +3181,34 @@ body[data-e1="suche"] #e1-suche{padding-bottom:calc(var(--sab) + 48px)}   /* Hot
 .hf26-zu.leer-block{color:var(--mut);font-weight:400;font-size:12px;min-height:36px;cursor:default}
 .hf26-tag .k43-abt{margin-top:6px}
 .hf26-chat .k43-antwort input{cursor:pointer}
+/* ══ Hotfix 27 (04.11.2026) · §1 Tableiste hinter der Tastatur · §3 Infokarten (Zielbild 12) · §4 Unteraufgaben Pflichtfelder ══ */
+#nav{transform:translateY(var(--vvTop,0px))}   /* Hotfix 27 §1.1: #nav bleibt an seinem Platz (Fuß des Layout-Viewports), nie über die Tastatur geschoben; abgelöst: #ebene1 #nav (3163) */
+body[data-e1="suche"] #nav{z-index:210}   /* Hotfix 27 §1.3: die Suche ist eine Seite mit Tableiste (4.3 §7), die Leiste liegt über der Ebene */
+body[data-e1="suche"] #e1-suche{padding-bottom:calc(var(--sab) + 110px)}   /* Hotfix 27 §1.3: Platz für die feste Leiste (abgelöst: 48 px aus Hotfix 26 §2.3) */
+.uaneu .uaminneu{width:58px}
+.uaneu input.leer,.uareihe input.uamin.leer{border-color:#f2b84b}
+.hf27-ung{display:block;font-size:10.5px;color:#f2b84b;font-weight:600}
+.hf27-info .thinweis{margin-top:2px}
+.hf27-grp{display:flex;justify-content:space-between;align-items:center;min-height:36px;border-top:2px solid #243349;padding-top:6px;margin-top:6px;font-size:12.5px;font-weight:700}
+.hf27-grp:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.hf27-grp span{font-size:11px;color:#8fa1b8;font-weight:600}
+.hf27-liste{display:flex;flex-direction:column;gap:12px;margin:8px 0 4px}
+.hf27-ik{background:#1a2638;border:1px solid #2f4260;border-left:4px solid #5eead4;border-radius:12px;padding:9px 11px;display:flex;flex-direction:column;gap:3px;box-shadow:0 1px 4px rgba(0,0,0,.28);color:var(--txt)}
+.hf27-ik .hf27-z{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hf27-ik .hf27-z b{font-size:13px;line-height:1.3}
+.hf27-ik .hf27-pf{color:#8fa1b8;font-size:13px;flex:none}
+.hf27-ik .hf27-m{font-size:11px;color:#8fa1b8}
+.hf27-ik .hf27-k1{font-size:11.5px;color:#c5d0de;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hf27-ik.auf{border-color:#5eead4;gap:8px}
+.hf27-ik.auf .hf27-kopf{border-bottom:1px solid #2f4260;padding-bottom:6px}
+.hf27-chips{display:flex;flex-wrap:wrap;gap:4px}
+.hf27-chips span{font-size:10.5px;background:#182438;border:1px solid #2f4260;border-radius:999px;padding:1px 8px;color:#c5d0de}
+.hf27-lab{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:#8fa1b8;font-weight:700;margin:2px 0 0}
+.hf27-kurz{font-size:12.5px;background:#141e2e;border-radius:8px;padding:7px 9px}
+.hf27-voll{font-size:12.5px;color:#c5d0de;line-height:1.5}
+.hf27-voll p{margin:0 0 6px}
+.hf27-fehlt{color:#8fa1b8}
+#hf27InfosFeld input[type=search]{margin-top:6px}
 </style>
 </head>
 <body>
@@ -3359,11 +3387,11 @@ body[data-e1="suche"] #e1-suche{padding-bottom:calc(var(--sab) + 48px)}   /* Hot
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '4.3.2';   // Hotfix 26 (04.11.2026) · Hotfix 25 · Karten-Standard 4.3
+const APP_VERSION = '4.3.3';   // Hotfix 27 (04.11.2026) · Hotfix 26 · Hotfix 25 · Karten-Standard 4.3
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-11-04-55';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-11-04-56';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -3896,10 +3924,10 @@ const FSLive = (()=>{
     }catch(e){ if(e.offline){ gescheitert=true; fehlerText=e.message; } }
     finally{ paketeLaufen=false; anzeigen(); }
   }
-  async function paketMelden(id, res){
+  async function paketMelden(id, res){   // Hotfix 27 §5.3: bei einem Korrektur-Paket kommen die Schritte (angewendet/abgewiesen mit Grund) mit (hf27KorrErgebnis)
     if(!ichFuehre) return;   // Hotfix 14 §8.3
     const ok=!(res && res.fehler);
-    try{ await aufruf('POST', '/api/app/pakete/'+id, JSON.stringify(ok ? { status:'uebernommen' } : { status:'abgelehnt', grund:String(res.fehler).slice(0,300) })); }
+    try{ await aufruf('POST', '/api/app/pakete/'+id, JSON.stringify(ok ? Object.assign({ status:'uebernommen' }, (typeof hf27KorrErgebnis==='function' ? hf27KorrErgebnis() : {})) : { status:'abgelehnt', grund:String(res.fehler).slice(0,300) })); }
     catch(e){}   // nicht gemeldet: beim nächsten Holen kommt das Paket erneut; der Import ist je Karte idempotent
   }
   // Aus syncFreigabeAnwenden: das Blatt „Paket prüfen“ wurde mit Übernehmen beantwortet.
@@ -4506,7 +4534,9 @@ const DEFAULT_SETTINGS = {
   engine42: { barrieren:{ dfmAufgabe:[300,700], dfmRoutine:[300,700], privatAufgabe:[150,350], privatRoutine:[100,250] },
     gewichte:{ prio:0.5, belastung:0.3, matrix:0.2 }, matrixWert:{ ziel:1, werkzeug:0.5, zustand:0 }, bonusJePrio:25, lageMax:0.2, rundung:10 },
   // ══ Karten-Standard 4.3 §4: Tagesrahmen — feste Morgenketten (App-IDs, Startwert leer), Zustand → Ziel (Startwert keine Verschiebung), Punkte der Tagesplanung (halb DFM, halb Privat wie Routine Prio 3, Belastung 0, Werkzeug), Eckpunkte aus ══
-  engine43: { morgenketten:{ aufstehen:[], aufwachen:[] }, zustandZiel:{ fitness:0, motivation:0, schlaf:0, maxProzent:0 }, tagesplanung:{ anteilDfm:0.5, prio:3, belastung:0, matrix:'werkzeug' }, eckpunkte:false },
+  engine43: { morgenketten:{ aufstehen:[], aufwachen:[] }, zustandZiel:{ fitness:0, motivation:0, schlaf:0, maxProzent:0 }, tagesplanung:{ anteilDfm:0.5, prio:3, belastung:0, matrix:'werkzeug' }, eckpunkte:false,
+    // Hotfix 27 §7.1 (Pascal 04.11.2026): Standard-Tagesblöcke an jedem Werktag; Overload nur bei Bedarf, ohne feste Zeit
+    tagesbloecke:[{ block:'aufstehen', von:'08:15', bis:'08:45' },{ block:'aufwachen', von:'08:45', bis:'09:45' },{ block:'fokus1', von:'09:45', bis:'12:45' },{ block:'senke', von:'12:45', bis:'14:30' },{ block:'fokus2', von:'14:30', bis:'17:00' },{ block:'overload', von:null, bis:null },{ block:'erholung', von:'17:00', bis:'19:00' },{ block:'abendroutine', von:'21:30', bis:'22:30' }] },
   // ══ 4.0 · Paket 4 · Punkte-Engine nach Punkt 5 (alle Werte über die Sync-Tür, Bereich engine4) ══
   leiter: { geldnah:600, kommunikation:400, ohneGeld:300, privatWerkzeug:200, erholung:200, ablenkung:0 },   // 5.3 Stundenleiter, Punkte je Stunde
   tickAktivierung: 10,         // 5.3: Tick = Satz × echte Tick-Minuten ÷ 60 + 10
@@ -4705,7 +4735,8 @@ const EINST_SCHEMA={
     bonusJePrio:Z('engine42.bonusJePrio',{min:0}), lageMax:Z('engine42.lageMax',{min:0, max:1}), rundung:Z('engine42.rundung',{min:1}) },
   // Karten-Standard 4.3 §4: Morgenketten als Listen von App-IDs, Zustand→Ziel und Tagesplanung als Tabellen, Eckpunkte als Schalter
   engine43:{ morgenketten:{ aufstehen:{p:'engine43.morgenketten.aufstehen', t:'texte'}, aufwachen:{p:'engine43.morgenketten.aufwachen', t:'texte'} },
-    zustandZiel:{p:'engine43.zustandZiel', t:'tabelle'}, tagesplanung:{p:'engine43.tagesplanung', t:'tabelle'}, eckpunkte:{p:'engine43.eckpunkte', t:'bool'} },
+    zustandZiel:{p:'engine43.zustandZiel', t:'tabelle'}, tagesplanung:{p:'engine43.tagesplanung', t:'tabelle'}, eckpunkte:{p:'engine43.eckpunkte', t:'bool'},
+    tagesbloecke:{p:'engine43.tagesbloecke', t:'liste'} },   // Hotfix 27 §7.1: Liste von { block, von, bis }
   // 4.0 · Paket 4: die Punkte-Engine nach Punkt 5 — der Scoring-Spezialist ändert sie nur über das Postfach und ein Paket
   engine4:{ leiter:{p:'leiter', t:'tabelle'}, tickAktivierung:Z('tickAktivierung',{min:0}), startBonus:Z('startBonus',{min:0}), bruecke:{p:'bruecke', t:'tabelle'},
     abhakbonusAbSollMin:Z('abhakbonusAbSollMin',{min:0}), abzugOhneGrund:Z('abzugOhneGrund',{min:0}), wochenserieBonus:Z('wochenserieBonus',{min:0}), chatAgentenMax:Z('chatAgentenMax',{min:1, max:50}),   // Hotfix 16 §4.4
@@ -4781,6 +4812,7 @@ function schemaPruefen(f, roh){
       const v=roh[k]; if(v===null) schritte.push([f.p+'.'+k, std(f.p+'.'+k)]); else if(Number.isFinite(Number(v))) schritte.push([f.p+'.'+k, Number(v)]); else unbekannt.push(k+' (keine Zahl)'); });
     return { ok:true, anzeige:roh, schritte, unbekannt };
   }
+  if(t==='liste'){ if(!Array.isArray(roh) || !roh.every(x=>x && typeof x==='object' && !Array.isArray(x))) return { fehler:'Liste von Objekten erwartet' }; return { ok:true, anzeige:roh.map(x=>JSON.stringify(x)), schritte:[[f.p, roh.map(x=>Object.assign({}, x))]] }; }   // Hotfix 27 §7.1: Liste von Objekten (Standard-Tagesblöcke)
   if(t==='tabelle'){   // 4.0 · Paket 4: Objekt mit Zahlen (oder Texten) je Schlüssel, null = Standard des Schlüssels
     if(!roh || typeof roh!=='object' || Array.isArray(roh)) return { fehler:'Objekt {schlüssel: wert} erwartet' };
     const schritte=[], unbekannt=[], stdO=std(f.p)||{};
@@ -5069,6 +5101,8 @@ function neueKarte(f={}){
     wartetAuf: null,                  // Text: gesetzt = Status „wartet" (§6)
     wartetSeit: null,                 // "YYYY-MM-DD"
     std42: false,                     // true = Karten-Standard 4.2
+    infos: [],                        // Hotfix 27 §3.6: Karten-ids verlinkter Infokarten (gleiche Familie)
+    kurzfassung: null,                // Hotfix 27 §3.6: Kurzfassung einer Infokarte
     erstelltTs: jetztIso()
   }, f);
   if(!Array.isArray(k.tickKurve) || !k.tickKurve.length) k.tickKurve=[0];
@@ -5928,7 +5962,7 @@ function renderFokus(){
   _fokusExakt=true;
   try{
     if(!k){ const nv=fokusNavHtml(null); host.innerHTML=banner+'<div class="blk fk-ohne">'+nv.oben+'</div>'+f4NaechstesHtml(null)+(S.tag ? f4DerTagHtml()+f4MatrixHeuteHtml()+f4FlowBelastungHtml() : ''); return; }
-    host.innerHTML=banner+f4KartenKernHtml(k)+'<div id="f4KarteTempo">'+f4KartenTempoHtml(k)+'</div>'+fokusSubsHtml(k)+f4NaechstesHtml(k)+(S.tag ? f4DerTagHtml()+f4MatrixHeuteHtml()+f4FlowBelastungHtml() : '');
+    host.innerHTML=banner+f4KartenKernHtml(k)+'<div id="f4KarteTempo">'+f4KartenTempoHtml(k)+'</div>'+fokusSubsHtml(k)+hf27InfokartenHtml(k)+f4NaechstesHtml(k)+(S.tag ? f4DerTagHtml()+f4MatrixHeuteHtml()+f4FlowBelastungHtml() : '');
   } finally { _fokusExakt=false; }
   fokusTacho(k);
 }
@@ -7942,7 +7976,7 @@ function f11Ablageordner(projektId){ const p=(f7Projekte()||[]).find(x=>x.id===p
 const F12={ voll:{}, lade:{}, pf:{}, pfLade:{}, entschieden:{}, uhr:null, nachladen:null, nachladenKey:'', badge:{}, benachrichtigt:{}, gesehen:{}, nachUnten:false };
 const F12_AVATAR={ 'Trainer':'🏋️', 'Zeit-Spezialist':'⏱️', 'Scoring-Spezialist':'🎯', 'Belastungs-Spezialist':'🔋' };
 const F12_TRAINER_TABELLE='Privat_Chat · Trainer';   // Rückfall, wenn Chat-Kanäle noch nicht geladen sind (Warteschlange offline)
-const F12_FELDER=['Text','Von','Gespräch','Gesprächstitel','Art','Anlass','Status','Zeitstempel','Laufstart','Beantwortet','Antwortet auf','Karten','Anhänge','Postfach','Session','Lauf'];
+const F12_FELDER=['Text','Von','Gespräch','Gesprächstitel','Art','Anlass','Status','Zeitstempel','Laufstart','Beantwortet','Antwortet auf','Karten','Anhänge','Postfach','Session','Lauf','Still'];   // Hotfix 27 §6: Still
 const F12_RAUM_FOLGE=['Trainerstab'].concat(F7_ABT_FOLGE);
 function f12Ui(){ if(!S.ui.chat || typeof S.ui.chat!=='object') S.ui.chat={ raum:'Trainerstab', kanal:null, gespraech:null, entwurf:{} }; if(!S.ui.chat.entwurf || typeof S.ui.chat.entwurf!=='object') S.ui.chat.entwurf={}; return S.ui.chat; }
 function f12Mmss(ms){ const s=Math.max(0, Math.floor(num(ms)/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
@@ -8501,13 +8535,13 @@ function f16WartetHtml(rows){ return f16WartetAufDich(rows) ? '<b class="f16-war
 function f12TrainerZeilenHeute(anlass){ const kanal=f12TrainerKanal(); const rows=kanal ? (f12Zeilen(kanal)||[]) : []; const heute=heuteApp();
   return rows.filter(r=>String(r.Von||'')==='Trainer' && String(r.Anlass||'')===anlass && String(r.Zeitstempel||'').slice(0,10)===heute); }
 /* ── §10 · Badge und Benachrichtigung über alle Kanäle ── */
-function f12BadgeLaden(){
+function f12BadgeLaden(){   // Hotfix 27 §6: stille Zeilen (Feld Still) zählen nicht als ungelesen (Filter in der Badge-Runde)
   if(!FSLive.gekoppelt()) return; if(FSLive.nichtFuehrend()) return;   // Hotfix 17 §1.2: nicht führend → kein Badge-Abruf (Takt 60 s, Start nach 9 s, Nachladen im Chat)
   const kan=f12Kanaele(); if(!kan || !kan.length) return;
   if(F12.badgeLaeuft) return; F12.badgeLaeuft=true; const sum={};
   const zeilen={};
-  Promise.all(kan.map(k=>FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel','Art','Anlass','Status','Postfach'], filter:[{ feld:'Von', operator:'ungleich', wert:'Pascal' },{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Zeitstempel', richtung:'ab' }], limit:20 })   // Hotfix 15 §7: Art, Anlass, Postfach für die Postfach-Ansicht
-    .then(d=>{ sum[k.id]=num(d && d.gesamt); zeilen[k.id]=(d && d.datensaetze)||[]; zeilen[k.id].forEach(r=>f12Benachrichtigen(k, r)); }).catch(()=>{ if(F12.ungelesen && F12.ungelesen[k.id]){ zeilen[k.id]=F12.ungelesen[k.id]; sum[k.id]=num(F12.badge[k.id]); } })))
+  Promise.all(kan.map(k=>FSLive.lesen('datensaetze_auflisten', { tabelle:k.Tabelle, felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel','Art','Anlass','Status','Postfach','Still'], filter:[{ feld:'Von', operator:'ungleich', wert:'Pascal' },{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Zeitstempel', richtung:'ab' }], limit:20 })   // Hotfix 15 §7: Art, Anlass, Postfach für die Postfach-Ansicht
+    .then(d=>{ const alle=(d && d.datensaetze)||[]; zeilen[k.id]=alle.filter(r=>!hf27Still(r)); sum[k.id]=Math.max(0, num(d && d.gesamt)-(alle.length-zeilen[k.id].length)); zeilen[k.id].forEach(r=>f12Benachrichtigen(k, r)); }).catch(()=>{ if(F12.ungelesen && F12.ungelesen[k.id]){ zeilen[k.id]=F12.ungelesen[k.id]; sum[k.id]=num(F12.badge[k.id]); } })))
     .then(()=>{ F12.badge=sum; F12.ungelesen=zeilen; F12.badgeLaeuft=false; f12BadgeZeigen(); });   // Hotfix 13 §5.4: dieselbe Runde liefert die ungelesenen Zeilen
 }
 function f12BadgeSumme(){ return Object.keys(F12.badge||{}).reduce((a,k)=>a+num(F12.badge[k]), 0); }
@@ -9999,7 +10033,7 @@ function laufendeSek(){ return (S.fokus && S.fokus.laeuft) ? (Date.now()-S.fokus
 function fokusZeitEinbuchen(bisMs){
   if(!S.fokus || !S.fokus.laeuft) return;
   const k=fokusKarte();
-  const ende=(bisMs && bisMs<Date.now()) ? Math.max(num(S.fokus.startMs), bisMs) : Date.now();
+  const ende=(bisMs && bisMs<=Date.now()) ? Math.max(num(S.fokus.startMs), bisMs) : Date.now();   // Hotfix 27 §5.4b: auch der Startzeitpunkt selbst (t0) gilt als Ende
   const sek=(ende-S.fokus.startMs)/1000, nurZeit=!!S.fokus.nurZeit;
   let _sitzung=null;
   // §1.3/§1.5 (v3.4.0): eine reine Messung (Tageslimit erreicht) zaehlt als Ist-Zeit — ohne Punkte, ohne Pflicht-Abzug
@@ -10045,12 +10079,13 @@ function fokusStarten(kid, quelle, opt){
   // stoppt, Zeit wird gebucht, KEIN Dialog. (Aendert v2.0.1 §2.) Der
   // Buchungsdialog gehoert zu Erledigen und Schieben — dort ist die Karte
   // wirklich abgeschlossen, bei Pause und Wechsel nur unterbrochen.
+  const t0=Date.now();   // Hotfix 27 §5.4b: EIN Zeitpunkt — die vorige Sitzung endet genau dann, wenn die neue beginnt
   if(S.fokus && S.fokus.karteId!==kid){
-    fokusZeitEinbuchen();
+    fokusZeitEinbuchen(t0);
   }
   if(!S.fokus || S.fokus.karteId!==kid) S.fokus={ karteId:kid, laeuft:false, startMs:0, sessionSek:0 };
   // §4 (v2.0.0): zeitmessung ist entfallen — die Uhr läuft bei JEDER Karte an.
-  S.fokus.laeuft=true; S.fokus.startMs=Date.now();
+  S.fokus.laeuft=true; S.fokus.startMs=t0;
   // §3.1 (v1.10.0): merken, aus welcher Liste die Karte kam — Quelle des
   // Nachrückens nach einem Abschluss. Die Swipe-Navigation bleibt davon
   // unberührt (sie läuft weiter über die Tageskette/fokusKandidaten).
@@ -12907,11 +12942,11 @@ function fokusSubsHtml(k){
   const zu=!!S.ui.fokusSubsZu, fertig=subs.filter(u=>u.done).length;
   const rows=subs.map(u=>'<div class="uareihe'+(u.done?' fertig':'')+'" data-uaid="'+u.id+'">'+
     '<button class="uacheck" data-uatoggle="'+u.id+'"><span class="box'+(hakAktiv(u.id)?' hak-neu" style="'+hakStil():'')+'">'+(u.done?'✓':'')+'</span></button>'+
-    '<div class="uatitel"><span class="uat">'+esc(u.titel||'Teilschritt')+'</span>'+hakFlugHtml(u.id)+'</div>'+
-    '<input class="uamin" type="number" inputmode="numeric" data-uamin="'+u.id+'" placeholder="0" value="'+(num(u.sollMin)>0?num(u.sollMin):'')+'" title="Minuten (zählen zur Kartenzeit)">'+
+    '<div class="uatitel"><span class="uat">'+esc(u.titel||'Teilschritt')+'</span>'+(u.ungeprueft?'<small class="hf27-ung">ungeprüft · Vorschlag der Punkte-Engine</small>':'')+hakFlugHtml(u.id)+'</div>'+   // Hotfix 27 §4.3
+    '<input class="uamin'+(u.ungeprueft?' leer':'')+'" type="number" inputmode="numeric" data-uamin="'+u.id+'" placeholder="0" value="'+(num(u.sollMin)>0?num(u.sollMin):'')+'" title="Minuten (zählen zur Kartenzeit)">'+
     (u.done
       ? '<span class="uapunkte">+'+fmtP(u.bonusPunkte)+'</span>'
-      : '<input class="uamin uabonus" type="number" inputmode="numeric" data-uabonus="'+u.id+'" placeholder="0" value="'+(u.bonusPunkte!=null?num(u.bonusPunkte):'')+'" title="Einmalige Zusatzpunkte (zählen zu den Kartenpunkten)">')+
+      : '<input class="uamin uabonus'+(u.ungeprueft?' leer':'')+'" type="number" inputmode="numeric" data-uabonus="'+u.id+'" placeholder="0" value="'+(u.bonusPunkte!=null?num(u.bonusPunkte):'')+'" title="Einmalige Zusatzpunkte (zählen zu den Kartenpunkten)">')+
     '<button class="uax" data-uadel="'+u.id+'">✕</button></div>').join('');
   // §9.4 (v1.8.0): Tick-Zeile OBERHALB der ersten Unteraufgabe — ＋ bucht mit
   // dem eingegebenen Wert (leer = Karten-Default), rechts der Tagesstand.
@@ -12933,8 +12968,9 @@ function fokusSubsHtml(k){
     // (Pflicht). Der neue Sub erhöht den Parent-Soll (Invariante §3.2 bleibt hart).
     '<div class="uaneu"><input id="fkUaNeu" type="text" placeholder="Unteraufgabe hinzufügen …">'+
       '<input id="fkUaMin" class="uaminneu" type="number" inputmode="numeric" min="1" placeholder="Min">'+
+      '<input id="fkUaP" class="uaminneu" type="number" inputmode="numeric" min="0" placeholder="P" title="Punkte beim ✓ (Pflicht)">'+   // Hotfix 27 §4.2: Feld P (bonusPunkte)
       '<button data-uaadd="'+k.id+'">+</button></div>'+
-    '<div class="thinweis">Soll-Minuten sind Pflicht — sie erhöhen die Kartenzeit.</div>'+
+    '<div class="thinweis">Minuten und Punkte sind Pflicht. Ohne beide kein Speichern.</div>'+   // Hotfix 27 §4.2 (abgelöst: „Soll-Minuten sind Pflicht — sie erhöhen die Kartenzeit.“)
     unterZaehlerZeilenHtml(k)+   // §4.1.2 (v3.5.0)
     '</div></div>';
 }
@@ -12971,12 +13007,14 @@ function unterZaehlerTick(uid){
 /* §4: gemeinsamer Pfad für Button und Enter. Ohne Minuten kein Anlegen. */
 function fokusSubAnlegen(kid){
   const k=S.karten.find(x=>x.id===kid); if(!k) return;
-  const inp=el('fkUaNeu'), mi=el('fkUaMin');
+  const inp=el('fkUaNeu'), mi=el('fkUaMin'), pi=el('fkUaP');   // Hotfix 27 §4.2: Minuten UND Punkte Pflicht, fehlende Felder gelb
   const titel=(inp&&inp.value||'').trim();
   const min=Math.max(0, Math.round(num(mi&&mi.value)));
+  const pRaw=pi ? String(pi.value).trim() : '', pOk=pRaw!=='' && Number.isFinite(Number(pRaw)) && Number(pRaw)>=0;
+  if(mi) mi.classList.toggle('leer', !(min>0)); if(pi) pi.classList.toggle('leer', !pOk);
   if(!titel){ toast('Titel fehlt'); if(inp) inp.focus(); return; }
-  if(min<=0){ toast('Soll-Minuten fehlen'); if(mi) mi.focus(); return; }
-  S.unteraufgaben.push(neueUnteraufgabe(kid,{titel, sollMin:min}));
+  if(min<=0 || !pOk){ toast('Minuten und Punkte sind Pflicht'); if(min<=0 && mi) mi.focus(); else if(pi) pi.focus(); return; }
+  S.unteraufgaben.push(neueUnteraufgabe(kid,{titel, sollMin:min, bonusPunkte:num(pRaw)}));
   DB.set('unteraufgaben', S.unteraufgaben);
   k.sollMin=untermenge(kid).reduce((s,u)=>s+num(u.sollMin),0);   // Invariante §3.2
   saveKarten(); renderFokus();
@@ -16198,6 +16236,8 @@ function renderDetail42(_scroll){
   } else if(info){
     // ── Info-Karte (§7): Titel, Notiz, Unteraufgaben als Liste ohne Punkte, Kommentar ──
     h+='<h4 class="abt-h">Zuordnung</h4>'+titel+familie+projekt+art;
+    h+='<div class="field"><label>Kurzfassung</label><textarea data-bind="kurzfassung" placeholder="Ein bis zwei Sätze für den Kasten Infokarten">'+esc(k.kurzfassung||'')+'</textarea></div>';   // Hotfix 27 §3.6
+    h+=hf27InfosFeldHtml(k, '');   // Hotfix 27 §3.7
     h+='<h4 class="abt-h">Notiz</h4><div class="field"><textarea data-bind="notiz" placeholder="Notiz">'+esc(k.notiz||'')+'</textarea></div>';
     h+='<h4 class="abt-h">Unteraufgaben</h4>'+d42SubsHtml(k, subs);
     h+='<h4 class="abt-h">Kommentar</h4><div class="field"><label>Kommentar für Claude</label><textarea data-bind="kommentarClaude" placeholder="Hinweis für den nächsten Sync">'+esc(k.kommentarClaude||'')+'</textarea></div>';
@@ -16205,6 +16245,7 @@ function renderDetail42(_scroll){
     // ── Bearbeiten · 1 Zuordnung ──
     const status=k.freeze ? 'eingefroren' : (k.wartetAuf ? 'wartet' : 'offen');
     h+='<h4 class="abt-h">1 · Zuordnung</h4>'+titel+familie+projekt+art;
+    h+=hf27InfosFeldHtml(k, '');   // Hotfix 27 §3.7: Infokarten verlinken
     h+='<div class="field"><label>Status</label>'+d42Chip('status42', status, [['offen','offen'],['wartet','⏳ wartet'],['eingefroren','❄︎ eingefroren']], status==='offen'?'gruen':'rot');
     if(status==='wartet') h+='<div class="grid2" style="margin-top:8px"><div class="field"><label>Wartet auf</label><input data-bind="wartetAuf" value="'+esc(k.wartetAuf||'')+'" placeholder="wen oder was"></div><div class="field"><label>Wartet seit</label><input type="date" data-bind="wartetSeit" value="'+esc(k.wartetSeit||'')+'"></div></div><div class="hint">wartet = nicht vorgeschlagen; Leeren von „Wartet auf" beendet den Zustand</div>';
     if(status==='eingefroren') h+='<div class="field" style="margin-top:8px"><label>Eingefroren bis</label><input type="date" data-bind="eingefrorenBis" value="'+esc(k.eingefrorenBis||'')+'"><div class="hint">am Morgen dieses Tages taut die Karte auf</div></div>';
@@ -19514,6 +19555,8 @@ function ks42ZielAnwenden(k, z){
   if(k.domain!=='dfm' || (k.projekt && String(k.projekt).trim())) k.abteilung=null;
   if(KARTENART42_LABEL[z.art]) k.art=z.art; else if(!KARTENART42_LABEL[k.art]) k.art=k.rolle ? 'system' : (k.rhythmus ? 'routine' : 'aufgabe');
   if(z.sammelkarte!==undefined) k.sammelkarte=z.sammelkarte===true;
+  if(z.infos!==undefined) k.infos=Array.isArray(z.infos) ? z.infos.map(String) : [];   // Hotfix 27 §3.6
+  if(z.kurzfassung!==undefined) k.kurzfassung=leer(z.kurzfassung) ? null : String(z.kurzfassung);   // Hotfix 27 §3.6
   { const mf=matrixFeldNorm(z.matrix); if(mf) k.matrixFeld=mf; }
   if(z.belastung!==undefined) k.belastung=leer(z.belastung) ? null : Math.max(-3, Math.min(3, Math.round(num(z.belastung))));
   if(z.prio!==undefined) k.prio=leer(z.prio) ? null : Math.max(1, Math.min(5, Math.round(num(z.prio))));
@@ -20060,6 +20103,8 @@ function syncImport(text, opt){
     if(inc.prio!==undefined) lok.prio=leer(inc.prio) ? null : Math.max(1, Math.min(5, Math.round(num(inc.prio))));
     if(inc.phFest!==undefined) lok.phFest=leer(inc.phFest) ? null : Math.max(0, num(inc.phFest));
     if(inc.sammelkarte!==undefined) lok.sammelkarte=(inc.sammelkarte===true || inc.sammelkarte==='true');
+    if(inc.infos!==undefined) lok.infos=Array.isArray(inc.infos) ? inc.infos.map(String) : [];   // Hotfix 27 §3.6: Datenvertrag infos (Karten-ids), kurzfassung (Text)
+    if(inc.kurzfassung!==undefined) lok.kurzfassung=leer(inc.kurzfassung) ? null : String(inc.kurzfassung);
     if(inc.eingefrorenBis!==undefined) lok.eingefrorenBis=leer(inc.eingefrorenBis) ? null : String(inc.eingefrorenBis).slice(0,10);
     if(inc.wartetAuf!==undefined) lok.wartetAuf=leer(inc.wartetAuf) ? null : String(inc.wartetAuf);
     if(inc.wartetSeit!==undefined) lok.wartetSeit=leer(inc.wartetSeit) ? null : String(inc.wartetSeit).slice(0,10);
@@ -20214,7 +20259,7 @@ function syncImport(text, opt){
         });
       });
       // §3 (v2.7.0): die neue Form — tag · sitzungen · positionen, mit Grund
-      const neueForm = kx.tag!==undefined || kx.sitzungen!==undefined || kx.positionen!==undefined || kx.schlaf!==undefined;   // §3 (v3.2.0): + schlaf
+      const neueForm = kx.tag!==undefined || kx.sitzungen!==undefined || kx.positionen!==undefined || kx.schlaf!==undefined || kx.bonusAusgleich!==undefined;   // §3 (v3.2.0): + schlaf · Hotfix 27 §5.2: + bonusAusgleich
       if(neueForm){
         if(!kx.grund || !String(kx.grund).trim()) uebersprungen.push({was:'Korrektur '+kx.datum, grund:'grund fehlt (Pflicht)'});
         else if(kx.datum>heuteApp()) uebersprungen.push({was:'Korrektur '+kx.datum, grund:'Datum liegt in der Zukunft'});
@@ -25135,13 +25180,13 @@ el('fokusView').addEventListener('click', e=>{
 });
 el('fokusView').addEventListener('change', e=>{
   // (v1.6.0) Stapel-Auswahl auf der Fokusseite entfällt — Ebene 1–3 ersetzen sie.
-  const um=e.target.closest('[data-uamin]'); if(um){ const u=S.unteraufgaben.find(x=>x.id===um.dataset.uamin); if(u){ u.sollMin=num(e.target.value);
+  const um=e.target.closest('[data-uamin]'); if(um){ const u=S.unteraufgaben.find(x=>x.id===um.dataset.uamin); if(u){ u.sollMin=num(e.target.value); u.ungeprueft=false;   // Hotfix 27 §4.3: Pascal hat den Wert geändert oder bestätigt
     const k=S.karten.find(x=>x.id===u.parentId); if(k){ k.sollMin=untermenge(k.id).reduce((s,x)=>s+num(x.sollMin),0); saveKarten(); }   // Karten-Sollzeit = Σ Unteraufgaben
     DB.set('unteraufgaben', S.unteraufgaben); renderFokus(); } return; }
-  const ub=e.target.closest('[data-uabonus]'); if(ub){ const u=S.unteraufgaben.find(x=>x.id===ub.dataset.uabonus); if(u){ u.bonusPunkte = e.target.value===''?null:num(e.target.value); DB.set('unteraufgaben', S.unteraufgaben); renderFokus(); } return; }
+  const ub=e.target.closest('[data-uabonus]'); if(ub){ const u=S.unteraufgaben.find(x=>x.id===ub.dataset.uabonus); if(u){ u.bonusPunkte = e.target.value===''?null:num(e.target.value); u.ungeprueft=false; DB.set('unteraufgaben', S.unteraufgaben); renderFokus(); } return; }
 });
 el('fokusView').addEventListener('keydown', e=>{
-  if((e.target.id==='fkUaNeu'||e.target.id==='fkUaMin') && e.key==='Enter'){   // §4
+  if((e.target.id==='fkUaNeu'||e.target.id==='fkUaMin'||e.target.id==='fkUaP') && e.key==='Enter'){   // §4 · Hotfix 27 §4.2: + Feld P
     e.preventDefault(); const k=angezeigteKarte(); if(k) fokusSubAnlegen(k.id); }
 });
 
@@ -27285,7 +27330,8 @@ const K43_MATRIX_MITTE={ ablenkung:[-0.5,0.5], zustand:[-0.5,-0.5], werkzeug:[0.
 function k43Einst(){ const d=DEFAULT_SETTINGS.engine43, s=(S.settings && S.settings.engine43)||{};
   const mk=Object.assign({}, d.morgenketten, s.morgenketten||{});
   return { morgenketten:{ aufstehen:Array.isArray(mk.aufstehen)?mk.aufstehen:[], aufwachen:Array.isArray(mk.aufwachen)?mk.aufwachen:[] },
-    zustandZiel:Object.assign({}, d.zustandZiel, s.zustandZiel||{}), tagesplanung:Object.assign({}, d.tagesplanung, s.tagesplanung||{}) }; }
+    zustandZiel:Object.assign({}, d.zustandZiel, s.zustandZiel||{}), tagesplanung:Object.assign({}, d.tagesplanung, s.tagesplanung||{}),
+    tagesbloecke:(Array.isArray(s.tagesbloecke) && s.tagesbloecke.length) ? s.tagesbloecke : d.tagesbloecke }; }   // Hotfix 27 §7.1
 function k43Tag(){ if(!S.tag) return null; if(!S.tag.k43 || typeof S.tag.k43!=='object') S.tag.k43={}; return S.tag.k43; }
 function k43Ui(){ if(!S.ui.spezial || typeof S.ui.spezial!=='object') S.ui.spezial={ art:null, schritt:1 }; return S.ui.spezial; }
 function k43Karte(rolle){ return S.karten.find(k=>k.rolle===rolle && k.status!=='archiviert')||null; }
@@ -27690,7 +27736,7 @@ setInterval(()=>{ try{ if(FSLive.nichtFuehrend()) return; }catch(e){} try{ k43We
    S.tagesketten: { id, name, art:'tag'|'block'|'eigene', datum, block?, von?, plan?, karten:[App-ID], quelle:'tagesplan'|'morgen'|'pascal', filter? }
    Bestehende Einträge ohne art → art 'eigene', quelle 'pascal'. Drei Felder je Kette (5.6): Kreis Zeit · Kreis Punkte · Zahlenfeld.
    ══════════════════════════════════════════════════════════════════════ */
-const K43_BLOECKE=[['aufstehen','Aufstehen'],['aufwachen','Aufwachen & Tagesplanung'],['fokus1','Fokus 1'],['senke','Senke'],['fokus2','Fokus 2'],['overload','Overload'],['abendroutine','Abendroutine']];
+const K43_BLOECKE=[['aufstehen','Aufstehen'],['aufwachen','Aufwachen & Tagesplanung'],['fokus1','Fokus 1'],['senke','Senke'],['fokus2','Fokus 2'],['overload','Overload'],['erholung','Erholung'],['abendroutine','Abendroutine']];   // Hotfix 27 §7.1: Block-Kette Erholung
 /* Abbildung der bisherigen Ketten-IDs aus Tagesplan-Paketen (Teil 2 · Ketten-Struktur): Block-Kette, Onramp-Gruppen Bad · Aufräumrunde · Kommunikation; tk-abschluss entfällt */
 const K43_TK_ABBILDUNG={ 'tk-morgen':{ block:'aufwachen' }, 'tk-bad':{ block:'aufstehen', onramp:'Bad' }, 'tk-fokus1':{ block:'fokus1' }, 'tk-senke':{ block:'senke' }, 'tk-erholung':{ block:'senke' },
   'tk-aufraeumrunde':{ block:'senke', onramp:'Aufräumrunde' }, 'tk-kommunikation':{ block:'fokus2', onramp:'Kommunikation' }, 'tk-fokus2':{ block:'fokus2' }, 'tk-abendroutine':{ block:'abendroutine' }, 'tk-abschluss':null };
@@ -27698,7 +27744,8 @@ const K43_GRUPPEN=[['tag','Tag'],['block','Blöcke'],['thema','Themen'],['famili
 function k43BlockName(b){ const e=K43_BLOECKE.find(x=>x[0]===b); return e ? e[1] : (b||'Block'); }
 function k43BlockNorm(s){ const t=String(s||'').toLowerCase().replace(/[^a-z0-9äöü]/g,''); if(!t) return null;
   if(/aufsteh/.test(t)) return 'aufstehen'; if(/aufwach|morgen|tagesplan/.test(t)) return 'aufwachen'; if(/fokus1|vormittag/.test(t)) return 'fokus1'; if(/fokus2|nachmittag/.test(t)) return 'fokus2';
-  if(/senke|erhol|mittag/.test(t)) return 'senke'; if(/over/.test(t)) return 'overload'; if(/abend/.test(t)) return 'abendroutine'; if(/^(fokusheute|heute|tag)\d*$/.test(t)) return 'tag'; return t; }   // Hotfix 26 §6.2: „Fokus heute“, „heute“, „Tag“ → Tag-Kette
+  if(/erhol/.test(t)) return 'erholung';   // Hotfix 27 §7.1: erhol → erholung (vorher senke)
+  if(/senke|mittag/.test(t)) return 'senke'; if(/over/.test(t)) return 'overload'; if(/abend/.test(t)) return 'abendroutine'; if(/^(fokusheute|heute|tag)\d*$/.test(t)) return 'tag'; return t; }   // Hotfix 26 §6.2: „Fokus heute“, „heute“, „Tag“ → Tag-Kette
 function k43KetteId(block, datum){ return 'tk43-'+block+'-'+datum; }
 /* Normierung der gespeicherten Ketten (idempotent, bei jedem Laden und nach jedem Import): art, quelle, datum */
 function k43KettenNormieren(){ if(!Array.isArray(S.tagesketten)) S.tagesketten=[]; let dirty=false;
@@ -28384,6 +28431,206 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) r
 
 /* ── Migration und Startwerte beim Laden (nach karten43) ── */
 { const _alt=migrationRolle421; migrationRolle421=function(){ const r=_alt(); try{ migrationKarten43b(); k43TagesplanungSatzSetzen(); }catch(e){ console.warn('karten43b', e); } return r; }; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Hotfix 27 (04.11.2026, App 4.3.3) · Volltext überall, Infokarten auf der Fokusseite, Unteraufgaben mit Minuten und Punkten, Korrektur 03./04.11.,
+   Tastatur, Benachrichtigung nur aus dem führenden Chat, Standard-Tagesblöcke · Auftrag 261104_Auftrag_ClaudeCode_Hotfix27_Volltext_Infokarten_Korrektur.md
+   Regel „Eine Ansicht je Funktion“: alles Vorhandene wird aufgerufen, nicht nachgebaut; abgelöster Code bleibt mit Kommentar stehen.
+   ══════════════════════════════════════════════════════════════════════ */
+const HF27={ voll:{}, lade:{}, migLaeuft:false, korrSchritte:[], tastatur:false };
+/* ── §1 · Tastatur: #nav bleibt an seinem Platz im DOM und hinter der Tastatur (CSS: #nav translateY(--vvTop)); abgelöst: hf26NavInSuche (#nav in #ebene1) ── */
+const hf26NavInSuche26=hf26NavInSuche;   // Hotfix 27 §1.3: abgelöst durch die feste Tableiste (Code bleibt)
+hf26NavInSuche=function(){ try{ const nav=el('nav'), eb=el('ebene1'); if(nav && eb && nav.parentNode===eb && HF26_NAV.platz){ const p=HF26_NAV.platz; HF26_NAV.platz=null; if(p.next && p.next.parentNode===p.parent) p.parent.insertBefore(nav, p.next); else p.parent.appendChild(nav); } }catch(e){} };   // nur noch zurückstellen, nie mehr hineinhängen
+{ const _alt=vvSync; vvSync=function(){ _alt(); try{ const vv=window.visualViewport; if(!vv) return; const kb=Math.max(0, Math.round(window.innerHeight-vv.height-vv.offsetTop)); HF27.tastatur=kb>100;
+    document.documentElement.style.setProperty('--vvKb', kb+'px'); if(document.body) document.body.classList.toggle('hf27-tastatur', HF27.tastatur); }catch(e){} }; }   // §1.2: Kennzeichen für Prüfungen; die Tableiste folgt allein --vvTop
+/* ── §2 · Volltext: EINE Lesefunktion fsVolltext(tabelle, id, felder) — liest den Datensatz einzeln (datensatz_lesen), Lager mit Zeitstempel; gekürzt („… (N Zeichen)“) bleibt nie stehen ── */
+function hf27Gekuerzt(t){ return hf26Gekuerzt(t); }
+function hf27Datensatz(d){ const r=d && (d.datensatz||d); if(!(r && r.id)) return null; if(r.felder && typeof r.felder==='object'){ Object.keys(r.felder).forEach(f=>{ if(r[f]===undefined) r[f]=r.felder[f]; }); } return r; }
+function fsVolltext(tabelle, id, felder){ const key=String(tabelle)+'|'+String(id), fl=Array.isArray(felder)?felder:[];
+  const L=HF27.voll[key]; if(L && L.r && !fl.some(f=>hf27Gekuerzt(L.r[f]))) return Promise.resolve(L.r);
+  if(HF27.lade[key]) return HF27.lade[key];
+  const p=FSLive.lesen('datensatz_lesen', { tabelle, id }).then(d=>{ const r=hf27Datensatz(d); if(!r) throw new Error('kein Datensatz');
+    if(fl.some(f=>hf27Gekuerzt(r[f]))) throw new Error('Text unvollständig, bitte neu laden');
+    HF27.voll[key]={ ts:Date.now(), r }; return r; });
+  HF27.lade[key]=p; p.catch(()=>{}).then(()=>{ delete HF27.lade[key]; }); return p; }
+const hf26PfVollLesen26=hf26PfVollLesen;   // Hotfix 27 §2.3: abgelöst durch fsVolltext
+hf26PfVollLesen=function(id){ return fsVolltext('Postfach', id, ['Output/Entwurf']); };
+{ const _alt=f12Text; f12Text=function(kanal, r){ try{ if(r && kanal && F12.voll[r.id]==null && f12Gekuerzt(r.Text) && !F12.lade[r.id] && !r.lokal && FSLive.gekoppelt()){ F12.lade[r.id]=true;   // §2.3: Chat-Text über fsVolltext (abgelöst: eigenes datensatz_lesen in f12Text 7991)
+      fsVolltext(kanal.Tabelle, r.id, ['Text']).then(v=>{ F12.voll[r.id]=String(v.Text||''); try{ if(e1Art()==='chat') f12Rendern(); }catch(e){} }).catch(()=>{}).then(()=>{ F12.lade[r.id]=false; }); } }catch(e){} return _alt(kanal, r); }; }
+const f15PfLaden26=f15PfLaden;   // Hotfix 27 §2.3: abgelöst durch fsVolltext
+f15PfLaden=function(id){ if(!id || F15.lade[id] || !FSLive.gekoppelt()) return; F15.lade[id]=true;
+  fsVolltext('Postfach', id, []).then(r=>{ F15.pf[id]={ ts:Date.now(), r }; if(e1Art()==='agentenkarte') f15KarteRendern(); }).catch(()=>{}).then(()=>{ F15.lade[id]=false; }); };
+/* §2.3 · gekürzter Text wird nie gespeichert: Postfach-Freigabe und Pakete brechen ab */
+function hf27KarteGekuerzt(kk){ if(!kk) return false; return hf27Gekuerzt(kk.titel) || hf27Gekuerzt(kk.notiz) || (kk.unteraufgaben||[]).some(t=>hf27Gekuerzt(typeof t==='string' ? t : (t && t.titel))); }
+{ const _alt=f7PfKarteAnlegen; f7PfKarteAnlegen=function(r, kk){ if(hf27KarteGekuerzt(kk)){ toast('Text unvollständig, bitte neu laden'); return null; } const k=_alt(r, kk); try{ if(k) hf27UaKarteErgaenzen(k); }catch(e){} return k; }; }
+{ const _alt=f7PfEntwurfAnwenden; f7PfEntwurfAnwenden=function(k, subs, kk){ if(hf27KarteGekuerzt(kk)){ toast('Text unvollständig, bitte neu laden'); return k; } const r=_alt(k, subs, kk); try{ if(!subs) hf27UaKarteErgaenzen(k); }catch(e){} return r; }; }
+{ const _alt=syncImport; syncImport=function(text, opt){ try{ const p=JSON.parse(String(text)); const karten=(p && Array.isArray(p.karten)) ? p.karten : [];
+      const gek=karten.filter(c=>c && (hf27Gekuerzt(c.titel) || hf27Gekuerzt(c.notiz) || hf27Gekuerzt(c.beschreibung) || (Array.isArray(c.unteraufgaben) && c.unteraufgaben.some(u=>hf27Gekuerzt(u && (u.titel!==undefined ? u.titel : u))))));
+      if(gek.length) return { fehler:'Text unvollständig, bitte neu laden ('+gek.length+' Karte(n) mit gekürztem Text im Paket)' }; }catch(e){}
+    const res=_alt(text, opt); try{ if(res && !res.fehler && !res.freigabeNoetig){ const p=JSON.parse(String(text)); (p.karten||[]).forEach(c=>{ const k=c && c.id && S.karten.find(x=>x.id===c.id); if(k) hf27UaKarteErgaenzen(k); }); } }catch(e){} return res; }; }   // §4.3: Unteraufgaben aus Paketen mit Vorschlag
+/* §2.5 · Reparatur volltext27: jede Karte und Unteraufgabe beider Familien mit gekürztem Text in Notiz, Titel oder Beschreibung.
+   Quelle (a) Postfach-Karte, deren Feld „Pascals Anpassung“ die Karten-id nennt (bzw. meta.postfachKarten), Feld Output/Entwurf · (b) Agenten-Auftrag mit Bezug Aufgabe = Karte
+   (Text im Kartenformat) · (c) keine Quelle → meta.volltext27.fehler (Bericht, ❓). Abgelöst: pfVoll26 (hf26PfVollMigration) und hf26KarteNachziehen (nur Postfach-Herkunft). */
+function hf27KarteOffen(k){ return !!(k && (hf27Gekuerzt(k.notiz) || hf27Gekuerzt(k.titel) || hf27Gekuerzt(k.beschreibung) || (S.unteraufgaben||[]).some(u=>u.parentId===k.id && hf27Gekuerzt(u.titel)))); }
+function hf27Kandidaten(){ return (S.karten||[]).filter(hf27KarteOffen).map(k=>k.id); }
+function hf27KarteNachziehen(karteId, quelle, kk){ const k=S.karten.find(x=>x.id===karteId); if(!k) return null;
+  const alt=(S.unteraufgaben||[]).filter(u=>u.parentId===karteId), gek=alt.filter(u=>hf27Gekuerzt(u.titel));
+  const e={ karteId, quelle, ts:jetztIso(), notizVorher:String(k.notiz||'').length, notizNachher:0, titelErsetzt:false, uaVorher:alt.length, uaArchiviert:0, uaNeu:0, uaNachher:0 };
+  if((hf27Gekuerzt(k.notiz) || !String(k.notiz||'').trim()) && kk.notiz && !hf27Gekuerzt(kk.notiz)){ if(k.notiz) k.notizVorher27=k.notiz; k.notiz=kk.notiz; }   // Notiz gekürzt oder leer → aus der Quelle (wie hf26KarteNachziehen)
+  if(hf27Gekuerzt(k.titel) && kk.titel && !hf27Gekuerzt(kk.titel)){ k.titelVorher27=k.titel; k.titel=kk.titel; e.titelErsetzt=true; }
+  e.notizNachher=String(k.notiz||'').length;
+  if(!Array.isArray(S.meta.entfernteUnteraufgaben)) S.meta.entfernteUnteraufgaben=[];
+  const neu=[]; (kk.unteraufgaben||[]).forEach((t,i)=>{ if(hf27Gekuerzt(t)) return; if(alt.some(u=>!hf27Gekuerzt(u.titel) && String(u.titel||'').trim()===String(t).trim())) return;
+    const u=neueUnteraufgabe(karteId, Object.assign({ titel:t, bonusPunkte:null, sollMin:0 }, f7PfUnterDetail(kk, i))); hf27UaErgaenzen(u, k); neu.push(u); });
+  gek.forEach(u=>{ S.meta.entfernteUnteraufgaben.push({ id:u.id, parentId:u.parentId, titel:u.titel||'', airtableId:u.airtableId||null, ts:jetztIso(), ersetztDurch:neu.map(n=>n.id), grund:'Hotfix 27 §2.5: gekürzter Text aus der Liste ('+quelle+')' }); e.uaArchiviert++; });
+  S.unteraufgaben=(S.unteraufgaben||[]).filter(u=>gek.indexOf(u)<0);
+  neu.forEach(n=>{ S.unteraufgaben.push(n); e.uaNeu++; }); e.uaNachher=(S.unteraufgaben||[]).filter(u=>u.parentId===karteId).length;
+  beruehre(k); saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveMeta(); return e; }
+function hf27PfIdFuer(karteId){ const m=(S.meta && S.meta.postfachKarten)||{}; const pf=Object.keys(m).find(id=>m[id] && m[id].karteId===karteId); if(pf) return Promise.resolve(pf);
+  return FSLive.lesen('datensaetze_auflisten', { tabelle:'Postfach', felder:['Titel'], filter:[{ feld:'Pascals Anpassung', operator:'enthaelt', wert:String(karteId) }], limit:1 }).then(d=>{ const z=(d && d.datensaetze && d.datensaetze[0]); return z ? String(z.id) : null; }); }
+function hf27AuftragFuer(karteId){ return FSLive.lesen('datensaetze_auflisten', { tabelle:'Agenten-Aufträge', felder:['Text'], filter:[{ feld:'Aufgabe', operator:'gleich', wert:String(karteId) }], sortierung:[{ feld:'Zeitpunkt', richtung:'ab' }], limit:5 })
+  .then(d=>((d && d.datensaetze)||[]).map(z=>String(z.id))).catch(()=>[]); }
+function hf27QuelleLesen(karteId){
+  return hf27PfIdFuer(karteId).then(pfId=>{ if(!pfId) return null; return fsVolltext('Postfach', pfId, ['Output/Entwurf']).then(r=>{ const kk=f7PfKarteLesen(r, String(r['Output/Entwurf']||'')); return kk ? { quelle:'postfach:'+pfId, kk } : null; }); })
+    .then(q=>{ if(q) return q; return hf27AuftragFuer(karteId).then(ids=>{ let p=Promise.resolve(null); ids.forEach(id=>{ p=p.then(x=>{ if(x) return x; return fsVolltext('Agenten-Aufträge', id, ['Text']).then(r=>{ const kk=f7PfKarteLesen(r, String(r.Text||'')); return kk ? { quelle:'auftrag:'+id, kk } : null; }).catch(()=>null); }); }); return p; }); }); }
+function hf27VolltextMigration(){ if(!S.meta || (S.meta.volltext27 && S.meta.volltext27.fertig) || HF27.migLaeuft || !FSLive.gekoppelt()) return;
+  const p=(S.meta.volltext27 && !S.meta.volltext27.fertig) ? S.meta.volltext27 : { name:'volltext27', ts:jetztIso(), version:APP_VERSION, kandidaten:hf27Kandidaten().length, karten:[], fehler:[], fertig:false };
+  const offen=hf27Kandidaten().filter(id=>!p.karten.some(y=>y.karteId===id) && !p.fehler.some(y=>y.karteId===id && y.endgueltig));
+  if(!offen.length){ p.fertig=true; p.fertigTs=jetztIso(); S.meta.volltext27=p; if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[]; if(!S.meta.migrationen.some(x=>x && x.name==='volltext27')) S.meta.migrationen=S.meta.migrationen.concat([{ name:'volltext27', ts:p.fertigTs, version:APP_VERSION, karten:p.karten.length, fehler:p.fehler.length }]).slice(-50); saveMeta(); return; }
+  HF27.migLaeuft=true;
+  (function naechste(i){ if(i>=offen.length){ HF27.migLaeuft=false; S.meta.volltext27=p; saveMeta(); hf27VolltextMigration(); try{ kettenListenNeu(); renderAlles(); }catch(e){} return; } const id=offen[i];
+    hf27QuelleLesen(id).then(q=>{ if(!q){ p.fehler.push({ karteId:id, grund:'keine Quelle (❓)', endgueltig:true }); return; } const e=hf27KarteNachziehen(id, q.quelle, q.kk); if(e) p.karten.push(e); if(hf27KarteOffen(S.karten.find(x=>x.id===id))) p.fehler.push({ karteId:id, grund:'Quelle '+q.quelle+' deckt nicht alles', endgueltig:true }); })
+      .catch(e=>{ p.fehler.push({ karteId:id, grund:String((e && e.message)||e) }); })
+      .then(()=>{ S.meta.volltext27=p; saveMeta(); naechste(i+1); }); })(0); }
+const hf26PfVollMigration26=hf26PfVollMigration;   // Hotfix 27 §2.5: abgelöst durch volltext27 (läuft nicht mehr)
+hf26PfVollMigration=function(){};
+setTimeout(()=>{ try{ hf27VolltextMigration(); }catch(e){} }, 15000); setInterval(()=>{ try{ hf27VolltextMigration(); }catch(e){} }, 300000);
+/* ── §3 · Infokarten auf der Fokusseite (Zielbild 12): ein Block zwischen Unteraufgaben und Nächstes; zwei Gruppen (Verlinkt · Gleiches Thema), je zu-/aufklappbar ── */
+function hf27InfoGruppen(k){ const fam=k.domain, ids=Array.isArray(k.infos)?k.infos:[]; const offen=x=>x && x.status!=='archiviert' && x.domain===fam && istInfoKarte(x) && x.id!==k.id;
+  const verlinkt=ids.map(id=>S.karten.find(x=>x.id===id)).filter(offen); const vs=new Set(verlinkt.map(x=>x.id)); const th=k43Thema(k);
+  const thema=S.karten.filter(x=>offen(x) && x.status==='offen' && !vs.has(x.id) && k43Thema(x).thema===th.thema); return { verlinkt, thema, themaName:th.thema }; }
+function hf27InfoUi(){ if(!S.ui.hf27Info || typeof S.ui.hf27Info!=='object') S.ui.hf27Info={ verlinkt:true, thema:false, auf:{} }; if(!S.ui.hf27Info.auf) S.ui.hf27Info.auf={}; return S.ui.hf27Info; }
+function hf27InfoKurz(x){ const t=String(x.kurzfassung||'').replace(/\s+/g,' ').trim(); return t ? esc(t) : '<span class="hf27-fehlt">Kurzfassung fehlt</span>'; }
+function hf27InfoMeta(x){ return esc(k43Thema(x).thema)+(x.letzteBearbeitung ? ' · geändert '+esc(kz42Datum(x.letzteBearbeitung)) : ''); }
+function hf27InfoZeileHtml(x){ return '<div class="hf27-ik" data-hf27ik="'+esc(x.id)+'" role="button"><div class="hf27-z"><b>ℹ️ '+esc(String(x.titel||'?'))+'</b><span class="hf27-pf">▸</span></div><span class="hf27-m">'+hf27InfoMeta(x)+'</span><span class="hf27-k1">'+hf27InfoKurz(x)+'</span></div>'; }
+function hf27Absaetze(t){ return String(t||'').replace(/\r/g,'').split(/\n{2,}/).map(a=>'<p>'+esc(a).replace(/\n/g,'<br>')+'</p>').join(''); }
+function infoKarteVollHtml(x){ const th=k43Thema(x), chips=[]; if(x.domain==='privat') chips.push('Privat'); else if(x.projekt) chips.push(x.projekt); else if(x.abteilung) chips.push(x.abteilung);
+  if(th.art==='projekt' && th.abteilung) chips.push(th.abteilung); chips.push(KARTENART42_LABEL[x.art]||'Info'); if(x.erstelltTs) chips.push('angelegt '+kz42Datum(x.erstelltTs)); if(x.letzteBearbeitung) chips.push('geändert '+kz42Datum(x.letzteBearbeitung)); if(x.owner) chips.push(String(x.owner));
+  let inhalt; if(hf27Gekuerzt(x.notiz)){ const tab=x.domain==='privat' ? 'Privat_Karten' : 'Aufgaben', rid=x.airtableId||x.id, key=tab+'|'+rid, L=HF27.voll[key];
+    if(L && L.r && L.r.Notiz!=null && !hf27Gekuerzt(L.r.Notiz)) inhalt=hf27Absaetze(L.r.Notiz);
+    else { inhalt='<p class="hf27-fehlt">Inhalt wird vollständig gelesen …</p>'; if(FSLive.gekoppelt()) fsVolltext(tab, rid, ['Notiz']).then(()=>{ try{ renderFokus(); }catch(e){} }).catch(()=>{ try{ toast('Text unvollständig, bitte neu laden'); }catch(e){} }); } }
+  else inhalt=String(x.notiz||'').trim() ? hf27Absaetze(x.notiz) : '<p class="hf27-fehlt">Keine Notiz</p>';
+  return '<div class="hf27-ik auf" data-hf27ik="'+esc(x.id)+'"><div class="hf27-z hf27-kopf" role="button"><b>ℹ️ '+esc(String(x.titel||'?'))+'</b><span class="hf27-pf">▾</span></div>'+
+    '<div class="hf27-chips">'+chips.map(c=>'<span>'+esc(c)+'</span>').join('')+'</div><p class="hf27-lab">Kurzfassung</p><div class="hf27-kurz">'+hf27InfoKurz(x)+'</div><p class="hf27-lab">Inhalt</p><div class="hf27-voll">'+inhalt+'</div></div>'; }
+function hf27GruppeHtml(key, titel, liste, zu){ const U=hf27InfoUi();
+  return '<div class="hf27-grp" data-hf27grp="'+key+'" role="button">'+(zu?'▸':'▾')+' '+titel+' <span>'+liste.length+'</span></div>'+(zu||!liste.length ? '' : '<div class="hf27-liste">'+liste.map(x=>U.auf[x.id] ? infoKarteVollHtml(x) : hf27InfoZeileHtml(x)).join('')+'</div>'); }
+function hf27InfokartenHtml(k){ if(!k) return ''; const G=hf27InfoGruppen(k), U=hf27InfoUi();
+  const leer=!G.verlinkt.length && !G.thema.length;
+  return '<div class="blk hf27-info" id="hf27Info"><div class="blk-h">Infokarten</div>'+(leer ? '<div class="thinweis">Keine Infokarten</div>' : '')+
+    hf27GruppeHtml('verlinkt', 'Verlinkt', G.verlinkt, !U.verlinkt)+hf27GruppeHtml('thema', 'Gleiches Thema · '+esc(G.themaName), G.thema, !U.thema)+'</div>'; }
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
+  const g=t.closest('[data-hf27grp]'); if(g){ e.stopPropagation(); const U=hf27InfoUi(); U[g.dataset.hf27grp]=!U[g.dataset.hf27grp]; saveUi(); haptik(6); try{ renderFokus(); }catch(x){} return; }
+  const ik=t.closest('[data-hf27ik]'); if(ik && (!ik.classList.contains('auf') || t.closest('.hf27-kopf'))){ e.stopPropagation(); const U=hf27InfoUi(), id=ik.dataset.hf27ik; U.auf[id]=!U.auf[id]; saveUi(); haptik(6); try{ renderFokus(); }catch(x){} return; } }, true);
+/* §3.7 · Verlinken im Bearbeiten-Fenster (renderDetail42): Feld „Infos“ mit Suche über die Infokarten der Familie; Chips der verlinkten Karten */
+function hf27InfosFeldHtml(k, q){ const ids=Array.isArray(k.infos)?k.infos:[], such=String(q||'').trim().toLowerCase();
+  const chips=ids.map(id=>{ const x=S.karten.find(y=>y.id===id); return x ? '<button type="button" class="chip on" data-hf27infodel="'+esc(id)+'">ℹ️ '+esc(String(x.titel||'').slice(0,40))+' ✕</button>' : ''; }).join('');
+  const treffer=such ? S.karten.filter(x=>x && x.domain===k.domain && x.id!==k.id && x.status!=='archiviert' && istInfoKarte(x) && ids.indexOf(x.id)<0 && String(x.titel||'').toLowerCase().indexOf(such)>=0).slice(0,8) : [];
+  return '<div class="field" id="hf27InfosFeld"><label>Infos (Infokarten verlinken)</label><div class="chips">'+(chips||'<span class="hint" style="margin:0">keine</span>')+'</div>'+
+    '<input id="hf27InfoSuche" type="search" placeholder="Infokarte suchen …" value="'+esc(q||'')+'" autocomplete="off">'+
+    (such ? '<div class="chips" style="margin-top:6px">'+(treffer.length ? treffer.map(x=>'<button type="button" class="chip" data-hf27infoadd="'+esc(x.id)+'">＋ '+esc(String(x.titel||'').slice(0,40))+'</button>').join('') : '<span class="hint" style="margin:0">keine Infokarte gefunden</span>')+'</div>' : '')+'</div>'; }
+function hf27InfosFeldNeu(q){ const host=el('hf27InfosFeld'); if(!host || !entwurf) return; const w=document.createElement('div'); w.innerHTML=hf27InfosFeldHtml(entwurf, q); host.replaceWith(w.firstChild); if(q!=null){ const i=el('hf27InfoSuche'); if(i){ i.focus(); try{ i.setSelectionRange(i.value.length, i.value.length); }catch(e){} } } }
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest || !entwurf) return;
+  const a=t.closest('[data-hf27infoadd]'); if(a){ e.stopPropagation(); if(!Array.isArray(entwurf.infos)) entwurf.infos=[]; if(entwurf.infos.indexOf(a.dataset.hf27infoadd)<0) entwurf.infos.push(a.dataset.hf27infoadd); hf27InfosFeldNeu(''); return; }
+  const d=t.closest('[data-hf27infodel]'); if(d){ e.stopPropagation(); entwurf.infos=(entwurf.infos||[]).filter(x=>x!==d.dataset.hf27infodel); hf27InfosFeldNeu(''); return; } }, true);
+document.addEventListener('input', e=>{ if(e.target && e.target.id==='hf27InfoSuche') hf27InfosFeldNeu(e.target.value); }, true);
+/* ── §4 · Unteraufgaben: Minuten und Punkte immer gesetzt; fehlt ein Wert aus einer automatischen Quelle, setzt die App einen Vorschlag der Punkte-Engine und markiert ungeprueft ── */
+function hf27UaVorschlagMin(k, u){ const subs=untermenge(k.id), andere=subs.filter(x=>x.id!==u.id && num(x.sollMin)>0).reduce((s,x)=>s+num(x.sollMin),0), ohne=Math.max(1, subs.filter(x=>!(num(x.sollMin)>0)).length);
+  const rest=Math.max(0, num(k.sollMin)-andere); return rest>0 ? Math.max(5, Math.round(rest/ohne/5)*5) : 15; }   // Anteil der offenen Kartenzeit, mindestens 5, auf 5 gerundet; ohne Soll 15
+function hf27UaVorschlagPunkte(k){ if(k && k.std42) return e42Bonus(k); return (k && k.domain==='dfm') ? num(S.settings&&S.settings.subBonusDfm,100) : num(S.settings&&S.settings.subBonusPrivat,100); }   // Regel aus neueUnteraufgabe (5085): std42 → e42Bonus der Karte, sonst subBonusDfm/subBonusPrivat
+function hf27UaErgaenzen(u, k){ if(!u || !k || istUnterZaehler(u) || u.done) return false; let ge=false;
+  if(!(num(u.sollMin)>0)){ u.sollMin=hf27UaVorschlagMin(k, u); u.ungeprueft=true; ge=true; }
+  if(u.bonusPunkte==null || u.bonusPunkte===''){ u.bonusPunkte=hf27UaVorschlagPunkte(k); u.ungeprueft=true; ge=true; }
+  return ge; }
+/* Vorschlag für ALLE Unteraufgaben einer Karte ohne Minuten: die offene Kartenzeit (Soll der Karte minus Soll der übrigen) wird exakt auf sie verteilt (letzte bekommt den Rest, je mindestens 5; ohne Soll 15 Min);
+   Punkte je fehlendem Wert nach hf27UaVorschlagPunkte. Das Soll der Karte bleibt unverändert; die Invariante §3.2 (Karten-Soll = Σ Unteraufgaben) geht danach auf. subs = Liste (Standard untermenge). */
+function hf27UaVerteilen(k, subs){ if(!k) return 0; subs=subs||untermenge(k.id); let n=0; const offen=subs.filter(u=>u && !istUnterZaehler(u) && !u.done && !(num(u.sollMin)>0));
+  if(offen.length){ const andere=subs.filter(u=>num(u.sollMin)>0).reduce((s,u)=>s+num(u.sollMin),0), rest=Math.max(0, Math.round(num(k.sollMin)-andere)); let verteilt=0;
+    offen.forEach((u,i)=>{ const v=rest>0 ? ((i===offen.length-1) ? Math.max(5, rest-verteilt) : Math.max(5, Math.round(rest/offen.length))) : 15; verteilt+=v; u.sollMin=v; u.ungeprueft=true; n++; }); }
+  subs.forEach(u=>{ if(!u || istUnterZaehler(u) || u.done) return; if(u.bonusPunkte==null || u.bonusPunkte===''){ u.bonusPunkte=hf27UaVorschlagPunkte(k); u.ungeprueft=true; n++; } });
+  return n; }
+function hf27UaKarteErgaenzen(k){ const n=hf27UaVerteilen(k); if(n) DB.set('unteraufgaben', S.unteraufgaben); return n; }
+{ const _alt=detailSpeichern; detailSpeichern=function(){ try{ if(entwurf && Array.isArray(entwurfSubs) && entwurfSubs.length) hf27UaVerteilen(entwurf, entwurfSubs); }catch(e){} return _alt(); }; }   // §4.3: auch im Bearbeiten-Fenster bekommt jede Unteraufgabe ohne Wert den Vorschlag (ungeprüft), bevor die Invariante §3.2 rechnet
+{ const _alt=fokusSubsHtml; fokusSubsHtml=function(k){ try{ hf27UaKarteErgaenzen(k); }catch(e){} return _alt(k); }; }   // §4.3: jede Unteraufgabe trägt Minuten und Punkte, bevor die Fokusseite sie zeichnet
+{ const _alt=ks42SubsErsetzen; ks42SubsErsetzen=function(k, liste){ const r=_alt(k, liste); try{ hf27UaKarteErgaenzen(k); }catch(e){} return r; }; }   // §4.3: Kartenset
+/* §4.4 · Bestand (Migration ua27, einmalig): Unteraufgaben offener Karten mit 0 Minuten oder ohne Punkte bekommen den Vorschlag mit ungeprueft */
+function migrationUa27(){ if(!S.meta || (S.meta.ua27 && S.meta.ua27.ts)) return null; const p={ name:'ua27', ts:jetztIso(), version:APP_VERSION, karten:0, unteraufgaben:0, ids:[] };
+  (S.karten||[]).forEach(k=>{ if(!k || k.status!=='offen') return; const vorher=untermenge(k.id).filter(u=>!u.ungeprueft).map(u=>u.id); const n=hf27UaVerteilen(k); if(n){ p.karten++; p.unteraufgaben+=n; untermenge(k.id).forEach(u=>{ if(u.ungeprueft && vorher.indexOf(u.id)>=0) p.ids.push(u.id); }); } });
+  p.ids=p.ids.slice(0,500); S.meta.ua27=p; if(!Array.isArray(S.meta.migrationen)) S.meta.migrationen=[]; S.meta.migrationen=S.meta.migrationen.concat([{ name:'ua27', ts:p.ts, version:APP_VERSION, karten:p.karten, unteraufgaben:p.unteraufgaben }]).slice(-50);
+  saveKarten(); DB.set('unteraufgaben', S.unteraufgaben); saveMeta(); return p; }
+{ const _alt=migrationKarten43b; migrationKarten43b=function(){ const r=_alt(); try{ migrationUa27(); }catch(e){} return r; }; }
+/* ── §5 · Postfach-Zeit entfällt; Korrektur-Paket mit bonusAusgleich; Abweisungsgründe je Schritt; keine Überlappung beim Nachtrag und beim Start ── */
+const f7PostfachVerlassen26=f7PostfachVerlassen;   // Hotfix 27 §5.1: abgelöst — der Bonus „Postfach-Zeit“ (400 P/h) entfällt dauerhaft; Zeit im Postfach zählt nur über die laufende Karte
+f7PostfachVerlassen=function(){ F7.pfSeit=null; };
+function hf27BonusAusgleich(kx, abgewiesen, schritte){ const liste=Array.isArray(kx.bonusAusgleich) ? kx.bonusAusgleich : []; const datum=String(kx.datum||''), zeilen=[];
+  liste.forEach((b,i)=>{ b=b||{}; const was='Korrektur '+datum+' · Bonusausgleich '+(i+1)+(b.grund ? ' ('+String(b.grund).slice(0,40)+')' : ''), p=logRund(num(b.punkte)), fam=(b.familie==='privat') ? 'privat' : 'dfm', tagD=String(b.tag||datum);
+    const schritt={ nr:schritte.length+1, aktion:'bonusAusgleich', was, status:'angewendet', grund:'' }; schritte.push(schritt);
+    const ab=(grund)=>{ schritt.status='abgewiesen'; schritt.grund=grund; abgewiesen.push({ was, grund }); };
+    if(!p){ ab('punkte fehlen'); return; } if(!b.grund || !String(b.grund).trim()){ ab('grund fehlt'); return; }
+    const heute=tagOffen() && S.tag.datum===tagD;
+    if(heute){ const log=S.tag.log=S.tag.log||[]; const bonus=log.find(l=>l && l.art==='bonus' && String(l.grund||'')===String(b.grund) && (!b.ts || Math.abs(Date.parse(l.ts)-Date.parse(b.ts))<60000));
+      if(!bonus){ ab('Bonus „'+String(b.grund)+'“ nicht im Tages-Log'); return; } if(bonus.ausgeglichen27){ schritt.grund='schon ausgeglichen'; return; }
+      bonus.ausgeglichen27=jetztIso(); log.push({ itemId:'korrektur', titel:'Ausgleich: '+String(b.grund), domain:fam, art:'korrektur', punkte:p, ts:jetztIso(), grund:String(kx.grund||''), bonusTs:bonus.ts });
+      const e=logIntraday({ id:null, domain:fam }, { punkte:p, typ:'korrektur-tag', quelle:'korrektur' }); e.grund=String(kx.grund||''); e.bonusTs=bonus.ts; e.datum=tagD; DB.set('intraday', S.intraday); saveTag(); }
+    else { const hs=korrSnapshots(tagD), h=hs[hs.length-1]; if(!h){ ab('kein Tages-Snapshot zu '+tagD); return; } if(!Array.isArray(h.log)) h.log=[];
+      const bonus=h.log.find(l=>l && l.art==='bonus' && String(l.grund||'')===String(b.grund) && (!b.ts || Math.abs(Date.parse(l.ts)-Date.parse(b.ts))<60000));
+      if(!bonus){ ab('Bonus „'+String(b.grund)+'“ nicht im Tages-Log von '+tagD); return; } if(bonus.ausgeglichen27){ schritt.grund='schon ausgeglichen'; return; }
+      bonus.ausgeglichen27=jetztIso(); h.log.push({ itemId:'korrektur', titel:'Ausgleich: '+String(b.grund), domain:fam, art:'korrektur', punkte:p, ts:jetztIso(), grund:String(kx.grund||''), bonusTs:bonus.ts });
+      const e=logEintragFuerTag(h, tagD, { domaene:fam, punkte:p, grund:String(kx.grund||''), bonusTs:bonus.ts }); void e; h.punkteBilanz=Math.round((num(h.punkteBilanz)+p)*10)/10;   // Münzen und Konto unverändert (§5.5, ❓ Pascal) — kein kontoNachziehen
+      DB.set('intraday', S.intraday); saveHistorie(); }
+    zeilen.push('Bonus ausgeglichen: „'+String(b.grund)+'“ '+(p>=0?'+':'')+fmtP(p)+' P ('+(fam==='dfm'?'DFM':'Privat')+', '+tagD+')'); });
+  return zeilen; }
+{ const _alt=korrekturAnwenden; korrekturAnwenden=function(kx, abgewiesen){ abgewiesen=abgewiesen||[]; const vorher=abgewiesen.length, datum=String((kx && kx.datum)||''), schritte=[];
+    const e=_alt(kx, abgewiesen);
+    (Array.isArray(kx && kx.sitzungen) ? kx.sitzungen : []).forEach((sz,i)=>{ sz=sz||{}; const was='Korrektur '+datum+' · Sitzung '+(i+1)+(sz.id ? ' ('+sz.id+')' : ''); const a=abgewiesen.slice(vorher).find(x=>x && x.was===was);
+      schritte.push({ nr:schritte.length+1, aktion:String(sz.aktion||''), was, status:a ? 'abgewiesen' : 'angewendet', grund:a ? String(a.grund||'') : '' }); });
+    const zeilen=hf27BonusAusgleich(kx||{}, abgewiesen, schritte);
+    if(e && zeilen.length){ e.aenderungen=(e.aenderungen||[]).concat(zeilen); }
+    if(e) e.schritte=schritte; HF27.korrSchritte=HF27.korrSchritte.concat(schritte);
+    if(!e && zeilen.length){ try{ if(!Array.isArray(S.meta.korrekturProtokoll)) S.meta.korrekturProtokoll=[]; S.meta.korrekturProtokoll=S.meta.korrekturProtokoll.concat([{ ts:jetztIso(), datum, grund:String(kx.grund||''), aenderungen:zeilen, schritte }]).slice(-200); saveMeta(); }catch(x){} }
+    try{ rangInvalidieren(); }catch(x){}
+    return e || (zeilen.length ? { datum, aenderungen:zeilen, schritte } : e); }; }
+function hf27KorrErgebnis(){ const s=HF27.korrSchritte; HF27.korrSchritte=[]; return s.length ? { ergebnis:{ schritte:s } } : {}; }   // §5.3: paketMelden hängt die Schritte an die Rückmeldung
+/* §5.4a · Ein Nachtrag, der in die LAUFENDE Sitzung fällt, teilt sie: die laufende Sitzung endet beim Beginn des Nachtrags und läuft nach seinem Ende weiter (zwei Sitzungen) */
+{ const _alt=nachtragBuchen; nachtragBuchen=function(k, vonMs, bisMs){ let wieder=null;
+    try{ if(S.fokus && S.fokus.laeuft && num(S.fokus.startMs)>0 && vonMs>num(S.fokus.startMs) && vonMs<Date.now()){ wieder={ kid:S.fokus.karteId, quelle:S.fokus.quelle||null, nurZeit:!!S.fokus.nurZeit, startMs:Math.min(Date.now(), bisMs) }; fokusZeitEinbuchen(vonMs); } }catch(e){ wieder=null; }
+    const e=_alt(k, vonMs, bisMs);
+    if(wieder){ S.fokus={ karteId:wieder.kid, laeuft:true, startMs:wieder.startMs, sessionSek:0, quelle:wieder.quelle, nurZeit:wieder.nurZeit }; saveFokus(); try{ renderStatusbar(); }catch(x){} }
+    return e; }; }
+/* §5.4b · Jede Uhr-Sitzung trägt ihren exakten Beginn (von); beim Start einer Karte endet die vorige Sitzung genau zum Startzeitpunkt (fokusStarten 10047/10050, t0) */
+{ const _alt=fokusZeitEinbuchen; fokusZeitEinbuchen=function(bisMs){ const kid=S.fokus ? S.fokus.karteId : null, start=S.fokus ? num(S.fokus.startMs) : 0, lief=!!(S.fokus && S.fokus.laeuft), n0=(S.intraday||[]).length;
+    _alt(bisMs);
+    try{ if(lief && start>0){ const e=(S.intraday||[]).slice(n0).reverse().find(x=>x && x.typ==='timer' && x.kartenId===kid); if(e && !e.von) e.von=new Date(start).toISOString(); if(e && !e.von) return; if(e) DB.set('intraday', S.intraday); } }catch(x){} }; }
+/* ── §6 · Benachrichtigung nur aus dem führenden Chat: stille Zeilen (Feld Still) zählen nicht als ungelesen, lösen keine Mitteilung aus, fehlen im Postfach-Filter 💬 Chats ── */
+function hf27Still(r){ return !!(r && (r.Still===true || r.Still==='true' || r.still===true)); }
+{ const _alt=f12Ungelesen; f12Ungelesen=function(r){ return _alt(r) && !hf27Still(r); }; }
+{ const _alt=f12Benachrichtigen; f12Benachrichtigen=function(kanal, r){ if(hf27Still(r)) return; return _alt(kanal, r); }; }
+/* ── §7 · Standard-Tagesblöcke (engine43.tagesbloecke), Erholung als Block, Ketten vergangener Tage beim Aufstehen archivieren, Antwortzeile öffnet den Chat ── */
+function hf27StdBloecke(){ const E=k43Einst(); return Array.isArray(E.tagesbloecke) ? E.tagesbloecke : DEFAULT_SETTINGS.engine43.tagesbloecke; }
+{ const _alt=tagesBloecke; tagesBloecke=function(datum){ const r=_alt(datum); if(r) return r;
+    const typ={ fokus1:'dfm', fokus2:'dfm', senke:'pause', erholung:'pause', aufstehen:'privat', aufwachen:'privat', abendroutine:'privat', overload:'dfm' };
+    const l=hf27StdBloecke().filter(b=>b && b.block && b.von && b.bis).map((b,i)=>({ id:'b'+(i+1), name:k43BlockName(b.block), von:hf26Std(b.von), bis:hf26Std(b.bis), typ:typ[b.block]||'dfm', parent:null, tiefe:0, standard27:true }));
+    return l.length ? l : null; }; }   // §7.1: Rückfall auf die Standard-Tagesblöcke (Werktag) ohne eigene Blöcke des Tags
+{ const _alt=k43Morgenketten; k43Morgenketten=function(){ try{ hf27KettenArchivieren(); }catch(e){} return _alt(); }; }   // §7.3: beim Aufstehen (k43Aufstehen 27401 → k43Morgenketten 27425)
+function hf27KettenArchivieren(){ if(!Array.isArray(S.tagesketten)) return 0; const heute=heuteApp(), alt=S.tagesketten.filter(c=>c && c.datum && c.datum<heute && (c.art==='block' || c.art==='tag' || c.art==='eigene')); if(!alt.length) return 0;
+  if(!Array.isArray(S.meta.ketten43Archiv)) S.meta.ketten43Archiv=[];
+  alt.forEach(c=>{ S.meta.ketten43Archiv.push(Object.assign({}, c, { archiviertTs:jetztIso(), grund:'Hotfix 27 §7.3: Kette eines vergangenen Tags beim Aufstehen archiviert (Karten bleiben offen)' })); });
+  S.meta.ketten43Archiv=S.meta.ketten43Archiv.slice(-200); S.tagesketten=S.tagesketten.filter(c=>alt.indexOf(c)<0);
+  if(S.ui.tkWahl && alt.some(c=>c.id===S.ui.tkWahl)){ S.ui.tkWahl=null; saveUi(); }
+  saveMeta(); DB.set('tagesketten', S.tagesketten); K43K.cache=null; return alt.length; }
+const k43ChatAntwortHtml43=k43ChatAntwortHtml;   // Hotfix 27 §7.4: abgelöst — die Antwortzeile sendet nicht mehr selbst (Handler data-k43senden 27663 bleibt stehen)
+k43ChatAntwortHtml=function(text, platzhalter){ const kanal=f12TrainerKanal(), ref=(kanal ? esc(kanal.id) : '')+'|'+esc(f12TagGespraech())+'|fokus';
+  return (text ? '<div class="k43-msg">Trainer: '+esc(String(text).replace(/\s+/g,' ').slice(0,300))+'</div>' : '')+
+    '<div class="k43-antwort hf27-antwort" data-hf26chat="'+ref+'"><input id="k43Antwort" readonly placeholder="'+esc(platzhalter||'Antwort …')+'" data-hf26chat="'+ref+'" aria-label="Im Chat schreiben"><button type="button" data-hf26chat="'+ref+'" aria-label="Im Chat schreiben">↑</button></div>'; };   // ein Tipp öffnet den Ebene-1-Chat im Tagesgespräch mit Tastatur-Fokus (hf26ChatOeffnen, wie der Ketten-Chat aus Hotfix 26 §2.2)
 
 function init(){
   ladeAlles();
