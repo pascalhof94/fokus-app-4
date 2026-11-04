@@ -144,7 +144,7 @@ function bestandSchreiben(){
       var r=elm.getBoundingClientRect();
       geprueft++;
       /* 2) kein Element ragt über den Viewport */
-      if(r.right>W+2 && r.left<W && !(elm.closest && (elm.closest('.dia-tv-scroll') || elm.closest('.f12-raeume'))))   // v3.5.0 §2.1: wischbare Tagesdiagramme ragen gewollt ueber den Rand · 4.1 §12.3: die Raum-Leiste wischt in sich
+      if(r.right>W+2 && r.left<W && !(elm.closest && (elm.closest('.dia-tv-scroll') || elm.closest('.f12-raeume') || elm.closest('.kl-chips'))))   // v3.5.0 §2.1: wischbare Tagesdiagramme ragen gewollt ueber den Rand · 4.1 §12.3: die Raum-Leiste wischt in sich · Hotfix 26 §6.5: die Chip-Reihe (Tagesblöcke, Tagesketten) wischt in sich (overflow-x:auto)
         fatal('Ragt über den Viewport: '+beschreibe(elm)+' (right '+Math.round(r.right)+' > '+W+')');
       /* 3) Tap-Ziele */
       var istTap = elm.tagName==='BUTTON' ||
@@ -278,14 +278,18 @@ function bestandSchreiben(){
       fw.eval("F7.lager.chatKanaele={ ts:Date.now(), daten:[{ id:'k-tr', Kanal:'Trainer', Agent:'Trainer', Abteilung:[], Projekt:[], Bereich:'privat', Tabelle:'Privat_Chat · Trainer', Reihenfolge:1, Rolle:'Trainer' },{ id:'k-erf', Kanal:'Erfassungs-Agent', Agent:'Erfassungs-Agent', Abteilung:[], Projekt:[], Bereich:'dfm', Tabelle:'Chat · Erfassungs-Agent', Reihenfolge:1, Rolle:'Eingang' }], fehler:'' };"+
               "F12.ungelesen={ 'k-tr':[{ id:'u1', 'Gespräch':'g1', 'Gesprächstitel':'Plan morgen', Von:'Trainer', Art:'Antwort', Anlass:'Chat', Status:'offen', Zeitstempel:new Date().toISOString(), Text:'Freitag: Steuer zuerst, dann RiSe …', Postfach:[] }], 'k-erf':[{ id:'u2', 'Gespräch':'g2', Von:'Erfassungs-Agent', Art:'Hinweis', Anlass:'Postfach', Status:'offen', Zeitstempel:new Date().toISOString(), Text:'📬 Neue Agenten-Karte: Pruefkarte · Klärung', Postfach:[{ id:'pf-plan-1', anzeige:'Pruefkarte' }] }] }; F12.badge={ 'k-tr':1, 'k-erf':1 };");
       fw.seiteZeigen('postfach');
-      fw.eval("F16.pfFilter='freigaben'; renderPostfach();");   /* Karten-Standard 4.3 §6.4: Standard-Filter ist 🗂️ Freigegeben (Historie); hier wird 📬 Offen gewählt */
+      fw.eval("F16.pfFilter='freigaben'; renderPostfach();");   /* Karten-Standard 4.3 §6.4: Standard-Filter ist 🗂️ Freigegeben (Historie); hier wird 📬 Offen gewählt · Hotfix 26 §2.1: das Postfach steht im Ketten-Tab (#kettenBody), seiteZeigen('postfach') leitet um */
       /* Hotfix 16 §5: drei Filter; Kartenfreigaben (2 offene Karten), je Gespräch eine Kopfzeile, Karten eingerückt; keine Kette, keine Karten-Knöpfe */
-      fw.eval("var n=document.querySelectorAll('#postfachBody .f16-filter .f16-chip').length; if(n!==3) throw new Error('Hotfix 16 §5: '+n+' statt 3 Filter');"+
-              "if(!document.querySelector('#postfachBody .f16-chip.an[data-f16filter=\"freigaben\"]')) throw new Error('Hotfix 16 §5: Filter Offen (Kartenfreigaben) nicht gewaehlt');"+
-              "var k=document.querySelectorAll('#postfachBody [data-f15karte]').length; if(k!==2) throw new Error('Hotfix 16 §5: '+k+' statt 2 Karten unter Kartenfreigaben');"+
-              "if(document.querySelector('#postfachBody [data-f15kette]')) throw new Error('Hotfix 16 §5: Zeile zur Kette darf nicht mehr im Postfach stehen');"+
-              "if(document.querySelector('#postfachBody [data-f7pfent]')) throw new Error('Hotfix 15 §7: Postfach zeigt noch Karten-Knoepfe');"); },
+      fw.eval("var n=document.querySelectorAll('#kettenBody .f16-filter .f16-chip').length; if(n!==3) throw new Error('Hotfix 16 §5: '+n+' statt 3 Filter');"+
+              "if(!document.querySelector('#kettenBody .f16-chip.an[data-f16filter=\"freigaben\"]')) throw new Error('Hotfix 16 §5: Filter Offen (Kartenfreigaben) nicht gewaehlt');"+
+              "var k=document.querySelectorAll('#kettenBody [data-f15karte]').length; if(k!==2) throw new Error('Hotfix 16 §5: '+k+' statt 2 Karten unter Kartenfreigaben');"+
+              "if(document.querySelector('#kettenBody [data-f15kette]')) throw new Error('Hotfix 16 §5: Zeile zur Kette darf nicht mehr im Postfach stehen');"+
+              "if(document.querySelector('#kettenBody [data-f7pfent]')) throw new Error('Hotfix 15 §7: Postfach zeigt noch Karten-Knoepfe');"); },
     /* Hotfix 9 · 8.6: alle Gruppen der Statistik offen, damit die Nachprüfung jedes Diagramm sieht */
+    ketten:     function(fw){ tagSicher(fw); fw.seiteZeigen('fokus'); fw.fokusStarten(karteId(fw)); fw.closeSheet();   /* Hotfix 26 §6 (Zielbild 11): Ketten-Tab mit Blockleiste und Tag-Kette nach Block und Thema */
+      fw.eval("var heute=heuteApp(); var o=S.karten.filter(function(k){ return k.status==='offen' && !k.rolle; }).slice(0,6); var ids=o.map(function(k){ return k.id; }); k43KettenNormieren(); hf26StandardKetten(heute); var f1=S.tagesketten.find(function(c){ return c.id===k43KetteId('fokus1', heute); }); f1.karten=ids.slice(0,3); f1.von='09:30'; f1.plan={}; f1.plan[ids[0]]={ start:'09:30', min:60 }; f1.quelle='tagesplan'; var f2=S.tagesketten.find(function(c){ return c.id===k43KetteId('fokus2', heute); }); f2.karten=ids.slice(3,6); f2.von='14:00'; f2.quelle='tagesplan'; var t=hf26TagKette(heute); t.karten=ids.slice(); t.quelle='tagesplan'; DB.set('tagesketten', S.tagesketten); K43K.cache=null; S.ui.kettenTab='ketten'; S.ui.k43Auf={ kettentab:'tk43-tag-'+heute }; S.ui.hf26BlockAuf={}; saveUi();");
+      fw.seiteZeigen('ketten');
+      fw.eval("if(!document.querySelector('#kettenBody .hf26-bl .hf26-bc')) throw new Error('Hotfix 26 §6.5: Blockleiste fehlt'); if(!document.querySelector('#kettenBody .hf26-tag .hf26-bh')) throw new Error('Hotfix 26 §6.4: Tag-Kette ohne Blockabschnitte'); var bc=document.querySelectorAll('#kettenBody .hf26-bc'); for(var i=0;i<bc.length;i++){ if(bc[i].getBoundingClientRect().height<44) throw new Error('Hotfix 26 §6.5: Kachel unter 44 px'); }"); },
     statistik:  function(fw){ tagSicher(fw); fw.eval("S.ui.statGruppeZu={1:false,2:false,3:false,4:false,5:false,6:false}; saveUi();"); fw.seiteZeigen('statistik'); },
     /* Hotfix 10: mit Münzen auf dem Konto, damit der Kaufen-Knopf da ist */
     shop:       function(fw){ tagSicher(fw); fw.eval("S.meta.muenzenGesamt=num(S.meta.muenzenGesamt)+20000; saveMeta();"); fw.seiteZeigen('belohnung'); },

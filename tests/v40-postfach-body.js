@@ -43,7 +43,7 @@ f7PfEntscheiden('pf-4', 'freigegeben', { felder:{ 'Pascals Anpassung':'Option A'
 pruef('Klärung: keine Karte, Antwort unverändert', S.karten.length===n0+2 && _gesendet[0].args.felder['Pascals Anpassung']==='Option A');
 // Postfach-Seite (Abschnitt 1): plan-Zeile mit „öffnen", aufgeklappt fünf Knöpfe, Kartenhinweis, Kartenzeile
 F7.lager.postfach={ ts:Date.now(), daten:[Object.assign({}, r, { id:'pf-2' })], fehler:'' }; S.ui.f7pfAuf={};
-var host=document.getElementById('postfachBody'); F16.pfFilter='freigaben'; renderPostfach(); var H=host.innerHTML;   // Hotfix 16: Start-Filter neu bestimmen (im Betrieb über seiteZeigen) · 4.3 §6.4: Standard ist 🗂️ Freigegeben, diese Suite prüft 📬 Offen
+seiteZeigen('postfach'); var host=document.getElementById('kettenBody'); F16.pfFilter='freigaben'; renderPostfach(); var H=host.innerHTML;   // Hotfix 26 §2.1: das Postfach steht im Ketten-Tab (#kettenBody), die Seite postfach leitet um   // Hotfix 16: Start-Filter neu bestimmen (im Betrieb über seiteZeigen) · 4.3 §6.4: Standard ist 🗂️ Freigegeben, diese Suite prüft 📬 Offen
 pruef('Hotfix 16 §5: Postfach zeigt die offene Karte unter Kartenfreigaben (keine Zeile mit Knöpfen, keine Kette)', H.indexOf('data-f7pfauf="1"')<0 && H.indexOf('data-f7pfent=')<0 && H.indexOf('data-f16filter="freigaben"')>=0 && H.indexOf('data-f15karte="pf-2"')>=0 && H.indexOf('offene Karte')<0, H.slice(0, 300));
 pruef('Hotfix 15 §7: angelegte Karte bleibt über f7PfAngelegteKarten erreichbar; die Postfach-Seite zeigt sie nicht mehr', f7PfAngelegteKarten().some(function(x){ return x.id===k.id; }) && H.indexOf('data-klkarte="'+k.id+'"')<0);
 S.ui.f7pfAuf={ 'pf-2':true }; renderPostfach(); H=host.innerHTML;

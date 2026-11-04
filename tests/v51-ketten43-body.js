@@ -48,7 +48,7 @@ pruef('B-T1 Tagesplanung läuft als Karte, Ansicht Schritt 1', S.fokus.laeuft &&
 var s1=k43TagesplanungHtml(); pruef('B-T2 Schritt 1: Zustand, Wirkung noch nicht eingestellt, Hinweise', /Zustand/.test(s1) && /noch nicht eingestellt/.test(s1) && /Hinweise/.test(s1));
 S.ui.spezial.schritt=2; var s2=k43TagesplanungHtml(); pruef('B-T3 Schritt 2 zeichnet (Gestern nach Themen)', /Gestern nach Themen/.test(s2), s2.slice(0,200));
 S.ui.spezial.schritt=3; var s3=k43TagesplanungHtml(); pruef('B-T4 Schritt 3: Themen-Chips', /Themen heute/.test(s3) && /data-k43thema/.test(s3));
-var sz=k43TagesplanungSaetze(); pruef('B-T5 Sätze 50/50: Karte phFest = Privat-Satz/2, DFM-Bonus-Satz > 0', k43TagesplanungKarte().phFest===sz.satzKarte && sz.satzBonusDfm>0, JSON.stringify(sz));
+var sz=k43TagesplanungSaetze(); pruef('B-T5 Sätze 50/50 (Hotfix 26 §4.3): phFest leer, Satz der Karte = Privat-Satz über e42Satz, DFM-Satz > 0', k43TagesplanungKarte().phFest==null && e42Satz(k43TagesplanungKarte())===sz.privat && sz.dfm>0, JSON.stringify(sz)+' phFest='+k43TagesplanungKarte().phFest);   // 4.3: phFest = Privat-Satz/2 und DFM-Bonus — abgelöst durch die Teilung der Sitzung
 // Plan aus dem Chat (Trainer-Zeile im Lager)
 var kanal={ id:'kan-trainer', Agent:'Trainer', Tabelle:'Trainer_Chat', Bereich:'privat', Kanal:'Trainer' };
 f12KanalVon=function(a){ return a==='Trainer' ? kanal : null; };
@@ -73,7 +73,7 @@ k43FrageSetzen('q2', 'Ablenkung'); pruef('B-B2 Antwort Ablenkung setzt die Matri
 var bh=k43BlockadeHtml(); pruef('B-B3 Blockade-HTML: Fragen, Chat, Insights, Nächster Schritt', /Was ist passiert/.test(bh) && /Chat mit dem Trainer/.test(bh) && /Insights/.test(bh) && /Nächster Schritt/.test(bh));
 _gesendet.length=0; fokusStarten('t-priv'); pruef('B-B4 K2: Start einer anderen Karte beendet die Blockade, Antworten an den Trainer', !!S.tag.k43.blockade.endeTs && _gesendet.some(function(x){ return x.args && x.args.felder && /ADHS Blockade/.test(x.args.felder.Text||''); }) && e1Art()!=='spezial', JSON.stringify(_gesendet.map(function(x){return x.werkzeug;})));
 // Schlafen
-schlafUmschalten(); pruef('B-S1 Schlafen öffnet die Ansicht, Uhr läuft noch nicht', S.ui.spezial.art==='schlafen' && !schlafLaeuft());
+schlafUmschalten(); pruef('B-S1 Schlafen (Hotfix 26 §4.5): Start öffnet die Ansicht, Schlafuhr läuft, Schlafen im Fokus', S.ui.spezial.art==='schlafen' && schlafLaeuft() && S.fokus && S.fokus.karteId===schlafKarte().id && !S.fokus.laeuft);   // 4.3: Ansicht ohne Uhr — abgelöst
 var sh=k43SchlafenHtml(); pruef('B-S2 Schlafen-HTML: Geschafft heute, Woche, Nachtnotiz, nichts gebucht', /Geschafft heute/.test(sh) && /Diese Woche/.test(sh) && /Nachtnotiz/.test(sh) && /nichts gebucht/.test(sh));
 fokusZeitEinbuchen(); S.fokus={laeuft:false}; var pv=tagesPunkteLive(), nI=S.intraday.length, nL=(S.tag.log||[]).length; k43SchlafenStarten(); pruef('B-S3 Schlafen startet, bucht nichts', schlafLaeuft() && tagesPunkteLive()===pv && S.intraday.length===nI && (S.tag.log||[]).length===nL, pv+' → '+tagesPunkteLive()+' intraday '+nI+'→'+S.intraday.length+' log '+nL+'→'+(S.tag.log||[]).length+' '+JSON.stringify(S.intraday.slice(nI)));
 // Wecker
@@ -108,7 +108,7 @@ var fh2=k43FelderHtml(Kb.familie[1], 104); pruef('C-F4 Ketten-Tab-Felder: Lila f
 // Kettenansicht
 var h=k43KettenansichtHtml('fokus'); pruef('C-A1 Fokus-Ansicht: Gruppen Tag und Blöcke, Felder 42 px', /data-k43gruppe="fokus\|tag"/.test(h) && /width:42px/.test(h));
 var fn=f4NaechstesHtml(null); pruef('C-A2 Fokus-Block „Ketten heute“ statt Kettenliste', /Ketten heute/.test(fn) && /k43-ketten/.test(fn) && !/kl-liste/.test(fn));
-S.ui.k43Auf={ kettentab:Kb.tag[0].id }; var ht=k43KettenansichtHtml('kettentab'); pruef('C-A3 Ketten-Tab aufgeklappt: 104 px, Heute eingeplant, Chat der Kette, Erledigt, Kette neu', /width:104px/.test(ht) && /Heute eingeplant/.test(ht) && /Chat der Kette/.test(ht) && /Erledigt · zuletzt zuerst/.test(ht) && /Kette neu/.test(ht));
+S.ui.k43Auf={ kettentab:Kb.tag[0].id }; var ht=k43KettenansichtHtml('kettentab'); pruef('C-A3 Ketten-Tab aufgeklappt (Hotfix 26 §6.4: Tag-Kette nach Block und Thema): 104 px, Blockabschnitte, Chat der Kette, Kette neu', /width:104px/.test(ht) && /nach Block, darin Thema/.test(ht) && /hf26-bh/.test(ht) && /Chat der Kette/.test(ht) && /Kette neu/.test(ht));   // 4.3: Heute eingeplant / Erledigt — in der Tag-Kette abgelöst durch Abschnitte je Block
 // K8 / K9
 S.ui.tkWahl='k43:thema:'+Kb.thema[0].id.slice(10); S.ui.tkWahl=Kb.thema.find(function(c){ return c.name==='Projekt A'; }).id;
 pruef('C-K8 berechnete Kette als aktuelle: aktiveKetteKarten liefert ihre Karten', aktiveKetteKarten().some(function(k){ return k.id==='t-dfm'; }) && aktiveKetteName()==='Projekt A');
@@ -123,7 +123,7 @@ var Kc=k43KettenBauen(true); pruef('C-S1 erledigte unten (Erledigt-Liste der The
 var vorher=S.tagesketten.length;
 syncImport(JSON.stringify({ appVersion:APP_VERSION, karten:[{ id:'t-priv', titel:'Private Aufgabe' }], tagesketten:[{ id:'tk-fokus1', name:'Fokus 1', karten:['t-nach'] },{ id:'tk-bad', name:'Bad', karten:['r-priv'] },{ id:'tk-abschluss', name:'Abschluss', karten:['t-priv'] },{ id:'tk-neu', name:'Eigene aus Paket', karten:['t-priv'] }] }));
 var bl=S.tagesketten.filter(function(c){ return c.art==='block'; });
-pruef('C-I1 Import: tk-fokus1 → Block fokus1, tk-bad → Block aufstehen mit Onramp Bad, tk-abschluss entfällt, andere → Eigene; alte eigene bleibt', bl.some(function(c){ return c.block==='fokus1' && c.karten.indexOf('t-nach')>=0; }) && bl.some(function(c){ return c.block==='aufstehen' && c.plan['r-priv'] && c.plan['r-priv'].onramp; }) && S.tagesketten.some(function(c){ return c.id==='tk-neu' && c.art==='eigene' && c.quelle==='tagesplan'; }) && S.tagesketten.some(function(c){ return c.id==='tk-alt'; }) && !S.tagesketten.some(function(c){ return c.id==='tk-abschluss'; }), JSON.stringify(S.tagesketten.map(function(c){ return c.id+'|'+c.art+'|'+c.block; })));
+pruef('C-I1 Import: tk-fokus1 → Block fokus1, tk-bad → Block aufstehen mit Onramp Bad, tk-abschluss entfällt, andere → Tag-Kette (Hotfix 26 §6.2, vorher Eigene); alte eigene bleibt', bl.some(function(c){ return c.block==='fokus1' && c.karten.indexOf('t-nach')>=0; }) && bl.some(function(c){ return c.block==='aufstehen' && c.plan['r-priv'] && c.plan['r-priv'].onramp; }) && !S.tagesketten.some(function(c){ return c.id==='tk-neu'; }) && S.tagesketten.some(function(c){ return c.id==='tk43-tag-'+heute && c.karten.indexOf('t-priv')>=0; }) && S.tagesketten.some(function(c){ return c.id==='tk-alt'; }) && !S.tagesketten.some(function(c){ return c.id==='tk-abschluss'; }), JSON.stringify(S.tagesketten.map(function(c){ return c.id+'|'+c.art+'|'+c.block; })));
 pruef('C-I2 Block-Kette trägt das Datum im Namen', bl.every(function(c){ return /\d\d\.\d\d\./.test(c.name) && c.datum===heute; }));
 // Kette neu mit Filter
 el('k43KnName').value='Automatisierung'; el('k43KnArt').value='filter'; el('k43KnText').value=''; el('k43KnFam').value='dfm'; el('k43KnAbt').value='Automatisierungen'; k43KetteAnlegen();
@@ -139,7 +139,7 @@ seiteZeigen('ketten'); pruef('D-S2 seiteZeigen ketten', seiteAktuell()==='ketten
 var h=el('kettenBody').innerHTML; pruef('D-S3 Umschalter mit vier Tabs, Standard Ketten, Kettenansicht', /data-kt="trainer"/.test(h) && /data-kt="postfach"/.test(h) && /class="an" data-kt="ketten"/.test(h) && /k43-ketten kettentab/.test(h));
 var kanal={ id:'kan-trainer', Agent:'Trainer', Tabelle:'Trainer_Chat', Bereich:'privat', Kanal:'Trainer' }; f12KanalVon=function(a){ return a==='Trainer' ? kanal : null; }; f12Kanaele=function(){ return [kanal]; };
 F7.lager[f12VerlaufKey(kanal, f12TagGespraech())]={ ts:Date.now(), daten:[{ id:'r1', Von:'Trainer', Art:'Antwort', Zeitstempel:jetztIso(), Text:'Guten Morgen' }] };
-k43TabSetzen('trainer'); h=el('kettenBody').innerHTML; pruef('D-S4 Trainer heute: Tagesgespräch eingebettet (chatList, Eingabe)', /id="ktChat"/.test(h) && /id="chatList"/.test(h) && /Guten Morgen/.test(h) && /id="f12Text"/.test(h), h.slice(0,300));
+k43TabSetzen('trainer'); h=el('kettenBody').innerHTML; pruef('D-S4 Trainer heute (Hotfix 26 §2.2): Umschalter ↗ öffnet den Ebene-1-Chat im Tagesgespräch, nichts eingebettet', e1Art()==='chat' && /Trainer heute ↗/.test(h) && !/id="ktChat"/.test(h), h.slice(0,300)); e1Schliessen();   // 4.3: eingebettet (ktChat) — abgelöst
 pruef('D-S5 Chat-Zustand folgt: Kanal Trainer, Gespräch heute', f12Ui().kanal==='kan-trainer' && f12Ui().gespraech===f12TagGespraech());
 k43TabSetzen('postfach'); h=el('kettenBody').innerHTML; pruef('D-P1 Postfach-Tab: Filter Freigegeben (Standard), Offen, Chats', /✓ 🗂️ Freigegeben/.test(h) && /📬 Offen/.test(h) && /💬 Chats/.test(h));
 warten(); k43TabSetzen('postfach'); h=el('kettenBody').innerHTML;
@@ -158,7 +158,7 @@ S.meta.freigaben['pf:pf1'].nummer=71; kb=f12KartenBloeckeHtml(kanal, row); pruef
 S.meta.postfach={ offen:3, dringend:0 }; f7NavBadge(); pruef('D-B1 f7NavBadge läuft ohne Fehler (Tab Ketten und Umschalter)', true);
 // Abteilungen-Tab
 f7Abteilungen=function(){ return [{ id:'a1', Name:'Trainerstab', Emoji:'🎯' }]; }; kanal.Abteilung=[{ id:'a1' }]; f12Ui().kanal=null; f12Ui().gespraech=null;
-k43TabSetzen('abteilungen'); h=el('kettenBody').innerHTml||el('kettenBody').innerHTML; pruef('D-A1 Abteilungen: Räume eingebettet', /k43-chatseite abt/.test(h) && /chatRaeume|f12-raeume|Trainerstab/.test(h), h.slice(0,300));
+k43TabSetzen('abteilungen'); h=el('kettenBody').innerHTML; pruef('D-A1 Abteilungen (Hotfix 26 §2.2): Umschalter ↗ öffnet den Ebene-1-Chat auf der Raum-Stufe, nichts eingebettet', e1Art()==='chat' && f12Stufe()==='raum' && /Abteilungen ↗/.test(h) && !/k43-chatseite abt/.test(h), h.slice(0,300)); e1Schliessen();   // 4.3: Räume eingebettet — abgelöst
 
 // Freigabe im Postfach (nicht aus dem Chat): Quelle postfach
 var pf2={ id:'pf2', Titel:'Zweite Karte', Status:'offen', Entscheidung:'', 'Output/Entwurf':'Aufgabe: Zweite Karte\n- Familie: Privat\n- Soll: 15 Min', Agent:'Trainer' };
@@ -189,5 +189,5 @@ z=kartenZeileHtml(N, { live:true }); pruef('F-R5 live-Zeile (Statusleiste): kein
 z=kartenZeileHtml(_k('k3-aufstehen')); pruef('F-R6 Rollenkarte (4.1-Zeile): ▶, +1, ✓ und 💬', /data-klplay="k3-aufstehen"/.test(z) && /data-k43kchat="k3-aufstehen"/.test(z) && !/kz42/.test(z));
 
 // ══ G · Version ══
-pruef('G1 App 4.3.1 · Build 2026-11-03-54 · sw.js Cache fokus4-v4.3.1-1', APP_VERSION==='4.3.1' && APP_BUILD==='2026-11-03-54' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.1-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('G1 App 4.3.2 · Build 2026-11-04-55 · sw.js Cache fokus4-v4.3.2-1 (seit Hotfix 26)', APP_VERSION==='4.3.2' && APP_BUILD==='2026-11-04-55' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.3.2-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Karten-Standard 4.3 · Ketten (4.3.0)');
