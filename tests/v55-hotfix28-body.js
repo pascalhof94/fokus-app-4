@@ -36,15 +36,15 @@ pruef('B3 Startzeit: ohne Plan-Start das von des Blocks, sonst „—“ (Ohne B
 
 // ══ C · Archiv aus FocusSystem (§3) ══
 var kA=Object.assign(neueKarte({ titel:'Archiv-Karte', domain:'dfm' }), { id:'ka-28', status:'offen', std42:true, art:'aufgabe', projekt:'P' }); S.karten.push(kA); S.tagesketten[0].karten.push('ka-28'); S.tagesketten[2].karten.push('ka-28'); if(!ketteHat('ka-28')) ketteToggle('ka-28'); saveKarten(); DB.set('tagesketten', S.tagesketten);
-var nK=S.karten.length; var resA=syncImport(JSON.stringify({ appVersion:'4.4.0', karten:[{ id:'ka-28', archivAusFocussystem:'2026-11-04T12:30:00.000Z' },{ id:'gibt-es-nicht', archivAusFocussystem:'2026-11-04T12:30:00.000Z' }] }));
+var nK=S.karten.length; var resA=syncImport(JSON.stringify({ appVersion:'4.5.0', karten:[{ id:'ka-28', archivAusFocussystem:'2026-11-04T12:30:00.000Z' },{ id:'gibt-es-nicht', archivAusFocussystem:'2026-11-04T12:30:00.000Z' }] }));
 pruef('C1 Paket archivAusFocussystem: Karte archiviert (status, archiviertTs, archivGrund „Archiv aus FocusSystem (<Zeitpunkt>)“), aus allen Ketten entfernt, keine neue Karte für unbekannte ids, Zeiten bleiben', kA.status==='archiviert' && !!kA.archiviertTs && kA.archivGrund==='Archiv aus FocusSystem (2026-11-04T12:30:00.000Z)' && !S.tagesketten.some(function(c){ return c.karten.indexOf('ka-28')>=0; }) && !ketteHat('ka-28') && S.karten.length===nK && resA && !resA.fehler && JSON.stringify(resA.archivAusFocussystem)==='["archiviert","unbekannt"]' && S.meta.archivAusFs.some(function(e){ return e.id==='ka-28'; }), JSON.stringify(resA));
 var kL=Object.assign(neueKarte({ titel:'Läuft', domain:'dfm' }), { id:'kl-28', status:'offen', std42:true, art:'aufgabe', projekt:'P', matrixFeld:'werkzeug' }); S.karten.push(kL); saveKarten(); S.fokus={ karteId:'kl-28', laeuft:true, startMs:Date.now()-5*60000, sessionSek:0 };
-syncImport(JSON.stringify({ appVersion:'4.4.0', karten:[{ id:'kl-28', archivAusFocussystem:'2026-11-04T12:40:00.000Z' }] }));
+syncImport(JSON.stringify({ appVersion:'4.5.0', karten:[{ id:'kl-28', archivAusFocussystem:'2026-11-04T12:40:00.000Z' }] }));
 pruef('C2 läuft die Uhr der Karte, wartet das Archiv (meta.archivWartend), Karte bleibt offen', kL.status==='offen' && S.meta.archivWartend && S.meta.archivWartend['kl-28']==='2026-11-04T12:40:00.000Z' && S.fokus.laeuft);
 fokusZeitEinbuchen();
 pruef('C3 nach dem Stopp der Uhr wird das Archiv übernommen; die Sitzung bleibt im Stunden-Log', kL.status==='archiviert' && /Archiv aus FocusSystem/.test(kL.archivGrund) && !(S.meta.archivWartend && S.meta.archivWartend['kl-28']) && (S.intraday||[]).some(function(e){ return e.typ==='timer' && e.kartenId==='kl-28'; }));
 pruef('C0 meta.appVersion wird beim Start gesetzt (Spiegel; der Dienst schickt Archiv-Pakete nur an eine App ab 4.3.4)', (function(){ S.meta.appVersion=null; migrationKarten43b(); return S.meta.appVersion===APP_VERSION; })());
-pruef('C4 Archiv bleibt Archiv: ein zweites Paket ändert nichts (schon)', (function(){ var r=syncImport(JSON.stringify({ appVersion:'4.4.0', karten:[{ id:'ka-28', archivAusFocussystem:'2026-11-04T12:30:00.000Z' }] })); return r && JSON.stringify(r.archivAusFocussystem)==='["schon"]' && kA.status==='archiviert'; })());
+pruef('C4 Archiv bleibt Archiv: ein zweites Paket ändert nichts (schon)', (function(){ var r=syncImport(JSON.stringify({ appVersion:'4.5.0', karten:[{ id:'ka-28', archivAusFocussystem:'2026-11-04T12:30:00.000Z' }] })); return r && JSON.stringify(r.archivAusFocussystem)==='["schon"]' && kA.status==='archiviert'; })());
 S.fokus={ laeuft:false };
 
 // ══ D · Antwortzeile als Kurzansicht (§4.4) ══
@@ -75,5 +75,5 @@ pruef('F1 body.hf27-tastatur #nav{visibility:hidden} (zusätzlich zur translateY
   pruef('H2 Einstellungen zeichnen auch einen Alt-Eintrag ohne vorher/nachher (Code: Bedingung e.vorher && e.vorher.matrix)', ok && /e\.vorher && e\.vorher\.matrix \? /.test(src) && /e\.nachher && e\.nachher\.matrix \? /.test(src)); })();
 
 // ══ G · Version ══
-pruef('G1 App 4.4.0 · Build 2026-11-04-59 · sw.js Cache fokus4-v4.4.0-1', APP_VERSION==='4.4.0' && APP_BUILD==='2026-11-04-59' && /const CACHE = 'fokus4-v4.4.0-1'/.test(readFile('sw.js')));
+pruef('G1 App 4.5.0 · Build 2026-11-10-60 · sw.js Cache fokus4-v4.5.0-1', APP_VERSION==='4.5.0' && APP_BUILD==='2026-11-10-60' && /const CACHE = 'fokus4-v4.5.0-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 28 · Themen-Ketten aufklappen, Blöcke in Heute gesamt, Archiv aus FocusSystem, Restpunkte (4.3.4)');

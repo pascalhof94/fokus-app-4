@@ -88,8 +88,10 @@ pruef('neue Karte (4.3): Kasten „📬 Neu: <Titel>“, Felder Familie/Soll/Unt
 pruef('Änderung (4.3): Kasten „📬 Änderung: <Titel>“, Diff alt durchgestrichen → neu, neue Unteraufgabe', hk.indexOf('📬 Änderung: <b>'+esc(kd.titel)+'</b>')>=0 && hk.indexOf('Soll <s>30</s> → <em>45 Min</em>')>=0 && hk.indexOf('„Offene Punkte vorab an Thao“')>=0);
 pruef('ohne Kartenformat: Zeile 📥 <Titel> im Stil f7-info, öffnet das Postfach', /<div class="f7-info" data-f7pfoeffnen="1">📬 Zielsteuerung: Vorschlag<\/div>/.test(hk));
 var nVor=S.karten.length; _gesendet.length=0;
-var kNeu=f12PfFreigeben('pf1', false);
-pruef('✓ legt die Karte an (Kette), Postfach-Datensatz erledigt/freigegeben, Zeile zeigt „✓ freigegeben … angelegt · Kette Platz"', !!kNeu && S.karten.length===nVor+1 && kNeu.titel==='Kalendertool-Dublette klären' && ketteHat(kNeu.id) && _gesendet.some(function(g){ return g.werkzeug==='datensatz_aendern' && g.args.tabelle==='Postfach' && g.args.id==='pf1' && g.args.felder.Status==='erledigt' && g.args.felder.Entscheidung==='freigegeben'; }) && F12.pf.pf1.r.Status==='erledigt' && /✅ freigegeben \d\d:\d\d · Paket/.test(f12KartenBloeckeHtml(KT, A2)), f12KartenBloeckeHtml(KT, A2).slice(0,500));   // 4.3 §6.3: „✅ freigegeben <Uhrzeit> · Paket <Nummer>“
+var kZu=f12PfFreigeben('pf1', false);   // Hotfix 29 §1.3: der Kasten öffnet die Block-Zuordnung (Zielbild 15 A) statt direkt freizugeben
+var zuOffen=!!(HF29.zu && HF29.zu.modus==='freigabe' && HF29.zu.pfId==='pf1');   /* sheetOffen() liefert im jsc-DOM-Ersatz kein verlässliches Ergebnis */ if(HF29.zu){ HF29.zu.ziel={ art:'block', block:'fokus1', zeit:'10:30' }; hf29ZuordnenGo(); }
+var kNeu=(function(){ var m=(S.meta.postfachKarten||{}).pf1; return m ? S.karten.find(function(x){ return x.id===m.karteId; }) : null; })();
+pruef('✓ (Hotfix 29) Kasten öffnet die Zuordnung; Freigeben · Fokus 1 legt die Karte an und in genau einen Block, Postfach-Datensatz erledigt/freigegeben, Zeile zeigt „✓ freigegeben“', kZu===null && zuOffen && !!kNeu && S.karten.length===nVor+1 && kNeu.titel==='Kalendertool-Dublette klären' && ketteHat(kNeu.id) && hf29BlockVon(kNeu.id).block==='fokus1' && hf29Bloecke().filter(function(c){ return c.karten.indexOf(kNeu.id)>=0; }).length===1 && !kNeu.ungeplant && _gesendet.some(function(g){ return g.werkzeug==='datensatz_aendern' && g.args.tabelle==='Postfach' && g.args.id==='pf1' && g.args.felder.Status==='erledigt' && g.args.felder.Entscheidung==='freigegeben'; }) && F12.pf.pf1.r.Status==='erledigt' && /✅ freigegeben \d\d:\d\d · Paket/.test(f12KartenBloeckeHtml(KT, A2)), f12KartenBloeckeHtml(KT, A2).slice(0,500));   // 4.3 §6.3: „✅ freigegeben <Uhrzeit> · Paket <Nummer>“
 F12.pf['pf2'].r.Status='erledigt'; F12.pf['pf2'].r.Entscheidung='abgelehnt'; F12.pf['pf2'].r.Ablehnungsgrund='30 Min reichen'; F12.pf['pf2'].r.geaendert_am=T;
 var hk2=f12KartenBloeckeHtml(KT, A2);
 pruef('Entscheidung im Postfach erscheint im Chat: ✗ abgelehnt <Uhrzeit> im Postfach · „Grund", Zeile gedimmt, Überschrift grau', hk2.indexOf('✕ abgelehnt '+f12Uhrzeit(T)+' im Postfach · „30 Min reichen“')>=0 && /k43-kbkopf grau">📬 Änderung/.test(hk2), hk2.slice(0,700));   // 4.3: Kasten, Überschrift grau
@@ -116,7 +118,7 @@ f12Ui().kanal='k-tr'; f12Ui().gespraech='g1'; delete f12Ui().entwurf[f12EntwurfK
 f12KontextOeffnen();
 pruef('＋ öffnet die Ebene kontextwahl mit Segment Suche', e1Art()==='kontextwahl' && f12Kw().seg==='suche' && f12Kw().auswahl.length===0);
 pruef('Kontext wählen: ＋ nimmt die Karte auf, erneut tippen nimmt sie heraus', f12KwToggle('t-dfm')===true && f12Kw().auswahl.length===1 && f12KwToggle('t-dfm')===true && f12Kw().auswahl.length===0);
-if(!ketteHat('t-dfm')) ketteToggle('t-dfm');   // die Kettenliste zeigt aufgeklappt nur die Aktuelle Kette
+if(!ketteHat('t-dfm')) hf29KarteEinordnen('t-dfm', { art:'block', block:'fokus1' });   // Hotfix 29 §5: in den Block (die Kettenliste zeigt aufgeklappt die Gruppe Blöcke heute)
 f12KwToggle('t-dfm'); f12KwSegment('projekte'); var n1=f12Kw().auswahl.length; f12KwSegment('abteilungen'); f12KwSegment('suche');
 pruef('Auswahl bleibt beim Wechsel der Segmente erhalten', n1===1 && f12Kw().auswahl.length===1 && f12Kw().seg==='suche');
 var hw=f12KontextHtml();
@@ -296,7 +298,8 @@ pruef('§5.2 · Trainer-Knopf öffnet die Stufe Raum Trainerstab (Block oben)', 
 pruef('§5.4 · Badge-Runde liefert Gespräch, Gesprächstitel und Text der ungelesenen Zeilen, limit 20, keine zweite Runde', src.indexOf("felder:['Text','Von','Gespräch','Gesprächstitel','Zeitstempel','Art','Anlass','Status','Postfach','Still']")>=0 && /limit:20 \}\)[^\n]*\n\s*\.then\(d=>\{ const alle=\(d && d\.datensaetze\)\|\|\[\]; zeilen\[k\.id\]=alle\.filter\(r=>!hf27Still\(r\)\); sum\[k\.id\]=/.test(src)   /* Hotfix 27 §6: Feld Still, stille Zeilen zählen nicht */);
 F12.ungelesen={}; F12.badge={}; e1Schliessen();
 // §6 · kurze Entscheidungen als Knöpfe
-pruef('§6 · 2 kurze Zeilen am Ende → Knöpfe', JSON.stringify(f12Knoepfe('Zwei Wege.\n- Freigeben\n- Ablehnen'))==='{"body":"Zwei Wege.","optionen":["Freigeben","Ablehnen"]}');
+pruef('§6 · 2 kurze Zeilen am Ende → Knöpfe', JSON.stringify(f12Knoepfe('Zwei Wege.\n- Ja\n- Ablehnen'))==='{"body":"Zwei Wege.","optionen":["Ja","Ablehnen"]}');
+pruef('Hotfix 29 §1.3 · Knopf „Freigeben“ wird nicht gezeichnet (bleibt nur einer → keine Knöpfe)', f12Knoepfe('Zwei Wege.\n- Freigeben\n- Ablehnen')===null && JSON.stringify((f12Knoepfe('Drei.\n- Plan freigegeben\n- A\n- B')||{}).optionen)==='["A","B"]');
 pruef('§6 · 4 kurze Zeilen → Knöpfe, 5 → Liste', f12Knoepfe('x\n- A\n- B\n- C\n- D').optionen.length===4 && f12Knoepfe('x\n- A\n- B\n- C\n- D\n- E')===null);
 pruef('§6 · eine Zeile mit 31 Zeichen → Liste; 30 → Knopf', f12Knoepfe('x\n- A\n- '+'b'.repeat(31))===null && f12Knoepfe('x\n- A\n- '+'b'.repeat(30))!==null);
 pruef('§6 · Liste mitten im Text (Text danach) bleibt Text; eine Zeile bleibt Liste', f12Knoepfe('x\n- A\n- B\nSchreib mir.')===null && f12Knoepfe('x\n- A')===null);

@@ -61,7 +61,7 @@ renderPostfach(); H=host.innerHTML;
 pruef('Hotfix 15 §4/§7: Trainer-Karte ist ein Vorschlag (f7PfVorschlaege) und steht in der Kette Agenten-Karten, nicht als Postfach-Zeile', f7PfVorschlaege(f7Postfach()||[]).some(function(o){ return o.r.id==='pf-9a' && !o.nachholen; }) && f15KetteZeilenHtml().indexOf('data-f15karte="pf-9a"')>=0 && H.indexOf('data-f7pfkarte="pf-9a"')<0, H.length);
 pruef('Hotfix 15 §7: keine Filter-Chips und kein Block „Karten vom Trainer" mehr auf der Postfach-Seite', H.indexOf('data-f7pffilter=')<0 && H.indexOf('Karten vom Trainer')<0);
 var n9=S.karten.length; _gesendet.length=0;
-pruef('▶: Karte angelegt, in der Kette, läuft', klick9('data-f7pfstart','pf-9a')===true && S.karten.length===n9+1 && (function(){ var k=S.karten[S.karten.length-1]; return k.titel==='Karte vom Trainer' && tagesKette().indexOf(k.id)>=0 && !!S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id; })(), JSON.stringify(S.fokus));
+pruef('▶: Karte angelegt, nicht in der Kette (Hotfix 29 §1.1: Block nur über die Zuordnung), läuft', klick9('data-f7pfstart','pf-9a')===true && S.karten.length===n9+1 && (function(){ var k=S.karten[S.karten.length-1]; return k.titel==='Karte vom Trainer' && tagesKette().indexOf(k.id)<0 && !!S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id; })(), JSON.stringify(S.fokus));
 pruef('▶: Postfach-Eintrag erledigt/freigegeben gesendet', _gesendet.some(function(g){ return g.werkzeug==='datensatz_aendern' && g.args.id==='pf-9a' && g.args.felder.Entscheidung==='freigegeben' && g.args.felder.Status==='erledigt'; }));
 fokusZeitEinbuchen(); S.fokus={ laeuft:false, karteId:null };
 // Titel → Karteneinstellungen vorausgefüllt, Speichern = Freigabe mit Anpassung
@@ -81,7 +81,7 @@ pruef('Nachholen: genau ein Vorschlag für zwei gesehen-Einträge gleichen Titel
 n9=S.karten.length; var u9=S.unteraufgaben.length; _gesendet.length=0;
 klick9('data-f7pffrei','pf-g1');
 var kh=S.karten[S.karten.length-1], geh=_gesendet.filter(function(g){ return g.werkzeug==='datensatz_aendern'; });
-pruef('✓ Nachholen: eine Karte mit 3 Unteraufgaben, in der Kette, datensatz_aendern ohne Status und ohne Punkte', S.karten.length===n9+1 && kh.titel==='Mail-Zugang bauen' && S.unteraufgaben.length===u9+3 && tagesKette().indexOf(kh.id)>=0 && geh.length===1 && geh[0].args.id==='pf-g1' && geh[0].args.felder.Entscheidung==='freigegeben' && geh[0].args.felder.Status===undefined && geh[0].args.felder['Punkte gebucht']===undefined, JSON.stringify(geh.map(function(g){ return g.args; })));
+pruef('✓ Nachholen: eine Karte mit 3 Unteraufgaben, in der Kette, datensatz_aendern ohne Status und ohne Punkte', S.karten.length===n9+1 && kh.titel==='Mail-Zugang bauen' && S.unteraufgaben.length===u9+3 && tagesKette().indexOf(kh.id)<0 /* Hotfix 29 §1.1 */ && geh.length===1 && geh[0].args.id==='pf-g1' && geh[0].args.felder.Entscheidung==='freigegeben' && geh[0].args.felder.Status===undefined && geh[0].args.felder['Punkte gebucht']===undefined, JSON.stringify(geh.map(function(g){ return g.args; })));
 renderPostfach(); H=host.innerHTML;
 pruef('Nachholen: danach kein Vorschlag mehr (auch pf-g2 nicht, gleicher Titel schon angelegt)', f7PfVorschlaege(f7Postfach()||[]).filter(function(o){ return o.nachholen; }).length===0);
 // Änderung an einer bestehenden Karte: Karte-ID → keine neue Karte, Felder gesetzt, Unteraufgabe angehängt

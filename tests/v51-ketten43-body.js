@@ -46,8 +46,8 @@ var h1=k43AufstehenHtml(); pruef('B-A7 Aufstehen-HTML enthält Nacht, Hintergrun
 k43TagesplanungOeffnen();
 pruef('B-T1 Tagesplanung läuft als Karte, Ansicht Schritt 1', S.fokus.laeuft && S.fokus.karteId===k43TagesplanungKarte().id && S.ui.spezial.art==='tagesplanung' && S.ui.spezial.schritt===1);
 var s1=k43TagesplanungHtml(); pruef('B-T2 Schritt 1: Zustand, Wirkung noch nicht eingestellt, Hinweise', /Zustand/.test(s1) && /noch nicht eingestellt/.test(s1) && /Hinweise/.test(s1));
-S.ui.spezial.schritt=2; var s2=k43TagesplanungHtml(); pruef('B-T3 Schritt 2 zeichnet (Gestern nach Themen)', /Gestern nach Themen/.test(s2), s2.slice(0,200));
-S.ui.spezial.schritt=3; var s3=k43TagesplanungHtml(); pruef('B-T4 Schritt 3: Themen-Chips', /Themen heute/.test(s3) && /data-k43thema/.test(s3));
+S.ui.spezial.schritt=2; var s2=k43TagesplanungHtml(); pruef('B-T3 Schritt 2 zeichnet „Blöcke planen“ (Hotfix 29 §3: die alten Schritte 2–4 entfallen)', /Blöcke planen/.test(s2) && /Schritt 2 von 2/.test(s2) && !/Gestern nach Themen/.test(s2), s2.slice(0,200));
+S.ui.spezial.schritt=1; var s3=k43TagesplanungHtml(); pruef('B-T4 Schritt 1: Themen-Chips und „Weiter: Blöcke planen“ (Hotfix 29 §3)', /Themen heute/.test(s3) && /data-k43thema/.test(s3) && /data-hf29weiter/.test(s3) && /Schritt 1 von 2/.test(s3));
 var sz=k43TagesplanungSaetze(); pruef('B-T5 Sätze 50/50 (Hotfix 26 §4.3): phFest leer, Satz der Karte = Privat-Satz über e42Satz, DFM-Satz > 0', k43TagesplanungKarte().phFest==null && e42Satz(k43TagesplanungKarte())===sz.privat && sz.dfm>0, JSON.stringify(sz)+' phFest='+k43TagesplanungKarte().phFest);   // 4.3: phFest = Privat-Satz/2 und DFM-Bonus — abgelöst durch die Teilung der Sitzung
 // Plan aus dem Chat (Trainer-Zeile im Lager)
 var kanal={ id:'kan-trainer', Agent:'Trainer', Tabelle:'Trainer_Chat', Bereich:'privat', Kanal:'Trainer' };
@@ -55,18 +55,21 @@ f12KanalVon=function(a){ return a==='Trainer' ? kanal : null; };
 var plan={ bloecke:[{ block:'fokus1', name:'Fokus 1', von:'09:00', karten:[{ id:'t-dfm', start:'09:00', min:30 },{ id:'t-priv', start:'09:30', min:20, onramp:true }] },{ block:'senke', name:'Senke', von:'12:00', karten:[{ id:'t-erh', start:'12:00', min:15 }] }] };
 F7.lager[f12VerlaufKey(kanal, f12TagGespraech())]={ ts:Date.now(), daten:[{ id:'r1', Von:'Trainer', Art:'Antwort', Zeitstempel:jetztIso(), Text:'Hier dein Plan:\n```tagesplan\n'+JSON.stringify(plan)+'\n```' }] };
 var R=k43PlanAusChat(); pruef('B-P1 Tagesplan-Block geparst', !!R.plan && R.plan.bloecke.length===2, R.grund);
-S.ui.spezial.schritt=4; var s4=k43TagesplanungHtml(); pruef('B-P2 Schritt 4: Zeitstrahl mit Onramp, Freigabe aktiv', /Onramp/.test(s4) && /data-k43freigeben="1">/.test(s4) && !/disabled/.test(s4.slice(s4.indexOf('data-k43freigeben')-20, s4.indexOf('data-k43freigeben'))));
+var pfTP={ id:'pf-tp1', Titel:'Tagesplan '+k43Datum(heuteApp())+' · Fassung 1', Agent:'Trainer', Art:'Tagesplan', Status:'offen', Runde:1, erstellt_am:jetztIso(), Quelle:'Tagesgespräch' }; F7.lager.postfach={ ts:Date.now(), daten:[pfTP], fehler:'' }; HF29.paket['pf-tp1']=JSON.stringify(Object.assign({ datum:heuteApp() }, plan));
+F15.karte={ id:'pf-tp1', optionen:[], text:'', datei:null }; var s4=f15KarteHtml(); pruef('B-P2 (Hotfix 29 §1.2) Tagesplan-Karte: Kopf mit ID, Kasten Blöcke, „Was sich gegenüber jetzt ändert“, Prognose ohne Overload, Knöpfe Ablehnen · Anpassen · Freigeben', /Postfach · Plan · Trainer/.test(s4) && /pf-tp1/.test(s4) && /Blöcke/.test(s4) && /Fokus 1 · 09:00/.test(s4) && /Was sich gegenüber jetzt ändert/.test(s4) && /Prognose nach Freigabe \(ohne Overload\)/.test(s4) && /data-hf29pffrei="pf-tp1"/.test(s4) && /data-hf29pfan="pf-tp1"/.test(s4) && /data-hf29pfab="pf-tp1"/.test(s4), s4.slice(0,300));
 var plan2={ bloecke:[{ block:'fokus1', karten:[{ id:'gibt-es-nicht', start:'09:00', min:30 }] }] };
 F7.lager[f12VerlaufKey(kanal, f12TagGespraech())].daten.push({ id:'r2', Von:'Trainer', Art:'Antwort', Zeitstempel:jetztIso(), Text:'```tagesplan\n'+JSON.stringify(plan2)+'\n```' });
-var zs=k43ZeitstrahlHtml(k43PlanAusChat().plan, {}); pruef('B-P3 unbekannte App-ID: rot „Karte nicht gefunden“, Freigabe gesperrt', zs.unbekannt===1 && /Karte nicht gefunden/.test(zs.html) && /disabled/.test(k43TagesplanungHtml()));
+var zs=k43ZeitstrahlHtml(k43PlanAusChat().plan, {}); HF29.paket['pf-tp1']=JSON.stringify(Object.assign({ datum:heuteApp() }, plan2)); var tkVor=JSON.stringify(S.tagesketten); _toasts.length=0; var frei0=hf29PlanFreigeben('pf-tp1');
+pruef('B-P3 unbekannte App-ID: Zeitstrahl rot „Karte nicht gefunden“; Freigabe bricht vor dem ersten Schreibschritt ab, Meldung nennt die ID, nichts geändert (Hotfix 29 §1.2)', zs.unbekannt===1 && /Karte nicht gefunden/.test(zs.html) && frei0===false && JSON.stringify(S.tagesketten)===tkVor && _toasts.some(function(t){ return /unbekannte ID/.test(t) && /gibt-es-nic/.test(t); }), JSON.stringify(_toasts));
+HF29.paket['pf-tp1']=JSON.stringify(Object.assign({ datum:heuteApp() }, plan));
 F7.lager[f12VerlaufKey(kanal, f12TagGespraech())].daten.pop();
-_gesendet.length=0; k43PlanFreigeben();
-pruef('B-P4 Freigabe: Tagesketten Block+Tag, quelle tagesplan, Datum im Namen', S.tagesketten.filter(function(c){ return c.quelle==='tagesplan'; }).length===3 && S.tagesketten.some(function(c){ return c.art==='tag' && /Heute gesamt · \d\d\.\d\d\./.test(c.name); }), JSON.stringify(S.tagesketten.map(function(c){ return c.name; })));
-pruef('B-P5 Freigabe-Eintrag quelle tagesplan gesendet', _gesendet.some(function(x){ return x.werkzeug==='app:freigaben' && x.args.quelle==='tagesplan' && x.args.karten.length===3; }), JSON.stringify(_gesendet));
-pruef('B-P6 erste Karte von Fokus 1 läuft, Tagesplanung beendet (K2), Geplant für heute', S.fokus.laeuft && S.fokus.karteId==='t-dfm' && _k('t-dfm').faelligkeit===heuteIso() && e1Art()!=='spezial', S.fokus.karteId+' '+e1Art());
+_gesendet.length=0; var frei1=hf29PlanFreigeben('pf-tp1');
+pruef('B-P4 Freigabe (Hotfix 29 §1.2): Block-Ketten fokus1 und senke gefüllt, quelle tagesplan, Fassung = Postfach-Karte, von aus dem Plan, Datum im Namen; andere Blöcke unverändert', frei1===true && S.tagesketten.filter(function(c){ return c.quelle==='tagesplan'; }).length===2 && (function(){ var f=hf29Block('fokus1'), s=hf29Block('senke'); return f && s && f.karten.join()==='t-dfm,t-priv' && s.karten.join()==='t-erh' && f.von==='09:00' && s.von==='12:00' && f.fassung==='pf-tp1' && f.plan['t-priv'].onramp===true && /Fokus 1 · \d\d\.\d\d\./.test(f.name); })() && S.tagesketten.some(function(c){ return c.block==='fokus2' && c.quelle!=='tagesplan'; }), JSON.stringify(S.tagesketten.map(function(c){ return c.name+':'+c.quelle; })));
+pruef('B-P5 Freigabe-Eintrag quelle tagesplan mit pfId gesendet, Postfach-Karte erledigt/freigegeben', _gesendet.some(function(x){ return x.werkzeug==='app:freigaben' && x.args.quelle==='tagesplan' && x.args.karten.length===3; }) && !!(S.meta.freigaben||{})['pf:pf-tp1'] && _gesendet.some(function(x){ return x.werkzeug==='datensatz_aendern' && x.args.id==='pf-tp1' && x.args.felder.Status==='erledigt' && x.args.felder.Entscheidung==='freigegeben'; }), JSON.stringify(_gesendet.map(function(x){ return x.werkzeug; })));
+pruef('B-P6 (Hotfix 29 §1.2) die Freigabe startet keine Karte, faelligkeit heute, kein ungeplant; „Fertig · Fokus 1 starten“ startet t-dfm und schließt die Tagesplanung (K2)', !(S.fokus && S.fokus.laeuft && S.fokus.karteId==='t-dfm') && _k('t-dfm').faelligkeit===heuteIso() && !_k('t-dfm').ungeplant && (function(){ hf29Fertig(true); return S.fokus.laeuft && S.fokus.karteId==='t-dfm' && e1Art()!=='spezial'; })(), (S.fokus ? S.fokus.karteId : '-')+' '+e1Art());
 pruef('B-P7 K3: Matrix auf dem Feld der laufenden Karte (ziel → 0.5/-0.5)', (function(){ var p=matrixPos(); return p && p.x===0.5 && p.y===-0.5; })(), JSON.stringify(matrixPos()));
 // zweites Öffnen = zwischendurch
-k43TagesplanungOeffnen(); pruef('B-T6 zweites Öffnen am selben Tag: zwischendurch', S.ui.spezial.art==='zwischendurch'); var zw=k43ZwischendurchHtml(); pruef('B-T7 zwischendurch-HTML: Heute bis jetzt, Nächster Schritt', /Heute bis jetzt/.test(zw) && /Nächster Schritt/.test(zw));
+k43TagesplanungOeffnen(); pruef('B-T6 zweites Öffnen am selben Tag: zwischendurch', S.ui.spezial.art==='zwischendurch'); var zw=k43ZwischendurchHtml(); pruef('B-T7 zwischendurch = „Blöcke planen“ (Hotfix 29 §3): Prognose · Blöcke ohne Overload, Blöcke von heute, Knopf Fertig', /Blöcke planen/.test(zw) && /Prognose · Blöcke ohne Overload/.test(zw) && /data-hf29auf=/.test(zw) && /data-hf29fertig="1"/.test(zw));
 // Blockade
 k43BlockadeOeffnen(); pruef('B-B1 Blockade läuft als Karte, Ansicht', S.fokus.karteId===B.id && S.ui.spezial.art==='blockade' && S.tag.k43.blockade.startTs);
 k43FrageSetzen('q2', 'Ablenkung'); pruef('B-B2 Antwort Ablenkung setzt die Matrix (-0.5/0.5)', matrixPos().x===-0.5 && matrixPos().y===0.5);
@@ -91,6 +94,7 @@ var N2=Object.assign(neueKarte({ titel:'Nachfolger', domain:'dfm' }), { id:'t-na
 S.karten.push(R1, R2, N2); saveKarten();
 S.tagesketten=[{ id:'tk-alt', name:'Alte Kette', karten:['t-priv'] }]; k43KettenNormieren();
 pruef('C-N1 bestehende Kette → art eigene, quelle pascal', S.tagesketten[0].art==='eigene' && S.tagesketten[0].quelle==='pascal');
+hf26KetteSetzen({ id:k43KetteId('fokus1', heute), name:'Fokus 1 · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:'fokus1', von:'09:45', karten:['t-dfm','t-priv','t-nach'], plan:{}, quelle:'tagesplan' }); DB.set('tagesketten', S.tagesketten); K43K.cache=null;   // Hotfix 29 §6: „Heute gesamt“ nur aus den Blöcken — die fälligen Karten stehen in Fokus 1
 var Kb=k43KettenBauen(true);
 pruef('C-K1 Gruppen: Tag, Blöcke, Themen, Familie, Sammeln, Eigene', Kb.tag.length===1 && Array.isArray(Kb.block) && Kb.thema.length>=2 && Kb.familie.length===3 && Kb.sammeln.length===3 && Kb.eigene.length===1, JSON.stringify(Object.keys(Kb).map(function(g){ return g+':'+Kb[g].length; })));
 pruef('C-K2 Heute gesamt enthält die fälligen Karten, keine Rollenkarten', Kb.tag[0].karten.some(function(k){ return k.id==='t-dfm'; }) && !Kb.tag[0].karten.some(function(k){ return k.rolle; }));
@@ -116,7 +120,7 @@ fokusStarten('r-priv'); pruef('C-K9 Start außerhalb → aktuelle Kette = Famili
 fokusZeitEinbuchen(); S.fokus={ laeuft:false };
 // K1
 S.ui.tkWahl=Kb.thema.find(function(c){ return c.name==='Projekt A'; }).id; K43.hakenImFokus='t-dfm'; karteAbhaken('t-dfm', false);
-pruef('C-K1 ✓ im Fokus startet die nächste offene Karte der Kette', _k('t-dfm').status==='erledigt' && S.fokus.laeuft && S.fokus.karteId==='t-nach', S.fokus.karteId);
+pruef('C-K1 ✓ im Fokus startet die nächste offene Karte desselben Blocks (Hotfix 29 §5: Fokus 1 = t-dfm, t-priv, t-nach → t-priv)', _k('t-dfm').status==='erledigt' && S.fokus.laeuft && S.fokus.karteId==='t-priv', S.fokus.karteId);
 pruef('C-T4b Nachfolger nach Erledigen nicht mehr blockiert', !k43Blockiert(_k('t-nach')));
 var Kc=k43KettenBauen(true); pruef('C-S1 erledigte unten (Erledigt-Liste der Themen-Kette)', Kc.thema.find(function(c){ return c.name==='Projekt A'; }).erledigt.some(function(k){ return k.id==='t-dfm'; }));
 // Import mit tk-*
@@ -151,8 +155,8 @@ var pf={ id:'pf1', Titel:'Neue Karte X', Status:'offen', Entscheidung:'', 'Outpu
 F12.pf['pf1']={ ts:Date.now(), r:pf };
 var row={ id:'r9', Von:'Trainer', Art:'Antwort', Zeitstempel:jetztIso(), Text:'Hier eine Karte', Postfach:[{ id:'pf1' }] };
 var kb=f12KartenBloeckeHtml(kanal, row); pruef('D-C1 Kasten „📬 Neu: Titel“ mit Feldern und ✅ ✏️ ✕', /📬 Neu: <b>Neue Karte X/.test(kb) && /✅ Freigeben/.test(kb) && /✏️ Anpassen/.test(kb) && /✕ Ablehnen/.test(kb), kb.slice(0,400));
-_gesendet.length=0; f12Ui().kanal='kan-trainer'; f12Ui().gespraech=f12TagGespraech(); f12PfFreigeben('pf1', false);
-pruef('D-C2 Freigabe aus dem Chat: Karte angelegt, Freigabe-Eintrag quelle chat mit Gespräch gesendet', !!(S.meta.postfachKarten||{}).pf1 && _gesendet.some(function(x){ return x.werkzeug==='app:freigaben' && x.args.quelle==='chat' && x.args.gespraech===f12TagGespraech() && x.args.karten.length===1 && x.args.karten[0].aktion==='neu'; }), JSON.stringify(_gesendet.map(function(x){ return x.werkzeug+':'+JSON.stringify(x.args).slice(0,120); })));
+_gesendet.length=0; f12Ui().kanal='kan-trainer'; f12Ui().gespraech=f12TagGespraech(); f12PfFreigeben('pf1', false); if(HF29.zu && HF29.zu.pfId==='pf1'){ HF29.zu.ziel={ art:'block', block:'fokus1' }; hf29ZuordnenGo(); }   // Hotfix 29 §1.3: Kasten → Zuordnung → Freigeben · Fokus 1
+pruef('D-C2 Freigabe aus dem Chat (über die Zuordnung): Karte angelegt, Freigabe-Eintrag quelle chat mit Gespräch gesendet', !!(S.meta.postfachKarten||{}).pf1 && _gesendet.some(function(x){ return x.werkzeug==='app:freigaben' && x.args.quelle==='chat' && x.args.gespraech===f12TagGespraech() && x.args.karten.length===1 && x.args.karten[0].aktion==='neu'; }), JSON.stringify(_gesendet.map(function(x){ return x.werkzeug+':'+JSON.stringify(x.args).slice(0,120); })));
 S.meta.freigaben['pf:pf1'].nummer=71; kb=f12KartenBloeckeHtml(kanal, row); pruef('D-C3 danach „✅ freigegeben <Uhrzeit> · Paket 71“', /✅ freigegeben \d\d:\d\d · Paket 71/.test(kb), kb.slice(-200));
 // Badge
 S.meta.postfach={ offen:3, dringend:0 }; f7NavBadge(); pruef('D-B1 f7NavBadge läuft ohne Fehler (Tab Ketten und Umschalter)', true);
@@ -189,5 +193,5 @@ z=kartenZeileHtml(N, { live:true }); pruef('F-R5 live-Zeile (Statusleiste): kein
 z=kartenZeileHtml(_k('k3-aufstehen')); pruef('F-R6 Rollenkarte (4.1-Zeile): ▶, +1, ✓ und 💬', /data-klplay="k3-aufstehen"/.test(z) && /data-k43kchat="k3-aufstehen"/.test(z) && !/kz42/.test(z));
 
 // ══ G · Version ══
-pruef('G1 App 4.4.0 · Build 2026-11-04-59 · sw.js Cache fokus4-v4.4.0-1 (seit Hotfix 26)', APP_VERSION==='4.4.0' && APP_BUILD==='2026-11-04-59' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.4.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('G1 App 4.5.0 · Build 2026-11-10-60 · sw.js Cache fokus4-v4.5.0-1 (seit Hotfix 26)', APP_VERSION==='4.5.0' && APP_BUILD==='2026-11-10-60' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Karten-Standard 4.3 · Ketten (4.3.0)');

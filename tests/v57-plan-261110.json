@@ -1,0 +1,37 @@
+{"datum":"2026-11-10",
+ "bloecke":[
+  {"block":"aufwachen","name":"Aufwachen & Tagesplanung","von":"08:45","bis":"09:45",
+   "karten":[
+    {"id":"ce503766-e0b7-4c2e-ac67-14f2fc7d1270","start":"08:45","min":30,"onramp":false},
+    {"id":"r-vitamine","start":"09:15","min":5,"onramp":false},
+    {"id":"r-katzen","start":"09:20","min":5,"onramp":false},
+    {"id":"r-toilette","start":"09:25","min":20,"onramp":false}]},
+  {"block":"fokus1","name":"Fokus 1","von":"09:45","bis":"13:15",
+   "karten":[
+    {"id":"3c2a70af-1a22-49ec-bf97-3bd66d66e5a9","start":"09:45","min":45,"onramp":false},
+    {"id":"d75e4733-917b-446c-83fd-3cb6d573a5fc","start":"11:30","min":105,"onramp":false}]},
+  {"block":"senke","name":"Senke","von":"13:15","bis":"14:55",
+   "karten":[
+    {"id":"214e7c86-7638-4250-8af0-f2a4d43b972c","start":"13:15","min":60,"onramp":false},
+    {"id":"reciAhR0Lb1YpZbaU","start":"14:15","min":20,"onramp":false},
+    {"id":"5ec4b7f7-7bca-44a4-b071-e7ff3678b609","start":"14:35","min":10,"onramp":true},
+    {"id":"1109767c-a922-4778-b920-98c806912073","start":"14:45","min":10,"onramp":true}]},
+  {"block":"fokus2","name":"Fokus 2","von":"14:55","bis":"18:10",
+   "karten":[
+    {"id":"6c4dd64a-0f91-4986-9550-7c1271dec21a","start":"14:55","min":20,"onramp":true},
+    {"id":"recdJNMBqteuD8aKG","start":"15:15","min":25,"onramp":false},
+    {"id":"e230928b-4068-4d5b-8fff-aee766a71fd8","start":"15:40","min":45,"onramp":false},
+    {"id":"r-auf-geschirr","start":"16:25","min":10,"onramp":true},
+    {"id":"4c4216da-4639-4b03-81e8-ac27fc6adb0b","start":"16:35","min":90,"onramp":false},
+    {"id":"r-muell","start":"18:05","min":5,"onramp":false}]},
+  {"block":"erholung","name":"Erholung","von":"18:10","bis":"20:10",
+   "karten":[
+    {"id":"r-sport","start":"18:10","min":60,"onramp":false},
+    {"id":"9736c899-4e2a-4cf9-9f51-5ee683029fe2","start":"19:10","min":60,"onramp":false}]},
+  {"block":"abendroutine","name":"Abendroutine","von":"21:30","bis":"22:30",
+   "karten":[
+    {"id":"r-auf-klamotten","start":"21:30","min":10,"onramp":false},
+    {"id":"r-auf-katzenklo","start":"21:40","min":10,"onramp":false},
+    {"id":"k3-reflexion","start":"21:50","min":5,"onramp":false},
+    {"id":"k3-tagebuch","start":"21:55","min":5,"onramp":false}]}
+ ]}

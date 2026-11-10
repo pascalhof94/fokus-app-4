@@ -1,7 +1,7 @@
 /* Suite 5.6 · Fokus App 4.4 (Auftrag 261104 §6/§8): A Zeitstempel je Feld (feldTs) · B Änderungen aus FocusSystem ohne Freigabe (erstellt, geändert mit vorher/nachher,
    archiviert aus Kette und Fokus, erledigt) · C Konflikt: der jüngere Stand gewinnt · D laufende Uhr: Status wartet bis zum Stopp · E Unteraufgaben neu/geändert/entfernt ·
    F Rückgängig als Gegenbuchung mit Spur (app_rueckgaengig) · G Postfach-Filter „🔄 Automatisch“ mit drei Gruppen · H Ketten-Paket unter Automatisch geändert ·
-   I Freigabe im Agenten-Chat = Postfach (nicht mehr unter Offen) · J hf44Holen mit Stand · K Version 4.4.0. Aufruf: jsc tests/v56-zweiwege.js */
+   I Freigabe im Agenten-Chat = Postfach (nicht mehr unter Offen) · J hf44Holen mit Stand · K Version 4.5.0. Aufruf: jsc tests/v56-zweiwege.js */
 var _toasts=[]; toast=function(m){ _toasts.push(String(m)); }; haptik=function(){}; var confirm=function(){ return true; };
 fsliveStumm();
 var src=readFile('index.html');
@@ -87,7 +87,7 @@ pruef('H1 Ketten-Paket läuft ohne Freigabe und erscheint als „Ketten-Paket ·
 // ══ I · Freigabe im Agenten-Chat = Postfach ══
 var pf={ id:'pf-44', Titel:'Neu: Chat-Karte', Agent:'Trainer', Art:'Plan', Dringlichkeit:40, Status:'offen', 'Output/Entwurf':'Aufgabe: Chat-Karte\n- Projekt: P\n- Soll-Minuten: 20' };
 F7.laeuft={}; F7.lager.postfach={ ts:Date.now(), daten:[pf], fehler:'' }; HF26.voll={}; HF26.pfLade={}; f12PfRecord=function(id){ return id==='pf-44' ? pf : null; };
-var vorher=f15KetteKarten().some(function(r){ return r.id==='pf-44'; }); f12PfFreigeben('pf-44', false); warten();
+var vorher=f15KetteKarten().some(function(r){ return r.id==='pf-44'; }); f12PfFreigeben('pf-44', false); if(HF29.zu && HF29.zu.pfId==='pf-44'){ HF29.zu.ziel={ art:'block', block:'fokus1' }; hf29ZuordnenGo(); }   /* Hotfix 29 §1.3: Kasten → Zuordnung → Freigeben · Fokus 1 */ warten();
 pruef('I1 Freigabe im Agenten-Chat (f12PfFreigeben → f7PfEntscheiden): Karte angelegt, Eintrag nicht mehr unter „📬 Offen“ (Lager bereinigt, Status erledigt gesendet)', vorher && !f15KetteKarten().some(function(r){ return r.id==='pf-44'; }) && !!(S.meta.postfachKarten||{})['pf-44'] && _gesendet44.some(function(g){ return g.w==='datensatz_aendern' && g.a.id==='pf-44' && g.a.felder.Status==='erledigt' && g.a.felder.Entscheidung==='freigegeben'; }) && /f7PfEntscheiden\(id, 'freigegeben', \{ datensatz:r, vonChat:true \}\)/.test(src));
 
 // ══ J · Holen mit Stand ══
@@ -97,5 +97,5 @@ hf44Holen(); warten(); warten(); var st1=JSON.stringify(hf44Stand()); hf44Holen(
 pruef('J1 erster Aufruf ohne Stand holt nur die Stände (nichts nachgespielt), zweiter Aufruf mit ?dfm=100&privat=50 übernimmt die Änderung und setzt den Stand fort', _gelesen44[0]==='aenderungen' && st1==='{"dfm":100,"privat":50}' && _gelesen44[1]==='aenderungen?dfm=100&privat=50' && kd.notiz==='Notiz aus FS' && hf44Stand().dfm===101);
 
 // ══ K · Version ══
-pruef('K1 App 4.4.0 · Build 2026-11-04-59 · sw.js Cache fokus4-v4.4.0-1', APP_VERSION==='4.4.0' && APP_BUILD==='2026-11-04-59' && /const CACHE = 'fokus4-v4\.4\.0-1'/.test(readFile('sw.js')));
-suiteEnde('Fokus App 4.4 · Zwei-Wege-Abgleich Karten ohne Freigabe (4.4.0)');
+pruef('K1 App 4.5.0 · Build 2026-11-10-60 · sw.js Cache fokus4-v4.5.0-1', APP_VERSION==='4.5.0' && APP_BUILD==='2026-11-10-60' && /const CACHE = 'fokus4-v4\.5\.0-1'/.test(readFile('sw.js')));
+suiteEnde('Fokus App 4.4 · Zwei-Wege-Abgleich Karten ohne Freigabe (4.5.0)');

@@ -47,7 +47,7 @@ function _k(id){ return S.karten.find(function(x){ return x.id===id; }); }
 // große Kette → Prognose weit über dem Ziel
 var L=[]; for(var i=0;i<6;i++){ var k=Object.assign(neueKarte({ titel:'K'+i, domain:i%2?'privat':'dfm' }), { id:'pk'+i, std42:true, art:'aufgabe', status:'offen', matrixFeld:'ziel', belastung:0, prio:5, sollMin:120, projekt:'P', faelligkeit:heute }); L.push(k); }
 S.karten=S.karten.filter(function(k){ return k.rolle; }).concat(L); saveKarten(); S.settings.tagesZielDfm=500; S.settings.zielWeDfm=500; DB.set('settings', S.settings);
-S.tagesketten=[{ id:'tk43-tag-'+heute, name:'Heute gesamt', art:'tag', datum:heute, karten:L.map(function(k){ return k.id; }), quelle:'tagesplan' }]; DB.set('tagesketten', S.tagesketten);
+S.tagesketten=[{ id:k43KetteId('fokus1', heute), name:'Fokus 1 · x', art:'block', datum:heute, block:'fokus1', von:'05:00', karten:L.map(function(k){ return k.id; }), plan:{}, quelle:'tagesplan' },{ id:'tk43-tag-'+heute, name:'Heute gesamt', art:'tag', datum:heute, karten:L.map(function(k){ return k.id; }), quelle:'tagesplan' }]; DB.set('tagesketten', S.tagesketten); K43K.cache=null;   // Hotfix 29 §6: Prognose nur aus den Blöcken
 var g=diaGroessen(); pruef('C-S0 Testlage: Prognose deutlich über dem Tagesziel', g.prognoseHeute>g.zielHeute*1.5, JSON.stringify({ p:g.prognoseHeute, z:g.zielHeute }));
 // 1 Mini-Kurve
 var mk=f4MiniKurveSvg(g); var m=/L250,(-?[\d.]+)" stroke="#e8e9ec" stroke-width="1.5" stroke-dasharray="4 3"/.exec(mk);
@@ -83,5 +83,5 @@ pruef('C-S11 Münzen heute: Prognose = (Prognose − Punkte) × streakFaktor + M
 var st=tagesformStufen(); pruef('C-S12 Tagesform: Prognose-Stufe aus tagesprognoseHeute (≥ aktuell)', st.prog>=st.akt && st.prog>=outfitVon(outfitFMit(Math.max(0, tagesPunkteLive())+Math.max(0, T.prognose-(T.dfm+T.privat))))-0);
 
 // ══ D · Version ══
-pruef('D1 App 4.4.0 · Build 2026-11-04-59 · sw.js Cache fokus4-v4.4.0-1 (seit Hotfix 26)', APP_VERSION==='4.4.0' && APP_BUILD==='2026-11-04-59' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.4.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('D1 App 4.5.0 · Build 2026-11-10-60 · sw.js Cache fokus4-v4.5.0-1 (seit Hotfix 26)', APP_VERSION==='4.5.0' && APP_BUILD==='2026-11-10-60' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 25 · Statusleiste, Tableiste, Prognose aus der Tageskette (4.3.1)');
