@@ -193,5 +193,5 @@ z=kartenZeileHtml(N, { live:true }); pruef('F-R5 live-Zeile (Statusleiste): kein
 z=kartenZeileHtml(_k('k3-aufstehen')); pruef('F-R6 Rollenkarte (4.1-Zeile): ▶, +1, ✓ und 💬', /data-klplay="k3-aufstehen"/.test(z) && /data-k43kchat="k3-aufstehen"/.test(z) && !/kz42/.test(z));
 
 // ══ G · Version ══
-pruef('G1 App 4.5.0 · Build 2026-11-10-60 · sw.js Cache fokus4-v4.5.0-1 (seit Hotfix 26)', APP_VERSION==='4.5.0' && APP_BUILD==='2026-11-10-60' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.0-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('G1 App 4.5.1 · Build 2026-11-10-61 · sw.js Cache fokus4-v4.5.1-1 (seit Hotfix 26)', APP_VERSION==='4.5.1' && APP_BUILD==='2026-11-10-61' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.1-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Karten-Standard 4.3 · Ketten (4.3.0)');
