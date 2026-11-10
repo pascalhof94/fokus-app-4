@@ -3493,11 +3493,11 @@ body.hf27-tastatur #nav{visibility:hidden}
    sie — ueber die beiden Alias-Namen, die der Code seit v1.x benutzt.
    Der DATENVERTRAG ist etwas anderes: die aelteste Paket-Version, die der
    Import annimmt (Gate) — er bleibt 2.0, additiv erweitert. */
-const APP_VERSION = '4.5.0';   // Hotfix 29 Freigabe über Postfach, Blöcke statt Aktueller Kette (10.11.2026) · Fokus App 4.4 Zwei-Wege-Abgleich (04.11.2026) · Hotfix 28 · Hotfix 27 · Hotfix 26 · Hotfix 25 · Karten-Standard 4.3
+const APP_VERSION = '4.5.1';   // Hotfix 29.1 Overload ohne Zeit und Punkte, Nachzug (10.11.2026) · Hotfix 29 Freigabe über Postfach, Blöcke statt Aktueller Kette (10.11.2026) · Fokus App 4.4 Zwei-Wege-Abgleich (04.11.2026) · Hotfix 28 · Hotfix 27 · Hotfix 26 · Hotfix 25 · Karten-Standard 4.3
 const VERSION = APP_VERSION;                  // Alias: appVersion im Export
 const UI_VERSION = 'v'+APP_VERSION;           // Alias: Anzeige
 const DATENVERTRAG = '2.1.0';                 // Import-Gate: Pakete ab dieser appVersion (§9 v3.5.0: Datenvertrag 2.1)
-const APP_BUILD = '2026-11-10-60';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
+const APP_BUILD = '2026-11-10-61';           // Deploy-Kennung — bei JEDEM Deploy hochzählen (Auto-Update-Check)
 try{ document.title='Fokus '+UI_VERSION; }catch(e){}
 const PREFIX  = 'fokus4_';                 // 4.0 · Paket 0: eigener Speicher. fokus2_ (App 3.8.1) wird nie gelesen, geschrieben oder gelöscht
 const IDB_NAME = 'fokus4';                 // 4.0 · Paket 0: eigener Name für IndexedDB (App 3.8.1 nutzt keine)
@@ -16471,13 +16471,7 @@ function detailSpeichern(){
   const kettenOben=!!entwurf.kettenOben; delete entwurf.kettenOben;
   const idx=S.karten.findIndex(k=>k.id===entwurf.id);
   if(idx>=0) S.karten[idx]=entwurf; else S.karten.push(entwurf);
-  if(kettenOben && idx<0){
-    const st=ketteState(); tagesKette();
-    st.ids=st.ids.filter(x=>x!==entwurf.id); st.ids.unshift(entwurf.id);
-    st.entfernt=(st.entfernt||[]).filter(x=>x!==entwurf.id);
-    /* Hotfix 29 §5: ungeplant wird nicht mehr gesetzt (vorher §5.5 v1.13.0) */
-    saveMeta(); ketteHistLog();
-  }
+  /* Hotfix 29.1 §5: kettenOben entfällt — der alte Ketten-Speicher S.meta.ketten.alle wird nicht mehr geschrieben (vorher: Karte an Position 1 der Aktuellen Kette, Hotfix 29 §5 ohne ungeplant) */
   // Unteraufgaben ersetzen
   S.unteraufgaben = S.unteraufgaben.filter(u=>u.parentId!==entwurf.id || istTicker(u)).concat(   // §1.2 (v3.2.0): der Ticker bleibt
     entwurfSubs.map(u=>Object.assign(neueUnteraufgabe(entwurf.id), u, {parentId:entwurf.id}))
@@ -28446,15 +28440,16 @@ setTimeout(()=>{ try{ hf26PfVollMigration(); }catch(e){} }, 12000); setInterval(
 /* §6.1 · Standard-Block-Ketten: an Werktagen jeden Tag die Block-Ketten aller Blöcke aus den Tagesblöcken der Einstellungen (tagesBloecke 13884), mindestens Fokus 1 und Fokus 2,
    auch ohne Tagesplan und auch leer, mit von aus den Einstellungen (Fokus 1: F4_SOLL.fokus1). Am Wochenende nur Blöcke mit Karten. Dieselbe Kennung k43KetteId: ein Tagesplan oder Paket füllt sie. */
 function hf26Wochenende(d){ const g=new Date((d||heuteApp())+'T12:00:00').getDay(); return g===0 || g===6; }
-function hf26StandardBloecke(){ const out=[]; const add=(b, name, von)=>{ if(!b || out.some(x=>x.block===b)) return; out.push({ block:b, name:name||k43BlockName(b), von:von||null }); };
-  (tagesBloecke()||[]).forEach(x=>{ if(!x || x.parent) return; const b=k43BlockNorm(x.name||x.id); if(!b || b==='tag') return; add(b, K43_BLOECKE.some(y=>y[0]===b) ? k43BlockName(b) : String(x.name||b), Number.isFinite(Number(x.von)) ? belUhr(num(x.von)) : null); });
+function hf26StandardBloecke(){ const out=[], std=hf27StdBloecke(); const add=(b, name, von, bis)=>{ if(!b || out.some(x=>x.block===b)) return; const s=std.find(x=>x && x.block===b)||{}; out.push({ block:b, name:name||k43BlockName(b), von:von||s.von||null, bis:bis||s.bis||null }); };   /* Hotfix 29.1 §3: bis aus engine43.tagesbloecke */
+  (tagesBloecke()||[]).forEach(x=>{ if(!x || x.parent) return; const b=k43BlockNorm(x.name||x.id); if(!b || b==='tag') return; add(b, K43_BLOECKE.some(y=>y[0]===b) ? k43BlockName(b) : String(x.name||b), Number.isFinite(Number(x.von)) ? belUhr(num(x.von)) : null, Number.isFinite(Number(x.bis)) ? belUhr(num(x.bis)) : null); });
   add('fokus1', k43BlockName('fokus1'), (typeof F4_SOLL==='object' && F4_SOLL.fokus1) ? F4_SOLL.fokus1 : null); add('fokus2', k43BlockName('fokus2'), null);   // ❓ Fokus 2 ohne Startzeit in den Einstellungen
+  add('overload', k43BlockName('overload'), null, null);   /* Hotfix 29.1 §2: Overload an jedem Werktag, ohne von/bis, auch leer */
   return out; }
 function hf26KetteSetzen(c){ if(!Array.isArray(S.tagesketten)) S.tagesketten=[]; const v=S.tagesketten.find(x=>x && x.id===c.id); if(v){ Object.assign(v, c); return v; } S.tagesketten.push(c); return c; }
 function hf26StandardKetten(datum){ const heute=datum||heuteApp(); if(hf26Wochenende(heute)) return 0; if(!Array.isArray(S.tagesketten)) S.tagesketten=[]; let n=0;
   hf26StandardBloecke().forEach(d=>{ const id=k43KetteId(d.block, heute), c=S.tagesketten.find(x=>x && x.id===id);
-    if(!c){ S.tagesketten.push({ id, name:d.name+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:d.block, von:d.von, karten:[], plan:{}, quelle:'standard' }); n++; }
-    else if(!c.von && d.von){ c.von=d.von; n++; } });
+    if(!c){ S.tagesketten.push({ id, name:d.name+' · '+anKurzDatum(heute)+'.', art:'block', datum:heute, block:d.block, von:d.von, bis:d.bis||null, karten:[], plan:{}, quelle:'standard' }); n++; }   /* Hotfix 29.1 §3: bis */
+    else { if(!c.von && d.von){ c.von=d.von; n++; } if(!c.bis && d.bis){ c.bis=d.bis; n++; } } });   /* Hotfix 29.1 §3: fehlendes bis nachtragen */
   if(n){ DB.set('tagesketten', S.tagesketten); K43K.cache=null; } return n; }
 /* §6.3 · Altbestand: Ketten art eigene mit quelle tagesplan werden archiviert (meta.ketten43Archiv, Grund und Datum); Karten einer Kette von heute gehen in die Tag-Kette von heute */
 function hf26TagKette(heute){ return hf26KetteSetzen(Object.assign((S.tagesketten||[]).find(x=>x && x.id==='tk43-tag-'+heute)||{ id:'tk43-tag-'+heute, name:'Heute gesamt · '+anKurzDatum(heute)+'.', art:'tag', datum:heute, karten:[], plan:{}, quelle:'paket' }, {})); }
@@ -28968,8 +28963,8 @@ hf26TagAbschnitte=function(c){ const K=k43KettenBauen(), bloecke=hf26HeutigeBloe
   abschnitte.forEach(a=>{ a.offen=a.karten.filter(hf29Offen).length; a.erl=a.karten.length-a.offen; }); return abschnitte; };
 function hf29OverloadIds(){ const ov=hf29Block('overload'); return new Set(ov ? (ov.karten||[]).filter(id=>!hf29Bloecke().some(c=>c!==ov && (c.karten||[]).indexOf(id)>=0)) : []); }
 { const _alt=tagesprognose43; tagesprognose43=function(){ HF29.ohneOverload=true; try{ return _alt(); } finally{ HF29.ohneOverload=false; } }; }
-{ const _alt=hf25PrognoseKarten; hf25PrognoseKarten=function(liste, abMs){ if(HF29.ohneOverload){ const ov=hf29OverloadIds(); if(ov.size) liste=(liste||[]).filter(e=>!(e && e.k && ov.has(e.k.id))); } return _alt(liste, abMs); }; }
-{ const _alt=k43KetteFelder; k43KetteFelder=function(c){ const f=_alt(c); try{ if(c && c.art==='tag'){ const ov=hf29OverloadIds(); if(ov.size){ let n=0; c.karten.forEach(k=>{ if(ov.has(k.id) && hf29Offen(k)) n++; }); f.geplant=Math.max(0, f.geplant-n); } } }catch(e){} return f; }; }
+/* Hotfix 29.1 §1.1: die Hülle um hf25PrognoseKarten mit eigener Prüfung ist abgelöst durch die Hülle im Block Hotfix 29.1 (hf29OhneOverload) */
+/* Hotfix 29.1 §1.2: die Hülle um k43KetteFelder (nur geplant ohne Overload) ist abgelöst durch die Hülle im Block Hotfix 29.1 (alle Felder ohne Overload) */
 /* §6 · Plan-Streifen („Tempo und Blöcke“, „Tagesverlauf“) mit den Blockzeiten von heute, sobald ein Block von hat */
 function hf29StrahlTyp(b){ return (b==='fokus1' || b==='fokus2') ? 'dfm' : (b==='senke' || b==='erholung') ? 'pause' : 'privat'; }
 { const _alt=tagesBloeckeStrahl; tagesBloeckeStrahl=function(){ const r=_alt(); try{ const bl=hf29Bloecke().filter(c=>c.von && c.block!=='overload'); if(bl.length){ r.plan=bl.map(c=>{ const von=hf26Std(c.von), b=hf29BlockBis(c, bl); return { von, bis:b ? hf26Std(b) : von+1, typ:hf29StrahlTyp(c.block), name:k43BlockName(c.block) }; }); } }catch(e){} return r; }; }
@@ -29162,8 +29157,8 @@ k43TagesplanungHtml=function(){ const u=k43Ui(), P=k43TP(); if(!P) return '<div 
 const k43ZwischendurchHtml43=k43ZwischendurchHtml;   // Hotfix 29 §3: abgelöst durch „Blöcke planen“ (vergangene Blöcke zu, der laufende offen)
 k43ZwischendurchHtml=function(){ return hf29PlanenHtml({ zwischendurch:true }); };
 function hf29Weiter(){ const P=k43TP(); if(!P) return; const wahl=k43ThemenWahl(), namen=wahl.map(w=>w.split('|')[1]||w), z=k43Zustand(); P.zustand=Object.assign(z, { ts:z.ts||jetztIso() });
-  if(namen.length){ P.planTs=jetztIso(); k43Senden('Tagesplanung '+k43Datum(heuteApp())+': Themen heute: '+namen.join(', ')+'. Zustand: Fitness '+num(z.fitness)+'/5, Motivation '+num(z.motivation)+'/5'+(z.schlafStd!=null ? ', Schlaf '+hMin(num(z.schlafStd)*60)+' Std.' : '')+'. Bitte den Tagesplan als Postfach-Karte Art Tagesplan (Blöcke aus den Einstellungen mit von und bis, Startuhrzeit und Minuten je Karte, Fassung im Titel).', 'Tagesplan'); }
-  else toast('Ohne Themen: keine Anforderung an den Trainer'); saveTag(); k43Ui().schritt=2; saveUi(); e1Rendern(); }
+  P.planTs=jetztIso(); k43Senden('Tagesplanung '+k43Datum(heuteApp())+': Themen heute: '+(namen.length ? namen.join(', ') : 'keine gewählt, bitte aus den Fälligkeiten planen')+'. Zustand: Fitness '+num(z.fitness)+'/5, Motivation '+num(z.motivation)+'/5'+(z.schlafStd!=null ? ', Schlaf '+hMin(num(z.schlafStd)*60)+' Std.' : '')+'. Bitte den Tagesplan als Postfach-Karte Art Tagesplan (Blöcke aus den Einstellungen mit von und bis, Startuhrzeit und Minuten je Karte, Fassung im Titel).', 'Tagesplan');   /* Hotfix 29.1 §4: auch ohne Themen */
+  saveTag(); k43Ui().schritt=2; saveUi(); e1Rendern(); }
 function hf29Fertig(start){ const P=k43TP(); if(P && !P.beendetTs){ P.beendetTs=jetztIso(); saveTag(); } if(start){ const f1=hf29Block('fokus1'), by={}; S.karten.forEach(x=>by[x.id]=x); const erste=f1 ? hf29KettenKarten(f1).map(id=>by[id]).find(k=>hf29Offen(k) && !karteRuht(k) && !istInfoKarte(k)) : null; if(erste){ S.ui.tkWahl=f1.id; saveUi(); fokusStarten(erste.id); fokusseiteNachStart(); toast('▶ „'+String(erste.titel||'').slice(0,24)+'“ läuft'); return; } hf29Meldung('Fokus 1 hat keine offene Karte'); } e1Schliessen(); renderAlles(); }
 /* das alte Blatt „☀️ Tagesübergang“ (F11) wird nicht mehr geöffnet; der Code bleibt */
 const oeffneTagesuebergang11=oeffneTagesuebergang;   // Hotfix 29 §3: abgelöst
@@ -29204,6 +29199,25 @@ document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.dataset) r
   if(t.dataset.hf29datum!=null && HF29.zu){ HF29.zu.ziel={ art:'tag', datum:String(t.value||'') }; const f=el('sheetFoot'); if(f) f.innerHTML=hf29ZuordnenFussHtml(); } });
 /* ── Kartenformat: Zeile „- Block: <block> · HH:MM“ (nur gelesen; die Zuordnung kommt aus Zielbild 15) ── */
 { const _alt=f7PfKarteLesen; f7PfKarteLesen=function(r, text){ const kk=_alt(r, text); if(!kk) return kk; try{ const src=String(text!=null ? text : ((r && r['Output/Entwurf'])||'')).replace(/\r/g,''); const m=src.match(/^\s*-\s*Block\s*:\s*([^\n]+)$/im); if(m){ const teile=m[1].split(/[·,]/).map(x=>x.trim()).filter(Boolean), b=k43BlockNorm(teile[0]||''); if(b && b!=='tag' && K43_BLOECKE.some(x=>x[0]===b)){ kk.block=b; const z=(teile[1]||'').match(/^(\d{1,2}):(\d{2})$/); kk.blockZeit=z ? z[1].padStart(2,'0')+':'+z[2] : null; } } }catch(e){} return kk; }; }
+
+/* ═══ Hotfix 29.1 (10.11.2026) · Fokus App 4.5.1 · Overload ohne Zeit und Punkte, Nachzug aus dem Bericht Hotfix 29 (Auftrag 261110 Hotfix 29.1) ═══
+   §1 Karten im Block Overload zählen nirgends mit (Minuten, Punkte), außer im Kopf des Overload-Blocks — eine Funktion hf29OhneOverload für alle Stellen
+   §5 Alte Ketten-Speicher stillgelegt: ketteNachVorn im Block, ketteBewegen/tagStartPrioFinish melden nur noch */
+function hf29OhneOverload(karten){ const ov=hf29OverloadIds(); const l=(karten||[]).slice(); if(!ov.size) return l; return l.filter(k=>!ov.has((k && typeof k==='object') ? k.id : k)); }
+/* §1.2 · „Heute gesamt“: alle Felder (offen heute, gebucht, Punkte-%, offen gesamt, geplant) ohne Overload-Karten (löst die Hülle aus Hotfix 29 §6 ab, die nur geplant abzog) */
+{ const _alt=k43KetteFelder; k43KetteFelder=function(c){ try{ if(c && c.art==='tag'){ const ohne=hf29OhneOverload(c.karten); if(ohne.length!==(c.karten||[]).length) return _alt(Object.assign({}, c, { karten:ohne })); } }catch(e){} return _alt(c); }; }
+/* §1.3 · Prognose (tagesprognose43 → Statusleiste, Tagesprognose, Blockübersicht) und Plankurve („Tempo und Blöcke“, planKurveInfo über ketteKarten) ohne Overload */
+{ const _alt=hf25PrognoseKarten; hf25PrognoseKarten=function(liste, abMs){ if(HF29.ohneOverload){ const ok=new Set(hf29OhneOverload((liste||[]).map(e=>e && e.k).filter(Boolean)).map(k=>k.id)); liste=(liste||[]).filter(e=>!e || !e.k || ok.has(e.k.id)); } return _alt(liste, abMs); }; }
+{ const _alt=planKurveInfo; planKurveInfo=function(datum){ const _kk=ketteKarten; ketteKarten=function(dom){ return hf29OhneOverload(_kk(dom)); }; try{ return _alt(datum); } finally{ ketteKarten=_kk; } }; }
+/* §5 · „⤒ Nach vorn“: im Block der Karte an die erste offene Stelle (plan.start = Start des Blocks bzw. Start der bisher ersten); ohne Block → Zuordnung. ketteBewegen und tagStartPrioFinish schreiben nichts mehr */
+const ketteNachVorn40=ketteNachVorn, ketteBewegen40=ketteBewegen, tagStartPrioFinish40=tagStartPrioFinish;   // Hotfix 29.1 §5: abgelöst (Code bleibt)
+ketteNachVorn=function(id){ const k=S.karten.find(x=>x.id===id); if(!k) return hf29Meldung('Karte '+hf29Id8(id)+' nicht gefunden'); const c=hf29BlockVon(id); if(!c){ hf29Zuordnen(id, { modus:'verschieben' }); return false; }
+  const by={}; S.karten.forEach(x=>by[x.id]=x); const reihe=hf29KettenKarten(c).filter(x=>x!==id), ersteOffen=reihe.find(x=>hf29Offen(by[x]))||null;
+  c.karten=(c.karten||[]).filter(x=>x!==id); const idx=ersteOffen ? Math.max(0, c.karten.indexOf(ersteOffen)) : 0; c.karten.splice(idx, 0, id);
+  if(!c.plan || typeof c.plan!=='object') c.plan={}; const altStart=(ersteOffen && c.plan[ersteOffen] && c.plan[ersteOffen].start) || null; c.plan[id]=Object.assign({}, c.plan[id], { start:c.von || altStart || null });
+  HF29.quelle='zuordnung'; DB.set('tagesketten', S.tagesketten); K43K.cache=null; try{ kettenListenNeu(); }catch(e){} return true; };
+ketteBewegen=function(){ hf29Meldung('Reihenfolge nur in den Blöcken (Hotfix 29)'); return false; };
+tagStartPrioFinish=function(){ hf29Meldung('Reihenfolge nur in den Blöcken (Hotfix 29)'); closeSheet(); renderAlles(); };
 
 function init(){
   ladeAlles();
