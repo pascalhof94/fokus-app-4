@@ -20498,7 +20498,7 @@ function syncImport(text, opt){
         });
       });
       // §3 (v2.7.0): die neue Form — tag · sitzungen · positionen, mit Grund
-      const neueForm = kx.tag!==undefined || kx.sitzungen!==undefined || kx.positionen!==undefined || kx.schlaf!==undefined || kx.bonusAusgleich!==undefined;   // §3 (v3.2.0): + schlaf · Hotfix 27 §5.2: + bonusAusgleich
+      const neueForm = kx.tag!==undefined || kx.sitzungen!==undefined || kx.positionen!==undefined || kx.schlaf!==undefined || kx.bonusAusgleich!==undefined || kx.ticks!==undefined;   // §3 (v3.2.0): + schlaf · Hotfix 27 §5.2: + bonusAusgleich · Hotfix 30 §3: + ticks
       if(neueForm){
         if(!kx.grund || !String(kx.grund).trim()) uebersprungen.push({was:'Korrektur '+kx.datum, grund:'grund fehlt (Pflicht)'});
         else if(kx.datum>heuteApp()) uebersprungen.push({was:'Korrektur '+kx.datum, grund:'Datum liegt in der Zukunft'});
