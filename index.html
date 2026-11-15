@@ -19057,25 +19057,27 @@ function korrTagStand(datum){
     positionen:spur.filter(e=>e && !e.uebersprungen).length,
     matrix:{ ablenkung:Math.round(z.felder.ablenkung), zustand:Math.round(z.felder.zustand), werkzeug:Math.round(z.felder.werkzeug), ziel:Math.round(z.felder.ziel), unbekannt:Math.round(z.unbekannt) } };
 }
-function korrekturAnwenden(kx, abgewiesen){
+function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1: postfachKarte = Karte aus dem Paket (paket.postfachKarte), sonst null
   const datum=String(kx.datum||'');
   const nm=(t)=>'Korrektur '+datum+' · '+t;
   const zeilen=[];
   const heute=tagOffen() && S.tag.datum===datum;
   // Der Tages-Snapshot eines vergangenen Tags — fehlt er (vergessener Tag),
   // wird er beim ersten wirksamen Eintrag angelegt.
-  let _h=null;
-  const tagSn=()=>{ if(heute) return null; if(_h) return _h;
-    const hs=korrSnapshots(datum);
-    if(hs.length){ _h=hs[hs.length-1]; }
-    else { _h={ tagId:datum+'-k', datum, laufindex:1, urlaub:false, spielZufluss:0, startTs:null, endeTs:null, akku:null,
+  let _h=null; const _hs={};   // Hotfix 30 §4.1: tagSn(d) liefert auch den Snapshot eines anderen Tages (ältere Nacht unter dem Datum ihres Abends)
+  const tagSn=(d)=>{ const andere=!!(d && d!==datum);
+    if(!andere){ if(heute) return null; if(_h) return _h; } else if(_hs[d]) return _hs[d];
+    const dat=andere ? d : datum, hs=korrSnapshots(dat); let h;
+    if(hs.length){ h=hs[hs.length-1]; }
+    else { h={ tagId:dat+'-k', datum:dat, laufindex:1, urlaub:false, spielZufluss:0, startTs:null, endeTs:null, akku:null,
       punkteBilanz:0, abzuege:0, routinenBilanz:[], zeit:{dfm:0,privat:0,projekte:{}}, luecke:false, matrixSpur:[], log:[],
       akkuVerlauf:[], streak:0, erledigtHeute:0, perKorrektur:true };
-      S.historie.push(_h); S.historie.sort((a,b)=>a.datum<b.datum?-1:(a.datum>b.datum?1:0)); zeilen.push('Tag angelegt (es gab keinen Abschluss)'); }
-    if(!_h.zeit) _h.zeit={dfm:0,privat:0,projekte:{}};
-    if(!Array.isArray(_h.log)) _h.log=[];
-    if(!Array.isArray(_h.matrixSpur)) _h.matrixSpur=[];
-    return _h; };
+      S.historie.push(h); S.historie.sort((a,b)=>a.datum<b.datum?-1:(a.datum>b.datum?1:0)); zeilen.push('Tag '+(andere ? dat+' ' : '')+'angelegt (es gab keinen Abschluss)'); }
+    if(!h.zeit) h.zeit={dfm:0,privat:0,projekte:{}};
+    if(!Array.isArray(h.log)) h.log=[];
+    if(!Array.isArray(h.matrixSpur)) h.matrixSpur=[];
+    if(andere) _hs[d]=h; else _h=h;
+    return h; };
   const vorher=korrTagStand(datum);
   // Wirkung einer Sitzung auf Karte, Tag und Konto
   const wirkung=(k, dP, dMin, id)=>{
@@ -19290,6 +19292,20 @@ function korrekturAnwenden(kx, abgewiesen){
       zeilen.push((f==='tagesStart'?'Tagesstart ':'Tagesende ')+korrUhr(alt)+' → '+korrUhr(iso));
     });
   }
+  // ── Hotfix 30 §2.2 · nachträglich angelegter Tag (perKorrektur): startTs = früheste, endeTs = späteste Zeit aller Sitzungen (von/bis) und
+  //    Ticks (ts) mit dieser tagId; bei jedem weiteren Paket erweitert, nie verkürzt. Nächte (§4) zählen nicht. notiz nennt die Postfach-Karte. ──
+  [_h].concat(Object.keys(_hs).map(d=>_hs[d])).forEach(h=>{
+    if(!h || !h.perKorrektur) return;
+    let s=null, e=null;
+    (S.intraday||[]).forEach(x=>{ if(!x || x.tagId!==h.tagId) return;
+      if(SITZUNG_TYPEN.indexOf(x.typ)>=0 && num(x.minuten)>=0.5){ const xv=sitzungVonMs(x), xb=Date.parse(x.ts); if(Number.isFinite(xv) && (s==null || xv<s)) s=xv; if(Number.isFinite(xb) && (e==null || xb>e)) e=xb; }
+      else if(x.typ==='tick'){ const t=Date.parse(x.ts); if(Number.isFinite(t)){ if(s==null || t<s) s=t; if(e==null || t>e) e=t; } } });
+    const alt=String(h.startTs||'')+'|'+String(h.endeTs||'');
+    if(s!=null && (!h.startTs || s<Date.parse(h.startTs))) h.startTs=new Date(s).toISOString();
+    if(e!=null && (!h.endeTs || e>Date.parse(h.endeTs))) h.endeTs=new Date(e).toISOString();
+    h.notiz='Nachtrag per Korrektur'+(postfachKarte ? ' '+String(postfachKarte) : '');
+    if(String(h.startTs||'')+'|'+String(h.endeTs||'')!==alt) zeilen.push('Tag '+h.datum+' '+korrUhr(h.startTs)+'–'+korrUhr(h.endeTs)+' (aus Sitzungen und Ticks)');
+  });
   if(!zeilen.length) return null;
   const eintrag={ ts:jetztIso(), datum, grund:String(kx.grund), vorher, nachher:korrTagStand(datum), aenderungen:zeilen };
   if(!Array.isArray(S.meta.korrekturProtokoll)) S.meta.korrekturProtokoll=[];
@@ -20420,7 +20436,7 @@ function syncImport(text, opt){
       if(neueForm){
         if(!kx.grund || !String(kx.grund).trim()) uebersprungen.push({was:'Korrektur '+kx.datum, grund:'grund fehlt (Pflicht)'});
         else if(kx.datum>heuteApp()) uebersprungen.push({was:'Korrektur '+kx.datum, grund:'Datum liegt in der Zukunft'});
-        else { const e=korrekturAnwenden(kx, uebersprungen);
+        else { const e=korrekturAnwenden(kx, uebersprungen, (paket.postfachKarte!=null && paket.postfachKarte!=='') ? String(paket.postfachKarte) : null);   // Hotfix 30 §2.1: Postfach-Karte des Pakets
           if(e){ korrekturNeu++; S.meta.rueckblick291Korrigiert=true; } }   // protokolliert in meta.korrekturProtokoll (Einstellungen „Korrekturen"); §2 (v2.9.1)
       }
       if(Array.isArray(kx.karten)) kx.karten.forEach(kk=>{
@@ -28746,10 +28762,10 @@ function hf27BonusAusgleich(kx, abgewiesen, schritte){ const liste=Array.isArray
       DB.set('intraday', S.intraday); saveHistorie(); }
     zeilen.push('Bonus ausgeglichen: „'+String(b.grund)+'“ '+(p>=0?'+':'')+fmtP(p)+' P ('+(fam==='dfm'?'DFM':'Privat')+', '+tagD+')'); });
   return zeilen; }
-{ const _alt=korrekturAnwenden; korrekturAnwenden=function(kx, abgewiesen){ abgewiesen=abgewiesen||[]; const vorher=abgewiesen.length, datum=String((kx && kx.datum)||''), schritte=[];
+{ const _alt=korrekturAnwenden; korrekturAnwenden=function(kx, abgewiesen, postfachKarte){ abgewiesen=abgewiesen||[];   // Hotfix 30 §2.1: postfachKarte durchgereicht const vorher=abgewiesen.length, datum=String((kx && kx.datum)||''), schritte=[];
     let standVorher=null; try{ if(kx && !Array.isArray(kx.sitzungen) && Array.isArray(kx.bonusAusgleich)) standVorher=korrTagStand(datum); }catch(x){}   // Hotfix 28 (ungeplant, Pascal 04.11. 14:16 Uhr): Stand vorher für einen reinen Bonusausgleich
     HF30.angepasst=[];   // Hotfix 30 §1.3: Hinweise der Toleranz (was → hinweis) aus korrekturAnwenden
-    const e=_alt(kx, abgewiesen);
+    const e=_alt(kx, abgewiesen, postfachKarte);
     (Array.isArray(kx && kx.sitzungen) ? kx.sitzungen : []).forEach((sz,i)=>{ sz=sz||{}; const was='Korrektur '+datum+' · Sitzung '+(i+1)+(sz.id ? ' ('+sz.id+')' : ''); const a=abgewiesen.slice(vorher).find(x=>x && x.was===was), an=HF30.angepasst.find(x=>x && x.was===was);
       schritte.push({ nr:schritte.length+1, aktion:String(sz.aktion||''), was, status:a ? 'abgewiesen' : (an ? 'angepasst' : 'angewendet'), grund:a ? String(a.grund||'') : (an ? String(an.hinweis||'') : '') }); });   // Hotfix 30 §1.3: Status „angepasst" mit Hinweis
     const zeilen=hf27BonusAusgleich(kx||{}, abgewiesen, schritte);
