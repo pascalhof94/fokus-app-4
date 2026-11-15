@@ -18924,6 +18924,105 @@ function korrZeit(v, datum){
 }
 function korrUhr(iso){ return iso ? belUhr(kalStunde(iso)) : '—'; }   // lokale Uhrzeit, nie die UTC-Ziffern des ISO-Strings
 function korrKarte(ref){ if(ref==null||ref==='') return null; const r=String(ref); return S.karten.find(k=>k.id===r) || S.karten.find(k=>k.airtableId===r) || null; }
+/* ══ Hotfix 30 §1 (15.11.2026) · Zeitspanne eines Korrektur-Schritts — die EINZIGE Stelle, die von/bis auflöst.
+   v = korrZeit(von) (5-Uhr-Fenster, unverändert) · b = korrZeit(bis); ist bis „HH:MM" und b <= v, liegt bis am Folgetag (+24 h).
+   ISO-Angaben bleiben wie geschrieben (b <= v → „bis liegt vor von"). Länger als 24 Stunden → Fehler.
+   Folge (§1.2): eine Nacht steht unter dem Datum des Abends, an dem eingeschlafen wurde — datum 2026-11-13, von "00:00",
+   bis "09:00" = 14.11. 00:00–09:00 und gehört zum App-Tag 13.11. */
+const HF30={ angepasst:[], geschrieben:{} };   // angepasst: Hinweise der Toleranz je Schritt (was → hinweis), geschrieben: Prüfung je Karte (id → Paket-Hash)
+function korrZeitspanne(sz, datum){
+  sz=sz||{};
+  const v=korrZeit(sz.von, datum); let b=korrZeit(sz.bis, datum);
+  if(!Number.isFinite(v) || !Number.isFinite(b)) return { v, b, fehler:'von/bis nicht lesbar' };
+  if(/^\d{1,2}:\d{2}$/.test(String(sz.bis==null?'':sz.bis).trim()) && b<=v) b+=24*3600000;
+  if(b<=v) return { v, b, fehler:'bis liegt vor von' };
+  if(b-v>24*3600000) return { v, b, fehler:'länger als 24 Stunden' };
+  return { v, b, fehler:null };
+}
+/* Hotfix 30 §1.3 · Überlappung mit einer anderen Uhr-Sitzung (timer, autopause, nachtrag, korrektur) desselben Tages (Hotfix 22 §1.4),
+   mit Toleranz 60 Sek.: endet die andere Sitzung höchstens 60 Sek. nach v, rückt v auf ihr Ende („Beginn um n Sek. angepasst");
+   beginnt sie höchstens 60 Sek. vor b, rückt b auf ihren Beginn („Ende um n Sek. angepasst"). Größere Überlappung → fehler.
+   liste = die Sitzungsliste (S.intraday beim Anwenden, eine Kopie bei der Prüfung §5.1) · ausserId = die geänderte Sitzung selbst. */
+const KORR_TOLERANZ_MS=60000;
+function korrUeberlappt(v, b, ausserId, datum, liste){
+  const iv=Array.isArray(liste) ? liste : (S.intraday||[]), hinweise=[];
+  for(const x of iv){
+    if(!x || !x.ts || SITZUNG_TYPEN.indexOf(x.typ)<0 || num(x.minuten)<0.5) continue;
+    if(ausserId && sitzungIdVon(x)===String(ausserId)) continue;
+    const xv=sitzungVonMs(x), xb=Date.parse(x.ts);
+    if(!Number.isFinite(xv) || !Number.isFinite(xb)) continue;
+    if(belFensterDatum(new Date(xv).toISOString())!==datum && belFensterDatum(x.ts)!==datum) continue;
+    if(!(xv<b && xb>v)) continue;
+    if(xb-v<=KORR_TOLERANZ_MS && xb<b){ hinweise.push('Beginn um '+Math.round((xb-v)/1000)+' Sek. angepasst'); v=xb; continue; }
+    if(b-xv<=KORR_TOLERANZ_MS && xv>v){ hinweise.push('Ende um '+Math.round((b-xv)/1000)+' Sek. angepasst'); b=xv; continue; }
+    const kx=korrKarte(x.kartenId);
+    return { v, b, angepasst:null, fehler:'überlappt '+String((kx && kx.titel)||x.kartenId||'?').slice(0,30)+' '+korrUhr(new Date(xv).toISOString())+'–'+korrUhr(x.ts) };
+  }
+  if(!(b>v)) return { v, b, angepasst:null, fehler:'bis liegt vor von' };
+  return { v, b, angepasst:hinweise.length ? hinweise.join(' · ') : null, fehler:null };
+}
+/* Sitzung eines Schritts finden: erst id, dann Karte + Zeitspanne (über korrZeitspanne) */
+function korrFindeSitzung(sz, k, datum, liste){
+  const iv=Array.isArray(liste) ? liste : (S.intraday||[]);
+  if(sz.id!=null && sz.id!==''){ const e=iv.find(x=>SITZUNG_TYPEN.indexOf(x.typ)>=0 && sitzungIdVon(x)===String(sz.id)); if(e) return e; }
+  if(!k) return null;
+  const zs=korrZeitspanne(sz, datum); if(zs.fehler) return null;
+  return iv.find(x=>x.kartenId===k.id && SITZUNG_TYPEN.indexOf(x.typ)>=0 && Math.abs(Date.parse(x.ts)-zs.b)<30000 && Math.abs(sitzungVonMs(x)-zs.v)<30000) || null;
+}
+// Hotfix 22 §1.1 · fester Satz: { punkteJeStd (0 … 5.000), vermerk (Pflicht) } oder null; Fehler als Text
+function korrFesterSatz(sz){
+  if(sz.punkteJeStd===undefined || sz.punkteJeStd===null || sz.punkteJeStd==='') return { fest:null };
+  const satz=Number(sz.punkteJeStd);
+  if(!Number.isFinite(satz) || satz<0 || satz>5000) return { fehler:'punkteJeStd muss eine Zahl 0 … 5.000 sein' };
+  const vermerk=(sz.vermerk==null) ? '' : String(sz.vermerk).trim();
+  if(!vermerk) return { fehler:'vermerk fehlt' };
+  return { fest:{ punkteJeStd:satz, vermerk } };
+}
+/* ══ Hotfix 30 §5.1 · Prüfregeln je Schritt — genau EINMAL im Code. korrekturAnwenden (Wirkung) und korrekturPruefen (nur Lesen) rufen
+   dieselben Funktionen. Ergebnis { status:'ok'|'angepasst'|'abgewiesen', grund, … }, ohne Wirkung auf den Zustand.
+   liste = die Sitzungen, gegen die geprüft wird (§1.4: jeder Schritt sieht das Ergebnis der Schritte davor). ══ */
+function korrSitzungPruefen(sz, datum, liste){
+  sz=sz||{};
+  const akt=String(sz.aktion||'');
+  const r={ status:'ok', grund:'', akt, k:null, e:null, v:NaN, b:NaN, fest:null, angepasst:null, ohneWirkung:false, id:null };
+  const ab=(g)=>{ r.status='abgewiesen'; r.grund=g; return r; };
+  if(['hinzu','aendern','entfernen'].indexOf(akt)<0) return ab('aktion muss hinzu|aendern|entfernen sein');
+  const k=korrKarte(sz.karteId); r.k=k;
+  if(sz.karteId!=null && sz.karteId!=='' && !k) return ab('Karte „'+sz.karteId+'" unbekannt');
+  if(akt==='entfernen'){
+    const e=korrFindeSitzung(sz, k, datum, liste); r.e=e;
+    if(!e){ r.ohneWirkung=true; return r; }                                   // schon weg — zweites Einspielen
+    if(!korrKarte(e.kartenId)) return ab('Karte der Sitzung unbekannt');
+    r.v=sitzungVonMs(e); r.b=Date.parse(e.ts); return r;
+  }
+  if(!k) return ab('karteId fehlt');
+  const zs=korrZeitspanne(sz, datum); if(zs.fehler) return ab(zs.fehler);
+  const v=zs.v, b=zs.b;
+  if(b>Date.now()+60000) return ab('Sitzung liegt in der Zukunft');
+  const fs=korrFesterSatz(sz); if(fs.fehler) return ab(fs.fehler);          // Hotfix 22 §1.1
+  r.fest=fs.fest;
+  if(akt==='aendern'){
+    const e=korrFindeSitzung({id:sz.id}, null, datum, liste); r.e=e;
+    if(!e) return ab('Sitzung „'+(sz.id||'?')+'" nicht gefunden');
+    const gleicheZeit=e.kartenId===k.id && Math.abs(Date.parse(e.ts)-b)<30000 && Math.abs(sitzungVonMs(e)-v)<30000;
+    if(gleicheZeit && (!r.fest || (e.manuell && num(e.punkteJeStd)===r.fest.punkteJeStd))){ r.v=v; r.b=b; r.ohneWirkung=true; return r; }   // schon so (Hotfix 22: auch derselbe feste Satz)
+    const ue=korrUeberlappt(v, b, sitzungIdVon(e), datum, liste); if(ue.fehler) return ab(ue.fehler);   // Hotfix 22 §1.4 · Hotfix 30 §1.3 Toleranz
+    r.v=ue.v; r.b=ue.b; r.angepasst=ue.angepasst; if(ue.angepasst) r.status='angepasst';
+    return r;
+  }
+  r.id=(sz.id!=null && sz.id!=='') ? String(sz.id) : ('s-korr-'+k.id+'-'+new Date(v).toISOString()+'-'+new Date(b).toISOString());
+  if(korrFindeSitzung({id:r.id, von:sz.von, bis:sz.bis}, k, datum, liste)){ r.v=v; r.b=b; r.ohneWirkung=true; return r; }   // schon da — zweites Einspielen
+  const ue=korrUeberlappt(v, b, null, datum, liste); if(ue.fehler) return ab(ue.fehler);
+  r.v=ue.v; r.b=ue.b; r.angepasst=ue.angepasst; if(ue.angepasst) r.status='angepasst';
+  return r;
+}
+/* Nacht (Sitzung auf „Schlafen"): Zeitspanne und mindestens 60 Minuten */
+function korrNachtPruefen(sz, datum){
+  const zs=korrZeitspanne(sz||{}, datum);
+  if(zs.fehler) return { status:'abgewiesen', grund:zs.fehler, v:zs.v, b:zs.b };
+  if((zs.b-zs.v)/60000<SCHLAF_NACHT_MIN) return { status:'abgewiesen', grund:'kürzer als 60 Minuten — keine Nacht', v:zs.v, b:zs.b };
+  return { status:'ok', grund:'', v:zs.v, b:zs.b };
+}
 function sitzungPunkteFuer(k, min, datum){
   if(!k || hatFestMin(k)) return 0;
   // §2 (v2.9.0): Pflicht ab dem Update — eine nachgetragene Sitzung ist ein Durchgang
@@ -19011,35 +19110,10 @@ function korrekturAnwenden(kx, abgewiesen){
     h.spielZufluss=num(h.spielZufluss)+dM;
     zeilen.push('Konto '+(dM>=0?'+':'')+fmtP(dM)+' (Faktor '+fbZahl(f,2)+')');
   };
-  const findeSitzung=(sz, k)=>{
-    const iv=S.intraday||[];
-    if(sz.id!=null && sz.id!==''){ const e=iv.find(x=>SITZUNG_TYPEN.indexOf(x.typ)>=0 && sitzungIdVon(x)===String(sz.id)); if(e) return e; }
-    if(!k) return null;
-    const v=korrZeit(sz.von, datum), b=korrZeit(sz.bis, datum);
-    return iv.find(x=>x.kartenId===k.id && SITZUNG_TYPEN.indexOf(x.typ)>=0 && Math.abs(Date.parse(x.ts)-b)<30000 && Math.abs(sitzungVonMs(x)-v)<30000) || null;
-  };
-  // Hotfix 22 §1 · Überlappung mit einer anderen Uhr-Sitzung (timer, autopause, nachtrag, korrektur) desselben Tages; ausserId = die geänderte Sitzung selbst
-  const ueberlappt=(v, b, ausserId)=>{
-    const iv=S.intraday||[];
-    for(const x of iv){
-      if(!x || !x.ts || SITZUNG_TYPEN.indexOf(x.typ)<0 || num(x.minuten)<0.5) continue;
-      if(ausserId && sitzungIdVon(x)===String(ausserId)) continue;
-      const xv=sitzungVonMs(x), xb=Date.parse(x.ts);
-      if(!Number.isFinite(xv) || !Number.isFinite(xb)) continue;
-      if(belFensterDatum(new Date(xv).toISOString())!==datum && belFensterDatum(x.ts)!==datum) continue;
-      if(xv<b && xb>v){ const kx=korrKarte(x.kartenId); return 'überlappt '+String((kx && kx.titel)||x.kartenId||'?').slice(0,30)+' '+korrUhr(new Date(xv).toISOString())+'–'+korrUhr(x.ts); }
-    }
-    return null;
-  };
-  // Hotfix 22 §1.1 · fester Satz: { punkteJeStd (0 … 5.000), vermerk (Pflicht) } oder null; Fehler als Text
-  const festerSatz=(sz)=>{
-    if(sz.punkteJeStd===undefined || sz.punkteJeStd===null || sz.punkteJeStd==='') return { fest:null };
-    const satz=Number(sz.punkteJeStd);
-    if(!Number.isFinite(satz) || satz<0 || satz>5000) return { fehler:'punkteJeStd muss eine Zahl 0 … 5.000 sein' };
-    const vermerk=(sz.vermerk==null) ? '' : String(sz.vermerk).trim();
-    if(!vermerk) return { fehler:'vermerk fehlt' };
-    return { fest:{ punkteJeStd:satz, vermerk } };
-  };
+  // Hotfix 30 §1: von/bis, Überlappung (mit Toleranz) und fester Satz laufen über die gemeinsamen Funktionen (korrZeitspanne, korrUeberlappt, korrFesterSatz)
+  const findeSitzung=(sz, k)=>korrFindeSitzung(sz, k, datum, S.intraday);
+  const ueberlappt=(v, b, ausserId)=>korrUeberlappt(v, b, ausserId, datum, S.intraday);   // Hotfix 22 §1 · Hotfix 30 §1.3: { v, b, angepasst, fehler }
+  const festerSatz=korrFesterSatz;
   const sitzungEntfernen=(e, k, opt)=>{
     // Hotfix 22 §1.2: bei festem Satz zählt als „vorher“ das, was die Sitzung tatsächlich gebucht hat (e.punkte), nicht die Stundenleiter
     const min=num(e.minuten), dP=(e.typ==='korrektur' || (opt && opt.wieGebucht)) ? num(e.punkte) : sitzungPunkteFuer(k, min, datum);
@@ -19066,10 +19140,9 @@ function korrekturAnwenden(kx, abgewiesen){
   };
   // §3 (v3.2.0): eine Sitzung auf „Schlafen" ist eine NACHT — sie ersetzt dieselbe Nacht und rechnet die Schlafschuld neu
   const nachtKorrektur=(sz, was)=>{
-    const v=korrZeit(sz.von, datum), b=korrZeit(sz.bis, datum);
-    if(!Number.isFinite(v) || !Number.isFinite(b)){ abgewiesen.push({was, grund:'von/bis nicht lesbar'}); return; }
-    if(!(b>v)){ abgewiesen.push({was, grund:'bis liegt vor von'}); return; }
-    if((b-v)/60000<SCHLAF_NACHT_MIN){ abgewiesen.push({was, grund:'kürzer als 60 Minuten — keine Nacht'}); return; }
+    const pr=korrNachtPruefen(sz, datum);   // Hotfix 30 §1/§5.1: Zeitspanne über korrZeitspanne, mindestens 60 Minuten
+    if(pr.status==='abgewiesen'){ abgewiesen.push({was, grund:pr.grund}); return; }
+    const v=pr.v, b=pr.b;
     const z0=schlafZustand().letzte;
     if(z0 && Math.abs(Date.parse(z0.startTs)-v)<60000 && Math.abs(Date.parse(z0.endeTs)-b)<60000 && (sz.punkte==null || num(sz.punkte)===num(z0.punkte))) return;   // schon so
     const r=schlafNachtSetzen(v, b, sz.punkte, String(kx.grund||'Korrektur'));
@@ -19098,42 +19171,27 @@ function korrekturAnwenden(kx, abgewiesen){
   (Array.isArray(kx.sitzungen)?kx.sitzungen:[]).forEach((sz,i)=>{
     sz=sz||{}; const was=nm('Sitzung '+(i+1)+(sz.id?' ('+sz.id+')':''));
     { const ks=korrKarte(sz.karteId!=null && sz.karteId!=='' ? sz.karteId : sz.kartenId); if(ks && ks.rolle==='schlafen'){ nachtKorrektur(sz, was); return; } }
-    const akt=String(sz.aktion||'');
-    if(['hinzu','aendern','entfernen'].indexOf(akt)<0){ abgewiesen.push({was, grund:'aktion muss hinzu|aendern|entfernen sein'}); return; }
-    const k=korrKarte(sz.karteId);
-    if(sz.karteId!=null && sz.karteId!=='' && !k){ abgewiesen.push({was, grund:'Karte „'+sz.karteId+'" unbekannt'}); return; }
-    if(akt==='entfernen'){
-      const e=findeSitzung(sz, k);
-      if(!e) return;                                       // schon weg — zweites Einspielen
-      const ke=korrKarte(e.kartenId); if(!ke){ abgewiesen.push({was, grund:'Karte der Sitzung unbekannt'}); return; }
+    // Hotfix 30 §5.1: dieselben Prüfregeln wie korrekturPruefen (korrSitzungPruefen) — hier mit Wirkung auf S.intraday
+    const pr=korrSitzungPruefen(sz, datum, S.intraday);
+    if(pr.status==='abgewiesen'){ abgewiesen.push({was, grund:pr.grund}); return; }
+    if(pr.ohneWirkung) return;                               // schon weg · schon so · schon da — zweites Einspielen
+    if(pr.angepasst) HF30.angepasst.push({ was, hinweis:pr.angepasst });   // Hotfix 30 §1.3: Status „angepasst" im Schritt (Hotfix-27-Wrapper)
+    const k=pr.k, v=pr.v, b=pr.b, fest=pr.fest, satzText=fest ? ' · ✍︎ '+fmtP(fest.punkteJeStd)+' P/h' : '', hinweisText=pr.angepasst ? ' · '+pr.angepasst : '';
+    if(pr.akt==='entfernen'){
+      const e=pr.e, ke=korrKarte(e.kartenId);
       const r=sitzungEntfernen(e, ke);
       zeilen.push('Sitzung entfernt: „'+String(ke.titel||'').slice(0,30)+'" '+Math.round(r.min)+' Min · '+(r.dP?'−'+fmtP(r.dP)+' P':'0 P'));
       return;
     }
-    if(!k){ abgewiesen.push({was, grund:'karteId fehlt'}); return; }
-    const v=korrZeit(sz.von, datum), b=korrZeit(sz.bis, datum);
-    if(!Number.isFinite(v) || !Number.isFinite(b)){ abgewiesen.push({was, grund:'von/bis nicht lesbar'}); return; }
-    if(!(b>v)){ abgewiesen.push({was, grund:'bis liegt vor von'}); return; }
-    if(b>Date.now()+60000){ abgewiesen.push({was, grund:'Sitzung liegt in der Zukunft'}); return; }
-    const fs=festerSatz(sz); if(fs.fehler){ abgewiesen.push({was, grund:fs.fehler}); return; }   // Hotfix 22 §1.1
-    const fest=fs.fest, satzText=fest ? ' · ✍︎ '+fmtP(fest.punkteJeStd)+' P/h' : '';
-    if(akt==='aendern'){
-      const e=findeSitzung({id:sz.id}, null) || null;
-      if(!e){ abgewiesen.push({was, grund:'Sitzung „'+(sz.id||'?')+'" nicht gefunden'}); return; }
-      const gleicheZeit=e.kartenId===k.id && Math.abs(Date.parse(e.ts)-b)<30000 && Math.abs(sitzungVonMs(e)-v)<30000;
-      if(gleicheZeit && (!fest || (e.manuell && num(e.punkteJeStd)===fest.punkteJeStd))) return;   // schon so (Hotfix 22: auch derselbe feste Satz)
-      const ue=ueberlappt(v, b, sitzungIdVon(e)); if(ue){ abgewiesen.push({was, grund:ue}); return; }   // Hotfix 22 §1.4
-      const ke=korrKarte(e.kartenId)||k;
+    if(pr.akt==='aendern'){
+      const e=pr.e, ke=korrKarte(e.kartenId)||k;
       const vorher={ von:new Date(sitzungVonMs(e)).toISOString(), bis:e.ts, minuten:num(e.minuten), punkte:num(e.punkte) };   // Hotfix 22 §1.2
       const alt=sitzungEntfernen(e, ke, { wieGebucht:!!fest }), neu=sitzungHinzu(k, v, b, sitzungIdVon(e), fest ? Object.assign({ vorher }, fest) : null);
-      zeilen.push('Sitzung geändert: „'+String(k.titel||'').slice(0,30)+'" '+Math.round(alt.min)+' → '+Math.round(neu.min)+' Min · '+(neu.dP-alt.dP>=0?'+':'')+fmtP(neu.dP-alt.dP)+' P'+satzText);
+      zeilen.push('Sitzung geändert: „'+String(k.titel||'').slice(0,30)+'" '+Math.round(alt.min)+' → '+Math.round(neu.min)+' Min · '+(neu.dP-alt.dP>=0?'+':'')+fmtP(neu.dP-alt.dP)+' P'+satzText+hinweisText);
       return;
     }
-    const id=(sz.id!=null && sz.id!=='') ? String(sz.id) : ('s-korr-'+k.id+'-'+new Date(v).toISOString()+'-'+new Date(b).toISOString());
-    if(findeSitzung({id, von:sz.von, bis:sz.bis}, k)) return;                 // schon da — zweites Einspielen
-    { const ue=ueberlappt(v, b, null); if(ue){ abgewiesen.push({was, grund:ue}); return; } }   // Hotfix 22 §1.4
-    const r=sitzungHinzu(k, v, b, id, fest);
-    zeilen.push('Sitzung hinzu: „'+String(k.titel||'').slice(0,30)+'" '+belUhr(kalStunde(new Date(v).toISOString()))+'–'+belUhr(kalStunde(new Date(b).toISOString()))+' · '+Math.round(r.min)+' Min · +'+fmtP(r.dP)+' P'+satzText);
+    const r=sitzungHinzu(k, v, b, pr.id, fest);
+    zeilen.push('Sitzung hinzu: „'+String(k.titel||'').slice(0,30)+'" '+belUhr(kalStunde(new Date(v).toISOString()))+'–'+belUhr(kalStunde(new Date(b).toISOString()))+' · '+Math.round(r.min)+' Min · +'+fmtP(r.dP)+' P'+satzText+hinweisText);
   });
   // ── §3 (v3.2.0): Schlafschuld direkt setzen (mit grund) ──
   if(kx.schlaf && typeof kx.schlaf==='object' && kx.schlaf.schuldStd!==undefined && kx.schlaf.schuldStd!==null && kx.schlaf.schuldStd!==''){
@@ -28690,9 +28748,10 @@ function hf27BonusAusgleich(kx, abgewiesen, schritte){ const liste=Array.isArray
   return zeilen; }
 { const _alt=korrekturAnwenden; korrekturAnwenden=function(kx, abgewiesen){ abgewiesen=abgewiesen||[]; const vorher=abgewiesen.length, datum=String((kx && kx.datum)||''), schritte=[];
     let standVorher=null; try{ if(kx && !Array.isArray(kx.sitzungen) && Array.isArray(kx.bonusAusgleich)) standVorher=korrTagStand(datum); }catch(x){}   // Hotfix 28 (ungeplant, Pascal 04.11. 14:16 Uhr): Stand vorher für einen reinen Bonusausgleich
+    HF30.angepasst=[];   // Hotfix 30 §1.3: Hinweise der Toleranz (was → hinweis) aus korrekturAnwenden
     const e=_alt(kx, abgewiesen);
-    (Array.isArray(kx && kx.sitzungen) ? kx.sitzungen : []).forEach((sz,i)=>{ sz=sz||{}; const was='Korrektur '+datum+' · Sitzung '+(i+1)+(sz.id ? ' ('+sz.id+')' : ''); const a=abgewiesen.slice(vorher).find(x=>x && x.was===was);
-      schritte.push({ nr:schritte.length+1, aktion:String(sz.aktion||''), was, status:a ? 'abgewiesen' : 'angewendet', grund:a ? String(a.grund||'') : '' }); });
+    (Array.isArray(kx && kx.sitzungen) ? kx.sitzungen : []).forEach((sz,i)=>{ sz=sz||{}; const was='Korrektur '+datum+' · Sitzung '+(i+1)+(sz.id ? ' ('+sz.id+')' : ''); const a=abgewiesen.slice(vorher).find(x=>x && x.was===was), an=HF30.angepasst.find(x=>x && x.was===was);
+      schritte.push({ nr:schritte.length+1, aktion:String(sz.aktion||''), was, status:a ? 'abgewiesen' : (an ? 'angepasst' : 'angewendet'), grund:a ? String(a.grund||'') : (an ? String(an.hinweis||'') : '') }); });   // Hotfix 30 §1.3: Status „angepasst" mit Hinweis
     const zeilen=hf27BonusAusgleich(kx||{}, abgewiesen, schritte);
     if(e && zeilen.length){ e.aenderungen=(e.aenderungen||[]).concat(zeilen); }
     if(e) e.schritte=schritte; HF27.korrSchritte=HF27.korrSchritte.concat(schritte);
