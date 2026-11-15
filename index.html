@@ -19174,6 +19174,11 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
   //   schlafZustand().korrekturNaechte (höchstens 60, älteste fallen heraus); dieselbe Nacht (Überlappung) ersetzt den Eintrag, die Punktedifferenz
   //   geht an den Tag von belFensterDatum(startTs) (Bilanz, Log „Nacht nachgetragen", Intraday typ korrektur-schlaf mit der Schlafen-Karte — der
   //   Dienst überspringt Einträge der Schlafen-Karte, bucht die Nacht aus korrekturNaechte), dann kontoNachziehen. Schlafschuld unverändert.
+  const nachtMerken=(n)=>{ const z=schlafZustand(); if(!Array.isArray(z.korrekturNaechte)) z.korrekturNaechte=[];
+    const v=Date.parse(n.startTs), b=Date.parse(n.endeTs), alt=z.korrekturNaechte.find(x=>x && x.startTs && x.endeTs && v<Date.parse(x.endeTs) && b>Date.parse(x.startTs)) || null;
+    const eintrag={ startTs:n.startTs, endeTs:n.endeTs, dauerMin:num(n.dauerMin), punkte:num(n.punkte), tagId:n.tagId||null, grund:String(kx.grund||''), korrektur:true, alsLetzte:true };
+    if(alt) z.korrekturNaechte[z.korrekturNaechte.indexOf(alt)]=eintrag; else z.korrekturNaechte.push(eintrag);
+    z.korrekturNaechte.sort((p,q)=>p.startTs<q.startTs?-1:(p.startTs>q.startTs?1:0)); z.korrekturNaechte=z.korrekturNaechte.slice(-60); };
   const nachtAelter=(sz, v, b)=>{
     const z=schlafZustand(); if(!Array.isArray(z.korrekturNaechte)) z.korrekturNaechte=[];
     const sk=schlafKarte(), std=(b-v)/3600000;
@@ -19223,6 +19228,7 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
           kontoNachziehen(h, bil0, dP); }
       }
     } else if(!r.ersetzt && !n.gebucht) schlafPunkteBuchen();   // eine neue Nacht zaehlt zum Tag, der nach ihr begann
+    nachtMerken(n);   // Hotfix 30 §4.1: auch die als „letzte" gebuchte Korrektur-Nacht steht in korrekturNaechte (alsLetzte, mit dem Tag der Buchung) — ein zweites Einspielen nach einer neueren Nacht findet sie und bucht nichts doppelt
     zeilen.push('Nacht '+belUhr(kalStunde(n.startTs))+'–'+belUhr(kalStunde(n.endeTs))+' · '+hMin(n.dauerMin)+' Std · '+fmtP(n.punkte)+' P'+(dP?' ('+(dP>=0?'+':'−')+fmtP(Math.abs(dP))+')':'')+
       ' · Schlafschuld '+fbZahl(r.schuldVor,1)+' → '+fbZahl(r.schuldNach,1)+' Std'+(r.neuer?'':' (ältere Nacht — Schuld unverändert)'));
   };
@@ -28855,7 +28861,7 @@ function hf27BonusAusgleich(kx, abgewiesen, schritte){ const liste=Array.isArray
       DB.set('intraday', S.intraday); saveHistorie(); }
     zeilen.push('Bonus ausgeglichen: „'+String(b.grund)+'“ '+(p>=0?'+':'')+fmtP(p)+' P ('+(fam==='dfm'?'DFM':'Privat')+', '+tagD+')'); });
   return zeilen; }
-{ const _alt=korrekturAnwenden; korrekturAnwenden=function(kx, abgewiesen, postfachKarte){ abgewiesen=abgewiesen||[];   // Hotfix 30 §2.1: postfachKarte durchgereicht const vorher=abgewiesen.length, datum=String((kx && kx.datum)||''), schritte=[];
+{ const _alt=korrekturAnwenden; korrekturAnwenden=function(kx, abgewiesen, postfachKarte){ abgewiesen=abgewiesen||[]; const vorher=abgewiesen.length, datum=String((kx && kx.datum)||''), schritte=[];   // Hotfix 30 §2.1: postfachKarte durchgereicht
     let standVorher=null; try{ if(kx && !Array.isArray(kx.sitzungen) && Array.isArray(kx.bonusAusgleich)) standVorher=korrTagStand(datum); }catch(x){}   // Hotfix 28 (ungeplant, Pascal 04.11. 14:16 Uhr): Stand vorher für einen reinen Bonusausgleich
     HF30.angepasst=[];   // Hotfix 30 §1.3: Hinweise der Toleranz (was → hinweis) aus korrekturAnwenden
     const e=_alt(kx, abgewiesen, postfachKarte);
@@ -29451,9 +29457,9 @@ function korrekturPruefen(paket){
     (Array.isArray(kx.sitzungen)?kx.sitzungen:[]).forEach(sz=>{ sz=sz||{};
       const ks=korrKarte(sz.karteId!=null && sz.karteId!=='' ? sz.karteId : sz.kartenId);
       if(ks && ks.rolle==='schlafen'){ const pr=korrNachtPruefen(sz, datum); zeile({ datum, was:'Nacht', aktion:'nacht', karte:titel(ks), von:ms(pr.v), bis:ms(pr.b), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund }); return; }
-      const pr=korrSitzungPruefen(sz, datum, liste), akt=pr.akt||String(sz.aktion||'');
+      const pr=korrSitzungPruefen(sz, datum, liste), akt=pr.akt||String(sz.aktion||''), zs=korrZeitspanne(sz, datum);   // zs: Zeitspanne auch für abgewiesene Schritte (Anzeige)
       const k=pr.k||(pr.e ? korrKarte(pr.e.kartenId) : null);
-      zeile({ datum, was:'Sitzung '+(akt==='aendern' ? 'ändern' : akt||'?'), aktion:akt, karte:titel(k), von:ms(pr.v), bis:ms(pr.b), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund||(pr.ohneWirkung ? 'ohne Wirkung (schon so)' : '') });
+      zeile({ datum, was:'Sitzung '+(akt==='aendern' ? 'ändern' : akt||'?'), aktion:akt, karte:titel(k), von:Number.isFinite(pr.v) ? pr.v : ms(zs.v), bis:Number.isFinite(pr.b) ? pr.b : ms(zs.b), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund||pr.angepasst||(pr.ohneWirkung ? 'ohne Wirkung (schon so)' : '') });   // grund bzw. Hinweis (§5.4)
       if(sperre || pr.status==='abgewiesen' || pr.ohneWirkung) return;
       if(akt==='entfernen' || akt==='aendern'){ const i=liste.indexOf(pr.e); if(i>=0) liste.splice(i,1); }   // Wirkung auf die Kopie (§1.4)
       if(akt==='hinzu' || akt==='aendern') liste.push({ id:akt==='aendern' ? sitzungIdVon(pr.e) : pr.id, ts:new Date(pr.b).toISOString(), von:new Date(pr.v).toISOString(), kartenId:pr.k.id, domaene:pr.k.domain, typ:'korrektur', minuten:Math.round((pr.b-pr.v)/6000)/10, datum });
