@@ -1,4 +1,4 @@
-/* Suite 6.0 · Hotfix 30.2 (Auftrag 261115 Hotfix 30.2, Phase C) · Pflichtfall = Pascals Lage: letzte Nacht Do→Fr (13.11. 01:00–08:00, gebucht, 2026-11-12-1),
+/* Suite 6.0 · Hotfix 30.2 (Auftrag 261115 Hotfix 30.2, Phase C) + Hotfix 30.3 §3 (schon gebuchte Nacht = Differenz) · Pflichtfall = Pascals Lage: letzte Nacht Do→Fr (13.11. 01:00–08:00, gebucht, 2026-11-12-1),
    App-Tag 2026-11-13-1 abgeschlossen (ADHS-Erholung 13.11. 22:52:21 – 14.11. 12:03, s-bb2d29ae…), kein App-Tag 14.11., laufender App-Tag 2026-11-15-1 (15.11. 10:56).
    Paket: 13.11. Sitzung ändern bis „00:00“ + Schlafen „00:00“–„09:00“ · 14.11. Erholung „09:00“–„00:00“, Schlafen „00:00“–„09:00“, 7 Tick-Schritte.
    Erwartet: Nacht 14.11. auf 2026-11-13-1, Nacht 15.11. auf 2026-11-14-k (angelegt), letzte = Nacht 15.11. (tagId 2026-11-14-k, gebucht), heute ohne Schlafpunkte und
@@ -76,6 +76,20 @@ var abgA=[]; var eA=korrekturAnwenden({ datum:'2026-11-11', grund:'Nacht Mi→Do
 var nA=(schlafZustand().korrekturNaechte||[]).find(function(x){ return x.startTs===iso('2026-11-11','23:00'); }), h11=S.historie.find(function(h){ return h.datum==='2026-11-11'; });
 pruef('1.3 ältere Nacht bleibt im Weg von Hotfix 30 §4: korrekturNaechte mit tagId des Snapshots (2026-11-11-k), letzte unverändert, Zeile „… ältere Nacht — Schuld unverändert“', !abgA.length && !!nA && !nA.alsLetzte && nA.tagId==='2026-11-11-k' && !!h11 && h11.perKorrektur===true && schlafZustand().letzte.startTs===iso(d15,'11:00') && !!eA && eA.aenderungen.some(function(z){ return /^Nacht nachgetragen 23:00–06:00 · 7:00 Std/.test(z) && /ältere Nacht — Schuld unverändert/.test(z); }), JSON.stringify([abgA, nA, eA && eA.aenderungen]));
 
+// ══ Hotfix 30.3 · Korrektur einer schon gebuchten Nacht = Differenz (kein zweites Buchen) ══
+// Ausgang: letzte Nacht 13.11. 01:15–07:55, gebucht auf 2026-11-12-1 mit 70 P; laufender App-Tag 2026-11-15-1. Korrektur datum 2026-11-12, Schlafen „01:00“–„08:30“.
+S.meta.schlaf.letzte={ startTs:iso(d13,'01:15'), endeTs:iso(d13,'07:55'), dauerMin:400, punkte:70, schuldVorStd:0, schuldNachStd:0, abendAkku:null, akkuPrognose:null, nachtnotiz:'', gebucht:true, tagId:d12+'-1', korrektur:false, grund:'' }; S.meta.schlaf.schuldStd=0; saveMeta();
+var h12=S.historie.find(function(h){ return h.tagId===d12+'-1'; }), bil12=num(h12.punkteBilanz), log12=(h12.log||[]).length, P75=schlafPunkte(7.5), dP33=Math.round((P75-70)*10)/10;
+var knVor33=(schlafZustand().korrekturNaechte||[]).filter(function(x){ return !x.alsLetzte; }).length, ks12Vor=S.intraday.filter(function(e){ return e.typ==='korrektur-schlaf' && e.tagId===d12+'-1'; }).length;
+var heuteVor33=JSON.stringify([ticksHeuteV3(kS).length, S.tag.morgen===undefined ? null : S.tag.morgen, (S.tag.log||[]).length, tagesPunkteLive()]);
+var abg33=[]; var e33=korrekturAnwenden({ datum:d12, grund:'Nacht Do→Fr verlängert', sitzungen:[{ aktion:'hinzu', karteId:kS.id, von:'01:00', bis:'08:30', vermerk:'x' }] }, abg33, 'pf-hf303');
+var l33=schlafZustand().letzte;
+pruef('30.3a schon gebuchte letzte Nacht ersetzt: keine zweite Buchung — kein neuer Eintrag ohne alsLetzte in korrekturNaechte, kein Intraday korrektur-schlaf auf 2026-11-12-1, kein Log „Nacht nachgetragen“', !abg33.length && (schlafZustand().korrekturNaechte||[]).filter(function(x){ return !x.alsLetzte; }).length===knVor33 && S.intraday.filter(function(e){ return e.typ==='korrektur-schlaf' && e.tagId===d12+'-1'; }).length===ks12Vor && !h12.log.some(function(x){ return x.titel==='Nacht nachgetragen'; }), JSON.stringify([abg33, schlafZustand().korrekturNaechte, e33 && e33.aenderungen]));
+pruef('30.3b Bilanz von 2026-11-12-1 ändert sich genau um (neue Punkte − 70), Log „Nacht korrigiert“ mit der Differenz, Zeile „Nacht 01:00–08:30 · 7:30 Std … (±Differenz)“', dP33!==0 && nah(h12.punkteBilanz, bil12+dP33, 0.11) && (h12.log||[]).length===log12+1 && h12.log.some(function(x){ return x.titel==='Nacht korrigiert' && x.art==='korrektur' && x.punkte===dP33; }) && !!e33 && e33.aenderungen.some(function(z){ return /^Nacht 01:00–08:30 · 7:30 Std · /.test(z) && z.indexOf((dP33>=0?'+':'−')+fmtP(Math.abs(dP33)))>0 && !/nachgetragen/.test(z); }), JSON.stringify([bil12, h12.punkteBilanz, dP33, P75, h12.log, e33 && e33.aenderungen]));
+pruef('30.3c letzte = 13.11. 01:00–08:30 mit tagId 2026-11-12-1 (unverändert), gebucht:true, neue Punkte; Tag 15.11. unverändert', !!l33 && l33.startTs===iso(d13,'01:00') && l33.endeTs===iso(d13,'08:30') && l33.tagId===d12+'-1' && l33.gebucht===true && l33.punkte===P75 && JSON.stringify([ticksHeuteV3(kS).length, S.tag.morgen===undefined ? null : S.tag.morgen, (S.tag.log||[]).length, tagesPunkteLive()])===heuteVor33, JSON.stringify([l33, heuteVor33]));
+var vor33d=stand(); var abg33d=[]; var e33d=korrekturAnwenden({ datum:d12, grund:'Nacht Do→Fr verlängert', sitzungen:[{ aktion:'hinzu', karteId:kS.id, von:'01:00', bis:'08:30', vermerk:'x' }] }, abg33d, 'pf-hf303');
+pruef('30.3d zweites Einspielen ändert nichts', e33d===null && !abg33d.length && stand()===vor33d && nah(h12.punkteBilanz, bil12+dP33, 0.11));
+
 // ══ 3 · Version ══
-pruef('3 App 4.5.3 · Build 2026-11-15-63 · sw.js Cache fokus4-v4.5.3-1', APP_VERSION==='4.5.3' && APP_BUILD==='2026-11-15-63' && /const CACHE = 'fokus4-v4\.5\.3-1'/.test(readFile('sw.js')));
-suiteEnde('Hotfix 30.2 · Nächte vergangener Tage (4.5.3)');
+pruef('3 App 4.5.4 · Build 2026-11-15-64 · sw.js Cache fokus4-v4.5.4-1', APP_VERSION==='4.5.4' && APP_BUILD==='2026-11-15-64' && /const CACHE = 'fokus4-v4\.5\.4-1'/.test(readFile('sw.js')));
+suiteEnde('Hotfix 30.2 · Nächte vergangener Tage · Hotfix 30.3 gebuchte Nacht = Differenz (4.5.4)');
