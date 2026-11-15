@@ -19201,15 +19201,41 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
     saveMeta();
     zeilen.push('Nacht nachgetragen '+belUhr(kalStunde(eintrag.startTs))+'–'+belUhr(kalStunde(eintrag.endeTs))+' · '+hMin(eintrag.dauerMin)+' Std · '+fmtP(punkte)+' P'+(alt ? ' (ersetzt, '+(dP>=0?'+':'−')+fmtP(Math.abs(dP))+')' : '')+' · Tag '+tagD+' · ältere Nacht — Schuld unverändert');
   };
+  // Hotfix 30.2 §1.2 (15.11.2026) · Nacht eines VERGANGENEN Tags, die neuer ist als meta.schlaf.letzte (schlafNachtSetzen: neuer:true): sie ist die
+  //   letzte Nacht (Schlafschuld wie bisher), wird aber nicht über schlafPunkteBuchen auf heute gebucht, sondern auf den Snapshot des App-Tags
+  //   von belFensterDatum(startTs) (tagSn legt ihn bei Bedarf an): n.gebucht, n.tagId; Punkte wie nachtAelter (Bilanz, Log „Nacht nachgetragen",
+  //   Intraday typ korrektur-schlaf, kontoNachziehen); Eintrag in korrekturNaechte ohne alsLetzte, dieselbe Nacht (Überlappung) ersetzt den Eintrag,
+  //   die Punktedifferenz geht an den Tag. S.tag.morgen und die Tick-Liste von heute bleiben unberührt. Gilt für jede neuer:true-Nacht (Pascal 15.11.2026).
+  const nachtVergangen=(r, v, b, tagD)=>{
+    const z=schlafZustand(); if(!Array.isArray(z.korrekturNaechte)) z.korrekturNaechte=[];
+    const n=r.nacht, sk=schlafKarte();
+    const h=tagSn(tagD), tagId=h.tagId;
+    n.gebucht=true; n.tagId=tagId; saveMeta();
+    const alt=z.korrekturNaechte.find(x=>x && x.startTs && x.endeTs && v<Date.parse(x.endeTs) && b>Date.parse(x.startTs)) || null;
+    const dP=Math.round((num(n.punkte)-(alt ? num(alt.punkte) : 0))*10)/10;
+    const eintrag={ startTs:n.startTs, endeTs:n.endeTs, dauerMin:num(n.dauerMin), punkte:num(n.punkte), tagId, grund:String(kx.grund||''), korrektur:true };
+    if(alt) z.korrekturNaechte[z.korrekturNaechte.indexOf(alt)]=eintrag; else z.korrekturNaechte.push(eintrag);
+    z.korrekturNaechte.sort((p,q)=>p.startTs<q.startTs?-1:(p.startTs>q.startTs?1:0)); z.korrekturNaechte=z.korrekturNaechte.slice(-60);
+    if(sk && dP){
+      const log={ itemId:sk.id, titel:'Nacht nachgetragen', domain:sk.domain, art:'korrektur', punkte:dP, ts:jetztIso() };
+      const ie={ ts:eintrag.endeTs, kartenId:sk.id, domaene:sk.domain, punkte:logRund(dP), minuten:0, typ:'korrektur-schlaf', quelle:'korrektur', tagId, datum:tagD, grund:String(kx.grund||'') };
+      const bil0=num(h.punkteBilanz); h.punkteBilanz=Math.round((bil0+dP)*10)/10; h.log.push(log); (S.intraday=S.intraday||[]).push(ie); kontoNachziehen(h, bil0, dP);
+      DB.set('intraday', S.intraday);
+    }
+    saveMeta();
+    zeilen.push('Nacht nachgetragen '+belUhr(kalStunde(n.startTs))+'–'+belUhr(kalStunde(n.endeTs))+' · '+hMin(n.dauerMin)+' Std · '+fmtP(n.punkte)+' P · Tag '+tagD+' · Schlafschuld '+fbZahl(r.schuldVor,1)+' → '+fbZahl(r.schuldNach,1)+' Std');
+  };
   // §3 (v3.2.0): eine Sitzung auf „Schlafen" ist eine NACHT — sie ersetzt dieselbe Nacht und rechnet die Schlafschuld neu
   const nachtKorrektur=(sz, was)=>{
     const pr=korrNachtPruefen(sz, datum);   // Hotfix 30 §1/§5.1: Zeitspanne über korrZeitspanne, mindestens 60 Minuten
     if(pr.status==='abgewiesen'){ abgewiesen.push({was, grund:pr.grund}); return; }
     const v=pr.v, b=pr.b;
+    const tagD=belFensterDatum(new Date(v).toISOString()), tagHeute=tagOffen() && S.tag.datum===tagD;   // Hotfix 30.2 §1.1: App-Tag des Einschlafens
     const z0=schlafZustand().letzte;
     if(z0 && Math.abs(Date.parse(z0.startTs)-v)<60000 && Math.abs(Date.parse(z0.endeTs)-b)<60000 && (sz.punkte==null || num(sz.punkte)===num(z0.punkte))) return;   // schon so
     const r=schlafNachtSetzen(v, b, sz.punkte, String(kx.grund||'Korrektur'));
-    if(!r.neuer){ nachtAelter(sz, v, b); return; }   // Hotfix 30 §4.1: ältere Nacht — nicht über schlafPunkteBuchen, sondern korrekturNaechte
+    if(!r.neuer){ nachtAelter(sz, v, b); return; }   // Hotfix 30 §4.1 / 30.2 §1.3: ältere Nacht — nicht über schlafPunkteBuchen, sondern korrekturNaechte
+    if(!tagHeute){ nachtVergangen(r, v, b, tagD); return; }   // Hotfix 30.2 §1.2: Nacht eines vergangenen Tags — auf dessen Snapshot, nicht auf heute
     const n=r.nacht, sk=schlafKarte();
     let dP=0;
     if(r.ersetzt && n.gebucht) dP=num(n.punkte)-num(r.punkteAlt);
@@ -29456,7 +29482,9 @@ function korrekturPruefen(paket){
     else if(datum>heuteApp()) sperre='Datum liegt in der Zukunft';
     (Array.isArray(kx.sitzungen)?kx.sitzungen:[]).forEach(sz=>{ sz=sz||{};
       const ks=korrKarte(sz.karteId!=null && sz.karteId!=='' ? sz.karteId : sz.kartenId);
-      if(ks && ks.rolle==='schlafen'){ const pr=korrNachtPruefen(sz, datum); zeile({ datum, was:'Nacht', aktion:'nacht', karte:titel(ks), von:ms(pr.v), bis:ms(pr.b), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund }); return; }
+      if(ks && ks.rolle==='schlafen'){ const pr=korrNachtPruefen(sz, datum);
+        zeile({ datum, was:'Nacht', aktion:'nacht', karte:titel(ks), von:ms(pr.v), bis:ms(pr.b), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund,
+          tag:Number.isFinite(pr.v) ? belFensterDatum(new Date(pr.v).toISOString()) : null }); return; }   // Hotfix 30.2 §1.5: tag = App-Tag, auf den gebucht wird
       const pr=korrSitzungPruefen(sz, datum, liste), akt=pr.akt||String(sz.aktion||''), zs=korrZeitspanne(sz, datum);   // zs: Zeitspanne auch für abgewiesene Schritte (Anzeige)
       const k=pr.k||(pr.e ? korrKarte(pr.e.kartenId) : null);
       zeile({ datum, was:'Sitzung '+(akt==='aendern' ? 'ändern' : akt||'?'), aktion:akt, karte:titel(k), von:Number.isFinite(pr.v) ? pr.v : ms(zs.v), bis:Number.isFinite(pr.b) ? pr.b : ms(zs.b), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund||pr.angepasst||(pr.ohneWirkung ? 'ohne Wirkung (schon so)' : '') });   // grund bzw. Hinweis (§5.4)
@@ -29478,8 +29506,9 @@ function hf30PruefungText(liste, hash8, jetztMs){
   const kopf='Prüfung '+hf30Zeit(jetztMs==null ? Date.now() : jetztMs)+' · '+n+' ok · '+m+' angepasst · '+k+' abgewiesen · Paket '+hash8;
   return [kopf].concat(liste.map(z=>{ const sym=z.status==='abgewiesen' ? '✗' : z.status==='angepasst' ? '~' : '✓';
     const zeit=z.aktion==='ticks' ? '×'+(z.anzahl!=null ? z.anzahl : '?')+' um '+hf30Zeit(z.von) : (z.von!=null || z.bis!=null) ? hf30Zeit(z.von)+'–'+hf30Zeit(z.bis) : '';
-    return [sym+' '+z.was, z.karte, zeit, z.grund].filter(x=>x && String(x).trim()).join(' · '); })).join('\n');
+    return [sym+' '+z.was, z.karte, zeit, z.grund, z.tag ? 'Tag '+hf30Tag(z.tag) : ''].filter(x=>x && String(x).trim()).join(' · '); })).join('\n');   // Hotfix 30.2 §1.5: „· Tag TT.MM." bei Nächten
 }
+function hf30Tag(d){ d=String(d||''); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.slice(8,10)+'.'+d.slice(5,7)+'.' : d; }   // Hotfix 30.2 §1.5: JJJJ-MM-TT → TT.MM.
 function hf30PruefungHash(text){ const m=/Paket ([0-9a-f]{8})\s*$/.exec(String(text||'').split('\n')[0]||''); return m ? m[1] : null; }   // Hash aus Zeile 1
 function hf30KopfZahl(text){ const m=/(\d+) abgewiesen/.exec(String(text||'').split('\n')[0]||''); return m ? num(m[1]) : 0; }
 function hf30PruefungFuer(paketText, hash8){ let p; try{ p=JSON.parse(String(paketText)); }catch(e){ return 'Prüfung '+hf30Zeit(Date.now())+' · 0 ok · 0 angepasst · 1 abgewiesen · Paket '+hash8+'\n✗ Paket · nicht lesbar (kein gültiges JSON)'; } return hf30PruefungText(korrekturPruefen(p), hash8); }
