@@ -2905,6 +2905,7 @@ body[data-e1="agentenkarte"] #e1-agentenkarte{display:flex;flex-direction:column
 .f12-kopie{position:absolute;top:3px;right:3px;font-size:14px;line-height:1;padding:3px 5px;border-radius:6px;background:rgba(255,255,255,.08);min-height:0}
 .f12-kopie-ganz{display:block;margin:6px 0 0 auto;font-size:12px;opacity:.65;padding:2px 0;min-height:0}
 .f15-block .titel{font-size:16px;font-weight:800;margin-bottom:6px;line-height:1.3}.f15-block .out{font-size:14.5px;line-height:1.4;white-space:pre-wrap;color:#e8e9ec}.f15-block .why{font-size:12.5px;color:#9a9ca2;margin-top:8px;white-space:pre-wrap}
+.hf30-pruef .hf30-z{font-size:12.5px;line-height:1.4;white-space:pre-wrap;color:#e8e9ec}.hf30-pruef .hf30-z.kopf{color:#9a9ca2;margin-bottom:4px}.hf30-pruef .hf30-z.ab{color:var(--warn)}   /* Hotfix 30 §5.5: ✗-Zeilen in der Warnfarbe */
 .f15-opt{display:block;width:100%;text-align:left;background:#262a32;border:1px solid rgba(255,255,255,.08);color:#e8e9ec;border-radius:10px;padding:10px 12px;margin-bottom:6px;font:inherit;font-size:14px;min-height:44px;cursor:pointer}
 .f15-opt.an{background:rgba(59,130,246,.22);border:2px solid #3b82f6;font-weight:700;padding:9px 11px}
 .f15-text{display:block;width:100%;box-sizing:border-box;background:#262a32;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;min-height:72px;font-size:16px;color:#e8e9ec;font-family:inherit;resize:vertical;outline:none}
@@ -7117,7 +7118,7 @@ function f7Mikro(feldId){
   try{ const r=new SR(); r.lang='de-DE'; r.interimResults=false; r.onresult=ev=>{ const t=ev.results[0][0].transcript, f=el(feldId); if(f){ f.value=(f.value ? f.value+' ' : '')+t; } }; r.onerror=()=>toast('Spracheingabe abgebrochen'); r.start(); toast('🎙️ spricht …'); }catch(e){ toast('Spracheingabe nicht möglich'); }
 }
 /* ── 7.5 · Postfach ── */
-function f7Postfach(){ return f7Lager('postfach', 60000, ()=>f7Alle({ tabelle:'Postfach', felder:['Titel','Agent','Art','Output/Entwurf','Quelle','Projekt','Person','Organisation','Begründung','Sicherheit %','Dringlichkeit','Push','Folge nach Freigabe','Status','Entscheidung','Runde','Vorgänger','Pascals Anpassung'], filter:[{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Dringlichkeit', richtung:'ab' }] })); }   // Hotfix 15 §3/§4: Runde, Vorgänger, Pascals Anpassung
+function f7Postfach(){ return f7Lager('postfach', 60000, ()=>f7Alle({ tabelle:'Postfach', felder:['Titel','Agent','Art','Output/Entwurf','Quelle','Projekt','Person','Organisation','Begründung','Sicherheit %','Dringlichkeit','Push','Folge nach Freigabe','Status','Entscheidung','Runde','Vorgänger','Pascals Anpassung','Prüfung'], filter:[{ feld:'Status', operator:'gleich', wert:'offen' }], sortierung:[{ feld:'Dringlichkeit', richtung:'ab' }] })); }   // Hotfix 15 §3/§4: Runde, Vorgänger, Pascals Anpassung
 function f7PfHeute(){ const h=S.meta.postfachHeute; if(!h || h.datum!==heuteApp()){ S.meta.postfachHeute={ datum:heuteApp(), n:0, leerBonus:false }; } return S.meta.postfachHeute; }
 function f7PfKat(r){ const a=String(r.Art||''); if(a==='Dringend' || num(r.Dringlichkeit)>=80) return 'dringend'; if(a==='Klärung') return 'klaerung'; if(/^(Plan|Kurs|Ziel)$/.test(a)) return 'plan'; return 'entwurf'; }
 /* ── Hotfix 7 · Abschnitt 2: Karte aus dem Postfach. Vertrag für den Entwurfstext: erste Zeile „Aufgabe: <Titel>" (auch „Karte:"),
@@ -8742,6 +8743,7 @@ function f15KarteHtml(){
   // §5.4 Karte
   const korrektur=String(r.Art||'')==='Korrektur';   // Hotfix 22 §3.4
   h+='<div class="f15-block"><div class="titel">'+esc(r.Titel||'')+'</div><div class="out">'+(korrektur ? f15TabelleHtml(f15OutputOhneOptionen(r['Output/Entwurf'])) : f12TextHtml(f15OutputOhneOptionen(r['Output/Entwurf'])))+'</div>'+(r['Begründung'] ? '<div class="why">Begründung: '+esc(r['Begründung'])+'</div>' : '')+(erledigt ? '<div class="why">Entschieden: '+esc(r.Entscheidung||'')+'</div>' : '')+'</div>';
+  if(korrektur) h+=hf30PruefungBlockHtml(r);   // Hotfix 30 §5.5: Block „Prüfung" unter der Tabelle
   // §5.5 Optionen (Mehrfachwahl)
   if(opts.length) h+='<div class="f15-block"><h4>Optionen</h4>'+opts.map((o,i)=>{ const an=K.optionen.indexOf(o)>=0; return '<button type="button" class="f15-opt'+(an?' an':'')+'" data-f15opt="'+i+'">'+(an?'✓ ':'')+esc(o)+'</button>'; }).join('')+'</div>';
   if(K.nurLesen){ return h+'</div><div class="f15-knoepfe"></div>'; }   // Hotfix 16 §5.5: aus „Angelegte Karten“ nur lesend
@@ -8751,7 +8753,7 @@ function f15KarteHtml(){
   // §5.7 Knopfleiste
   const sendenAktiv=!erledigt && (K.optionen.length>0 || !!String(K.text||'').trim() || !!K.datei);
   h+='<div class="f15-knoepfe">'+(F15.laeuft ? '<button type="button" class="k s aus"><i class="f15-kreis"></i>Wird übertragen …</button>'
-    : '<button type="button" class="k f'+(erledigt?' aus':'')+'" data-f15ent="freigegeben">✅ Freigeben</button><button type="button" class="k s'+(sendenAktiv?'':' aus')+'" data-f15ent="angepasst">↻ Senden</button><button type="button" class="k r'+(erledigt?' aus':'')+'" data-f15ent="abgelehnt">✕ Ablehnen</button>')+'</div>';
+    : '<button type="button" class="k f'+(erledigt?' aus':'')+'" data-f15ent="freigegeben">'+hf30FreigebenText(korrektur ? r : null)+'</button><button type="button" class="k s'+(sendenAktiv?'':' aus')+'" data-f15ent="angepasst">↻ Senden</button><button type="button" class="k r'+(erledigt?' aus':'')+'" data-f15ent="abgelehnt">✕ Ablehnen</button>')+'</div>';
   return h;
 }
 function f15KarteRendern(){ const b=el('akBody'); if(!b) return; const ta=el('f15Text'); if(F15.karte && ta && typeof ta.value==='string') F15.karte.text=ta.value; b.innerHTML=f15KarteHtml(); }
@@ -28838,19 +28840,17 @@ function migrationUa27(){ if(!S.meta || (S.meta.ua27 && S.meta.ua27.ts)) return 
 const f7PostfachVerlassen26=f7PostfachVerlassen;   // Hotfix 27 §5.1: abgelöst — der Bonus „Postfach-Zeit“ (400 P/h) entfällt dauerhaft; Zeit im Postfach zählt nur über die laufende Karte
 f7PostfachVerlassen=function(){ F7.pfSeit=null; };
 function hf27BonusAusgleich(kx, abgewiesen, schritte){ const liste=Array.isArray(kx.bonusAusgleich) ? kx.bonusAusgleich : []; const datum=String(kx.datum||''), zeilen=[];
-  liste.forEach((b,i)=>{ b=b||{}; const was='Korrektur '+datum+' · Bonusausgleich '+(i+1)+(b.grund ? ' ('+String(b.grund).slice(0,40)+')' : ''), p=logRund(num(b.punkte)), fam=(b.familie==='privat') ? 'privat' : 'dfm', tagD=String(b.tag||datum);
+  liste.forEach((b,i)=>{ b=b||{}; const was='Korrektur '+datum+' · Bonusausgleich '+(i+1)+(b.grund ? ' ('+String(b.grund).slice(0,40)+')' : '');
     const schritt={ nr:schritte.length+1, aktion:'bonusAusgleich', was, status:'angewendet', grund:'' }; schritte.push(schritt);
-    const ab=(grund)=>{ schritt.status='abgewiesen'; schritt.grund=grund; abgewiesen.push({ was, grund }); };
-    if(!p){ ab('punkte fehlen'); return; } if(!b.grund || !String(b.grund).trim()){ ab('grund fehlt'); return; }
-    const heute=tagOffen() && S.tag.datum===tagD;
-    if(heute){ const log=S.tag.log=S.tag.log||[]; const bonus=log.find(l=>l && l.art==='bonus' && String(l.grund||'')===String(b.grund) && (!b.ts || Math.abs(Date.parse(l.ts)-Date.parse(b.ts))<60000));
-      if(!bonus){ ab('Bonus „'+String(b.grund)+'“ nicht im Tages-Log'); return; } if(bonus.ausgeglichen27){ schritt.grund='schon ausgeglichen'; return; }
-      bonus.ausgeglichen27=jetztIso(); log.push({ itemId:'korrektur', titel:'Ausgleich: '+String(b.grund), domain:fam, art:'korrektur', punkte:p, ts:jetztIso(), grund:String(kx.grund||''), bonusTs:bonus.ts });
+    const pr=hf30BonusPruefen(b, kx);   // Hotfix 30 §5.1: dieselbe Prüfung wie korrekturPruefen
+    if(pr.status==='abgewiesen'){ schritt.status='abgewiesen'; schritt.grund=pr.grund; abgewiesen.push({ was, grund:pr.grund }); return; }
+    if(pr.ohneWirkung){ schritt.grund=pr.grund; return; }   // schon ausgeglichen
+    const p=pr.p, fam=pr.fam, tagD=pr.tagD, bonus=pr.bonus;
+    bonus.ausgeglichen27=jetztIso();
+    const logEintrag={ itemId:'korrektur', titel:'Ausgleich: '+String(b.grund), domain:fam, art:'korrektur', punkte:p, ts:jetztIso(), grund:String(kx.grund||''), bonusTs:bonus.ts };
+    if(pr.heute){ (S.tag.log=S.tag.log||[]).push(logEintrag);
       const e=logIntraday({ id:null, domain:fam }, { punkte:p, typ:'korrektur-tag', quelle:'korrektur' }); e.grund=String(kx.grund||''); e.bonusTs=bonus.ts; e.datum=tagD; DB.set('intraday', S.intraday); saveTag(); }
-    else { const hs=korrSnapshots(tagD), h=hs[hs.length-1]; if(!h){ ab('kein Tages-Snapshot zu '+tagD); return; } if(!Array.isArray(h.log)) h.log=[];
-      const bonus=h.log.find(l=>l && l.art==='bonus' && String(l.grund||'')===String(b.grund) && (!b.ts || Math.abs(Date.parse(l.ts)-Date.parse(b.ts))<60000));
-      if(!bonus){ ab('Bonus „'+String(b.grund)+'“ nicht im Tages-Log von '+tagD); return; } if(bonus.ausgeglichen27){ schritt.grund='schon ausgeglichen'; return; }
-      bonus.ausgeglichen27=jetztIso(); h.log.push({ itemId:'korrektur', titel:'Ausgleich: '+String(b.grund), domain:fam, art:'korrektur', punkte:p, ts:jetztIso(), grund:String(kx.grund||''), bonusTs:bonus.ts });
+    else { const h=pr.h; if(!Array.isArray(h.log)) h.log=[]; h.log.push(logEintrag);
       const e=logEintragFuerTag(h, tagD, { domaene:fam, punkte:p, grund:String(kx.grund||''), bonusTs:bonus.ts }); void e; h.punkteBilanz=Math.round((num(h.punkteBilanz)+p)*10)/10;   // Münzen und Konto unverändert (§5.5, ❓ Pascal) — kein kontoNachziehen
       DB.set('intraday', S.intraday); saveHistorie(); }
     zeilen.push('Bonus ausgeglichen: „'+String(b.grund)+'“ '+(p>=0?'+':'')+fmtP(p)+' P ('+(fam==='dfm'?'DFM':'Privat')+', '+tagD+')'); });
@@ -29389,6 +29389,129 @@ ketteNachVorn=function(id){ const k=S.karten.find(x=>x.id===id); if(!k) return h
 ketteBewegen=function(){ hf29Meldung('Reihenfolge nur in den Blöcken (Hotfix 29)'); return false; };
 tagStartPrioFinish=function(){ hf29Meldung('Reihenfolge nur in den Blöcken (Hotfix 29)'); closeSheet(); renderAlles(); };
 
+/* ══ Hotfix 30 §5 (15.11.2026) · Prüfung vor der Freigabe einer Korrektur-Karte ══════════════════════════════════════════════
+   korrekturPruefen(paket) liefert je Schritt (Sitzungen, Nächte, Ticks, Bonusausgleich) den Status ok · angepasst · abgewiesen mit Grund —
+   mit DENSELBEN Prüffunktionen wie korrekturAnwenden (korrSitzungPruefen, korrNachtPruefen, korrTickPruefen, hf30BonusPruefen), ohne Wirkung
+   auf den Zustand. Das führende Gerät schreibt das Ergebnis in das Feld „Prüfung" der Karte (Migration 0038); die Karten-Ansicht zeigt es. */
+/* SHA-256 (hex) in reinem JavaScript — der Paket-Hash (§5.3) muss auf jedem Gerät gleich und ohne crypto.subtle (synchron, auch in der jsc-Suite) rechenbar sein */
+function sha256Hex(str){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let bytes;
+  if(typeof TextEncoder==='function') bytes=Array.from(new TextEncoder().encode(String(str)));
+  else { const s=unescape(encodeURIComponent(String(str))); bytes=[]; for(let i=0;i<s.length;i++) bytes.push(s.charCodeAt(i)&255); }
+  const l=bytes.length; bytes.push(0x80); while(bytes.length%64!==56) bytes.push(0);
+  const hi=Math.floor(l/536870912), lo=(l*8)>>>0;
+  for(let i=3;i>=0;i--) bytes.push((hi>>>(i*8))&255); for(let i=3;i>=0;i--) bytes.push((lo>>>(i*8))&255);
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const rotr=(x,n)=>(x>>>n)|(x<<(32-n)), W=new Array(64);
+  for(let off=0;off<bytes.length;off+=64){
+    for(let i=0;i<16;i++) W[i]=((bytes[off+i*4]<<24)|(bytes[off+i*4+1]<<16)|(bytes[off+i*4+2]<<8)|bytes[off+i*4+3])>>>0;
+    for(let i=16;i<64;i++){ const s0=rotr(W[i-15],7)^rotr(W[i-15],18)^(W[i-15]>>>3), s1=rotr(W[i-2],17)^rotr(W[i-2],19)^(W[i-2]>>>10); W[i]=(W[i-16]+s0+W[i-7]+s1)>>>0; }
+    let a=H[0], b=H[1], c=H[2], d=H[3], e=H[4], f=H[5], g=H[6], h=H[7];
+    for(let i=0;i<64;i++){ const S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+W[i])>>>0, S0=rotr(a,2)^rotr(a,13)^rotr(a,22), maj=(a&b)^(a&c)^(b&c), t2=(S0+maj)>>>0;
+      h=g; g=f; f=e; e=(d+t1)>>>0; d=c; c=b; b=a; a=(t1+t2)>>>0; }
+    H=[(H[0]+a)>>>0,(H[1]+b)>>>0,(H[2]+c)>>>0,(H[3]+d)>>>0,(H[4]+e)>>>0,(H[5]+f)>>>0,(H[6]+g)>>>0,(H[7]+h)>>>0];
+  }
+  return H.map(x=>('00000000'+x.toString(16)).slice(-8)).join('');
+}
+function hf30Hash8(text){ return sha256Hex(String(text==null?'':text)).slice(0,8); }   // §5.3: Paket-Hash = erste 8 Zeichen SHA-256 über das Feld „Paket"
+/* §5.1 · Prüfung eines Bonusausgleich-Schritts (Hotfix 27 §5.2) — ohne Wirkung; hf27BonusAusgleich wendet mit demselben Ergebnis an */
+function hf30BonusPruefen(b, kx){
+  b=b||{}; kx=kx||{}; const datum=String(kx.datum||''), p=logRund(num(b.punkte)), fam=(b.familie==='privat') ? 'privat' : 'dfm', tagD=String(b.tag||datum);
+  const r={ status:'ok', grund:'', p, fam, tagD, heute:false, log:null, bonus:null, h:null, ohneWirkung:false };
+  const ab=(g)=>{ r.status='abgewiesen'; r.grund=g; return r; };
+  if(!p) return ab('punkte fehlen');
+  if(!b.grund || !String(b.grund).trim()) return ab('grund fehlt');
+  r.heute=tagOffen() && S.tag.datum===tagD;
+  if(r.heute) r.log=Array.isArray(S.tag.log) ? S.tag.log : [];
+  else { const hs=korrSnapshots(tagD), h=hs[hs.length-1]; if(!h) return ab('kein Tages-Snapshot zu '+tagD); r.h=h; r.log=Array.isArray(h.log) ? h.log : []; }
+  const bonus=r.log.find(l=>l && l.art==='bonus' && String(l.grund||'')===String(b.grund) && (!b.ts || Math.abs(Date.parse(l.ts)-Date.parse(b.ts))<60000));
+  if(!bonus) return ab('Bonus „'+String(b.grund)+'“ nicht im Tages-Log'+(r.heute ? '' : ' von '+tagD));
+  r.bonus=bonus; if(bonus.ausgeglichen27){ r.ohneWirkung=true; r.grund='schon ausgeglichen'; }
+  return r;
+}
+/* §5.1 · korrekturPruefen(paket) → [{ nr, datum, was, aktion, karte, von, bis, status, grund }] in Paket-Reihenfolge, ändert nichts, speichert nichts.
+   Überlappung auf einer Kopie der Sitzungsliste, in die jeder geprüfte Schritt seine Wirkung einträgt (entfernt, geändert, hinzu) — §1.4. */
+function korrekturPruefen(paket){
+  const out=[]; let nr=0;
+  const liste=(S.intraday||[]).filter(e=>e && SITZUNG_TYPEN.indexOf(e.typ)>=0).map(e=>Object.assign({}, e));
+  const zeile=(o)=>{ nr++; out.push(Object.assign({ nr, datum:'', was:'', aktion:'', karte:'', von:null, bis:null, status:'ok', grund:'' }, o)); };
+  const titel=(k)=>k ? String(k.titel||'').slice(0,40) : '';
+  const ms=(x)=>Number.isFinite(x) ? x : null;
+  const kxs=(paket && !Array.isArray(paket) && Array.isArray(paket.korrekturen)) ? paket.korrekturen : [];
+  kxs.forEach(kx=>{
+    if(!kx || kx.muenzen!==undefined || (kx.ausmalen && typeof kx.ausmalen==='object')) return;
+    const datum=String(kx.datum||'');
+    const neueForm=kx.tag!==undefined || kx.sitzungen!==undefined || kx.positionen!==undefined || kx.schlaf!==undefined || kx.bonusAusgleich!==undefined || kx.ticks!==undefined;
+    if(!neueForm) return;
+    let sperre=null;   // Prüfungen des Imports vor korrekturAnwenden (syncImport §5.7)
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)) sperre='nur BENANNTE Tage (§5.7)';
+    else if(!kx.grund || !String(kx.grund).trim()) sperre='grund fehlt (Pflicht)';
+    else if(datum>heuteApp()) sperre='Datum liegt in der Zukunft';
+    (Array.isArray(kx.sitzungen)?kx.sitzungen:[]).forEach(sz=>{ sz=sz||{};
+      const ks=korrKarte(sz.karteId!=null && sz.karteId!=='' ? sz.karteId : sz.kartenId);
+      if(ks && ks.rolle==='schlafen'){ const pr=korrNachtPruefen(sz, datum); zeile({ datum, was:'Nacht', aktion:'nacht', karte:titel(ks), von:ms(pr.v), bis:ms(pr.b), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund }); return; }
+      const pr=korrSitzungPruefen(sz, datum, liste), akt=pr.akt||String(sz.aktion||'');
+      const k=pr.k||(pr.e ? korrKarte(pr.e.kartenId) : null);
+      zeile({ datum, was:'Sitzung '+(akt==='aendern' ? 'ändern' : akt||'?'), aktion:akt, karte:titel(k), von:ms(pr.v), bis:ms(pr.b), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund||(pr.ohneWirkung ? 'ohne Wirkung (schon so)' : '') });
+      if(sperre || pr.status==='abgewiesen' || pr.ohneWirkung) return;
+      if(akt==='entfernen' || akt==='aendern'){ const i=liste.indexOf(pr.e); if(i>=0) liste.splice(i,1); }   // Wirkung auf die Kopie (§1.4)
+      if(akt==='hinzu' || akt==='aendern') liste.push({ id:akt==='aendern' ? sitzungIdVon(pr.e) : pr.id, ts:new Date(pr.b).toISOString(), von:new Date(pr.v).toISOString(), kartenId:pr.k.id, domaene:pr.k.domain, typ:'korrektur', minuten:Math.round((pr.b-pr.v)/6000)/10, datum });
+    });
+    (Array.isArray(kx.ticks)?kx.ticks:[]).forEach(tk=>{ tk=tk||{}; const pr=korrTickPruefen(tk, datum);
+      zeile({ datum, was:'Ticks', aktion:'ticks', karte:titel(pr.k), von:ms(pr.zeit), bis:null, anzahl:pr.anzahl!=null ? pr.anzahl : (Number.isFinite(Number(tk.anzahl)) ? Number(tk.anzahl) : null), status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund }); });
+    (Array.isArray(kx.bonusAusgleich)?kx.bonusAusgleich:[]).forEach(b=>{ b=b||{}; const pr=hf30BonusPruefen(b, kx);
+      zeile({ datum, was:'Bonusausgleich', aktion:'bonusAusgleich', karte:String(b.grund||'').slice(0,40), von:null, bis:null, status:sperre ? 'abgewiesen' : pr.status, grund:sperre||pr.grund }); });
+  });
+  return out;
+}
+/* §5.4 · Format des Felds „Prüfung" */
+function hf30Zeit(x){ if(x==null) return '—'; const d=new Date(x); if(isNaN(d.getTime())) return '—'; return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'. '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function hf30PruefungText(liste, hash8, jetztMs){
+  const n=liste.filter(z=>z.status==='ok').length, m=liste.filter(z=>z.status==='angepasst').length, k=liste.filter(z=>z.status==='abgewiesen').length;
+  const kopf='Prüfung '+hf30Zeit(jetztMs==null ? Date.now() : jetztMs)+' · '+n+' ok · '+m+' angepasst · '+k+' abgewiesen · Paket '+hash8;
+  return [kopf].concat(liste.map(z=>{ const sym=z.status==='abgewiesen' ? '✗' : z.status==='angepasst' ? '~' : '✓';
+    const zeit=z.aktion==='ticks' ? '×'+(z.anzahl!=null ? z.anzahl : '?')+' um '+hf30Zeit(z.von) : (z.von!=null || z.bis!=null) ? hf30Zeit(z.von)+'–'+hf30Zeit(z.bis) : '';
+    return [sym+' '+z.was, z.karte, zeit, z.grund].filter(x=>x && String(x).trim()).join(' · '); })).join('\n');
+}
+function hf30PruefungHash(text){ const m=/Paket ([0-9a-f]{8})\s*$/.exec(String(text||'').split('\n')[0]||''); return m ? m[1] : null; }   // Hash aus Zeile 1
+function hf30KopfZahl(text){ const m=/(\d+) abgewiesen/.exec(String(text||'').split('\n')[0]||''); return m ? num(m[1]) : 0; }
+function hf30PruefungFuer(paketText, hash8){ let p; try{ p=JSON.parse(String(paketText)); }catch(e){ return 'Prüfung '+hf30Zeit(Date.now())+' · 0 ok · 0 angepasst · 1 abgewiesen · Paket '+hash8+'\n✗ Paket · nicht lesbar (kein gültiges JSON)'; } return hf30PruefungText(korrekturPruefen(p), hash8); }
+/* §5.3 · Wer prüft: das führende Gerät. Je offener Postfach-Karte Art „Korrektur" mit Paket wird „Prüfung" geschrieben — nur, wenn das Feld leer ist
+   oder der Paket-Hash in Zeile 1 nicht zum aktuellen Paket passt. Weg wie f7PfEntscheiden: FSLive.senden('datensatz_aendern', { tabelle:'Postfach', id, felder }). */
+function hf30PruefungenSchreiben(){
+  if(!FSLive.gekoppelt() || !FSLive.ichFuehre()) return 0;
+  const rows=(F7.lager.postfach && Array.isArray(F7.lager.postfach.daten)) ? F7.lager.postfach.daten : []; let n=0;
+  rows.forEach(r=>{ if(!r || String(r.Art||'')!=='Korrektur' || String(r.Status||'offen').toLowerCase()!=='offen') return;
+    const id=String(r.id), text=HF29.paket[id];
+    if(text===undefined){ hf29PaketLaden(id, ()=>{ try{ hf30PruefungenSchreiben(); }catch(e){} }); return; }
+    if(!text) return;   // Paket fehlt oder ist nicht lesbar
+    const hash=hf30Hash8(text);
+    if(hf30PruefungHash(r['Prüfung'])===hash || HF30.geschrieben[id]===hash) return;
+    const t=hf30PruefungFuer(text, hash);
+    HF30.geschrieben[id]=hash; r['Prüfung']=t; n++;
+    FSLive.senden('datensatz_aendern', { tabelle:'Postfach', id, felder:{ 'Prüfung':t } }).catch(e=>{ delete HF30.geschrieben[id]; toast('Prüfung: '+((e && e.message)||'Fehler')); });
+  });
+  return n;
+}
+{ const _alt=f7Takt; f7Takt=function(){ const r=_alt(); try{ hf30PruefungenSchreiben(); }catch(e){} return r; }; }   // alle 30 Sek. mit dem Postfach-Takt
+/* §5.5 · Anzeige in der Karten-Ansicht: Zeilen aus dem Feld „Prüfung" (passender Hash) oder sofort selbst gerechnet (gleiche Funktion) */
+function hf30Pruefung(r){
+  const id=String(r.id), text=HF29.paket[id];
+  if(text===undefined){ hf29PaketLaden(id); return { laedt:true, abgewiesen:0 }; }
+  if(!text) return { fehlt:true, abgewiesen:0 };
+  const hash=hf30Hash8(text), feld=String(r['Prüfung']||'');
+  const t=(hf30PruefungHash(feld)===hash) ? feld : hf30PruefungFuer(text, hash);
+  return { text:t, zeilen:t.split('\n'), abgewiesen:hf30KopfZahl(t), quelle:(t===feld) ? 'FocusSystem' : 'App' };
+}
+function hf30PruefungBlockHtml(r){
+  const p=hf30Pruefung(r); let h='<div class="f15-block hf30-pruef"><h4>Prüfung</h4>';
+  if(p.laedt) h+='<div class="leer">Paket lädt aus FocusSystem …</div>';
+  else if(p.fehlt) h+='<div class="leer">Paket fehlt oder ist nicht lesbar</div>';
+  else h+=p.zeilen.map((z,i)=>'<div class="hf30-z'+(i===0 ? ' kopf' : '')+(/^✗/.test(z) ? ' ab' : '')+(/^~/.test(z) ? ' an' : '')+'">'+esc(z)+'</div>').join('');
+  return h+'</div>';
+}
+function hf30FreigebenText(r){ if(!r) return '✅ Freigeben'; const k=hf30Pruefung(r).abgewiesen||0; return k>0 ? '✅ Freigeben (⚠️ '+k+(k===1 ? ' Schritt würde' : ' Schritte würden')+' abgewiesen)' : '✅ Freigeben'; }   // Freigeben bleibt möglich; kein zweiter Freigabeweg
 function init(){
   ladeAlles();
   if(DB._schutz) return;   // Hotfix 21 §A.4: angehalten — keine Takte, kein Rendern, nichts weiter
