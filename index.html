@@ -19235,7 +19235,7 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
     if(z0 && Math.abs(Date.parse(z0.startTs)-v)<60000 && Math.abs(Date.parse(z0.endeTs)-b)<60000 && (sz.punkte==null || num(sz.punkte)===num(z0.punkte))) return;   // schon so
     const r=schlafNachtSetzen(v, b, sz.punkte, String(kx.grund||'Korrektur'));
     if(!r.neuer){ nachtAelter(sz, v, b); return; }   // Hotfix 30 §4.1 / 30.2 §1.3: ältere Nacht — nicht über schlafPunkteBuchen, sondern korrekturNaechte
-    if(!tagHeute){ nachtVergangen(r, v, b, tagD); return; }   // Hotfix 30.2 §1.2: Nacht eines vergangenen Tags — auf dessen Snapshot, nicht auf heute
+    if(!tagHeute && !(r.ersetzt && r.nacht.gebucht)){ nachtVergangen(r, v, b, tagD); return; }   // Hotfix 30.3: eine schon gebuchte Nacht wird um die Differenz korrigiert (Weg „Nacht korrigiert“ auf n.tagId)
     const n=r.nacht, sk=schlafKarte();
     let dP=0;
     if(r.ersetzt && n.gebucht) dP=num(n.punkte)-num(r.punkteAlt);
