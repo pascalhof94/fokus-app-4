@@ -1,7 +1,7 @@
 /* Suite 5.9 · Hotfix 30 (Auftrag 261115 Hotfix 30, Phase C): 1 die vier Schritte von Postfach 268d4a71 als Fixture (neue Zeitregel, Nächte unter dem Datum des Abends) gehen durch,
    Schritt 1 „angepasst“ · 2 „00:00“–„09:00“ unter 2026-11-13 = 14.11. 00:00–09:00, App-Tag 13.11. · 3 Ticks auf einem fehlenden Tag: Snapshot, startTs/endeTs, Punkte nach Staffel,
    zweites Einspielen ändert nichts · 4 ältere Nacht in korrekturNaechte, an der Bilanz des Tags, Intraday korrektur-schlaf · 5 korrekturPruefen liefert dieselben Status wie korrekturAnwenden
-   und ändert nichts · 6 Feld „Prüfung“ nur bei geändertem Paket, Anzeige und Knopf · 7 Version 4.5.2. Aufruf: jsc tests/v59-hotfix30.js */
+   und ändert nichts · 6 Feld „Prüfung“ nur bei geändertem Paket, Anzeige und Knopf · 7 Version 4.5.3. Aufruf: jsc tests/v59-hotfix30.js */
 var _toasts=[]; toast=function(m){ _toasts.push(String(m)); }; haptik=function(){}; var confirm=function(){ return true; };
 fsliveStumm(); var src=readFile('index.html');
 uuid=function(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r=Math.random()*16|0; return (c==='x' ? r : (r&3|8)).toString(16); }); };
@@ -26,7 +26,7 @@ S.intraday.push({ id:'s-x', ts:iso(dSa,'12:04'), von:tpEnde, kartenId:kX.id, dom
 DB.set('intraday', S.intraday); saveHistorie();
 // Fixture: die vier Schritte von Postfach 268d4a71 (Fassung 2), mit neuer Regel und richtigem Datum (Nacht Fr→Sa unter Freitag, Nacht Sa→So unter Samstag)
 var PF='268d4a71-0000-4000-8000-000000000001';
-var P1={ appVersion:'4.5.2', postfachKarte:PF, karten:[], korrekturen:[
+var P1={ appVersion:'4.5.3', postfachKarte:PF, karten:[], korrekturen:[
   { datum:dFr, grund:'Samstag nicht getrackt (Pascal 15.11.)', sitzungen:[
     { aktion:'aendern', id:'s-x', karteId:kX.id, von:new Date(ms(dFr,'22:52')+21000).toISOString(), bis:iso(dSa,'00:00'), vermerk:'Erholung bis 00:00 gekürzt, Schlafen vergessen' },
     { aktion:'hinzu', karteId:kS.id, von:'00:00', bis:'09:00', vermerk:'Schlafen nachgetragen, Nacht Fr→Sa, nicht getippt' } ] },
@@ -80,15 +80,16 @@ pruef('3f laufender Tag: Ticks über karteTick (ticksHeute +2, Log-Eintrag quell
 
 // ══ 4 · ältere Nacht ══
 var abg4=[]; var e4=korrekturAnwenden({ datum:dDo, grund:'Nacht Do→Fr nachgetragen', sitzungen:[{ aktion:'hinzu', karteId:kS.id, von:'23:00', bis:'07:00', vermerk:'x' }] }, abg4, 'pf-nacht');
-var knAlle=schlafZustand().korrekturNaechte||[], kn=knAlle.filter(function(x){ return !x.alsLetzte; }), hDo=S.historie.find(function(h){ return h.datum===dDo; }), ks4=S.intraday.filter(function(e){ return e.typ==='korrektur-schlaf'; });
-pruef('4a ältere Nacht (vor der letzten) landet in korrekturNaechte (die als letzte gebuchten Korrektur-Nächte stehen dort mit alsLetzte und dem Tag der Buchung): startTs Do 23:00, endeTs Fr 07:00, 480 Min, Punkte nach Stufen, tagId = Snapshot des Donnerstags, korrektur:true; letzte Nacht unverändert', !abg4.length && kn.length===1 && knAlle.length===3 && knAlle.filter(function(x){ return x.alsLetzte; }).every(function(x){ return x.tagId===S.tag.tagId; }) && kn[0].startTs===iso(dDo,'23:00') && kn[0].endeTs===iso(dFr,'07:00') && kn[0].dauerMin===480 && kn[0].punkte===schlafPunkte(8) && kn[0].tagId===dDo+'-k' && kn[0].korrektur===true && kn[0].grund==='Nacht Do→Fr nachgetragen' && schlafZustand().letzte.startTs===iso(heute,'00:00'), JSON.stringify([abg4, kn]));
+// Hotfix 30.2 §1.2: die beiden Nächte des Fixtures (vergangene Tage, neuer als letzte) stehen seit 4.5.3 ohne alsLetzte in korrekturNaechte, mit dem Tag des Einschlafens (Fr -1, Sa -k) — nicht mehr auf heute
+var knAlle=schlafZustand().korrekturNaechte||[], kn=knAlle.filter(function(x){ return x.startTs===iso(dDo,'23:00'); }), hDo=S.historie.find(function(h){ return h.datum===dDo; }), ks4=S.intraday.filter(function(e){ return e.typ==='korrektur-schlaf' && e.tagId===dDo+'-k'; });
+pruef('4a ältere Nacht (vor der letzten) landet in korrekturNaechte (die Fixture-Nächte stehen dort seit Hotfix 30.2 ohne alsLetzte mit dem Tag des Einschlafens): startTs Do 23:00, endeTs Fr 07:00, 480 Min, Punkte nach Stufen, tagId = Snapshot des Donnerstags, korrektur:true; letzte Nacht unverändert', !abg4.length && kn.length===1 && knAlle.length===3 && !knAlle.some(function(x){ return x.alsLetzte; }) && knAlle.some(function(x){ return x.startTs===iso(dSa,'00:00') && x.tagId===dFr+'-1'; }) && knAlle.some(function(x){ return x.startTs===iso(heute,'00:00') && x.tagId===dSa+'-k'; }) && kn[0].startTs===iso(dDo,'23:00') && kn[0].endeTs===iso(dFr,'07:00') && kn[0].dauerMin===480 && kn[0].punkte===schlafPunkte(8) && kn[0].tagId===dDo+'-k' && kn[0].korrektur===true && kn[0].grund==='Nacht Do→Fr nachgetragen' && schlafZustand().letzte.startTs===iso(heute,'00:00'), JSON.stringify([abg4, kn]));
 pruef('4b Punkte an der Bilanz des Tags, Log „Nacht nachgetragen“ (art korrektur), Intraday typ korrektur-schlaf mit Schlafen-Karte und tagId; Schlafschuld unverändert', !!hDo && hDo.perKorrektur===true && hDo.punkteBilanz===schlafPunkte(8) && hDo.log.some(function(l){ return l.titel==='Nacht nachgetragen' && l.art==='korrektur' && l.punkte===schlafPunkte(8); }) && ks4.length===1 && ks4[0].kartenId===kS.id && ks4[0].tagId===dDo+'-k' && ks4[0].punkte===schlafPunkte(8) && schlafZustand().schuldStd===0 && !hDo.startTs, JSON.stringify([hDo && [hDo.punkteBilanz, hDo.startTs], ks4]));
 pruef('4c Protokollzeile „Nacht nachgetragen … ältere Nacht — Schuld unverändert“', !!e4 && e4.aenderungen.some(function(z){ return /^Nacht nachgetragen 23:00–07:00 · 8:00 Std/.test(z) && /ältere Nacht — Schuld unverändert/.test(z); }), e4 && JSON.stringify(e4.aenderungen));
 var vor4=JSON.stringify([knAlle, hDo.punkteBilanz, S.intraday.length]); var abg4b=[]; var e4b=korrekturAnwenden({ datum:dDo, grund:'Nacht Do→Fr nachgetragen', sitzungen:[{ aktion:'hinzu', karteId:kS.id, von:'23:00', bis:'07:00', vermerk:'x' }] }, abg4b, 'pf-nacht');
 pruef('4d dieselbe Nacht ein zweites Mal: nichts geändert', e4b===null && !abg4b.length && JSON.stringify([schlafZustand().korrekturNaechte, hDo.punkteBilanz, S.intraday.length])===vor4);
 var abg4c=[]; korrekturAnwenden({ datum:dDo, grund:'Nacht korrigiert', sitzungen:[{ aktion:'hinzu', karteId:kS.id, von:'23:30', bis:'07:00', punkte:70, vermerk:'x' }] }, abg4c, 'pf-nacht');
-var kn2=schlafZustand().korrekturNaechte.filter(function(x){ return !x.alsLetzte; });
-pruef('4e überlappende Nacht ersetzt den Eintrag (ein Eintrag, 23:30–07:00, 70 P); Differenz −30 an der Bilanz des Tags', !abg4c.length && kn2.length===1 && kn2[0].startTs===iso(dDo,'23:30') && kn2[0].punkte===70 && hDo.punkteBilanz===70 && S.intraday.filter(function(e){ return e.typ==='korrektur-schlaf'; }).length===2, JSON.stringify([abg4c, kn2, hDo.punkteBilanz]));
+var kn2=schlafZustand().korrekturNaechte.filter(function(x){ return x.tagId===dDo+'-k'; });
+pruef('4e überlappende Nacht ersetzt den Eintrag (ein Eintrag für den Donnerstag, 23:30–07:00, 70 P); Differenz −30 an der Bilanz des Tags', !abg4c.length && kn2.length===1 && schlafZustand().korrekturNaechte.length===3 && kn2[0].startTs===iso(dDo,'23:30') && kn2[0].punkte===70 && hDo.punkteBilanz===70 && S.intraday.filter(function(e){ return e.typ==='korrektur-schlaf' && e.tagId===dDo+'-k'; }).length===2, JSON.stringify([abg4c, kn2, hDo.punkteBilanz]));
 
 // ══ 6 · Feld „Prüfung“ ══
 pruef('6a sha256Hex („abc“ = ba7816bf…), Paket-Hash = erste 8 Zeichen', sha256Hex('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad' && hf30Hash8('abc')==='ba7816bf' && sha256Hex('')==='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
@@ -112,5 +113,5 @@ pruef('6g ohne passende Prüfung rechnet die Anzeige selbst: ✗-Zeile in der Wa
 pruef('6h Format: Ticks-Zeile „×n um TT.MM. HH:MM“, abgewiesen mit „~“/„✗“ je Status', (function(){ var t=hf30PruefungText([{ nr:1, was:'Ticks', aktion:'ticks', karte:'Wasser trinken', von:ms(dMi,'10:00'), bis:null, anzahl:3, status:'ok', grund:'' },{ nr:2, was:'Sitzung hinzu', aktion:'hinzu', karte:'E', von:ms(dMi,'10:00'), bis:ms(dMi,'11:00'), status:'angepasst', grund:'Ende um 5 Sek. angepasst' }], 'abcdef01', ms(dMi,'12:34')); var z=t.split('\n'); return /^Prüfung \d\d\.\d\d\. 12:34 · 1 ok · 1 angepasst · 0 abgewiesen · Paket abcdef01$/.test(z[0]) && /^✓ Ticks · Wasser trinken · ×3 um \d\d\.\d\d\. 10:00$/.test(z[1]) && /^~ Sitzung hinzu · E · \d\d\.\d\d\. 10:00–\d\d\.\d\d\. 11:00 · Ende um 5 Sek\. angepasst$/.test(z[2]); })());
 
 // ══ 7 · Version ══
-pruef('7 App 4.5.2 · Build 2026-11-15-62 · sw.js Cache fokus4-v4.5.2-1', APP_VERSION==='4.5.2' && APP_BUILD==='2026-11-15-62' && /const CACHE = 'fokus4-v4\.5\.2-1'/.test(readFile('sw.js')));
-suiteEnde('Hotfix 30 · Korrektur übersprungene Tage (4.5.2)');
+pruef('7 App 4.5.3 · Build 2026-11-15-63 · sw.js Cache fokus4-v4.5.3-1', APP_VERSION==='4.5.3' && APP_BUILD==='2026-11-15-63' && /const CACHE = 'fokus4-v4\.5\.3-1'/.test(readFile('sw.js')));
+suiteEnde('Hotfix 30 · Korrektur übersprungene Tage (4.5.3)');

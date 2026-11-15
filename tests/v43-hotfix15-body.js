@@ -207,6 +207,6 @@ pruef('§7.4 Kette „Agenten-Karten“ bleibt über die Karten-Ebene erreichbar
 e1Schliessen(); S.ui.tkWahl=null; saveUi();
 
 // ══ Version ══
-pruef('App 4.5.2 · Build 2026-11-15-62 (seit Hotfix 26)', APP_VERSION==='4.5.2' && APP_BUILD==='2026-11-15-62', APP_VERSION+' / '+APP_BUILD);
+pruef('App 4.5.3 · Build 2026-11-15-63 (seit Hotfix 26)', APP_VERSION==='4.5.3' && APP_BUILD==='2026-11-15-63', APP_VERSION+' / '+APP_BUILD);
 toast=_toastAlt;
 suiteEnde('Hotfix 15 · Postfach, Agenten-Karten, Erfassung (4.1.4)');
