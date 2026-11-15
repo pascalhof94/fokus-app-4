@@ -117,7 +117,7 @@ var h=Object.assign(neuerTag(gestern, 1), { startTs:gestern+'T06:00:00.000Z', en
 var wohl=num(S.meta.wohlstand), muenz=num(S.meta.muenzenGesamt);
 syncImport(JSON.stringify({ appVersion:APP_VERSION, karten:[], korrekturen:[{ datum:gestern, grund:'Probe Vortag', bonusAusgleich:[{ tag:gestern, ts:gestern+'T00:34:53.000Z', grund:'Postfach-Zeit 99 Min', punkte:-663, familie:'dfm' }] }] }));
 pruef('G3 abgeschlossener Tag: Tagesbilanz des Snapshots −663, Log-Eintrag art korrektur, Stunden-Log korrektur-tag mit tagId; Münzen und Konto unverändert (§5.5)', h.punkteBilanz===4337 && h.log.some(function(l){ return l.art==='korrektur' && l.punkte===-663; }) && (S.intraday||[]).some(function(e){ return e.typ==='korrektur-tag' && e.tagId===h.tagId && e.punkte===-663; }) && num(S.meta.wohlstand)===wohl && num(S.meta.muenzenGesamt)===muenz);
-pruef('G4 Dienst zählt korrektur-tag (DFM) wie einen Bonus (0.9.1) — Paket-Form bonusAusgleich { tag, ts, grund, punkte, familie } im Datenvertrag (neueForm)', /kx\.bonusAusgleich!==undefined;   \/\/ §3 \(v3\.2\.0\): \+ schlaf · Hotfix 27 §5\.2/.test(src));
+pruef('G4 Dienst zählt korrektur-tag (DFM) wie einen Bonus (0.9.1) — Paket-Form bonusAusgleich { tag, ts, grund, punkte, familie } im Datenvertrag (neueForm)', /kx\.bonusAusgleich!==undefined \|\| kx\.ticks!==undefined;   \/\/ §3 \(v3\.2\.0\): \+ schlaf · Hotfix 27 §5\.2/.test(src));
 
 // ══ H · Abweisungsgründe je Schritt (§5.3) ══
 S.fokus={ laeuft:false }; var vonA=new Date(Date.now()-120*60000), bisA=new Date(Date.now()-90*60000);
@@ -157,5 +157,5 @@ var ah=k43ChatAntwortHtml('Plan steht', 'Antworten …');
 pruef('M1 Antwortzeile: Hotfix 27 (readonly, data-hf26chat) bleibt als k43ChatAntwortHtml27; seit Hotfix 28 §4.4 die Kurzansicht des Ketten-Chats (k43ChatKurzHtml), Tipp öffnet den Ebene-1-Chat, kein data-k43senden', /Trainer: Plan steht/.test(k43ChatAntwortHtml27('Plan steht', 'Antworten …')) && /<input id="k43Antwort" readonly/.test(k43ChatAntwortHtml27('x', 'y')) && /data-hf26chat="kan-trainer\|tag-[0-9-]+\|fokus"/.test(ah) && /hf26-chat/.test(ah) && !/data-k43senden/.test(ah) && typeof k43ChatAntwortHtml43==='function');
 
 // ══ N · Version ══
-pruef('N1 App 4.5.1 · Build 2026-11-10-61 · sw.js Cache fokus4-v4.5.1-1', APP_VERSION==='4.5.1' && APP_BUILD==='2026-11-10-61' && /const CACHE = 'fokus4-v4.5.1-1'/.test(readFile('sw.js')));
+pruef('N1 App 4.5.2 · Build 2026-11-15-62 · sw.js Cache fokus4-v4.5.2-1', APP_VERSION==='4.5.2' && APP_BUILD==='2026-11-15-62' && /const CACHE = 'fokus4-v4.5.2-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 27 · Volltext überall, Infokarten, Unteraufgaben mit Punkten, Korrektur, Tastatur, stille Benachrichtigung, Standard-Tagesblöcke (4.3.3)');

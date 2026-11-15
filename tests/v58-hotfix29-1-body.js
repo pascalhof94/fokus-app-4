@@ -54,5 +54,5 @@ _toasts.length=0; var r6c=ketteBewegen('o-a', 'hoch'); tagStartTmp={ sortOrder:[
 pruef('6c ketteBewegen und tagStartPrioFinish schreiben nichts und melden „Reihenfolge nur in den Blöcken (Hotfix 29)“; detailSpeichern ohne kettenOben', r6c===false && _toasts.filter(function(t){ return t==='Reihenfolge nur in den Blöcken (Hotfix 29)'; }).length===2 && JSON.stringify(S.meta.ketten.alle)===stVor && bF1.karten.join()==='o-b,o-a' && !/if\(kettenOben && idx<0\)\{/.test(src));
 
 // ══ 7 · Version ══
-pruef('7 App 4.5.1 · Build 2026-11-10-61 · sw.js Cache fokus4-v4.5.1-1', APP_VERSION==='4.5.1' && APP_BUILD==='2026-11-10-61' && /const CACHE = 'fokus4-v4\.5\.1-1'/.test(readFile('sw.js')));
+pruef('7 App 4.5.2 · Build 2026-11-15-62 · sw.js Cache fokus4-v4.5.2-1', APP_VERSION==='4.5.2' && APP_BUILD==='2026-11-15-62' && /const CACHE = 'fokus4-v4\.5\.2-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 29.1 · Overload ohne Zeit und Punkte, Nachzug (4.5.1)');
