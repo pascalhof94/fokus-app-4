@@ -19023,6 +19023,33 @@ function korrNachtPruefen(sz, datum){
   if((zs.b-zs.v)/60000<SCHLAF_NACHT_MIN) return { status:'abgewiesen', grund:'kürzer als 60 Minuten — keine Nacht', v:zs.v, b:zs.b };
   return { status:'ok', grund:'', v:zs.v, b:zs.b };
 }
+/* Hotfix 30 §3.1 · Ticks eines Korrektur-Schritts: { karteId, anzahl, zeit?, vermerk } — Karte bekannt und tickbar (dieselbe Bedingung wie der
+   Tick-Knopf: istTickbar, keine Info-Karte), anzahl ganze Zahl 1–50, zeit „HH:MM" oder ISO am Datum (fehlt sie: 12:00), nicht in der Zukunft, vermerk Pflicht */
+function korrTickPruefen(tk, datum){
+  tk=tk||{};
+  const ab=(g)=>({ status:'abgewiesen', grund:g, k:korrKarte(tk.karteId), anzahl:null, zeit:null, vermerk:'' });
+  const k=korrKarte(tk.karteId);
+  if(!k) return ab('Karte „'+(tk.karteId==null?'':tk.karteId)+'" unbekannt');
+  if(!istTickbar(k) || istInfoKarte(k)) return ab('Karte nicht tickbar');
+  const n=Number(tk.anzahl);
+  if(!Number.isInteger(n) || n<1 || n>50) return ab('anzahl muss eine ganze Zahl 1–50 sein');
+  const zeit=(tk.zeit==null || String(tk.zeit).trim()==='') ? korrZeit('12:00', datum) : korrZeit(tk.zeit, datum);
+  if(!Number.isFinite(zeit)) return ab('zeit nicht lesbar');
+  if(zeit>Date.now()+60000) return ab('Zeit liegt in der Zukunft');
+  const vermerk=(tk.vermerk==null) ? '' : String(tk.vermerk).trim();
+  if(!vermerk) return ab('vermerk fehlt');
+  return { status:'ok', grund:'', k, anzahl:n, zeit, vermerk };
+}
+/* Hotfix 30 §3.3 · Wert des n-ten Ticks einer Karte an einem Tag — dieselbe Staffel wie der Tick-Knopf, ohne Abhakbonus:
+   v3-/4.2-Karten wie routineTick (Schlafen: staffelWert, sonst e4TickBasis ohne Abhak × Serienfaktor privat); v2-Karten wie tickPunkte (tickSumme-Differenz × Gewicht × Geld × Dämpfung) */
+function korrTickPunkte(k, n, min){
+  if(istV3(k) || k.std42===true){
+    const basis=k.rolle==='schlafen' ? staffelWert(k, n) : e4TickBasis(k, min, n, { ohneAbhak:true });
+    const faktor=(k.serienfaktor && k.domain!=='dfm') ? (num(k.serienFaktor,1)||1) : 1;
+    return logRund(basis*faktor);
+  }
+  return logRund((tickSumme(k, n)-tickSumme(k, n-1)) * (S.settings.tickGewicht!=null?S.settings.tickGewicht:1) * geldFaktor(k) * daempfung(k));
+}
 function sitzungPunkteFuer(k, min, datum){
   if(!k || hatFestMin(k)) return 0;
   // §2 (v2.9.0): Pflicht ab dem Update — eine nachgetragene Sitzung ist ein Durchgang
@@ -19055,6 +19082,7 @@ function korrTagStand(datum){
     istMin:Math.round((num(zeit&&zeit.dfm)+num(zeit&&zeit.privat))/60),
     sitzungen:(S.intraday||[]).filter(e=>e.ts && SITZUNG_TYPEN.indexOf(e.typ)>=0 && num(e.minuten)>=0.5 && belFensterDatum(sitzungVonMs(e)?new Date(sitzungVonMs(e)).toISOString():e.ts)===datum).length,
     positionen:spur.filter(e=>e && !e.uebersprungen).length,
+    ticks:(()=>{ const tids=heute ? [S.tag.tagId] : hs.map(x=>x.tagId); return (S.intraday||[]).filter(e=>e && e.typ==='tick' && tids.indexOf(e.tagId)>=0).length; })(),   // Hotfix 30 §3.4: Tick-Einträge des Tags
     matrix:{ ablenkung:Math.round(z.felder.ablenkung), zustand:Math.round(z.felder.zustand), werkzeug:Math.round(z.felder.werkzeug), ziel:Math.round(z.felder.ziel), unbekannt:Math.round(z.unbekannt) } };
 }
 function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1: postfachKarte = Karte aus dem Paket (paket.postfachKarte), sonst null
@@ -19194,6 +19222,44 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
     }
     const r=sitzungHinzu(k, v, b, pr.id, fest);
     zeilen.push('Sitzung hinzu: „'+String(k.titel||'').slice(0,30)+'" '+belUhr(kalStunde(new Date(v).toISOString()))+'–'+belUhr(kalStunde(new Date(b).toISOString()))+' · '+Math.round(r.min)+' Min · +'+fmtP(r.dP)+' P'+satzText+hinweisText);
+  });
+  // ── Hotfix 30 §3 · Ticks im Korrektur-Paket: korrekturen[].ticks [{ karteId, anzahl, zeit?, vermerk }] ──
+  (Array.isArray(kx.ticks)?kx.ticks:[]).forEach((tk,i)=>{
+    tk=tk||{}; const was=nm('Ticks '+(i+1)+(tk.karteId!=null && tk.karteId!=='' ? ' ('+tk.karteId+')' : ''));
+    const pr=korrTickPruefen(tk, datum);   // §3.1 / §5.1: dieselbe Prüfung wie korrekturPruefen
+    if(pr.status==='abgewiesen'){ abgewiesen.push({was, grund:pr.grund}); return; }
+    const k=pr.k, n=pr.anzahl, titel=String(k.titel||'').slice(0,30);
+    const vorhanden=new Set((S.intraday||[]).filter(x=>x && x.id).map(x=>x.id));
+    const idFuer=(nr)=>'t-korr-'+k.id+'-'+datum+'-'+nr;   // §3.3: ein zweites Einspielen findet die ids und ändert nichts
+    let P=0, neu=0;
+    if(heute){   // §3.2: je Tick dieselbe Funktion wie der Tick-Knopf der Karte (karteTick → routineTick bei v3-/4.2-Karten), quelle:'korrektur' am Log-Eintrag
+      for(let j=1;j<=n;j++){ const id=idFuer(j); if(vorhanden.has(id)) continue;
+        const anz0=Math.max(tickAnzahlHeute(k), num(k.ticksHeute)), len0=(S.intraday||[]).length;
+        karteTick(k.id, true);
+        if(Math.max(tickAnzahlHeute(k), num(k.ticksHeute))===anz0){ abgewiesen.push({was, grund:'Tick '+j+' nicht gebucht (Tageslimit erreicht)'}); break; }
+        const e=(S.intraday||[]).slice(len0).reverse().find(x=>x && x.kartenId===k.id && x.typ==='tick')||null;
+        if(e){ e.quelle='korrektur'; e.id=id; e.grund=String(kx.grund); e.vermerk=pr.vermerk; P+=num(e.punkte); }
+        neu++; }
+      if(neu){ DB.set('intraday', S.intraday); saveKarten(); saveTag(); zeilen.push('Ticks hinzu: „'+titel+'" ×'+neu+' · +'+fmtP(P)+' P'); }
+      return;
+    }
+    // §3.3 vergangener Tag: Snapshot über tagSn, je Tick ein Intraday-Eintrag, Punkte nach der Staffel des n-ten Ticks dieses Tags, Wirkung wie eine Sitzung
+    const h=tagSn(), tid=h.tagId, dom=k.domain==='dfm'?'dfm':'privat', proj=dom==='dfm'?(k.projekt||'(ohne Projekt)'):'Privat';
+    const nVor=(S.intraday||[]).filter(x=>x && x.typ==='tick' && x.kartenId===k.id && x.tagId===tid).length;
+    const tickMin=istSonderRolle(k) ? 0 : tickMinutenVon(k);
+    for(let j=1;j<=n;j++){ const id=idFuer(j); if(vorhanden.has(id)) continue;
+      const p=korrTickPunkte(k, nVor+neu+1, tickMin);
+      (S.intraday=S.intraday||[]).push({ typ:'tick', quelle:'korrektur', kartenId:k.id, domaene:k.domain, tagId:tid, datum, ts:new Date(pr.zeit+(j-1)*1000).toISOString(), tickMin, punkte:logRund(p), grund:String(kx.grund), vermerk:pr.vermerk, id });
+      P+=p; neu++; }
+    if(!neu) return;
+    const bil0=num(h.punkteBilanz), dP=Math.round(P*10)/10;
+    h.punkteBilanz=Math.round((bil0+dP)*10)/10;
+    if(dP) h.log.push({ itemId:k.id, titel:k.titel||'', domain:dom, art:'korrektur', punkte:dP, ts:jetztIso(), ticks:neu });
+    h.zeit[dom]=Math.max(0, num(h.zeit[dom])+neu*tickMin*60);
+    h.zeit.projekte=h.zeit.projekte||{}; h.zeit.projekte[proj]=Math.max(0, num(h.zeit.projekte[proj])+neu*tickMin*60);
+    kontoNachziehen(h, bil0, dP);
+    DB.set('intraday', S.intraday);
+    zeilen.push('Ticks hinzu: „'+titel+'" ×'+neu+' · +'+fmtP(dP)+' P');
   });
   // ── §3 (v3.2.0): Schlafschuld direkt setzen (mit grund) ──
   if(kx.schlaf && typeof kx.schlaf==='object' && kx.schlaf.schuldStd!==undefined && kx.schlaf.schuldStd!==null && kx.schlaf.schuldStd!==''){
@@ -28768,6 +28834,8 @@ function hf27BonusAusgleich(kx, abgewiesen, schritte){ const liste=Array.isArray
     const e=_alt(kx, abgewiesen, postfachKarte);
     (Array.isArray(kx && kx.sitzungen) ? kx.sitzungen : []).forEach((sz,i)=>{ sz=sz||{}; const was='Korrektur '+datum+' · Sitzung '+(i+1)+(sz.id ? ' ('+sz.id+')' : ''); const a=abgewiesen.slice(vorher).find(x=>x && x.was===was), an=HF30.angepasst.find(x=>x && x.was===was);
       schritte.push({ nr:schritte.length+1, aktion:String(sz.aktion||''), was, status:a ? 'abgewiesen' : (an ? 'angepasst' : 'angewendet'), grund:a ? String(a.grund||'') : (an ? String(an.hinweis||'') : '') }); });   // Hotfix 30 §1.3: Status „angepasst" mit Hinweis
+    (Array.isArray(kx && kx.ticks) ? kx.ticks : []).forEach((tk,i)=>{ tk=tk||{}; const was='Korrektur '+datum+' · Ticks '+(i+1)+(tk.karteId!=null && tk.karteId!=='' ? ' ('+tk.karteId+')' : ''); const a=abgewiesen.slice(vorher).find(x=>x && x.was===was);
+      schritte.push({ nr:schritte.length+1, aktion:'ticks', was, status:a ? 'abgewiesen' : 'angewendet', grund:a ? String(a.grund||'') : '' }); });   // Hotfix 30 §3: Tick-Schritte in der Rückmeldung
     const zeilen=hf27BonusAusgleich(kx||{}, abgewiesen, schritte);
     if(e && zeilen.length){ e.aenderungen=(e.aenderungen||[]).concat(zeilen); }
     if(e) e.schritte=schritte; HF27.korrSchritte=HF27.korrSchritte.concat(schritte);
