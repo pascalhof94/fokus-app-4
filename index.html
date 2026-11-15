@@ -19168,6 +19168,32 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
     wirkung(k, dP, min, id);
     return {min, dP};
   };
+  // Hotfix 30 §4.1 · eine Nacht, die älter ist als meta.schlaf.letzte (schlafNachtSetzen: neuer:false): kein schlafPunkteBuchen; sie kommt in
+  //   schlafZustand().korrekturNaechte (höchstens 60, älteste fallen heraus); dieselbe Nacht (Überlappung) ersetzt den Eintrag, die Punktedifferenz
+  //   geht an den Tag von belFensterDatum(startTs) (Bilanz, Log „Nacht nachgetragen", Intraday typ korrektur-schlaf mit der Schlafen-Karte — der
+  //   Dienst überspringt Einträge der Schlafen-Karte, bucht die Nacht aus korrekturNaechte), dann kontoNachziehen. Schlafschuld unverändert.
+  const nachtAelter=(sz, v, b)=>{
+    const z=schlafZustand(); if(!Array.isArray(z.korrekturNaechte)) z.korrekturNaechte=[];
+    const sk=schlafKarte(), std=(b-v)/3600000;
+    const punkte=(sz.punkte!=null && sz.punkte!=='') ? num(sz.punkte) : schlafPunkte(std);
+    const tagD=belFensterDatum(new Date(v).toISOString()), tagHeute=tagOffen() && S.tag.datum===tagD;
+    const h=tagHeute ? null : tagSn(tagD), tagId=tagHeute ? S.tag.tagId : h.tagId;
+    const alt=z.korrekturNaechte.find(x=>x && x.startTs && x.endeTs && v<Date.parse(x.endeTs) && b>Date.parse(x.startTs)) || null;
+    const dP=Math.round((punkte-(alt ? num(alt.punkte) : 0))*10)/10;
+    if(alt && !dP && Math.abs(Date.parse(alt.startTs)-v)<60000 && Math.abs(Date.parse(alt.endeTs)-b)<60000) return;   // schon so — zweites Einspielen
+    const eintrag={ startTs:new Date(v).toISOString(), endeTs:new Date(b).toISOString(), dauerMin:Math.round(std*60), punkte, tagId, grund:String(kx.grund||''), korrektur:true };
+    if(alt) z.korrekturNaechte[z.korrekturNaechte.indexOf(alt)]=eintrag; else z.korrekturNaechte.push(eintrag);
+    z.korrekturNaechte.sort((p,q)=>p.startTs<q.startTs?-1:(p.startTs>q.startTs?1:0)); z.korrekturNaechte=z.korrekturNaechte.slice(-60);
+    if(sk && dP){
+      const log={ itemId:sk.id, titel:'Nacht nachgetragen', domain:sk.domain, art:'korrektur', punkte:dP, ts:jetztIso() };
+      const ie={ ts:eintrag.endeTs, kartenId:sk.id, domaene:sk.domain, punkte:logRund(dP), minuten:0, typ:'korrektur-schlaf', quelle:'korrektur', tagId, datum:tagD, grund:String(kx.grund||'') };
+      if(tagHeute){ (S.tag.log=S.tag.log||[]).push(log); (S.intraday=S.intraday||[]).push(ie); }
+      else { const bil0=num(h.punkteBilanz); h.punkteBilanz=Math.round((bil0+dP)*10)/10; h.log.push(log); (S.intraday=S.intraday||[]).push(ie); kontoNachziehen(h, bil0, dP); }
+      DB.set('intraday', S.intraday);
+    }
+    saveMeta();
+    zeilen.push('Nacht nachgetragen '+belUhr(kalStunde(eintrag.startTs))+'–'+belUhr(kalStunde(eintrag.endeTs))+' · '+hMin(eintrag.dauerMin)+' Std · '+fmtP(punkte)+' P'+(alt ? ' (ersetzt, '+(dP>=0?'+':'−')+fmtP(Math.abs(dP))+')' : '')+' · Tag '+tagD+' · ältere Nacht — Schuld unverändert');
+  };
   // §3 (v3.2.0): eine Sitzung auf „Schlafen" ist eine NACHT — sie ersetzt dieselbe Nacht und rechnet die Schlafschuld neu
   const nachtKorrektur=(sz, was)=>{
     const pr=korrNachtPruefen(sz, datum);   // Hotfix 30 §1/§5.1: Zeitspanne über korrZeitspanne, mindestens 60 Minuten
@@ -19176,6 +19202,7 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
     const z0=schlafZustand().letzte;
     if(z0 && Math.abs(Date.parse(z0.startTs)-v)<60000 && Math.abs(Date.parse(z0.endeTs)-b)<60000 && (sz.punkte==null || num(sz.punkte)===num(z0.punkte))) return;   // schon so
     const r=schlafNachtSetzen(v, b, sz.punkte, String(kx.grund||'Korrektur'));
+    if(!r.neuer){ nachtAelter(sz, v, b); return; }   // Hotfix 30 §4.1: ältere Nacht — nicht über schlafPunkteBuchen, sondern korrekturNaechte
     const n=r.nacht, sk=schlafKarte();
     let dP=0;
     if(r.ersetzt && n.gebucht) dP=num(n.punkte)-num(r.punkteAlt);
