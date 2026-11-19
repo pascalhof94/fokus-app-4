@@ -96,7 +96,7 @@ pruef('§4.7.1 Karte wechselt → Gespräch wechselt (private Karte → Trainer)
 S.fokus={ karteId:'t-dfm', laeuft:true, startMs:Date.now(), sessionSek:0 }; saveFokus(); f9Rendern();
 pruef('§4.7.3 ungesendeter Entwurf bleibt je Gespräch erhalten', f12Entwurf('k-hawk', 'karte-t-dfm').text==='Entwurf A' && f12EntwurfAktuell().text==='Entwurf A');
 S.fokus=null; saveFokus(); f9Rendern();
-pruef('§4.7.2 ohne Karte im Fokus: Verhalten wie heute (zuletzt offenes Gespräch bleibt)', f12Ui().kanal==='k-hawk' && f12Ui().gespraech==='karte-t-dfm' && el('srChat').innerHTML.indexOf('💬 HAWK')>=0);
+pruef('§4.7.2 ohne Karte im Fokus: rechte Spalte hidden und leer (Hotfix 31 §3.1; der Rückfall „zuletzt offenes Gespräch“ entfällt), Ui-Gespräch bleibt gespeichert', f12Ui().kanal==='k-hawk' && f12Ui().gespraech==='karte-t-dfm' && el('srChat').hidden===true && el('srChat').innerHTML==='');
 f9Breit=_breitAlt;
 
 // ══ §5 · Postfach in drei Filtern ══

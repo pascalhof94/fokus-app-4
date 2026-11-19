@@ -42,7 +42,7 @@ pruef('‹ aus der Stufe Agent eines Ein-Kanal-Raums schließt die Ebene', e1Art
 var ha=f12AgentHtml(KT);
 var i=function(t){ return ha.indexOf(t); };
 pruef('Gesprächsliste nach Tagen (Heute · Gestern · Älter), Bisheriger Verlauf ganz unten mit grauem Titel', i('Heute')>=0 && i('Heute')<i('Paket 34 angekommen?') && i('Paket 34 angekommen?')<i('>Gestern<') && i('>Gestern<')<i('Doppelbuchungen klären') && i('Doppelbuchungen klären')<i('>Älter<') && i('>Älter<')<i('Bisheriger Verlauf') && /class="alt"><div class="m"><p>🗄️ Bisheriger Verlauf/.test(ha), [i('Heute'), i('Paket 34 angekommen?'), i('>Gestern<'), i('Doppelbuchungen klären'), i('>Älter<'), i('Bisheriger Verlauf')].join(','));
-pruef('Zeile: Unterzeile „Trainer: „…““, ungelesen 1, ＋ Neuer Chat, Kopf mit Raum und ↗', ha.indexOf('Trainer: „Ja, Paket 34 ist um 12:13 Uhr angekommen.“')>=0 && /<span class="bd">1<\/span>/.test(ha) && ha.indexOf('data-f12neu="1"')>=0 && ha.indexOf('🎯 Trainerstab')>=0 && ha.indexOf('data-f12link="1"')>=0);
+pruef('Zeile: Unterzeile „Trainer: „…““, ungelesen 1, kein ＋ Neuer Chat im Trainer-Kanal (Hotfix 31 §2.2), Kopf mit Raum und ↗', ha.indexOf('Trainer: „Ja, Paket 34 ist um 12:13 Uhr angekommen.“')>=0 && /<span class="bd">1<\/span>/.test(ha) && ha.indexOf('data-f12neu="1"')<0 && ha.indexOf('🎯 Trainerstab')>=0 && ha.indexOf('data-f12link="1"')>=0);
 var GL=f12Gespraeche(KT);
 pruef('f12Gespraeche: Titel aus der ältesten Zeile, letzte Zeile, ungelesen, Karten', GL.length===3 && GL[0].gespraech==='g1' && GL[0].titel==='Paket 34 angekommen?' && GL[0].letzte.id==='r2' && GL[0].ungelesen===1 && GL[0].karten===0 && GL[2].verlauf===true);
 
@@ -118,6 +118,7 @@ f12Ui().kanal='k-tr'; f12Ui().gespraech='g1'; delete f12Ui().entwurf[f12EntwurfK
 f12KontextOeffnen();
 pruef('＋ öffnet die Ebene kontextwahl mit Segment Suche', e1Art()==='kontextwahl' && f12Kw().seg==='suche' && f12Kw().auswahl.length===0);
 pruef('Kontext wählen: ＋ nimmt die Karte auf, erneut tippen nimmt sie heraus', f12KwToggle('t-dfm')===true && f12Kw().auswahl.length===1 && f12KwToggle('t-dfm')===true && f12Kw().auswahl.length===0);
+(function(){ var k=S.karten.find(function(x){ return x.id==='t-dfm'; }); if(k && !k.faelligkeit){ k.faelligkeit=heuteApp(); saveKarten(); } })();   /* Hotfix 31 §7.4: in einen Block kommt nur eine Karte von heute */
 if(!ketteHat('t-dfm')) hf29KarteEinordnen('t-dfm', { art:'block', block:'fokus1' });   // Hotfix 29 §5: in den Block (die Kettenliste zeigt aufgeklappt die Gruppe Blöcke heute)
 f12KwToggle('t-dfm'); f12KwSegment('projekte'); var n1=f12Kw().auswahl.length; f12KwSegment('abteilungen'); f12KwSegment('suche');
 pruef('Auswahl bleibt beim Wechsel der Segmente erhalten', n1===1 && f12Kw().auswahl.length===1 && f12Kw().seg==='suche');
