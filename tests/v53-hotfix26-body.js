@@ -47,11 +47,11 @@ P.freigabeTs=jetztIso(); k43KarteOeffnen(tp.id); pruef('C7 Tagesplanung nach der
 S.tag.k43.blockade=null; k43KarteOeffnen(bk.id); var B=k43BL(); pruef('C8 Blockade → Ansicht ohne Start (kein startTs, Uhr aus)', e1Art()==='spezial' && k43Ui().art==='blockade' && !(B && B.startTs) && !(S.fokus && S.fokus.laeuft)); e1Schliessen();
 var tb=Object.assign(neueKarte({ titel:'Tagebuch', domain:'privat' }), { id:'k3-tagebuch', rolle:'tagebuch', status:'offen' }); S.karten.push(tb); k43KarteOeffnen(tb.id); pruef('C9 Tagebuch → Tagebuch-Dialog (Ebene tagebuch)', e1Art()==='tagebuch'); e1Schliessen();
 k43KarteOeffnen(K.d.id); pruef('C10 normale Karte → Kartenchat karte-<id>', e1Art()==='chat' && f12Ui().gespraech==='karte-'+K.d.id); e1Schliessen();
-var pos=Object.assign(neueKarte({ titel:'Position', domain:'privat' }), { id:'k3-position', rolle:'position', status:'offen' }); S.karten.push(pos); k43KarteOeffnen(pos.id); pruef('C11 ❓ position ohne Ansicht → Kartenchat', e1Art()==='chat' && f12Ui().gespraech==='karte-k3-position'); e1Schliessen();
+var pos=Object.assign(neueKarte({ titel:'Position', domain:'privat' }), { id:'k3-position', rolle:'position', status:'offen' }); S.karten.push(pos); k43KarteOeffnen(pos.id); pruef('C11 ❓ position ohne Ansicht → Kartenchat (Hotfix 31 §2.1: Systemkarte → Tagesgespräch tag-<heute>)', e1Art()==='chat' && f12Ui().gespraech===f12TagGespraech()); e1Schliessen();
 
 // ══ D · Tagesplanung zu früh gestartet (§4.1) ══
 S.fokus={ laeuft:false }; P.morgenTs=null; P.freigabeTs=null; k43Ui().schritt=1;
-k43TagesplanungOeffnen(); pruef('D1 erster Start: Morgenansicht Schritt 1, Karte läuft', k43Ui().art==='tagesplanung' && k43Ui().schritt===1 && S.fokus.laeuft && S.fokus.karteId===tp.id);
+k43TagesplanungOeffnen({ starten:true }); pruef('D1 erster Start (▶, Hotfix 31 §1: starten:true): Morgenansicht Schritt 1, Karte läuft', k43Ui().art==='tagesplanung' && k43Ui().schritt===1 && S.fokus.laeuft && S.fokus.karteId===tp.id);
 fokusseiteNachStart(); pruef('D2 fokusseiteNachStart (Ursache: schloss die Ebene nach leistePlay/kettenListeKlick) lässt die laufende Spezialansicht offen', e1Art()==='spezial' && k43Ui().art==='tagesplanung');
 k43Ui().schritt=2; saveUi(); e1Schliessen(); fokusZeitEinbuchen(); S.fokus={ laeuft:false };
 leistePlay(tp.id); if(S.fokus && S.fokus.laeuft && S.fokus.karteId===tp.id) fokusseiteNachStart();   // Weg aus Liste/Kette (kettenListeKlick 14588)
@@ -116,6 +116,7 @@ pruef('H1 Werktag ohne Plan: Standard-Block-Ketten mindestens Fokus 1 (von 09:45
 pruef('H2 Wochenende: keine leeren Standard-Ketten (Sa 07.11.)', hf26StandardKetten('2026-11-07')===0 && hf26Wochenende('2026-11-07') && !hf26Wochenende('2026-11-05'));
 pruef('H3 k43BlockNorm: „Fokus heute“, „heute“, „Tag“ → tag; Blöcke unverändert', k43BlockNorm('Fokus heute')==='tag' && k43BlockNorm('Heute 04.11.2026')==='tag' && k43BlockNorm('Tag')==='tag' && k43BlockNorm('Fokus 1 04.11.')==='fokus1' && k43BlockNorm('Senke')==='senke' && k43BlockNorm('Tagesplanung')==='aufwachen');
 var heute=heuteApp(); S.tagesketten=[{ id:'tk-alt-eigene', name:'Alte Eigene aus Plan', art:'eigene', datum:heute, karten:[K.p.id], quelle:'tagesplan' },{ id:'tk-pascal', name:'Meine Kette', art:'eigene', datum:heute, karten:[K.e.id], quelle:'pascal' }]; S.meta.ketten43Archiv=[];
+['t-dfm','t-priv','t-erh'].forEach(function(id){ var k=S.karten.find(function(x){ return x.id===id; }); if(k){ k.faelligkeit=heuteApp(); } }); saveKarten();   /* Hotfix 31 §7.4.5: ein Ketten-Paket nimmt nur Karten von heute */
 syncImport(JSON.stringify({ appVersion:APP_VERSION, karten:[{ id:'t-priv', titel:'Private Aufgabe' }], tagesketten:[{ id:'tk-fokus1', name:'Fokus 1', karten:['t-dfm'] },{ id:'tk-x1', name:'Fokus heute', karten:['t-priv'] },{ id:'tk-x2', name:'Sales · Jack\'s 04.11.', karten:['t-erh'] },{ id:'tk-senke', name:'Senke', karten:['t-priv'] }] }));
 var tagC=S.tagesketten.find(function(c){ return c.id==='tk43-tag-'+heute; });
 pruef('H4 Paket: tk-fokus1 → Block fokus1; „Fokus heute“ und „Sales · Jack\'s“ → Tag-Kette „Heute gesamt“; nie Eigene mit quelle tagesplan', S.tagesketten.some(function(c){ return c.art==='block' && c.block==='fokus1' && c.karten.indexOf('t-dfm')>=0; }) && !!tagC && tagC.art==='tag' && tagC.karten.indexOf('t-priv')>=0 && tagC.karten.indexOf('t-erh')>=0 && !S.tagesketten.some(function(c){ return c.art==='eigene' && c.quelle==='tagesplan'; }) && !S.tagesketten.some(function(c){ return c.id==='tk-x1' || c.id==='tk-x2'; }), JSON.stringify(S.tagesketten.map(function(c){ return c.id+'|'+c.art+'|'+c.quelle; })));
@@ -141,5 +142,5 @@ pruef('I7 Tipp auf eine Kachel: Block-Kette aufgeklappt (k43Auf) und aktuelle Ke
 pruef('I8 laufender Block aus den Startzeiten der Block-Ketten (hf26LaufenderBlockId), Tagesfenster 5..29', hf26LaufenderBlockId(hf26HeutigeBloecke(Kb))===k43KetteId('fokus1', heute) && hf26Std('02:00')===26 && hf26Std('09:30')===9.5);
 
 // ══ J · Version ══
-pruef('J1 App 4.5.4 · Build 2026-11-15-64 · sw.js Cache fokus4-v4.5.4-1', APP_VERSION==='4.5.4' && APP_BUILD==='2026-11-15-64' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.4-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('J1 App 4.5.5 · Build 2026-11-19-65 · sw.js Cache fokus4-v4.5.5-1', APP_VERSION==='4.5.5' && APP_BUILD==='2026-11-19-65' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.5-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 26 · Eine Ansicht je Funktion, 💬 an der Karte, Tagesplanung, Schlafen, Postfach-Volltext, Ketten nach Tagesblöcken (4.3.2)');

@@ -6,7 +6,7 @@
    fasst dieser Worker nie an. */
 'use strict';
 
-const CACHE = 'fokus4-v4.5.4-1';   // Hotfix 30.3 gebuchte Nacht = Differenz (15.11.2026) · App 4.5.4 · Build 64: Cache-Name hochgezählt
+const CACHE = 'fokus4-v4.5.5-1';   // Hotfix 31 Tagesplanung ohne Autostart, ein Trainer-Tageschat, Chats gelesen und vollständig, Farbe auf allen Geräten, Karten in der Planung (19.11.2026) · App 4.5.5 · Build 65: Cache-Name hochgezählt
 const ASSETS = [
   './',
   './index.html',

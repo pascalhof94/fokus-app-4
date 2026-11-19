@@ -43,8 +43,8 @@ warten();
 pruef('B-A6 Bilanz und Trainer gesendet (Hotfix-24-Weg)', _gesendet.some(function(x){ return x.id==='bilanz-'+g; }) && _gesendet.some(function(x){ return x.id==='chat-uebergang-'+g; }), JSON.stringify(_gesendet.map(function(x){ return x.id; })));
 var h1=k43AufstehenHtml(); pruef('B-A7 Aufstehen-HTML enthält Nacht, Hintergrund, Kette', /Deine Nacht/.test(h1) && /Im Hintergrund erledigt/.test(h1) && /Kette Aufstehen/.test(h1));
 // Tagesplanung
-k43TagesplanungOeffnen();
-pruef('B-T1 Tagesplanung läuft als Karte, Ansicht Schritt 1', S.fokus.laeuft && S.fokus.karteId===k43TagesplanungKarte().id && S.ui.spezial.art==='tagesplanung' && S.ui.spezial.schritt===1);
+k43TagesplanungOeffnen({ starten:true });   /* Hotfix 31 §1: Öffnen allein startet keine Uhr mehr; ▶ bzw. Kettenstart übergeben starten:true */
+pruef('B-T1 Tagesplanung läuft als Karte (▶), Ansicht Schritt 1', S.fokus.laeuft && S.fokus.karteId===k43TagesplanungKarte().id && S.ui.spezial.art==='tagesplanung' && S.ui.spezial.schritt===1);
 var s1=k43TagesplanungHtml(); pruef('B-T2 Schritt 1: Zustand, Wirkung noch nicht eingestellt, Hinweise', /Zustand/.test(s1) && /noch nicht eingestellt/.test(s1) && /Hinweise/.test(s1));
 S.ui.spezial.schritt=2; var s2=k43TagesplanungHtml(); pruef('B-T3 Schritt 2 zeichnet „Blöcke planen“ (Hotfix 29 §3: die alten Schritte 2–4 entfallen)', /Blöcke planen/.test(s2) && /Schritt 2 von 2/.test(s2) && !/Gestern nach Themen/.test(s2), s2.slice(0,200));
 S.ui.spezial.schritt=1; var s3=k43TagesplanungHtml(); pruef('B-T4 Schritt 1: Themen-Chips und „Weiter: Blöcke planen“ (Hotfix 29 §3)', /Themen heute/.test(s3) && /data-k43thema/.test(s3) && /data-hf29weiter/.test(s3) && /Schritt 1 von 2/.test(s3));
@@ -193,5 +193,5 @@ z=kartenZeileHtml(N, { live:true }); pruef('F-R5 live-Zeile (Statusleiste): kein
 z=kartenZeileHtml(_k('k3-aufstehen')); pruef('F-R6 Rollenkarte (4.1-Zeile): ▶, +1, ✓ und 💬', /data-klplay="k3-aufstehen"/.test(z) && /data-k43kchat="k3-aufstehen"/.test(z) && !/kz42/.test(z));
 
 // ══ G · Version ══
-pruef('G1 App 4.5.4 · Build 2026-11-15-64 · sw.js Cache fokus4-v4.5.4-1 (seit Hotfix 26)', APP_VERSION==='4.5.4' && APP_BUILD==='2026-11-15-64' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.4-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('G1 App 4.5.5 · Build 2026-11-19-65 · sw.js Cache fokus4-v4.5.5-1 (seit Hotfix 26)', APP_VERSION==='4.5.5' && APP_BUILD==='2026-11-19-65' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.5-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Karten-Standard 4.3 · Ketten (4.3.0)');
