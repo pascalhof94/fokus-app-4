@@ -29378,7 +29378,7 @@ function hf29BlockOffenHtml(c, bl){ const by={}; S.karten.forEach(x=>by[x.id]=x)
     const kt=(S.tagesketten||[]).filter(x=>x && x.id!==c.id && String(x.name||'').toLowerCase().indexOf(q)>=0 && (x.karten||[]).some(id=>hf31Planbar(by[id])));
     h+='<p class="k43-lab">Treffer</p>'+(tref.length ? tref.map(k=>hf29ZeileMit(k, c, {}, '<button type="button" class="hf29-ib1 plus" data-hf29plus="'+esc(c.block+'|'+k.id)+'">＋</button>')).join('') : '')+kt.map(x=>'<div class="hf29-kette"><div><b>⛓ '+esc(String(x.name||'').replace(/ · .*$/,''))+'</b><br><small>'+(x.karten||[]).filter(id=>hf31Planbar(by[id])).length+' einplanbare Karten</small></div><button type="button" class="hf29-ib1 txt" data-hf29alle="'+esc(c.block+'|'+x.id)+'">＋ alle</button></div>').join('')+(!tref.length && !kt.length ? '<div class="leer">nichts gefunden</div>' : ''); }
   const V=hf29Vorschlaege(c.block); h+='<p class="k43-lab">Vorschläge Trainer</p>'+(V.out.length ? V.out.map(v=>hf29ZeileMit(v.k, c, { zusatz:(v.start ? esc(v.start)+' · ' : '')+(v.min!=null ? v.min+' Min. · ' : '')+'<span class="hf29-gruen">Vorschlag'+(V.r ? ' Fassung '+f15Runde(V.r) : '')+'</span>' }, '<button type="button" class="hf29-ib1 plus" data-hf29plus="'+esc(c.block+'|'+v.k.id+'|'+(v.start||'')+'|'+(v.min!=null ? v.min : ''))+'">＋</button>', 'vor')).join('') : '<div class="leer">'+(V.laedt ? 'Plan lädt …' : V.r ? 'keine weiteren Vorschläge für diesen Block' : 'kein offener Tagesplan für heute')+'</div>');
-  const G=hf29Gestern(); h+='<p class="k43-lab">Von gestern · überfällig</p>'+(G.length ? G.map(k=>hf29ZeileMit(k, c, { zusatz:'<span class="hf29-rot">bis '+esc(anKurzDatum(k.faelligkeit))+'.</span>' }, '<button type="button" class="hf29-ib1 plus" data-hf29plus="'+esc(c.block+'|'+k.id)+'">＋</button>', 'rot hf29-gestern')).join('') : '<div class="leer">nichts offen von gestern</div>');
+  const G=hf29Gestern(); h+='<p class="k43-lab">Von gestern · überfällig</p><div data-hf31gestern="1">'+(G.length ? G.map(k=>hf29ZeileMit(k, c, { zusatz:'<span class="hf29-rot">bis '+esc(anKurzDatum(k.faelligkeit))+'.</span>' }, '<button type="button" class="hf29-ib1 plus" data-hf29plus="'+esc(c.block+'|'+k.id)+'">＋</button>', 'rot hf29-gestern')).join('') : '<div class="leer">nichts offen von gestern</div>')+'</div>';   // Hotfix 31.1 §1.1: ✓ in diesem Container öffnet „Erledigt am …“
   const K=k43KettenBauen(), ketten=(K.eigene||[]).concat(K.thema||[]).map(x=>Object.assign({}, x, { offen:(x.offen||[]).filter(hf31Planbar) })).filter(x=>x.offen.length); h+='<p class="k43-lab">Ketten</p>'+(ketten.length ? ketten.map(x=>'<div class="hf29-kette"><div><b>⛓ '+esc(String(x.name||'').replace(/ · .*$/,''))+'</b><br><small>'+x.offen.length+' offene Karten · '+fmtDauer(x.offen.reduce((a,k)=>a+Math.max(0, num(k.sollMin)-heuteInvestiertMin(k)), 0))+'</small></div><button type="button" class="hf29-ib1 txt" data-hf29alle="'+esc(c.block+'|'+x.id)+'">＋ alle</button></div>').join('') : '<div class="leer">keine eigene Kette, kein Thema mit offenen Karten</div>');
   return h+'</div>'; }
 function hf29PlanenHtml(opt){ opt=opt||{}; const P=k43TP(); if(!P) return '<div class="leer">Kein offener Tag — erst Aufstehen</div>'; const heute=heuteApp(), bl=hf29Bloecke(heute), T=tagesprognoseHeute(), g=diaGroessen(), morgen=!P.beendetTs && !P.freigabeTs && !opt.zwischendurch, auf=hf29AufId();
@@ -29387,7 +29387,7 @@ function hf29PlanenHtml(opt){ opt=opt||{}; const P=k43TP(); if(!P) return '<div 
   const G=hf29Gestern(), ueber=G.filter(k=>k.faelligkeit<anVorTage(heute, 1)), O=hf29HeuteOhneBlock();
   if(G.length) h+='<div class="hf29-warn" data-hf29rot="gestern"><span><b>'+G.length+' Karte'+(G.length===1?'':'n')+' offen von gestern</b>'+(ueber.length ? ' · '+ueber.length+' überfällig seit '+esc(anKurzDatum(ueber[0].faelligkeit))+'.' : '')+'</span><span class="tap">Einplanen ›</span></div>';
   if(O.length) h+='<div class="hf29-warn" data-hf29rot="heute"><span><b>'+O.length+' Karte'+(O.length===1?'':'n')+' mit Datum heute</b> ohne Block</span><span class="tap">Zuordnen ›</span></div>';
-  if(HF29.rot==='gestern' && G.length) h+='<div class="hf29-rotliste" data-klliste="1">'+G.map(k=>hf29ZeileMit(k, null, { zusatz:'<span class="hf29-rot">bis '+esc(anKurzDatum(k.faelligkeit))+'.</span>' }, '<button type="button" class="hf29-ib1 txt" data-hf29zuordnen="'+esc(k.id)+'">Zuordnen</button>', 'rot hf29-gestern')).join('')+'</div>';
+  if(HF29.rot==='gestern' && G.length) h+='<div class="hf29-rotliste" data-klliste="1" data-hf31gestern="1">'+G.map(k=>hf29ZeileMit(k, null, { zusatz:'<span class="hf29-rot">bis '+esc(anKurzDatum(k.faelligkeit))+'.</span>' }, '<button type="button" class="hf29-ib1 txt" data-hf29zuordnen="'+esc(k.id)+'">Zuordnen</button>', 'rot hf29-gestern')).join('')+'</div>';
   if(HF29.rot==='heute' && O.length) h+='<div class="hf29-rotliste" data-klliste="1">'+O.map(k=>hf29ZeileMit(k, null, {}, '<button type="button" class="hf29-ib1 txt" data-hf29zuordnen="'+esc(k.id)+'">Zuordnen</button>', 'rot')).join('')+'</div>';
   if(!bl.length) h+='<div class="leer">Heute gibt es keine Blöcke'+(hf26Wochenende(heute) ? ' (Wochenende)' : '')+'.</div>';
   bl.forEach(c=>{ h+=(auf===c.id) ? hf29BlockOffenHtml(c, bl) : hf29BlockKopfHtml(c, false, bl); });
@@ -29424,10 +29424,12 @@ function hf31Einplanbar(k){ if(!k) return false; if(k.rolle || kartenArt42(k)===
 function hf31Planbar(k){ return hf29Offen(k) && !istInfoKarte(k) && hf31Einplanbar(k); }   // §7.2.1/§7.4.4: Treffer der Suche, Ketten und „＋ alle“ zeigen bzw. übernehmen nur diese Karten
 /* §7.1.1 · EINE Tageswahl: morgen, übermorgen, in 3 Tagen (Wochentag und Datum, z. B. „Fr 20.11.“) und „📅 Datum wählen“ (frühestens morgen).
    ziel 'ziel' = „Karte zuordnen“ (setzt HF29.zu.ziel, Anwenden über den Fuß „Verschieben · anderer Tag“); sonst Karten-ID = „Blöcke planen“ (wendet sofort an) */
-function hf31TagWahlHtml(ziel, gewaehlt){ const heute=heuteApp(), tage=[1,2,3].map(n=>anVorTage(heute, -n)), morgen=tage[0], frei=!!(gewaehlt && tage.indexOf(gewaehlt)<0);
-  return '<div class="hf31-tage">'+tage.map(d=>'<button type="button" class="hf29-chip'+(gewaehlt===d ? ' an' : '')+'" data-hf31tag="'+esc(ziel)+'|'+esc(d)+'">'+esc(AN_WT[anWochentag(d)]+' '+anKurzDatum(d)+'.')+'</button>').join('')+
-    '<label class="hf31-datum'+(frei ? ' an' : '')+'">📅 Datum wählen<input type="date" data-hf31datum="'+esc(ziel)+'" value="'+esc(frei ? gewaehlt : '')+'" min="'+esc(morgen)+'"></label></div>'; }
-function hf31TagWaehlen(ziel, datum){ datum=String(datum||''); if(!/^\d{4}-\d{2}-\d{2}$/.test(datum) || datum<=heuteApp()) return hf29Meldung('Frühestens morgen');
+function hf31TagWahlHtml(ziel, gewaehlt, opt){ opt=opt||{}; const heute=heuteApp(), rueck=opt.rueckwaerts===true;   // Hotfix 31.1 §1.2: rueckwaerts = gestern (Wochentag, Datum) und heute, Datumsfeld bis heute; ohne opt wie bisher morgen / übermorgen / in 3 Tagen
+  const tage=rueck ? [anVorTage(heute, 1), heute] : [1,2,3].map(n=>anVorTage(heute, -n)), morgen=anVorTage(heute, -1), frei=!!(gewaehlt && tage.indexOf(gewaehlt)<0);
+  return '<div class="hf31-tage">'+tage.map(d=>'<button type="button" class="hf29-chip'+(gewaehlt===d ? ' an' : '')+'" data-hf31tag="'+esc(ziel)+'|'+esc(d)+'">'+esc(d===heute ? 'heute' : AN_WT[anWochentag(d)]+' '+anKurzDatum(d)+'.')+'</button>').join('')+
+    '<label class="hf31-datum'+(frei ? ' an' : '')+'">📅 Datum wählen<input type="date" data-hf31datum="'+esc(ziel)+'" value="'+esc(frei ? gewaehlt : '')+'" '+(rueck ? 'max="'+esc(heute)+'"' : 'min="'+esc(morgen)+'"')+'></label></div>'; }
+function hf31TagWaehlen(ziel, datum){ datum=String(datum||''); if(ziel==='erl') return hf311TagSetzen(datum);   // Hotfix 31.1: Tageswahl im Blatt „Erledigt am …“ (rückwärts)
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(datum) || datum<=heuteApp()) return hf29Meldung('Frühestens morgen');
   if(ziel==='ziel'){ if(!HF29.zu) return false; HF29.zu.ziel={ art:'tag', datum }; HF29.tagWahl=false; hf29ZuordnenNeu(); return true; }
   try{ closeSheet(); }catch(e){} HF31.schieb=null; const ok=hf29KarteEinordnen(ziel, { art:'tag', datum }, { quelle:'zuordnung' }); if(ok) toast('↷ '+hf29ZielText({ art:'tag', datum })); return ok; }
 /* §7.1.3 · ↷ an jeder Kartenzeile in „Blöcke planen“ öffnet dieselbe Tageswahl (ersetzt den ↷ in „Von gestern“ über k43GesternEntscheiden) */
@@ -29453,8 +29455,44 @@ document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.dataset ||
     const inPlanung=!!(t && t.closest && (t.closest('.hf29-zr') || t.closest('.hf29-karte'))); const r=_alt(e);
     if(r && inPlanung){ try{ if(e1Art()==='spezial') e1Rendern(); }catch(x){} try{ if(HF29.zu && sheetOffen()) hf29ZuordnenNeu(); }catch(x){} }
     return r; }; }
+/* ══ Hotfix 31.1 (19.11.2026) · ✓ in „Von gestern“ öffnet das Blatt „Erledigt am …“: Tag (gestern vorgewählt, heute, 📅 bis heute), Dauer (Soll-Minuten), Punkte (Satz × Dauer);
+   die Buchung läuft über den Korrektur-Weg aus Hotfix 30 (korrekturAnwenden mit einer Sitzung hinzu, fester Satz punkteJeStd), die Karte wird danach erledigt wie im Gestern-Zweig
+   von k43GesternEntscheiden (27917): erledigtAuf, tagId, ohne Abhakbonus. In allen anderen Listen bleibt ✓ unverändert (kettenListeKlick → kartenListeCheck). ══ */
+HF31.erl=null;
+function hf311Satz(k){ try{ return Math.max(0, num(e42Satz(k))); }catch(e){ return 0; } }
+function hf311TagText(d){ return d===heuteApp() ? 'heute' : AN_WT[anWochentag(d)]+' '+anKurzDatum(d)+'.'; }
+function hf311Oeffnen(kid){ const k=S.karten.find(x=>x.id===kid); if(!k) return hf29Meldung('Karte '+hf29Id8(kid)+' nicht gefunden'); const dauer=Math.max(0, Math.min(600, Math.round(num(k.sollMin))));
+  HF31.erl={ kid:k.id, tag:anVorTage(heuteApp(), 1), dauer, punkte:Math.round(hf311Satz(k)*dauer/60), punkteManuell:false, fehler:'' };
+  openSheet('Erledigt am …', hf311BlattHtml(), hf311FussHtml()); return true; }
+function hf311BlattHtml(){ const E=HF31.erl; if(!E) return ''; const k=S.karten.find(x=>x.id===E.kid); if(!k) return '<div class="leer">Karte nicht lesbar</div>';
+  return '<div class="hf29-zu"><div class="hf29-karte">'+kartenZeileHtml(k, { live:true })+'</div>'+
+    '<p class="k43-lab">Erledigt am</p>'+hf31TagWahlHtml('erl', E.tag, { rueckwaerts:true })+
+    '<div class="grid2"><div class="field"><label>Dauer (Min.)</label><input type="number" inputmode="numeric" min="0" max="600" step="1" value="'+esc(String(E.dauer))+'" data-hf311dauer="1" aria-label="Dauer in Minuten"></div>'+
+    '<div class="field"><label>Punkte</label><input type="number" inputmode="numeric" min="0" step="1" value="'+esc(String(E.punkte))+'" data-hf311punkte="1" aria-label="Punkte"></div></div>'+
+    '<div class="hint">Satz der Karte '+fmtP(hf311Satz(k))+' P/h · Punkte rechnen mit der Dauer mit, bis du sie selbst änderst. Zeit und Punkte zählen zur Statistik des gewählten Tags; kein Abhakbonus.</div>'+
+    (E.fehler ? '<div class="hf29-warn" data-hf311fehler="1"><span><b>'+esc(E.fehler)+'</b></span></div>' : '')+'</div>'; }
+function hf311FussHtml(){ const E=HF31.erl; if(!E) return ''; return '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-hf311go="1">✓ Erledigt am '+esc(hf311TagText(E.tag))+'</button>'; }
+function hf311Neu(){ try{ const b=el('sheetBody'), f=el('sheetFoot'); if(b) b.innerHTML=hf311BlattHtml(); if(f) f.innerHTML=hf311FussHtml(); }catch(e){} }
+function hf311TagSetzen(d){ const E=HF31.erl; if(!E) return false; d=String(d||''); if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d>heuteApp()) return hf29Meldung('Spätestens heute'); E.tag=d; E.fehler=''; hf311Neu(); return true; }
+function hf311DauerSetzen(v){ const E=HF31.erl; if(!E) return; E.dauer=Math.max(0, Math.min(600, Math.round(num(v)))); if(!E.punkteManuell){ const k=S.karten.find(x=>x.id===E.kid); E.punkte=Math.round(hf311Satz(k)*E.dauer/60); try{ const p=document.querySelector('[data-hf311punkte]'); if(p) p.value=String(E.punkte); }catch(e){} } }
+function hf311PunkteSetzen(v){ const E=HF31.erl; if(!E) return; E.punkte=Math.max(0, Math.round(num(v))); E.punkteManuell=true; }
+function hf311Hhmm(ms){ const d=new Date(ms); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function hf311Buchen(){ const E=HF31.erl; if(!E) return false; const k=S.karten.find(x=>x.id===E.kid); if(!k) return hf29Meldung('Karte nicht gefunden'); const heute=heuteApp(), tag=E.tag, dauer=E.dauer, punkte=E.punkte;
+  if(dauer<=0 && punkte>0){ E.fehler='Punkte brauchen eine Dauer'; hf311Neu(); return false; }
+  const grund='Erledigt am '+anKurzDatum(tag)+'. (Von gestern)';
+  if(dauer>0){ const bisMs=tag===heute ? Date.now() : Date.parse(tag+'T23:00:00');   // §1.3: heute endet die Sitzung jetzt, sonst um 23:00
+    const sz={ aktion:'hinzu', karteId:k.id, von:hf311Hhmm(bisMs-dauer*60000), bis:hf311Hhmm(bisMs), punkteJeStd:Math.round(punkte*60/dauer*100)/100, vermerk:grund };   // vermerk: Pflicht beim festen Satz (korrFesterSatz)
+    const abg=[]; let r=null; try{ r=korrekturAnwenden({ datum:tag, grund, sitzungen:[sz] }, abg, null); }catch(e){ abg.push({ was:'Sitzung', grund:String((e && e.message)||e) }); }
+    if(abg.length){ E.fehler='Sitzung abgewiesen: '+abg.map(a=>a.grund).join(' · '); hf311Neu(); return false; }
+    if(!r){ E.fehler='Sitzung nicht gebucht (ohne Wirkung)'; hf311Neu(); return false; } }
+  if(k.status==='offen'){ k.status='erledigt'; k.erledigtTs=jetztIso(); k.erledigtAuf=tag; const hs=korrSnapshots(tag); k.tagId=(tag===heute && tagOffen()) ? S.tag.tagId : (hs.length ? hs[hs.length-1].tagId : (k.tagId||null)); beruehre(k); }   // wie 27917: ohne Abhakbonus, ohne Bonus-Verteilung
+  saveKarten(); saveTag(); HF31.erl=null; try{ closeSheet(); }catch(e){} toast('Erledigt am '+anKurzDatum(tag)+'. · '+dauer+' Min · '+fmtP(punkte)+' P'); try{ kettenListenNeu(); renderAlles(); e1Rendern(); }catch(e){} return true; }
+/* §1.1 · Abfangen in der Capture-Phase auf window — läuft vor jedem document-Handler (26491 kettenListeKlick, 29484 Gestern-✓ aus Hotfix 29) */
+window.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const ch=t.closest('[data-klcheck]'); if(!ch || !t.closest('[data-hf31gestern]')) return; e.stopPropagation(); e.preventDefault(); haptik(8); hf311Oeffnen(ch.dataset.klcheck); }, true);
+document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.dataset) return; if(t.dataset.hf311dauer!=null) hf311DauerSetzen(t.value); else if(t.dataset.hf311punkte!=null) hf311PunkteSetzen(t.value); });
 /* ── Klicks (capture) ── */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
+  if(d('data-hf311go')){ e.stopPropagation(); haptik(10); hf311Buchen(); return; }   // Hotfix 31.1 §1.3
   if((z=d('data-hf31tag'))){ e.stopPropagation(); haptik(6); const [ziel, datum]=String(z.dataset.hf31tag).split('|'); hf31TagWaehlen(ziel, datum); return; }   // Hotfix 31 §7.1
   if((z=d('data-hf31schieb'))){ e.stopPropagation(); haptik(6); hf31Schieben(z.dataset.hf31schieb); return; }   // Hotfix 31 §7.1.3
   if((z=d('data-detail')) && t.closest('.hf29-ib')){ e.stopPropagation(); haptik(6); oeffneDetail(z.dataset.detail); return; }   // Hotfix 31 §7.3.5: ✎ öffnet die Einstellungen der Karte
