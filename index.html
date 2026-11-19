@@ -8139,8 +8139,10 @@ function f12Text(kanal, r){ if(!r) return ''; if(F12.voll[r.id]!=null) return F1
 /* Gespräch-Kennungen (§1.6) */
 function f12NeuesGespraech(){ return (crypto.randomUUID && crypto.randomUUID()) || ('g-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)); }
 function f12TagGespraech(datum){ return 'tag-'+(datum||heuteApp()); }
+function f12IstTrainerKanal(kanal){ const t=f12TrainerKanal(); return !!(kanal && t && kanal.id===t.id); }   // Hotfix 31 §2.2
+function f12NeuesGespraechIm(kanal){ return f12IstTrainerKanal(kanal) ? f12TagGespraech() : f12NeuesGespraech(); }   // Hotfix 31 §2.2: im Trainer-Kanal genau ein Tagesgespräch je Tag, sonst Zufalls-Kennung
 function f12TagTitel(datum){ const d=datum||heuteApp(); return '📅 Tag '+AN_WT[anWochentag(d)]+' '+anKurzDatum(d)+'.'; }
-function f12KarteGespraech(karteId){ return 'karte-'+karteId; }
+function f12KarteGespraech(karteId){ const k=(S && Array.isArray(S.karten)) ? S.karten.find(x=>x.id===karteId) : null; return (k && k.rolle) ? f12TagGespraech() : 'karte-'+karteId; }   // Hotfix 31 §2.1: Systemkarten (rolle) haben kein eigenes Gespräch — immer das Tagesgespräch des Trainers; gilt an allen Aufrufern
 function f12KarteTitel(k){ return '📇 '+String((k && k.titel)||'Karte'); }
 /* Titel der ersten Nachricht eines Gesprächs (§1.5): fester Titel bei Tages- und Karten-Gesprächen, sonst erste Zeile des Texts bis 60 Zeichen */
 function f12TitelFuer(kanal, g, text){ if(/^tag-/.test(g)) return f12TagTitel(g.slice(4)); if(/^karte-/.test(g)){ const k=S.karten.find(x=>x.id===g.slice(6)); return f12KarteTitel(k||{ titel:g.slice(6) }); } return String(text||'').split('\n')[0].trim().slice(0,60)||'Neues Gespräch'; }
@@ -8222,9 +8224,9 @@ function f12Klick(e){
   if(d('data-f12ungelesen')){ haptik(6); const u=f12Ui(); u.kanal=null; u.gespraech=null; saveUi(); e1Rendern(); return true; }   // Hotfix 13 §5.3: zur Stufe Raum
   if((z=d('data-f12kanal'))){ haptik(6); const u=f12Ui(); u.kanal=z.dataset.f12kanal; u.gespraech=null; saveUi(); e1Rendern(); return true; }
   if((z=d('data-f12gespraech'))){ haptik(6); const u=f12Ui(); u.gespraech=z.dataset.f12gespraech; saveUi(); e1Rendern(); return true; }
-  if(d('data-f12neu')){ haptik(8); const u=f12Ui(); u.gespraech=f12NeuesGespraech(); saveUi(); e1Rendern(); f12Fokus(); return true; }
+  if(d('data-f12neu')){ haptik(8); const u=f12Ui(); u.gespraech=f12NeuesGespraechIm(f12KanalAktuell()); saveUi(); e1Rendern(); f12Fokus(); return true; }   // Hotfix 31 §2.2
   if(d('data-f12senden')){ f12Abschicken(); return true; }
-  if(d('data-f12plus')){ haptik(6); const u=f12Ui(), tx=el('f12Text'); if(tx && typeof tx.value==='string'){ f12EntwurfAktuell().text=tx.value; saveUi(); } if(!u.gespraech){ u.gespraech=f12NeuesGespraech(); saveUi(); } f12KontextOeffnen(); return true; }
+  if(d('data-f12plus')){ haptik(6); const u=f12Ui(), tx=el('f12Text'); if(tx && typeof tx.value==='string'){ f12EntwurfAktuell().text=tx.value; saveUi(); } if(!u.gespraech){ u.gespraech=f12NeuesGespraechIm(f12KanalAktuell()); saveUi(); } f12KontextOeffnen(); return true; }   // Hotfix 31 §2.2
   if((z=d('data-f12markeweg'))){ e.stopPropagation(); haptik(6); f12MarkeWeg(z.dataset.f12markeweg); return true; }
   if((z=d('data-f12karte'))){ e.stopPropagation(); haptik(6); f7AufgabeOeffnen(z.dataset.f12karte); return true; }
   if((z=d('data-f12antwort'))){ e.stopPropagation(); const a=t.closest('[data-f12act]'); if(!a || a.classList.contains('aus')) return true; f12KnopfWahl(a.dataset.f12act, z.dataset.f12antwort); return true; }   // Hotfix 13 §6
@@ -8307,7 +8309,7 @@ function f12GespraechZeileHtml(kanal, g){
 function f12AgentHtml(kanal){
   const raum=f12Raum(kanal), link=kanal['Claude-Raum-Link'];
   let h=f12KopfHtml({ titel:f12Avatar(kanal)+' '+esc(f12Name(kanal)), sub:f12RaumEmoji(raum)+' '+esc(raum), extra:f12LinkKnopf(link, true) });
-  h+=f12AndereHtml()+'<div class="f12-inhalt" id="chatInhalt"><button class="f12-neu" data-f12neu="1">＋ Neuer Chat</button><h5 class="f7-h5">Gespräche</h5>';   // Hotfix 13 §5.3
+  h+=f12AndereHtml()+'<div class="f12-inhalt" id="chatInhalt">'+(f12IstTrainerKanal(kanal) ? '' : '<button class="f12-neu" data-f12neu="1">＋ Neuer Chat</button>')+'<h5 class="f7-h5">Gespräche</h5>';   // Hotfix 13 §5.3 · Hotfix 31 §2.2: im Trainer-Kanal kein „Neuer Chat“
   const gs=f12Gespraeche(kanal);
   if(!gs){ return h+'<div class="leer">'+(f7LagerFehler('chatG:'+kanal.id) ? 'FocusSystem: '+esc(f7LagerFehler('chatG:'+kanal.id)) : 'lädt aus FocusSystem …')+'</div></div>'; }
   const heute=heuteApp(), gestern=anVorTage(heute, 1), normal=gs.filter(g=>!g.verlauf), alt=gs.filter(g=>g.verlauf);
@@ -8621,7 +8623,7 @@ function f12KartenKanal(k){
   return trainer;
 }
 function f12KartenChat(karteId){ const k=S.karten.find(x=>x.id===karteId); if(!k) return; const kanal=f12KartenKanal(k); if(!kanal){ toast('Chat-Kanäle laden noch …'); f12Oeffnen({ raum:'Trainerstab' }); return; }
-  const g=f12KarteGespraech(k.id), e=f12Entwurf(kanal.id, g); if(!f12GespraechHatZeilen(kanal, g) && !e.karten.some(x=>x.id===k.id)) e.karten.push({ id:k.id, titel:k.titel, airtableId:k.airtableId||null });
+  const g=f12KarteGespraech(k.id), e=f12Entwurf(kanal.id, g); if(!k.rolle && !f12GespraechHatZeilen(kanal, g) && !e.karten.some(x=>x.id===k.id)) e.karten.push({ id:k.id, titel:k.titel, airtableId:k.airtableId||null });   // Hotfix 31 §2.1: Systemkarte → Tagesgespräch, ohne Karten-Marke
   f12Oeffnen({ raum:f12Raum(kanal), kanal:kanal.id, gespraech:g, fokus:true }); }
 /* Hotfix 16 §4.2 · interne Nachricht zu einer Karte (Kommentar beim Abhaken, Schiebe-Grund, „von jemand anderem erledigt“, „nicht mehr nötig“):
    ins Gespräch karte-<id> des führenden Kanals (f12KartenKanal), nicht mehr ins Tagesgespräch des Trainers; der Anlass bleibt */
