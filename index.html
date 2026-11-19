@@ -23586,6 +23586,11 @@ function ausgabeZielTopf(c){
   return i;
 }
 function ausmalVerteilen(){
+  // Hotfix 31 §6: die Farbe aus Zeitpunkten läuft nur auf dem führenden Gerät. Auf einem nicht führenden Gerät änderte diese Funktion S.meta.ausmalen bei jedem Zeichnen
+  //   (Töpfe, Tank, verteilt), ohne Tipp und damit ohne Übernahme der Führung — meta ist ein gemeinsamer Schlüssel und wird dort nie gesendet (3905–3908). Jetzt zeigt das
+  //   nicht führende Gerät den zuletzt übernommenen Stand; nach der Übernahme (fuehrungUebernehmen 4132) rechnet es mit dem Stand des Mac mini weiter.
+  //   Malen, Topf, Tank, Verkauf und Kulisse sind Tipps und laufen schon über den Tipp-Abfang (4387–4395 → fuehrungUebernehmen → tippAusfuehren 4103).
+  try{ if(typeof FSLive!=='undefined' && FSLive && typeof FSLive.nichtFuehrend==='function' && FSLive.nichtFuehrend()) return; }catch(e){}
   const A=ausmalState(), T=topfFassung(); if(!T) return;
   const W=Math.floor(ausmalW()); let delta=W-num(A.verteilt); if(delta<=0) return;
   let geaendert=false, vollEreignis=false;
