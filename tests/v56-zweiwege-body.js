@@ -97,5 +97,5 @@ hf44Holen(); warten(); warten(); var st1=JSON.stringify(hf44Stand()); hf44Holen(
 pruef('J1 erster Aufruf ohne Stand holt nur die Stände (nichts nachgespielt), zweiter Aufruf mit ?dfm=100&privat=50 übernimmt die Änderung und setzt den Stand fort', _gelesen44[0]==='aenderungen' && st1==='{"dfm":100,"privat":50}' && _gelesen44[1]==='aenderungen?dfm=100&privat=50' && kd.notiz==='Notiz aus FS' && hf44Stand().dfm===101);
 
 // ══ K · Version ══
-pruef('K1 App 4.5.5 · Build 2026-11-19-65 · sw.js Cache fokus4-v4.5.5-1', APP_VERSION==='4.5.5' && APP_BUILD==='2026-11-19-65' && /const CACHE = 'fokus4-v4\.5\.5-1'/.test(readFile('sw.js')));
+pruef('K1 App 4.5.6 · Build 2026-11-19-66 · sw.js Cache fokus4-v4.5.6-1', APP_VERSION==='4.5.6' && APP_BUILD==='2026-11-19-66' && /const CACHE = 'fokus4-v4\.5\.6-1'/.test(readFile('sw.js')));
 suiteEnde('Fokus App 4.4 · Zwei-Wege-Abgleich Karten ohne Freigabe (4.5.1)');

@@ -151,6 +151,6 @@ localStorage.setItem(PREFIX+'karten', '[]');
 _aufrufe=[]; FSLive.vormerken('karten'); FSLive.spiegeln(); drain();
 var u4=ereignis(100, 200); feuern('pointerdown', ereignis(100, 200)); feuern('pointerup', u4); drain();
 pruef('nicht gekoppelt: kein Aufruf, kein Abfangen, keine Pille, koennteSchreiben true', _aufrufe.length===0 && u4.pd===0 && sperre().style.display!=='flex' && pille().style.display!=='block' && FSLive.koennteSchreiben()===true && FSLive.zustand()==='grau', JSON.stringify([_aufrufe, u4.pd, sperre().style.display, pille().style.display, FSLive.zustand()]));
-pruef('Version 4.5.5 · Build 2026-11-19-65 (seit Hotfix 26)', APP_VERSION==='4.5.5' && APP_BUILD==='2026-11-19-65');
+pruef('Version 4.5.6 · Build 2026-11-19-66 (seit Hotfix 26)', APP_VERSION==='4.5.6' && APP_BUILD==='2026-11-19-66');
 
 suiteEnde('Mehrgeräte 4.2 · Hotfix 14');

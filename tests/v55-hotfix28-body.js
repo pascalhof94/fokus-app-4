@@ -75,5 +75,5 @@ pruef('F1 body.hf27-tastatur #nav{visibility:hidden} (zusätzlich zur translateY
   pruef('H2 Einstellungen zeichnen auch einen Alt-Eintrag ohne vorher/nachher (Code: Bedingung e.vorher && e.vorher.matrix)', ok && /e\.vorher && e\.vorher\.matrix \? /.test(src) && /e\.nachher && e\.nachher\.matrix \? /.test(src)); })();
 
 // ══ G · Version ══
-pruef('G1 App 4.5.5 · Build 2026-11-19-65 · sw.js Cache fokus4-v4.5.5-1', APP_VERSION==='4.5.5' && APP_BUILD==='2026-11-19-65' && /const CACHE = 'fokus4-v4.5.5-1'/.test(readFile('sw.js')));
+pruef('G1 App 4.5.6 · Build 2026-11-19-66 · sw.js Cache fokus4-v4.5.6-1', APP_VERSION==='4.5.6' && APP_BUILD==='2026-11-19-66' && /const CACHE = 'fokus4-v4.5.6-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 28 · Themen-Ketten aufklappen, Blöcke in Heute gesamt, Archiv aus FocusSystem, Restpunkte (4.3.4)');
