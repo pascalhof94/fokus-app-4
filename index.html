@@ -3042,8 +3042,8 @@ body[data-e1="spezial"] #e1-spezial{display:block}
 .k43-chatkopf{display:flex;justify-content:space-between;align-items:center}
 .k43-chatkopf .k43-lab{margin:0}
 .k43-ganz{background:none;border:0;color:#93c5fd;font-size:12px;min-height:32px;padding:0 4px}
-.k43-msgs{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:hidden}
-.k43-m{font-size:13px;line-height:1.35;border-radius:10px;padding:8px 10px;max-width:92%}
+.k43-msgs{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}   /* Hotfix 31 §5.2: scrollt, die neueste Nachricht steht unten (k43MsgsUnten) */
+.k43-m{font-size:13px;line-height:1.35;border-radius:10px;padding:8px 10px;max-width:92%;overflow-wrap:anywhere}
 .k43-m small{display:block;font-size:10px;color:var(--mut);margin-bottom:2px}
 .k43-m.t{background:#0d1420;align-self:flex-start}
 .k43-m.p{background:#1e3a8a;align-self:flex-end}
@@ -8345,7 +8345,13 @@ function f12TextHtml(text){ const lines=String(text||'').replace(/\r/g,'').split
     const m=l.match(/^\s*[-•]\s+(.*)$/); if(m){ li.push(m[1]); return; } flush(); h+=(h && !/<\/(ul|div|pre)>$/.test(h) ? '<br>' : '')+esc(l); });
   flush(); flushZit(); flushCode(); return h.replace(/^<br>/, ''); }
 /* Hotfix 22 §5.3/§5.4 · ganze Nachricht: kleiner Knopf am Nachrichtenfuß (ein langer Druck läuft auf dem iPhone in das Kontextmenü und in den Tipp-Abfang) */
-function f12KopieGanzKnopf(text){ return '<button type="button" class="f12-kopie-ganz" data-f12kopie="'+esc(String(text||''))+'" title="Ganze Nachricht kopieren">📋 Ganze Nachricht kopieren</button>'; }
+function f12KopieGanzKnopf(text, kanal, r){ const kurz=!!(kanal && r && !r.lokal && f12Gekuerzt(text));   // Hotfix 31 §5.4: ist der Text noch gekürzt, trägt der Knopf Tabelle und id — der Klick lädt erst den Volltext (datensatz_lesen) und kopiert dann
+  return '<button type="button" class="f12-kopie-ganz" data-f12kopie="'+esc(String(text||''))+'"'+(kurz ? ' data-f12kopietab="'+esc(kanal.Tabelle)+'" data-f12kopieid="'+esc(r.id)+'"' : '')+' title="Ganze Nachricht kopieren">📋 Ganze Nachricht kopieren</button>'; }
+function f12KopieAusfuehren(b){ const text=b.dataset.f12kopie, tab=b.dataset.f12kopietab, id=b.dataset.f12kopieid;
+  if(tab && id && f12Gekuerzt(text)){ if(F12.voll[id]!=null){ kopieren(F12.voll[id]); return; }
+    try{ toast('Volltext wird geladen …'); }catch(e){}
+    FSLive.lesen('datensatz_lesen', { tabelle:tab, id }).then(d=>{ const v=d && (d.datensatz||d); const txt=v && (v.Text!=null ? v.Text : (v.felder && v.felder.Text)); if(txt!=null){ F12.voll[id]=String(txt); kopieren(F12.voll[id]); try{ f7Neu(); }catch(e){} } else kopieren(text); }).catch(()=>kopieren(text)); return; }   // FSLive.lesen kennt keine Führungsregel (3959): läuft auch nicht führend
+  kopieren(text); }
 function kopieren(text){
   text=String(text==null ? '' : text);
   const ok=()=>{ try{ toast('Kopiert'); haptik(6); }catch(e){} };
@@ -8363,7 +8369,7 @@ function kopieren(text){
   try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(ok, rueckfall); return; } }catch(e){}
   rueckfall();
 }
-try{ document.addEventListener('click', e=>{ const b=e.target && e.target.closest ? e.target.closest('[data-f12kopie]') : null; if(!b) return; e.preventDefault(); e.stopPropagation(); kopieren(b.dataset.f12kopie); }, true); }catch(e){}   // Hotfix 22 §5
+try{ document.addEventListener('click', e=>{ const b=e.target && e.target.closest ? e.target.closest('[data-f12kopie]') : null; if(!b) return; e.preventDefault(); e.stopPropagation(); f12KopieAusfuehren(b); }, true); }catch(e){}   // Hotfix 22 §5 · Hotfix 31 §5.4: Volltext
 function f12KartenMarkenHtml(kanal, r){
   const ids=String(r.Karten||'').split('\n').map(s=>s.trim()).filter(Boolean), marken=(r.Marken && r.Marken.karten)||[];
   const anh=r.Marken ? (r.Marken.anhaenge||[]) : f7Link(r['Anhänge']).map(x=>({ id:x.id, name:x.name }));
@@ -8390,11 +8396,11 @@ function f12KnoepfeHtml(r, opt){ const wahl=(S.meta.chatWahl||{})[r.id], aktiv=!
 function f12NachrichtHtml(kanal, r, opt){
   opt=opt||{}; const vonPascal=String(r.Von||'')==='Pascal', art=String(r.Art||''), text=f12Text(kanal, r), von=String(r.Von||'')||f12Name(kanal);
   let h='<div class="f12-n" data-mid="'+esc(r.id)+'">';
-  if(vonPascal){ const s=f12Stand(kanal, r); h+='<div class="f7-m p">'+f12TextHtml(text)+f12KartenMarkenHtml(kanal, r)+'<em class="f12-st '+s.k+'" data-f12st="'+esc(r.id)+'">'+s.html+'</em>'+f12KopieGanzKnopf(text)+'</div>'; }   // Hotfix 22 §5.3
+  if(vonPascal){ const s=f12Stand(kanal, r); h+='<div class="f7-m p">'+f12TextHtml(text)+f12KartenMarkenHtml(kanal, r)+'<em class="f12-st '+s.k+'" data-f12st="'+esc(r.id)+'">'+s.html+'</em>'+f12KopieGanzKnopf(text, kanal, r)+'</div>'; }   // Hotfix 22 §5.3
   else if(von==='Dienst' && art==='Hinweis'){ h+='<div class="f16-hw'+(/^⏸/.test(text) ? ' or' : '')+'"><span>'+esc(text.replace(/\s+/g,' ').trim())+'</span></div>'; }   // Hotfix 16 §4.6: Hinweise des Dienstes grau, mittig; ⏸ in ORANGE
   else { const kn=f12Knoepfe(text), pfKarte=(art==='Hinweis' && String(r.Anlass||'')==='Postfach' && f7Link(r.Postfach).length) ? String(f7Link(r.Postfach)[0].id) : null;   // Hotfix 15 §5.1: Hinweis zu einer Agenten-Karte
     const teil=opt.teil||f16TeilVon(kanal, String(r['Gespräch']||'')), farbe=f16Farbe(teil, von), name=f16VonName(von);   // Hotfix 16 §4.6: Rand links 3 px und Name in der Farbe des Absenders
-    h+='<div class="f7-m t f16-a'+(art==='Hinweis' ? ' hinweis' : '')+(pfKarte ? ' f15-hk' : '')+'" style="--abs:'+farbe+'"'+(pfKarte ? ' data-f15karte="'+esc(pfKarte)+'"' : '')+'><div class="f16-w">'+esc(name)+'</div>'+f12TextHtml(kn ? kn.body : text)+f12KopieGanzKnopf(text)+(pfKarte ? '<div class="f15-hko">Karte öffnen ›</div>' : '')+'<small>'+(art==='Hinweis' ? (pfKarte ? '📬 Agenten-Karte · ' : '⚠️ Hinweis · ') : esc(name)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
+    h+='<div class="f7-m t f16-a'+(art==='Hinweis' ? ' hinweis' : '')+(pfKarte ? ' f15-hk' : '')+'" style="--abs:'+farbe+'"'+(pfKarte ? ' data-f15karte="'+esc(pfKarte)+'"' : '')+'><div class="f16-w">'+esc(name)+'</div>'+f12TextHtml(kn ? kn.body : text)+f12KopieGanzKnopf(text, kanal, r)+(pfKarte ? '<div class="f15-hko">Karte öffnen ›</div>' : '')+'<small>'+(art==='Hinweis' ? (pfKarte ? '📬 Agenten-Karte · ' : '⚠️ Hinweis · ') : esc(name)+' · ')+f12Uhrzeit(r.Zeitstempel)+(f12Gekuerzt(text) ? ' · lädt …' : '')+'</small></div>';
     if(kn) h+=f12KnoepfeHtml(r, { optionen:kn.optionen, aktiv:opt.letzte===undefined ? true : opt.letzte });
     if(f7Link(r.Postfach).length && !pfKarte){ h+=f12KartenBloeckeHtml(kanal, r); const offen=f12PostfachOffen(); const o=f7Link(r.Postfach).map(x=>String(x.id)).filter(id=>offen.has(id)); if(o.length) h+='<div class="f15-hko f16-zk" data-f15karte="'+esc(o[0])+'">📬 Karten-Ansicht öffnen ›</div>'; } }   // Hotfix 16 §5.4: aus dem Chat zurück zur Karte
   return h+'</div>';
@@ -27887,7 +27893,7 @@ function k43TagesplanungHtml(){
 function k43Themenwechsel(datum){ const tids=new Set((S.historie||[]).filter(h=>h && h.datum===datum).map(h=>h.tagId)); let letzte=null, n=0;
   (S.intraday||[]).filter(e=>e && e.kartenId && (e.tagId ? tids.has(e.tagId) : belFensterDatum(e.ts)===datum) && (e.typ==='timer'||e.typ==='autopause')).sort((a,b)=>String(a.ts)<String(b.ts)?-1:1).forEach(e=>{ const k=S.karten.find(x=>x.id===e.kartenId); if(!k || istSonderRolle(k)) return; const t=k43Thema(k).thema; if(letzte!=null && t!==letzte) n++; letzte=t; }); return n; }
 /* Antwortfeld wie im Chat: die Nachricht geht an den Trainer (Tagesgespräch); die letzte Trainer-Zeile steht darüber */
-function k43ChatAntwortHtml(text, platzhalter){ return (text ? '<div class="k43-msg">Trainer: '+esc(String(text).replace(/\s+/g,' ').slice(0,300))+'</div>' : '')+'<div class="k43-antwort"><input id="k43Antwort" placeholder="'+esc(platzhalter||'Nachricht an den Trainer …')+'"><button type="button" aria-label="Senden" data-k43senden="1">↑</button></div>'; }
+function k43ChatAntwortHtml(text, platzhalter){ return (text ? '<div class="k43-msg">Trainer: '+f12TextHtml(text)+'</div>' : '')+'<div class="k43-antwort"><input id="k43Antwort" placeholder="'+esc(platzhalter||'Nachricht an den Trainer …')+'"><button type="button" aria-label="Senden" data-k43senden="1">↑</button></div>'; }
 function k43Senden(text, anlass){ const t=String(text||'').trim(); if(!t) return; f12TrainerSenden(t, { anlass:anlass||'Chat' }); haptik(8); toast('An den Trainer gesendet'); }
 function k43PlanAnfordern(){ const P=k43TP(); if(!P) return; const wahl=k43ThemenWahl(); if(!wahl.length){ toast('Erst Themen wählen'); return; }
   const namen=wahl.map(w=>w.split('|')[1]||w), z=k43Zustand(); P.planTs=jetztIso(); P.zustand=Object.assign(z, { ts:z.ts||jetztIso() }); saveTag();
@@ -28005,7 +28011,7 @@ function k43FrageSetzen(id, wahl, text){ const B=k43BL(); if(!B) return; const a
 function k43ChatKurzZeilen(kanal, g){ const alle=f12Verlauf(kanal, g)||[]; try{ f12GesehenMelden(kanal, alle); }catch(e){} try{ setTimeout(k43MsgsUnten, 0); }catch(e){} return alle; }
 function k43MsgsUnten(){ try{ if(typeof document==='undefined' || !document.querySelectorAll) return; document.querySelectorAll('.k43-msgs').forEach(m=>{ m.scrollTop=m.scrollHeight; }); }catch(e){} }
 function k43ChatKurzHtml(kanal, g, platzhalter, titel){ if(!kanal) return '<div class="leer">Chat-Kanäle laden …</div>'; const rows=k43ChatKurzZeilen(kanal, g).slice(-4);
-  return '<div class="k43-chat"><div class="k43-chatkopf"><span class="k43-lab">'+esc(titel||('Chat · '+f12Name(kanal)))+'</span><button type="button" class="k43-ganz" data-k43chat="'+esc(kanal.id)+'|'+esc(g)+'">⤢ ganzer Verlauf</button></div><div class="k43-msgs">'+(rows.length ? rows.map(r=>{ const p=String(r.Von||'')==='Pascal'; return '<div class="k43-m'+(p?' p':' t')+'"><small>'+esc(p?'Du':f16VonName(r.Von||f12Name(kanal)))+' · '+f12Uhrzeit(r.Zeitstempel)+'</small>'+esc(String(f12Text(kanal, r)||'').replace(/```[\s\S]*?```/g,'[Tagesplan]').replace(/\s+/g,' ').slice(0,280))+'</div>'; }).join('') : '<div class="leer">noch keine Nachricht</div>')+'</div>'+
+  return '<div class="k43-chat"><div class="k43-chatkopf"><span class="k43-lab">'+esc(titel||('Chat · '+f12Name(kanal)))+'</span><button type="button" class="k43-ganz" data-k43chat="'+esc(kanal.id)+'|'+esc(g)+'">⤢ ganzer Verlauf</button></div><div class="k43-msgs">'+(rows.length ? rows.map(r=>{ const p=String(r.Von||'')==='Pascal'; return '<div class="k43-m'+(p?' p':' t')+'"><small>'+esc(p?'Du':f16VonName(r.Von||f12Name(kanal)))+' · '+f12Uhrzeit(r.Zeitstempel)+'</small>'+f12TextHtml(f12Text(kanal, r))+'</div>'; }).join('') : '<div class="leer">noch keine Nachricht</div>')+'</div>'+
     '<div class="k43-antwort"><input placeholder="'+esc(platzhalter||'Nachricht …')+'" data-k43chattext="'+esc(kanal.id)+'|'+esc(g)+'"><button type="button" aria-label="Senden" data-k43chatsenden="'+esc(kanal.id)+'|'+esc(g)+'">↑</button></div></div>'; }
 /* Klicks und Eingaben der Spezialansichten */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
@@ -28495,7 +28501,7 @@ k43TrainerHeuteOeffnen=function(){ hf26TrainerHeuteOeffnen(); };   // Hotfix 26 
    den Ebene-1-Chat in diesem Gespräch mit Tastatur-Fokus. Die Kurzansicht sendet nichts mehr (data-k43chatsenden/-chattext abgelöst, Handler 27641 bleibt). */
 const k43ChatKurzHtml43=k43ChatKurzHtml;   // Hotfix 26 §2.2: abgelöst durch die Fassung unten (sendet nichts mehr selbst)
 k43ChatKurzHtml=function(kanal, g, platzhalter, titel){ if(!kanal) return '<div class="leer">Chat-Kanäle laden …</div>'; const rows=k43ChatKurzZeilen(kanal, g).slice(-4), ref=esc(kanal.id)+'|'+esc(g);
-  return '<div class="k43-chat hf26-chat" data-hf26chat="'+ref+'" role="button"><div class="k43-chatkopf"><span class="k43-lab">'+esc(titel||('Chat · '+f12Name(kanal)))+'</span><button type="button" class="k43-ganz" data-hf26chat="'+ref+'">⤢ ganzer Verlauf</button></div><div class="k43-msgs">'+(rows.length ? rows.map(r=>{ const p=String(r.Von||'')==='Pascal'; return '<div class="k43-m'+(p?' p':' t')+'"><small>'+esc(p?'Du':f16VonName(r.Von||f12Name(kanal)))+' · '+f12Uhrzeit(r.Zeitstempel)+'</small>'+esc(String(f12Text(kanal, r)||'').replace(/```[\s\S]*?```/g,'[Tagesplan]').replace(/\s+/g,' ').slice(0,280))+'</div>'; }).join('') : '<div class="leer">noch keine Nachricht</div>')+'</div>'+
+  return '<div class="k43-chat hf26-chat" data-hf26chat="'+ref+'" role="button"><div class="k43-chatkopf"><span class="k43-lab">'+esc(titel||('Chat · '+f12Name(kanal)))+'</span><button type="button" class="k43-ganz" data-hf26chat="'+ref+'">⤢ ganzer Verlauf</button></div><div class="k43-msgs">'+(rows.length ? rows.map(r=>{ const p=String(r.Von||'')==='Pascal'; return '<div class="k43-m'+(p?' p':' t')+'"><small>'+esc(p?'Du':f16VonName(r.Von||f12Name(kanal)))+' · '+f12Uhrzeit(r.Zeitstempel)+'</small>'+f12TextHtml(f12Text(kanal, r))+'</div>'; }).join('') : '<div class="leer">noch keine Nachricht</div>')+'</div>'+
     '<div class="k43-antwort"><input readonly placeholder="'+esc(platzhalter||'Nachricht …')+'" data-hf26chat="'+ref+'|fokus" aria-label="Im Chat schreiben"><button type="button" aria-label="Im Chat schreiben" data-hf26chat="'+ref+'|fokus">↑</button></div></div>'; };
 function hf26ChatOeffnen(ref){ const t=String(ref||'').split('|'), kanal=f12KanalId(t[0]); if(!kanal) return; f12Oeffnen({ raum:f12Raum(kanal)||'Trainerstab', kanal:kanal.id, gespraech:t[1], fokus:t[2]==='fokus' }); setTimeout(()=>{ try{ f12NachUnten(); }catch(x){} }, 350); }
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const z=t.closest('[data-hf26chat]'); if(!z) return; e.stopPropagation(); haptik(6); hf26ChatOeffnen(z.dataset.hf26chat); }, true);
@@ -28950,7 +28956,7 @@ function hf27KettenArchivieren(){ if(!Array.isArray(S.tagesketten)) return 0; co
   saveMeta(); DB.set('tagesketten', S.tagesketten); K43K.cache=null; return alt.length; }
 const k43ChatAntwortHtml43=k43ChatAntwortHtml;   // Hotfix 27 §7.4: abgelöst — die Antwortzeile sendet nicht mehr selbst (Handler data-k43senden 27663 bleibt stehen)
 k43ChatAntwortHtml=function(text, platzhalter){ const kanal=f12TrainerKanal(), ref=(kanal ? esc(kanal.id) : '')+'|'+esc(f12TagGespraech())+'|fokus';
-  return (text ? '<div class="k43-msg">Trainer: '+esc(String(text).replace(/\s+/g,' ').slice(0,300))+'</div>' : '')+
+  return (text ? '<div class="k43-msg">Trainer: '+f12TextHtml(text)+'</div>' : '')+
     '<div class="k43-antwort hf27-antwort" data-hf26chat="'+ref+'"><input id="k43Antwort" readonly placeholder="'+esc(platzhalter||'Antwort …')+'" data-hf26chat="'+ref+'" aria-label="Im Chat schreiben"><button type="button" data-hf26chat="'+ref+'" aria-label="Im Chat schreiben">↑</button></div>'; };   // ein Tipp öffnet den Ebene-1-Chat im Tagesgespräch mit Tastatur-Fokus (hf26ChatOeffnen, wie der Ketten-Chat aus Hotfix 26 §2.2)
 
 /* ══════════════════════════════════════════════════════════════════════
