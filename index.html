@@ -27660,7 +27660,7 @@ ROLLEN_EIGENER_WEG.push('tagesplanung', 'blockade');
 { const _alt=schlafUmschalten; schlafUmschalten=function(){ if(schlafLaeuft()) return _alt(); k43SchlafenOeffnen(); }; }   // 4.3: Schlafen startet aus der Ansicht (Zielbild 01)
 /* fokusStarten für Rollenkarten: Tagesplanung und Blockade starten über ihre Ansicht; in der Ansicht selbst läuft ihre Uhr (opt.k43) */
 { const _alt=fokusStarten; fokusStarten=function(kid, quelle, opt){ opt=opt||{}; const zk=S.karten.find(x=>x.id===kid);
-    if(zk && !opt.k43){ if(zk.rolle==='tagesplanung'){ k43TagesplanungOeffnen(); return; } if(zk.rolle==='blockade'){ k43BlockadeOeffnen(); return; } }
+    if(zk && !opt.k43){ if(zk.rolle==='tagesplanung'){ k43TagesplanungOeffnen({ starten:true }); return; } if(zk.rolle==='blockade'){ k43BlockadeOeffnen(); return; } }   // Hotfix 31 §1.2: ▶ bzw. Kettenstart öffnet MIT Uhr
     const vor=fokusKarte(), vorLief=!!(S.fokus && S.fokus.laeuft);
     _alt(kid, quelle, opt);
     try{
@@ -27790,11 +27790,11 @@ function k43AufstehenHtml(){
 }
 /* ── 4.4 · 📋 Tagesplanung (Zielbilder 03–05) und Tagesplanung zwischendurch (Zielbild 07) ── */
 function k43TP(){ const T=k43Tag(); if(!T) return null; if(!T.tagesplanung || typeof T.tagesplanung!=='object') T.tagesplanung={ morgenTs:null, zustand:null, gestern:{}, themen:[], planTs:null, freigabeTs:null, hinweise:[] }; return T.tagesplanung; }
-function k43TagesplanungOeffnen(){
+function k43TagesplanungOeffnen(opt){   // Hotfix 31 §1: opt.starten===true startet die Uhr der Karte (nur ▶ und Kettenstart); ohne opt öffnet die Ansicht ohne Uhr
   const k=k43TagesplanungKarte(); if(!k){ toast('Karte Tagesplanung fehlt'); return; } const P=k43TP(); if(!P){ toast('Kein offener Tag — erst Aufstehen'); return; }
   k43TagesplanungSatzSetzen();
   const morgen=!P.freigabeTs;   // Hotfix 26 §4.1: Morgenansicht bis zur Freigabe des Tagesplans (abgelöst K11: !P.morgenTs, genau einmal je App-Tag)
-  if(!(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id)) fokusStarten(k.id, null, { k43:true });   // K2/K5: läuft als Karte mit Zeit vom Öffnen bis zum Start der nächsten Karte
+  if(opt && opt.starten===true && !(S.fokus && S.fokus.laeuft && S.fokus.karteId===k.id)) fokusStarten(k.id, null, { k43:true });   // K2/K5: läuft als Karte mit Zeit vom Start bis zum Start der nächsten Karte · Hotfix 31 §1: nur mit opt.starten (▶, Kettenstart); Öffnen allein startet keine Uhr mehr (07.11.: Uhr über Nacht)
   if(morgen){ const schritt=P.morgenTs ? Math.max(1, num(k43Ui().schritt,1)) : 1; if(!P.morgenTs) P.morgenTs=jetztIso(); saveTag(); k43SpezialOeffnen('tagesplanung', schritt); } else k43SpezialOeffnen('zwischendurch');   // Hotfix 26 §4.1: der zuletzt erreichte Schritt bleibt
 }
 function k43Schritte(n){ return '<div class="k43-schritte" aria-hidden="true">'+[1,2,3,4].map(i=>'<div style="background:'+(i<=n?FARBE.GRUEN:'#243349')+'"></div>').join('')+'</div>'; }
@@ -28556,7 +28556,7 @@ function migrationKarten43b(){
 ROLLEN_EIGENER_WEG.push('tagesplanungDfm');
 { const _alt=rollenWegAusloesen; rollenWegAusloesen=function(kid){ const k=S.karten.find(x=>x.id===kid); if(k && k.rolle==='tagesplanungDfm'){ k43TagesplanungOeffnen(); return true; } return _alt(kid); }; }
 { const _alt=istSonderRolle; istSonderRolle=function(k){ return _alt(k) || !!(k && k.rolle==='tagesplanungDfm'); }; }
-{ const _alt=fokusStarten; fokusStarten=function(kid, quelle, opt){ const zk=S.karten.find(x=>x.id===kid); if(zk && zk.rolle==='tagesplanungDfm' && !(opt && opt.k43)){ k43TagesplanungOeffnen(); return; } return _alt(kid, quelle, opt); }; }   // die DFM-Karte wird nie direkt gestartet: ihre Zeit kommt aus der Teilung
+{ const _alt=fokusStarten; fokusStarten=function(kid, quelle, opt){ const zk=S.karten.find(x=>x.id===kid); if(zk && zk.rolle==='tagesplanungDfm' && !(opt && opt.k43)){ k43TagesplanungOeffnen({ starten:true }); return; } return _alt(kid, quelle, opt); }; }   // Hotfix 31 §1.2: ▶ auf der DFM-Karte öffnet MIT Uhr (der Privat-Karte)   // die DFM-Karte wird nie direkt gestartet: ihre Zeit kommt aus der Teilung
 /* §4.3 · Punkte: jede Hälfte mit dem normalen Satz ihrer Familie (e42Satz einer Routine mit Prio 3, Belastung 0, Werkzeug = k43TagesplanungSaetze); phFest leer */
 { const _alt=e42Satz; e42Satz=function(k){ if(k && (k.rolle==='tagesplanung' || k.rolle==='tagesplanungDfm') && hf26Aktiv() && !(k.phFest!=null && k.phFest!=='' && Number.isFinite(Number(k.phFest)))){ const s=k43TagesplanungSaetze(); return k.rolle==='tagesplanungDfm' ? s.dfm : s.privat; } return _alt(k); }; }   // Hotfix 26 §4.3 (Systemkarten hätten sonst keinen Satz)
 { const _alt=k43TagesplanungSatzSetzen; k43TagesplanungSatzSetzen=function(){ if(!hf26Aktiv()) return _alt(); const k=k43TagesplanungKarte(); if(k && k.phFest!=null && k.phFest!==''){ k.phFest=null; saveKarten(); } }; }   // Hotfix 26 §4.3: abgelöst phFest = Privat-Satz × (1 − Anteil)
