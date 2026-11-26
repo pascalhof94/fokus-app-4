@@ -19129,7 +19129,7 @@ function hf313Nachzug(){
     const sz=(S.intraday||[]).filter(x=>x && x.kartenId===k.id && x.typ==='korrektur' && x.datum===tag && String(x.grund||'').indexOf('Erledigt am')===0 && x.ts).pop();
     if(hf313AbschlussZaehlen(k, tag, sz ? Date.parse(sz.ts) : Date.parse(tag+'T23:00:00'))) ids.push(k.id); });
   S.meta.hf313={ ts:jetztIso(), anzahl:ids.length, karten:ids }; saveMeta();
-  try{ toast('Nachzug: '+ids.length+' erledigte Karten gezählt'); }catch(e){}
+  if(ids.length>0){ try{ toast('Nachzug: '+ids.length+' erledigte Karten gezählt'); }catch(e){} }   // Hotfix 31.4 §2: Toast nur bei mindestens einer Karte, die Marke gilt immer
   return S.meta.hf313; }
 { const _alt=ladeAlles; ladeAlles=function(){ const r=_alt(); try{ if(!DB._schutz) hf313Nachzug(); }catch(e){ console.warn('Hotfix 31.3 Nachzug', e); } return r; }; }
 /* Stand eines Tages — fuer das Protokoll (vorher/nachher). */
