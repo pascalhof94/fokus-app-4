@@ -29531,7 +29531,8 @@ function hf312ErlAnzeigen(){ const E=HF31.erl; if(!E) return; hf312TageMarkieren
   try{ const f=el('sheetFoot'); if(f) f.innerHTML=hf311FussHtml(); }catch(e){} }
 function hf311DauerSetzen(v){ const E=HF31.erl; if(!E) return; E.dauer=Math.max(0, Math.min(600, Math.round(num(v)))); if(!E.punkteManuell){ const k=S.karten.find(x=>x.id===E.kid); E.punkte=Math.round(hf311Satz(k)*E.dauer/60); try{ const p=document.querySelector('[data-hf311punkte]'); if(p) p.value=String(E.punkte); }catch(e){} }
   try{ const z=document.querySelector('[data-hf312zeit]'); if(z) z.innerHTML=hf312ZeitInnenHtml(); }catch(e){} }   // Hotfix 31.2 §2.5
-function hf311PunkteSetzen(v){ const E=HF31.erl; if(!E) return; E.punkte=Math.max(0, Math.round(num(v))); E.punkteManuell=true; }
+function hf311PunkteSetzen(v){ const E=HF31.erl; if(!E) return; E.punkte=Math.max(0, Math.round(num(v))); E.punkteManuell=true;
+  try{ const z=document.querySelector('[data-hf312zeit]'); if(z) z.innerHTML=hf312ZeitInnenHtml(); }catch(e){} }   // Hotfix 31.3 §4: „Punkte bleiben …“ zeigt den neuen Wert
 function hf311Hhmm(ms){ const d=new Date(ms); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 /* ══ Hotfix 31.2 §2 (26.11.2026) · Block des Tages wählen: Blöcke des Tages in der Reihenfolge von K43_BLOECKE ohne Overload, Zeiten aus der Block-Kette des Tages,
    sonst aus den Standard-Tagesblöcken; heute nur Blöcke, die schon begonnen haben ══ */
