@@ -19118,6 +19118,20 @@ function hf313AbschlussZaehlen(k, tag, tsMs){
     saveHistorie();   // Abweichung zum Auftrag: saveTag speichert nur S.tag, der Snapshot liegt in S.historie
   }
   DB.set('intraday', S.intraday); saveTag(); return true; }
+/* Hotfix 31.3 §3 · einmaliger Nachzug beim Start, nur auf dem führenden Gerät: erledigte Karten mit erledigtAuf ohne Intraday abhaken an diesem Tag zählen nach
+   (ts = Ende der Sitzung „Erledigt am …“ der Karte an diesem Tag, sonst 23:00). Keine Punkte, kein Bonus. Marke S.meta.hf313 = { ts, anzahl, karten }. */
+function hf313Nachzug(){
+  if(!S.meta || (S.meta.hf313 && S.meta.hf313.ts)) return null;
+  try{ if(typeof FSLive!=='undefined' && FSLive && typeof FSLive.nichtFuehrend==='function' && FSLive.nichtFuehrend()) return null; }catch(e){}
+  const ids=[];
+  (S.karten||[]).forEach(k=>{ if(!k || k.status!=='erledigt' || !k.erledigtAuf) return; const tag=String(k.erledigtAuf);
+    if((S.intraday||[]).some(x=>x && x.typ==='abhaken' && x.kartenId===k.id && x.ts && belFensterDatum(x.ts)===tag)) return;
+    const sz=(S.intraday||[]).filter(x=>x && x.kartenId===k.id && x.typ==='korrektur' && x.datum===tag && String(x.grund||'').indexOf('Erledigt am')===0 && x.ts).pop();
+    if(hf313AbschlussZaehlen(k, tag, sz ? Date.parse(sz.ts) : Date.parse(tag+'T23:00:00'))) ids.push(k.id); });
+  S.meta.hf313={ ts:jetztIso(), anzahl:ids.length, karten:ids }; saveMeta();
+  try{ toast('Nachzug: '+ids.length+' erledigte Karten gezählt'); }catch(e){}
+  return S.meta.hf313; }
+{ const _alt=ladeAlles; ladeAlles=function(){ const r=_alt(); try{ if(!DB._schutz) hf313Nachzug(); }catch(e){ console.warn('Hotfix 31.3 Nachzug', e); } return r; }; }
 /* Stand eines Tages — fuer das Protokoll (vorher/nachher). */
 function korrTagStand(datum){
   const heute=tagOffen() && S.tag.datum===datum;
