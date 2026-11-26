@@ -29428,12 +29428,20 @@ function hf31TagWahlHtml(ziel, gewaehlt, opt){ opt=opt||{}; const heute=heuteApp
   const tage=rueck ? [anVorTage(heute, 1), heute] : [1,2,3].map(n=>anVorTage(heute, -n)), morgen=anVorTage(heute, -1), frei=!!(gewaehlt && tage.indexOf(gewaehlt)<0);
   return '<div class="hf31-tage">'+tage.map(d=>'<button type="button" class="hf29-chip'+(gewaehlt===d ? ' an' : '')+'" data-hf31tag="'+esc(ziel)+'|'+esc(d)+'">'+esc(d===heute ? 'heute' : AN_WT[anWochentag(d)]+' '+anKurzDatum(d)+'.')+'</button>').join('')+
     '<label class="hf31-datum'+(frei ? ' an' : '')+'">📅 Datum wählen<input type="date" data-hf31datum="'+esc(ziel)+'" value="'+esc(frei ? gewaehlt : '')+'" '+(rueck ? 'max="'+esc(heute)+'"' : 'min="'+esc(morgen)+'"')+'></label></div>'; }
-function hf31TagWaehlen(ziel, datum){ datum=String(datum||''); if(ziel==='erl') return hf311TagSetzen(datum);   // Hotfix 31.1: Tageswahl im Blatt „Erledigt am …“ (rückwärts)
+/* Hotfix 31.2 §1.2 · Tageswahl markieren, ohne neu zu zeichnen: nur bestehende Elemente in #sheetBody; das Datumsfeld selbst bleibt unberührt (iOS schließt sonst die Auswahl) */
+function hf312TageMarkieren(ziel, datum){ try{ const body=el('sheetBody'); if(!body) return; let chip=false;
+    Array.from(body.querySelectorAll('[data-hf31tag]')).forEach(x=>{ const w=String(x.dataset.hf31tag||''); if(w.indexOf(ziel+'|')!==0) return; const an=w.slice(ziel.length+1)===datum; if(an) chip=true; x.classList.toggle('an', an); });
+    Array.from(body.querySelectorAll('input[data-hf31datum]')).forEach(i=>{ if(i.dataset.hf31datum!==ziel) return; const lab=i.closest ? i.closest('label.hf31-datum') : null; if(lab) lab.classList.toggle('an', !chip); }); }catch(e){} }
+function hf31TagWaehlen(ziel, datum, opt){ datum=String(datum||''); const ausFeld=!!(opt && opt.ausFeld===true); if(ziel==='erl') return hf311TagSetzen(datum, opt);   // Hotfix 31.1: Tageswahl im Blatt „Erledigt am …“ (rückwärts) · Hotfix 31.2 §1.3: opt.ausFeld = Wahl aus dem Datumsfeld
   if(!/^\d{4}-\d{2}-\d{2}$/.test(datum) || datum<=heuteApp()) return hf29Meldung('Frühestens morgen');
+  if(ziel==='ziel' && ausFeld){ if(!HF29.zu) return false; HF29.zu.ziel={ art:'tag', datum }; HF29.tagWahl=false;   // Hotfix 31.2 §1.3: kein hf29ZuordnenNeu — Chips markieren, Fuß neu
+    try{ const body=el('sheetBody'); if(body) Array.from(body.querySelectorAll('[data-hf29ziel]')).forEach(x=>x.classList.remove('an')); }catch(e){} hf312TageMarkieren('ziel', datum); try{ const f=el('sheetFoot'); if(f) f.innerHTML=hf29ZuordnenFussHtml(); }catch(e){} return true; }
   if(ziel==='ziel'){ if(!HF29.zu) return false; HF29.zu.ziel={ art:'tag', datum }; HF29.tagWahl=false; hf29ZuordnenNeu(); return true; }
+  if(ausFeld){ HF31.schiebDatum=datum; hf312TageMarkieren(ziel, datum);   // Hotfix 31.2 §1.3: „↷ Auf anderen Tag“ — nicht einordnen, nicht schließen; der Fuß trägt das Einordnen
+    try{ const f=el('sheetFoot'); if(f) f.innerHTML='<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-hf312schiebgo="1">'+esc('↷ '+hf29ZielText({ art:'tag', datum }))+'</button>'; }catch(e){} return true; }
   try{ closeSheet(); }catch(e){} HF31.schieb=null; const ok=hf29KarteEinordnen(ziel, { art:'tag', datum }, { quelle:'zuordnung' }); if(ok) toast('↷ '+hf29ZielText({ art:'tag', datum })); return ok; }
 /* §7.1.3 · ↷ an jeder Kartenzeile in „Blöcke planen“ öffnet dieselbe Tageswahl (ersetzt den ↷ in „Von gestern“ über k43GesternEntscheiden) */
-function hf31Schieben(kid){ const k=S.karten.find(x=>x.id===kid); if(!k) return hf29Meldung('Karte '+hf29Id8(kid)+' nicht gefunden'); HF31.schieb=kid;
+function hf31Schieben(kid){ const k=S.karten.find(x=>x.id===kid); if(!k) return hf29Meldung('Karte '+hf29Id8(kid)+' nicht gefunden'); HF31.schieb=kid; HF31.schiebDatum=null;   // Hotfix 31.2 §1.6
   openSheet('↷ Auf anderen Tag', '<div class="hf29-zu"><span class="k43-klein">'+esc(String(k.titel||'').slice(0,40))+'</span><p class="d">Die Karte verlässt jeden Block und jede Kette von heute; ein 📌 für heute entfällt.</p>'+hf31TagWahlHtml(kid, null)+'</div>', '<button class="btn ghost sm" data-close="1">Abbrechen</button>'); return true; }
 /* §7.5.4 · rote Marke für DFM-Karten ohne Projekt und ohne Abteilung; Tippen öffnet „Karte zuordnen“ für diese Karte (data-hf29zuordnen) */
 function hf31PaFehlt(k){ return !!(k && k.domain==='dfm' && !k.rolle && !(k.projekt && String(k.projekt).trim()) && !(k.abteilung && String(k.abteilung).trim())); }
@@ -29473,7 +29481,13 @@ function hf311BlattHtml(){ const E=HF31.erl; if(!E) return ''; const k=S.karten.
     (E.fehler ? '<div class="hf29-warn" data-hf311fehler="1"><span><b>'+esc(E.fehler)+'</b></span></div>' : '')+'</div>'; }
 function hf311FussHtml(){ const E=HF31.erl; if(!E) return ''; return '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-hf311go="1">✓ Erledigt am '+esc(hf311TagText(E.tag))+'</button>'; }
 function hf311Neu(){ try{ const b=el('sheetBody'), f=el('sheetFoot'); if(b) b.innerHTML=hf311BlattHtml(); if(f) f.innerHTML=hf311FussHtml(); }catch(e){} }
-function hf311TagSetzen(d){ const E=HF31.erl; if(!E) return false; d=String(d||''); if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d>heuteApp()) return hf29Meldung('Spätestens heute'); E.tag=d; E.fehler=''; hf311Neu(); return true; }
+function hf311TagSetzen(d, opt){ const E=HF31.erl; if(!E) return false; d=String(d||''); if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d>heuteApp()) return hf29Meldung('Spätestens heute'); E.tag=d; E.fehler='';
+  hf312BlockVorwahl(); if(opt && opt.ausFeld===true) hf312ErlAnzeigen(); else hf311Neu(); return true; }   // Hotfix 31.2 §1.4: aus dem Datumsfeld kein hf311Neu (das Datumsfeld bliebe sonst nicht offen)
+/* Hotfix 31.2 §1.5 · Blatt „Erledigt am …“ nachziehen, ohne das Datumsfeld zu ersetzen: Tages-Chips, Blockliste, Zeile der gebuchten Zeit, Meldung weg, Fuß neu */
+function hf312ErlAnzeigen(){ const E=HF31.erl; if(!E) return; hf312TageMarkieren('erl', E.tag);
+  try{ const body=el('sheetBody'); if(body){ const bl=body.querySelector('[data-hf312bloecke]'); if(bl) bl.innerHTML=hf312BlockWahlInnenHtml(); const z=body.querySelector('[data-hf312zeit]'); if(z) z.innerHTML=hf312ZeitInnenHtml();
+      const fe=body.querySelector('[data-hf311fehler]'); if(fe && fe.remove) fe.remove(); } }catch(e){}
+  try{ const f=el('sheetFoot'); if(f) f.innerHTML=hf311FussHtml(); }catch(e){} }
 function hf311DauerSetzen(v){ const E=HF31.erl; if(!E) return; E.dauer=Math.max(0, Math.min(600, Math.round(num(v)))); if(!E.punkteManuell){ const k=S.karten.find(x=>x.id===E.kid); E.punkte=Math.round(hf311Satz(k)*E.dauer/60); try{ const p=document.querySelector('[data-hf311punkte]'); if(p) p.value=String(E.punkte); }catch(e){} } }
 function hf311PunkteSetzen(v){ const E=HF31.erl; if(!E) return; E.punkte=Math.max(0, Math.round(num(v))); E.punkteManuell=true; }
 function hf311Hhmm(ms){ const d=new Date(ms); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
@@ -29496,6 +29510,7 @@ document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.dataset) r
 /* ── Klicks (capture) ── */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
   if(d('data-hf311go')){ e.stopPropagation(); haptik(10); hf311Buchen(); return; }   // Hotfix 31.1 §1.3
+  if(d('data-hf312schiebgo')){ e.stopPropagation(); haptik(8); const kid=HF31.schieb, dat=HF31.schiebDatum; if(kid && dat) hf31TagWaehlen(kid, dat); return; }   // Hotfix 31.2 §1.6: ohne opt — ordnet ein und schließt wie bisher
   if((z=d('data-hf31tag'))){ e.stopPropagation(); haptik(6); const [ziel, datum]=String(z.dataset.hf31tag).split('|'); hf31TagWaehlen(ziel, datum); return; }   // Hotfix 31 §7.1
   if((z=d('data-hf31schieb'))){ e.stopPropagation(); haptik(6); hf31Schieben(z.dataset.hf31schieb); return; }   // Hotfix 31 §7.1.3
   if((z=d('data-detail')) && t.closest('.hf29-ib')){ e.stopPropagation(); haptik(6); oeffneDetail(z.dataset.detail); return; }   // Hotfix 31 §7.3.5: ✎ öffnet die Einstellungen der Karte
@@ -29526,7 +29541,7 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) r
 }, true);
 document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.dataset) return; if(t.dataset.hf29such!=null){ HF29.such=String(t.value||''); clearTimeout(HF29.suchTimer); HF29.suchTimer=setTimeout(()=>{ try{ const pos=t.selectionStart; e1Rendern(); const n=document.querySelector('[data-hf29such]'); if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(x){} } }catch(x){} }, 250); return; }
   if(t.dataset.hf29datum!=null && HF29.zu){ HF29.zu.ziel={ art:'tag', datum:String(t.value||'') }; const f=el('sheetFoot'); if(f) f.innerHTML=hf29ZuordnenFussHtml(); }   // abgelöst Hotfix 31 §7.1 (Datumsfeld kommt aus hf31TagWahlHtml)
-  if(t.dataset.hf31datum!=null && t.value){ hf31TagWaehlen(t.dataset.hf31datum, t.value); } });   // Hotfix 31 §7.1: „📅 Datum wählen“
+  if(t.dataset.hf31datum!=null && t.value){ hf31TagWaehlen(t.dataset.hf31datum, t.value, { ausFeld:true }); } });   // Hotfix 31 §7.1: „📅 Datum wählen“ · Hotfix 31.2 §1.1: aus dem Feld nichts neu zeichnen, nichts sofort buchen
 /* ── Kartenformat: Zeile „- Block: <block> · HH:MM“ (nur gelesen; die Zuordnung kommt aus Zielbild 15) ── */
 { const _alt=f7PfKarteLesen; f7PfKarteLesen=function(r, text){ const kk=_alt(r, text); if(!kk) return kk; try{ const src=String(text!=null ? text : ((r && r['Output/Entwurf'])||'')).replace(/\r/g,''); const m=src.match(/^\s*-\s*Block\s*:\s*([^\n]+)$/im); if(m){ const teile=m[1].split(/[·,]/).map(x=>x.trim()).filter(Boolean), b=k43BlockNorm(teile[0]||''); if(b && b!=='tag' && K43_BLOECKE.some(x=>x[0]===b)){ kk.block=b; const z=(teile[1]||'').match(/^(\d{1,2}):(\d{2})$/); kk.blockZeit=z ? z[1].padStart(2,'0')+':'+z[2] : null; } } }catch(e){} return kk; }; }
 
