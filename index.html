@@ -19094,6 +19094,30 @@ function korrekturPunkteVerrechnen(k){
   return p;
 }
 function korrSnapshots(datum){ return (S.historie||[]).filter(h=>h.datum===datum && !h.luecke); }
+/* Hotfix 31.3 §1.1 · fehlender Tages-Snapshot eines vergangenen Tags (aus korrekturAnwenden/tagSn gezogen, unverändert): tagId <datum>-k, perKorrektur, sortiert in S.historie */
+function korrSnapshotAnlegen(dat){
+  const h={ tagId:dat+'-k', datum:dat, laufindex:1, urlaub:false, spielZufluss:0, startTs:null, endeTs:null, akku:null,
+      punkteBilanz:0, abzuege:0, routinenBilanz:[], zeit:{dfm:0,privat:0,projekte:{}}, luecke:false, matrixSpur:[], log:[],
+      akkuVerlauf:[], streak:0, erledigtHeute:0, perKorrektur:true };
+  S.historie.push(h); S.historie.sort((a,b)=>a.datum<b.datum?-1:(a.datum>b.datum?1:0));
+  return h; }
+/* Hotfix 31.3 §1.2 · genau ein Abschluss der Karte k am App-Tag tag, ohne Punkte — wie ein normales ✓ (Intraday abhaken, Log art kartenArt, erledigtHeute + 1).
+   Die Punkte stehen schon über die Sitzung (Log korrektur) im Tag; ein zweiter Aufruf für dieselbe Karte und denselben Tag ändert nichts. */
+function hf313AbschlussZaehlen(k, tag, tsMs){
+  if(!k || !tag) return false;
+  if((S.intraday||[]).some(x=>x && x.typ==='abhaken' && x.kartenId===k.id && x.ts && belFensterDatum(x.ts)===tag)) return false;   // Doppelschutz
+  if(tag===heuteApp() && tagOffen()){
+    const e=logIntraday(k,{ punkte:0, typ:'abhaken' }); e.quelle='erledigtAm';
+    logPunktSchreiben(k);
+  } else {
+    const hs=korrSnapshots(tag), h=hs.length ? hs[hs.length-1] : korrSnapshotAnlegen(tag);
+    if(!Array.isArray(h.log)) h.log=[];
+    const e=logIntraday(k,{ punkte:0, typ:'abhaken' }); e.ts=new Date(tsMs).toISOString(); e.tagId=h.tagId; e.datum=tag; e.quelle='erledigtAm';
+    h.log.push({ itemId:k.id, titel:k.titel||'', domain:k.domain, art:kartenArt(k), punkte:0, kartenwert:0, ts:e.ts, quelle:'erledigtAm' });
+    h.erledigtHeute=num(h.erledigtHeute)+1;
+    saveHistorie();   // Abweichung zum Auftrag: saveTag speichert nur S.tag, der Snapshot liegt in S.historie
+  }
+  DB.set('intraday', S.intraday); saveTag(); return true; }
 /* Stand eines Tages — fuer das Protokoll (vorher/nachher). */
 function korrTagStand(datum){
   const heute=tagOffen() && S.tag.datum===datum;
@@ -19127,10 +19151,7 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
     if(!andere){ if(heute) return null; if(_h) return _h; } else if(_hs[d]) return _hs[d];
     const dat=andere ? d : datum, hs=korrSnapshots(dat); let h;
     if(hs.length){ h=hs[hs.length-1]; }
-    else { h={ tagId:dat+'-k', datum:dat, laufindex:1, urlaub:false, spielZufluss:0, startTs:null, endeTs:null, akku:null,
-      punkteBilanz:0, abzuege:0, routinenBilanz:[], zeit:{dfm:0,privat:0,projekte:{}}, luecke:false, matrixSpur:[], log:[],
-      akkuVerlauf:[], streak:0, erledigtHeute:0, perKorrektur:true };
-      S.historie.push(h); S.historie.sort((a,b)=>a.datum<b.datum?-1:(a.datum>b.datum?1:0)); zeilen.push('Tag '+(andere ? dat+' ' : '')+'angelegt (es gab keinen Abschluss)'); }
+    else { h=korrSnapshotAnlegen(dat); zeilen.push('Tag '+(andere ? dat+' ' : '')+'angelegt (es gab keinen Abschluss)'); }   // Hotfix 31.3 §1.1: Anlage in korrSnapshotAnlegen
     if(!h.zeit) h.zeit={dfm:0,privat:0,projekte:{}};
     if(!Array.isArray(h.log)) h.log=[];
     if(!Array.isArray(h.matrixSpur)) h.matrixSpur=[];
