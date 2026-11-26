@@ -29514,11 +29514,20 @@ function hf312ZeitInnenHtml(){ const E=HF31.erl; if(!E) return ''; if(!(E.dauer>
   if(sp.art==='mittig') return '<span>Gebucht wird '+zeit+' · mittig in '+name+'</span>';
   if(sp.art==='block') return '<span>Gebucht wird '+zeit+' · ganzer Block '+name+' · '+Math.round(sp.min)+' Min. statt '+E.dauer+' Min., Punkte bleiben '+fmtP(E.punkte)+'</span>';
   return '<span>Gebucht wird '+zeit+' · '+(E.tag===heuteApp() ? 'bis jetzt' : 'bis 23:00')+'</span>'; }
+/* ══ Hotfix 31.2 §3 · Zeitspanne der Buchung { v, b, art, min } (ms; min = gebuchte Minuten): mittig im Block; länger als der Block → ganzer Block (Pascal 26.11.2026),
+   die gesamte Punktzahl liegt dann auf dieser Zeit; ohne Block (oder Block kürzer als 1 Min.) endet sie heute jetzt, sonst 23:00 ══ */
+function hf312Spanne(tag, block, dauerMin){ const jetzt=Math.floor(Date.now()/60000)*60000, D=num(dauerMin)*60000, heute=(tag===heuteApp()), sp=(v, b, art)=>({ v, b, art, min:(b-v)/60000 });
+  const x=block ? hf312Bloecke(tag).find(y=>y.block===block) : null;
+  if(x){ const bv=korrZeit(x.von, tag); let bb=korrZeit(x.bis, tag); if(bb<=bv) bb+=24*3600000; if(heute) bb=Math.min(bb, jetzt); const L=bb-bv;
+    if(L>=60000){ if(D<=L){ const v=bv+Math.floor((L-D)/2/60000)*60000; return sp(v, v+D, 'mittig'); }
+      return sp(bv, bb, 'block'); } }
+  const b=heute ? jetzt : Date.parse(tag+'T23:00:00'); return sp(b-D, b, 'ohne'); }
 function hf311Buchen(){ const E=HF31.erl; if(!E) return false; const k=S.karten.find(x=>x.id===E.kid); if(!k) return hf29Meldung('Karte nicht gefunden'); const heute=heuteApp(), tag=E.tag, dauer=E.dauer, punkte=E.punkte;
   if(dauer<=0 && punkte>0){ E.fehler='Punkte brauchen eine Dauer'; hf311Neu(); return false; }
-  const grund='Erledigt am '+anKurzDatum(tag)+'. (Von gestern)';
-  if(dauer>0){ const bisMs=tag===heute ? Date.now() : Date.parse(tag+'T23:00:00');   // §1.3: heute endet die Sitzung jetzt, sonst um 23:00
-    const sz={ aktion:'hinzu', karteId:k.id, von:hf311Hhmm(bisMs-dauer*60000), bis:hf311Hhmm(bisMs), punkteJeStd:Math.round(punkte*60/dauer*100)/100, vermerk:grund };   // vermerk: Pflicht beim festen Satz (korrFesterSatz)
+  const grund='Erledigt am '+anKurzDatum(tag)+'. (Von gestern'+(E.block ? ' · '+k43BlockName(E.block) : '')+')'; let sp=null;   // Hotfix 31.2 §3: Block im Grund
+  if(dauer>0){ sp=hf312Spanne(tag, E.block, dauer);   // Hotfix 31.2 §3: Zeit mittig im Block (bzw. ganzer Block), Satz aus den gebuchten Minuten — die Sitzung trägt die volle Punktzahl
+    const sz={ aktion:'hinzu', karteId:k.id, von:new Date(sp.v).toISOString(), bis:new Date(sp.b).toISOString(),
+           punkteJeStd:Math.round(punkte*60/sp.min*100)/100, vermerk:grund, ueberlappen:true };   // vermerk: Pflicht beim festen Satz (korrFesterSatz) · ueberlappen: §4
     const abg=[]; let r=null; try{ r=korrekturAnwenden({ datum:tag, grund, sitzungen:[sz] }, abg, null); }catch(e){ abg.push({ was:'Sitzung', grund:String((e && e.message)||e) }); }
     if(abg.length){ E.fehler='Sitzung abgewiesen: '+abg.map(a=>a.grund).join(' · '); hf311Neu(); return false; }
     if(!r){ E.fehler='Sitzung nicht gebucht (ohne Wirkung)'; hf311Neu(); return false; } }
@@ -29526,7 +29535,7 @@ function hf311Buchen(){ const E=HF31.erl; if(!E) return false; const k=S.karten.
     if(tag===heute && tagOffen()){   // heute rechnet die Karte live (kartePunkteHeute = istSek × Satz, hier 160 statt 50): die gewählten Punkte gelten als beim Abhaken gewählter Ist-Wert (overrideSetzen, U6-A), der Abschluss trägt bonusPunkte 0 (kein Abhakbonus, aufgabenBonusHeute)
       try{ if(istAufgabeKarte(k)) overrideSetzen(k, punkte); }catch(e){}
       try{ if(!Array.isArray(k.abschluesse)) k.abschluesse=[]; let gl=null; try{ gl=glaettungBerechnen(k, 0); }catch(e){ gl=null; } k.abschluesse.push({ ts:jetztIso(), tagId:S.tag.tagId, punkteIstVorher:Math.round(kartePunkte(k)), istMinVorher:Math.round(num(k.istSek)/60), echt:true, bonusPunkte:0, subsDoneVorher:untermenge(k.id).filter(u=>u.done).map(u=>u.id), glaettung:gl, quelle:'erledigtAm' }); }catch(e){} } }
-  saveKarten(); saveTag(); HF31.erl=null; try{ closeSheet(); }catch(e){} toast('Erledigt am '+anKurzDatum(tag)+'. · '+dauer+' Min · '+fmtP(punkte)+' P'); try{ kettenListenNeu(); renderAlles(); e1Rendern(); }catch(e){} return true; }
+  saveKarten(); saveTag(); HF31.erl=null; try{ closeSheet(); }catch(e){} toast('Erledigt am '+anKurzDatum(tag)+'. · '+(sp ? Math.round(sp.min) : dauer)+' Min · '+fmtP(punkte)+' P'); try{ kettenListenNeu(); renderAlles(); e1Rendern(); }catch(e){} return true; }
 /* §1.1 · Abfangen in der Capture-Phase auf window — läuft vor jedem document-Handler (26491 kettenListeKlick, 29484 Gestern-✓ aus Hotfix 29) */
 window.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const ch=t.closest('[data-klcheck]'); if(!ch || !t.closest('[data-hf31gestern]')) return; e.stopPropagation(); e.preventDefault(); haptik(8); hf311Oeffnen(ch.dataset.klcheck); }, true);
 document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.dataset) return; if(t.dataset.hf311dauer!=null) hf311DauerSetzen(t.value); else if(t.dataset.hf311punkte!=null) hf311PunkteSetzen(t.value); });
