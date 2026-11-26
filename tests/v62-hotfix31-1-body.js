@@ -54,7 +54,7 @@ pruef('1.3g Datum vor 3 Tagen: Sitzung 45 Min bis 23:00 auf diesen Tag (Snapshot
 
 // ══ 1.3 · Dauer 0 / Punkte 0 ══
 var intra4=S.intraday.length, hist4=S.historie.length; hf311Oeffnen('g-4'); var E4=HF31.erl; var ok4=hf311Buchen();
-pruef('1.3h Karte ohne Soll: Dauer 0, Punkte 0 vorbelegt; Buchen setzt nur erledigt am Tag (gestern), keine Sitzung, kein Snapshot angelegt, tagId des Snapshots von gestern', E4.dauer===0 && E4.punkte===0 && ok4===true && kG4.status==='erledigt' && kG4.erledigtAuf===gestern && S.intraday.length===intra4 && S.historie.length===hist4 && kG4.tagId===gestern+'-k', JSON.stringify([E4, kG4.tagId]));
+pruef('1.3h Karte ohne Soll: Dauer 0, Punkte 0 vorbelegt; Buchen setzt nur erledigt am Tag (gestern), keine Sitzung, kein Snapshot angelegt, tagId des Snapshots von gestern', E4.dauer===0 && E4.punkte===0 && ok4===true && kG4.status==='erledigt' && kG4.erledigtAuf===gestern && S.intraday.length===intra4+1 && S.intraday[S.intraday.length-1].typ==='abhaken' /* Hotfix 31.3: der Abschluss zählt (abhaken) */ && S.historie.length===hist4 && kG4.tagId===gestern+'-k', JSON.stringify([E4, kG4.tagId]));
 
 // ══ 1.3 · Dauer 0 / Punkte 10 ══
 hf311Oeffnen('g-5'); hf311DauerSetzen(0); hf311PunkteSetzen(10); var intra5=S.intraday.length; var ok5=hf311Buchen();
@@ -63,7 +63,7 @@ closeSheet(); HF31.erl=null;
 
 // ══ 1.3 · Hotfix 31.2: zweite Karte am selben Tag überschneidet sich — wird gebucht (ueberlappen); abgewiesen wird nur noch z. B. ein Satz über 5.000 P/h ══
 hf311Oeffnen('g-6'); HF31.erl.block=null; var intra6=S.intraday.length; _toasts.length=0; var ok6=hf311Buchen(); var e6=S.intraday.filter(function(e){ return e.kartenId==='g-6' && e.typ==='korrektur'; })[0];
-pruef('1.3j Überlappung erlaubt (Hotfix 31.2): g-6 60 Min 22:00–23:00 gestern trifft g-1 22:30–23:00 — gebucht, Eintrag ueberlappen:true, Karte erledigt auf gestern, Toast', ok6===true && S.intraday.length===intra6+1 && !!e6 && e6.ueberlappen===true && nah(e6.minuten, 60, 0.1) && kG6.status==='erledigt' && kG6.erledigtAuf===gestern && _toasts.some(function(t){ return /^Erledigt am/.test(t); }), JSON.stringify([ok6, e6, kG6.status, _toasts]));
+pruef('1.3j Überlappung erlaubt (Hotfix 31.2): g-6 60 Min 22:00–23:00 gestern trifft g-1 22:30–23:00 — gebucht, Eintrag ueberlappen:true, Karte erledigt auf gestern, Toast', ok6===true && S.intraday.length===intra6+2 /* Sitzung und abhaken (Hotfix 31.3) */ && !!e6 && e6.ueberlappen===true && nah(e6.minuten, 60, 0.1) && kG6.status==='erledigt' && kG6.erledigtAuf===gestern && _toasts.some(function(t){ return /^Erledigt am/.test(t); }), JSON.stringify([ok6, e6, kG6.status, _toasts]));
 hf311Oeffnen('g-5'); hf311DauerSetzen(1); hf311PunkteSetzen(100); var intra7=S.intraday.length; _toasts.length=0; var ok7=hf311Buchen();
 pruef('1.3k Abweisung bleibt im Blatt: 1 Min, 100 Punkte (6.000 P/h über korrFesterSatz) — Grund im Blatt, nichts gebucht, Karte bleibt offen, kein Toast', ok7===false && HF31.erl && /^Sitzung abgewiesen: punkteJeStd/.test(HF31.erl.fehler) && document.getElementById('sheetBody').innerHTML.indexOf('Sitzung abgewiesen')>=0 && kG5.status==='offen' && S.intraday.length===intra7 && !_toasts.some(function(t){ return /^Erledigt am/.test(t); }), JSON.stringify([HF31.erl && HF31.erl.fehler, _toasts]));
 
@@ -75,5 +75,5 @@ pruef('1.5 ✓ in einer anderen Liste (ohne data-hf31gestern): kettenListeKlick 
 pruef('1.4 Beleg Statistik: Zeit und Punkte eines vergangenen Tags stehen im Snapshot (zeit.<dom>, punkteBilanz, log art korrektur, kontoNachziehen), heute als Intraday typ korrektur mit tagId des laufenden Tags (tagesPunkteLive)', /h\.zeit\[dom\]=Math\.max\(0, num\(h\.zeit\[dom\]\)\+dMin\*60\);/.test(src) && /kontoNachziehen\(h, bil0, dP\);/.test(src));
 
 // ══ Version ══
-pruef('3 App 4.5.7 · Build 2026-11-26-67 · sw.js Cache fokus4-v4.5.7-1', APP_VERSION==='4.5.7' && APP_BUILD==='2026-11-26-67' && /const CACHE = 'fokus4-v4\.5\.7-1'/.test(readFile('sw.js')));
+pruef('3 App 4.5.8 · Build 2026-11-26-68 · sw.js Cache fokus4-v4.5.8-1', APP_VERSION==='4.5.8' && APP_BUILD==='2026-11-26-68' && /const CACHE = 'fokus4-v4\.5\.8-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 31.1 · ✓ in „Von gestern“ mit Tag, Dauer und Punkten über den Korrektur-Weg (4.5.6)');

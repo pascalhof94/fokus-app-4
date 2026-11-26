@@ -64,7 +64,7 @@ var abgVor=S.intraday.length; _toasts.length=0; var okA=hf311Buchen();
 var eA=S.intraday.filter(function(e){ return e.kartenId==='a-1' && e.typ==='korrektur'; })[0];
 pruef('a) Standardblöcke, Soll 145, gestern, fokus1 (09:45–12:45): Sitzung 10:02–12:27, 145 Min, Grund mit Block, Toast mit 145 Min', okA===true && !!eA && _hm(eA.von)==='10:02' && _hm(eA.ts)==='12:27' && nah(eA.minuten, 145, 0.05) && eA.grund==='Erledigt am '+anKurzDatum(gestern)+'. (Von gestern · Fokus 1)' &&
   _toasts.some(function(t){ return t==='Erledigt am '+anKurzDatum(gestern)+'. · 145 Min · '+fmtP(PA)+' P'; }), JSON.stringify([okA, eA, _toasts, HF31.erl && HF31.erl.fehler]));
-pruef('b) Timer-Sitzung 10:00–10:30 einer anderen Karte: keine Abweisung, Eintrag trägt ueberlappen:true, Timer-Sitzung bleibt', okA===true && eA && eA.ueberlappen===true && S.intraday.some(function(e){ return e.id==='s-timer-b'; }) && S.intraday.length===abgVor+1);
+pruef('b) Timer-Sitzung 10:00–10:30 einer anderen Karte: keine Abweisung, Eintrag trägt ueberlappen:true, Timer-Sitzung bleibt', okA===true && eA && eA.ueberlappen===true && S.intraday.some(function(e){ return e.id==='s-timer-b'; }) && S.intraday.length===abgVor+2 /* Sitzung und abhaken (Hotfix 31.3) */);
 var hG=S.historie.filter(function(h){ return h.datum===gestern; }), hG1=hG[hG.length-1];
 pruef('i) Snapshot gestern: punkteBilanz = gewählte Punkte ('+PA+'), zeit.dfm + 8.700 Sek., Log art korrektur; Karte erledigt, erledigtAuf gestern, tagId Snapshot, kein Abhakbonus', hG.length===1 && nah(hG1.punkteBilanz, PA, 0.11) && nah(hG1.zeit.dfm, 8700, 1) && hG1.log.some(function(l){ return l.itemId==='a-1' && l.art==='korrektur' && nah(l.punkte, PA, 0.11); }) &&
   kA.status==='erledigt' && kA.erledigtAuf===gestern && kA.tagId===gestern+'-k' && !(kA.abschluesse||[]).length && nah(eA.punkte, PA, 0.11), JSON.stringify([hG1 && hG1.punkteBilanz, hG1 && hG1.zeit, kA.status, kA.erledigtAuf, kA.tagId, kA.abschluesse]));
@@ -131,5 +131,5 @@ hf31Schieben('s-2'); var sd0=HF31.schiebDatum; var okS3=hf31TagWaehlen('s-2', mo
 pruef('h3) Chip „morgen“ ordnet weiter sofort ein (hf31Schieben setzt schiebDatum zurück)', sd0===null && okS3===true && kS2.faelligkeit===morgen && !sheetOffen() && HF31.schieb===null, JSON.stringify([sd0, okS3, kS2.faelligkeit]));
 
 // ══ §6 · Version ══
-pruef('6 App 4.5.7 · Build 2026-11-26-67 · sw.js Cache fokus4-v4.5.7-1', APP_VERSION==='4.5.7' && APP_BUILD==='2026-11-26-67' && /const CACHE = 'fokus4-v4\.5\.7-1'/.test(readFile('sw.js')));
+pruef('6 App 4.5.8 · Build 2026-11-26-68 · sw.js Cache fokus4-v4.5.8-1', APP_VERSION==='4.5.8' && APP_BUILD==='2026-11-26-68' && /const CACHE = 'fokus4-v4\.5\.8-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 31.2 · Erledigt am …: Block wählen, Überschneidung erlaubt, Datumswahl bleibt offen (4.5.7)');
