@@ -157,5 +157,5 @@ pruef('7.4i Import-Weg: uebersprungen des Ketten-Pakets landet in der Import-Lis
 pruef('7.x Planung der Blöcke selbst unverändert: hf29Bloecke liefert die Standard-Blöcke von heute, Block fokus1 trägt die eingeplanten Karten', hf26Wochenende(heute) || (hf29Bloecke(heute).length>=5 && f1b.art==='block' && f1b.datum===heute));
 
 // ══ §8 · Version ══
-pruef('8 App 4.5.8 · Build 2026-11-26-68 · sw.js Cache fokus4-v4.5.8-1', APP_VERSION==='4.5.8' && APP_BUILD==='2026-11-26-68' && /const CACHE = 'fokus4-v4\.5\.8-1'/.test(readFile('sw.js')));
+pruef('8 App 4.5.9 · Build 2026-11-26-69 · sw.js Cache fokus4-v4.5.9-1', APP_VERSION==='4.5.9' && APP_BUILD==='2026-11-26-69' && /const CACHE = 'fokus4-v4\.5\.9-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 31 · Tagesplanung ohne Autostart, ein Trainer-Tageschat, Chats gelesen und vollständig, Farbe auf allen Geräten, Karten in der Planung (4.5.5)');

@@ -113,5 +113,5 @@ pruef('6g ohne passende Prüfung rechnet die Anzeige selbst: ✗-Zeile in der Wa
 pruef('6h Format: Ticks-Zeile „×n um TT.MM. HH:MM“, abgewiesen mit „~“/„✗“ je Status', (function(){ var t=hf30PruefungText([{ nr:1, was:'Ticks', aktion:'ticks', karte:'Wasser trinken', von:ms(dMi,'10:00'), bis:null, anzahl:3, status:'ok', grund:'' },{ nr:2, was:'Sitzung hinzu', aktion:'hinzu', karte:'E', von:ms(dMi,'10:00'), bis:ms(dMi,'11:00'), status:'angepasst', grund:'Ende um 5 Sek. angepasst' }], 'abcdef01', ms(dMi,'12:34')); var z=t.split('\n'); return /^Prüfung \d\d\.\d\d\. 12:34 · 1 ok · 1 angepasst · 0 abgewiesen · Paket abcdef01$/.test(z[0]) && /^✓ Ticks · Wasser trinken · ×3 um \d\d\.\d\d\. 10:00$/.test(z[1]) && /^~ Sitzung hinzu · E · \d\d\.\d\d\. 10:00–\d\d\.\d\d\. 11:00 · Ende um 5 Sek\. angepasst$/.test(z[2]); })());
 
 // ══ 7 · Version ══
-pruef('7 App 4.5.8 · Build 2026-11-26-68 · sw.js Cache fokus4-v4.5.8-1', APP_VERSION==='4.5.8' && APP_BUILD==='2026-11-26-68' && /const CACHE = 'fokus4-v4\.5\.8-1'/.test(readFile('sw.js')));
+pruef('7 App 4.5.9 · Build 2026-11-26-69 · sw.js Cache fokus4-v4.5.9-1', APP_VERSION==='4.5.9' && APP_BUILD==='2026-11-26-69' && /const CACHE = 'fokus4-v4\.5\.9-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 30 · Korrektur übersprungene Tage (4.5.4)');

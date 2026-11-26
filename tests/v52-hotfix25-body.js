@@ -83,5 +83,5 @@ pruef('C-S11 Münzen heute: Prognose = (Prognose − Punkte) × streakFaktor + M
 var st=tagesformStufen(); pruef('C-S12 Tagesform: Prognose-Stufe aus tagesprognoseHeute (≥ aktuell)', st.prog>=st.akt && st.prog>=outfitVon(outfitFMit(Math.max(0, tagesPunkteLive())+Math.max(0, T.prognose-(T.dfm+T.privat))))-0);
 
 // ══ D · Version ══
-pruef('D1 App 4.5.8 · Build 2026-11-26-68 · sw.js Cache fokus4-v4.5.8-1 (seit Hotfix 26)', APP_VERSION==='4.5.8' && APP_BUILD==='2026-11-26-68' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.8-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('D1 App 4.5.9 · Build 2026-11-26-69 · sw.js Cache fokus4-v4.5.9-1 (seit Hotfix 26)', APP_VERSION==='4.5.9' && APP_BUILD==='2026-11-26-69' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.9-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 25 · Statusleiste, Tableiste, Prognose aus der Tageskette (4.3.1)');

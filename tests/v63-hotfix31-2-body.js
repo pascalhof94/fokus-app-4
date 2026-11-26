@@ -131,5 +131,5 @@ hf31Schieben('s-2'); var sd0=HF31.schiebDatum; var okS3=hf31TagWaehlen('s-2', mo
 pruef('h3) Chip „morgen“ ordnet weiter sofort ein (hf31Schieben setzt schiebDatum zurück)', sd0===null && okS3===true && kS2.faelligkeit===morgen && !sheetOffen() && HF31.schieb===null, JSON.stringify([sd0, okS3, kS2.faelligkeit]));
 
 // ══ §6 · Version ══
-pruef('6 App 4.5.8 · Build 2026-11-26-68 · sw.js Cache fokus4-v4.5.8-1', APP_VERSION==='4.5.8' && APP_BUILD==='2026-11-26-68' && /const CACHE = 'fokus4-v4\.5\.8-1'/.test(readFile('sw.js')));
+pruef('6 App 4.5.9 · Build 2026-11-26-69 · sw.js Cache fokus4-v4.5.9-1', APP_VERSION==='4.5.9' && APP_BUILD==='2026-11-26-69' && /const CACHE = 'fokus4-v4\.5\.9-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 31.2 · Erledigt am …: Block wählen, Überschneidung erlaubt, Datumswahl bleibt offen (4.5.7)');

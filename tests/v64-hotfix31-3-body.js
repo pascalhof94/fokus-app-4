@@ -73,8 +73,8 @@ pruef('c) Erledigt am gestern ohne Dauer (0 Min., 0 P): keine Sitzung; Zählung 
 // ══ d · Tag ohne Snapshot (vor 10 Tagen) ══
 var snD0=korrSnapshots(vor10).length, histD0=S.historie.length;
 hf311Oeffnen('d-1'); hf311TagSetzen(vor10); var okD=hf311Buchen(); var hD=_snap(vor10), abD=_abh('d-1');
-pruef('d) Tag ohne Snapshot (vor 10 Tagen): Snapshot über korrSnapshotAnlegen angelegt (<datum>-k, perKorrektur, sortiert), Zählung wie a (Rohdaten: Tag ohne Zeit und Punkte fällt nach H4.2 heraus)', okD===true && snD0===0 && S.historie.length===histD0+1 && !!hD && hD.tagId===vor10+'-k' && hD.perKorrektur===true && hD.erledigtHeute===1 && hD.log.some(function(l){ return l.itemId==='d-1' && l.art==='Aufgabe'; }) &&
-  abD.length===1 && abD[0].tagId===vor10+'-k' && !analyseRohTage().some(function(e){ return e.datum===vor10; }) /* H4.2: Tag ohne Zeit und Punkte fehlt in den Rohdaten (Bericht ❓) */ && _raus(vor10)===1 && S.historie.every(function(h, i, a){ return i===0 || a[i-1].datum<=h.datum; }), JSON.stringify([okD, hD, abD]));
+pruef('d) Tag ohne Snapshot (vor 10 Tagen): Snapshot über korrSnapshotAnlegen angelegt (<datum>-k, perKorrektur, sortiert), Zählung wie a (Rohdaten: erledigt 1, seit Hotfix 31.4)', okD===true && snD0===0 && S.historie.length===histD0+1 && !!hD && hD.tagId===vor10+'-k' && hD.perKorrektur===true && hD.erledigtHeute===1 && hD.log.some(function(l){ return l.itemId==='d-1' && l.art==='Aufgabe'; }) &&
+  abD.length===1 && abD[0].tagId===vor10+'-k' && _roh(vor10).erledigt===1 /* Hotfix 31.4 §1: ein Tag mit Abschluss erscheint in den Rohdaten */ && _raus(vor10)===1 && S.historie.every(function(h, i, a){ return i===0 || a[i-1].datum<=h.datum; }), JSON.stringify([okD, hD, abD]));
 
 // ══ e · Doppelschutz ══
 var abE0=_abh('a-1').length, erlE0=_snap(gestern).erledigtHeute, logE0=_snap(gestern).log.length; var e1=hf313AbschlussZaehlen(kA, gestern, Date.parse(gestern+'T23:00:00')), e2=hf313AbschlussZaehlen(kA, gestern, Date.parse(gestern+'T23:00:00'));
@@ -104,5 +104,5 @@ document.querySelector=_qs; closeSheet(); HF31.erl=null;
 pruef('h) Punkte ändern → [data-hf312zeit] zeigt den neuen Wert („Punkte bleiben 999“)', z0.indexOf('Punkte bleiben 999')<0 && z1.indexOf('ganzer Block Senke · 105 Min. statt 145 Min., Punkte bleiben 999')>=0, JSON.stringify([z0, z1]));
 
 // ══ §6 · Version ══
-pruef('6 App 4.5.8 · Build 2026-11-26-68 · sw.js Cache fokus4-v4.5.8-1', APP_VERSION==='4.5.8' && APP_BUILD==='2026-11-26-68' && /const CACHE = 'fokus4-v4\.5\.8-1'/.test(readFile('sw.js')));
+pruef('6 App 4.5.9 · Build 2026-11-26-69 · sw.js Cache fokus4-v4.5.9-1', APP_VERSION==='4.5.9' && APP_BUILD==='2026-11-26-69' && /const CACHE = 'fokus4-v4\.5\.9-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 31.3 · Erledigt aus der Tagesplanung zählt überall als erledigt (4.5.8)');

@@ -75,5 +75,5 @@ pruef('1.5 ✓ in einer anderen Liste (ohne data-hf31gestern): kettenListeKlick 
 pruef('1.4 Beleg Statistik: Zeit und Punkte eines vergangenen Tags stehen im Snapshot (zeit.<dom>, punkteBilanz, log art korrektur, kontoNachziehen), heute als Intraday typ korrektur mit tagId des laufenden Tags (tagesPunkteLive)', /h\.zeit\[dom\]=Math\.max\(0, num\(h\.zeit\[dom\]\)\+dMin\*60\);/.test(src) && /kontoNachziehen\(h, bil0, dP\);/.test(src));
 
 // ══ Version ══
-pruef('3 App 4.5.8 · Build 2026-11-26-68 · sw.js Cache fokus4-v4.5.8-1', APP_VERSION==='4.5.8' && APP_BUILD==='2026-11-26-68' && /const CACHE = 'fokus4-v4\.5\.8-1'/.test(readFile('sw.js')));
+pruef('3 App 4.5.9 · Build 2026-11-26-69 · sw.js Cache fokus4-v4.5.9-1', APP_VERSION==='4.5.9' && APP_BUILD==='2026-11-26-69' && /const CACHE = 'fokus4-v4\.5\.9-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 31.1 · ✓ in „Von gestern“ mit Tag, Dauer und Punkten über den Korrektur-Weg (4.5.6)');
