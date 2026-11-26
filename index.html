@@ -26717,8 +26717,8 @@ function analyseRohTage(){
   });
   arr.forEach(e=>{ e.min=e.minDfm+e.minPrivat; e.wt=anWochentag(e.datum); });
   // H4.2: Tage ohne jegliche Aktivität (keine Zeit, keine Punkte) fallen komplett
-  // aus allen Statistiken/Durchschnitten heraus — kein Verzerren als 0-Tag.
-  arr=arr.filter(e=> e.heute || e.min>0.01 || e.punkte!==0);
+  // aus allen Statistiken/Durchschnitten heraus — kein Verzerren als 0-Tag. · Hotfix 31.4: auch Tage mit mindestens einem Abschluss (erledigt > 0)
+  arr=arr.filter(e=> e.heute || e.min>0.01 || e.punkte!==0 || e.erledigt>0);
   return arr;
 }
 /* §2 (v1.7.0): Die beiden zentralen Tages-Accessoren respektieren den
