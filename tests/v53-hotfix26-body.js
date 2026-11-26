@@ -142,5 +142,5 @@ pruef('I7 Tipp auf eine Kachel: Block-Kette aufgeklappt (k43Auf) und aktuelle Ke
 pruef('I8 laufender Block aus den Startzeiten der Block-Ketten (hf26LaufenderBlockId), Tagesfenster 5..29', hf26LaufenderBlockId(hf26HeutigeBloecke(Kb))===k43KetteId('fokus1', heute) && hf26Std('02:00')===26 && hf26Std('09:30')===9.5);
 
 // ══ J · Version ══
-pruef('J1 App 4.5.6 · Build 2026-11-19-66 · sw.js Cache fokus4-v4.5.6-1', APP_VERSION==='4.5.6' && APP_BUILD==='2026-11-19-66' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.6-1'")>=0, APP_VERSION+' / '+APP_BUILD);
+pruef('J1 App 4.5.7 · Build 2026-11-26-67 · sw.js Cache fokus4-v4.5.7-1', APP_VERSION==='4.5.7' && APP_BUILD==='2026-11-26-67' && readFile('sw.js').indexOf("const CACHE = 'fokus4-v4.5.7-1'")>=0, APP_VERSION+' / '+APP_BUILD);
 suiteEnde('Hotfix 26 · Eine Ansicht je Funktion, 💬 an der Karte, Tagesplanung, Schlafen, Postfach-Volltext, Ketten nach Tagesblöcken (4.3.2)');

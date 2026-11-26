@@ -91,5 +91,5 @@ var vor33d=stand(); var abg33d=[]; var e33d=korrekturAnwenden({ datum:d12, grund
 pruef('30.3d zweites Einspielen ändert nichts', e33d===null && !abg33d.length && stand()===vor33d && nah(h12.punkteBilanz, bil12+dP33, 0.11));
 
 // ══ 3 · Version ══
-pruef('3 App 4.5.6 · Build 2026-11-19-66 · sw.js Cache fokus4-v4.5.6-1', APP_VERSION==='4.5.6' && APP_BUILD==='2026-11-19-66' && /const CACHE = 'fokus4-v4\.5\.6-1'/.test(readFile('sw.js')));
+pruef('3 App 4.5.7 · Build 2026-11-26-67 · sw.js Cache fokus4-v4.5.7-1', APP_VERSION==='4.5.7' && APP_BUILD==='2026-11-26-67' && /const CACHE = 'fokus4-v4\.5\.7-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 30.2 · Nächte vergangener Tage · Hotfix 30.3 gebuchte Nacht = Differenz (4.5.4)');

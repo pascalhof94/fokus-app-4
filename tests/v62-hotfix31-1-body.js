@@ -35,7 +35,7 @@ closeSheet(); HF31.erl=null;
 
 // ══ 1.3 · Buchen: gestern mit Vorgaben ══
 var hist0=S.historie.length, intra0=S.intraday.length, liveVor=tagesPunkteLive(), logVor=(S.tag.log||[]).length, tagStand=JSON.stringify([S.tag.tagId, S.tag.datum, S.tag.punkteBilanz]);
-hf311Oeffnen('g-1'); _toasts.length=0; var ok1=hf311Buchen();
+hf311Oeffnen('g-1'); HF31.erl.block=null; _toasts.length=0; var ok1=hf311Buchen();   // Hotfix 31.2: ohne Block endet die Sitzung wie bisher um 23:00 (mit Block: Suite v63)
 var hG=S.historie.filter(function(h){ return h.datum===gestern; }), hG1=hG[hG.length-1], eG=S.intraday.filter(function(e){ return e.kartenId==='g-1' && e.typ==='korrektur'; });
 pruef('1.3a Vorgaben bestätigt: Karte erledigt, erledigtAuf = gestern, tagId = Snapshot von gestern (<gestern>-k), Blatt zu, HF31.erl leer', ok1===true && kG.status==='erledigt' && kG.erledigtAuf===gestern && !!hG1 && kG.tagId===hG1.tagId && hG1.tagId===gestern+'-k' && HF31.erl===null, JSON.stringify([kG.status, kG.erledigtAuf, kG.tagId, hG.map(function(h){ return h.tagId; })]));
 pruef('1.3b Historie von gestern enthält die Sitzung: zeit.dfm = 30 Min, punkteBilanz = '+P30+', Log „korrektur“ mit den Punkten; Intraday typ korrektur 22:30–23:00 mit tagId, manuell, punkteJeStd', hG.length===1 && hG1.perKorrektur===true && nah(hG1.zeit.dfm, 30*60, 1) && nah(hG1.punkteBilanz, P30, 0.11) && hG1.log.some(function(l){ return l.itemId==='g-1' && l.art==='korrektur' && nah(l.punkte, P30, 0.11); }) && eG.length===1 && nah(eG[0].minuten, 30, 0.1) && nah(eG[0].punkte, P30, 0.11) && eG[0].tagId===gestern+'-k' && eG[0].manuell===true && /^Erledigt am \d\d\.\d\d\. \(Von gestern\)$/.test(eG[0].grund) && new Date(eG[0].ts).getHours()===23 && new Date(eG[0].ts).getMinutes()===0 && new Date(eG[0].von).getHours()===22 && new Date(eG[0].von).getMinutes()===30, JSON.stringify([hG1.zeit, hG1.punkteBilanz, hG1.log, eG]));
@@ -43,13 +43,13 @@ pruef('1.3c heute bleibt unverändert (Live-Punkte, Tages-Log, Tag); Toast „Er
 pruef('1.3d kartenStatusHeute der erledigten Aufgabe = erledigt; sie fehlt in hf29Gestern()', kartenStatusHeute(kG)==='erledigt' && !hf29Gestern().some(function(k){ return k.id==='g-1'; }));
 
 // ══ 1.3 · heute, Dauer 20, Punkte 50 ══
-hf311Oeffnen('g-2'); hf311TagSetzen(heute); hf311DauerSetzen(20); hf311PunkteSetzen(50); var live1=tagesPunkteLive(); var t0=Date.now(); _toasts.length=0; var ok2=hf311Buchen();
+hf311Oeffnen('g-2'); hf311TagSetzen(heute); hf311DauerSetzen(20); hf311PunkteSetzen(50); HF31.erl.block=null;   // Hotfix 31.2: ohne Block endet sie wie bisher jetzt var live1=tagesPunkteLive(); var t0=Date.now(); _toasts.length=0; var ok2=hf311Buchen();
 var e2=S.intraday.filter(function(e){ return e.kartenId==='g-2' && e.typ==='korrektur'; })[0];
 pruef('1.3e Tag heute: Sitzung endet jetzt (±2 Min), 20 Min, 50 P, tagId = laufender Tag; Karte erledigt mit erledigtAuf heute, tagId = S.tag.tagId; kein neuer Snapshot', ok2===true && !!e2 && Math.abs(Date.parse(e2.ts)-t0)<120000 && nah(e2.minuten, 20, 0.1) && nah(e2.punkte, 50, 0.11) && e2.tagId===S.tag.tagId && nah(e2.punkteJeStd, 150, 0.01) && kG2.status==='erledigt' && kG2.erledigtAuf===heute && kG2.tagId===S.tag.tagId && S.historie.length===hist0+1 && _toasts.some(function(t){ return t==='Erledigt am '+anKurzDatum(heute)+'. · 20 Min · 50 P'; }), JSON.stringify([e2, kG2.status, kG2.erledigtAuf, kG2.tagId, _toasts]));
 pruef('1.3f die 50 P stehen im laufenden Tag: tagesPunkteLive steigt um 50, kartePunkteHeute = 50 (Ist-Wert punkteOverride statt istSek × Satz = '+Math.round(e42Satz(kG2)*20/60)+'), kein Abhakbonus (Abschluss bonusPunkte 0)', nah(tagesPunkteLive()-live1, 50, 0.11) && nah(kartePunkteHeute(kG2), 50, 0.11) && kG2.punkteOverride===50 && (kG2.abschluesse||[]).some(function(a){ return a.tagId===S.tag.tagId && a.bonusPunkte===0 && a.quelle==='erledigtAm'; }) && aufgabenBonusHeute()===0, JSON.stringify([tagesPunkteLive()-live1, kartePunkteHeute(kG2), kG2.punkteOverride, kG2.abschluesse, aufgabenBonusHeute()]));
 
 // ══ 1.3 · Datum vor 3 Tagen ══
-hf311Oeffnen('g-3'); hf31TagWaehlen('erl', vor3); var ok3=hf311Buchen(); var h3=S.historie.filter(function(h){ return h.datum===vor3; }); var e3=S.intraday.filter(function(e){ return e.kartenId==='g-3' && e.typ==='korrektur'; })[0];
+hf311Oeffnen('g-3'); hf31TagWaehlen('erl', vor3); HF31.erl.block=null; var ok3=hf311Buchen();   // Hotfix 31.2: ohne Block bis 23:00 var h3=S.historie.filter(function(h){ return h.datum===vor3; }); var e3=S.intraday.filter(function(e){ return e.kartenId==='g-3' && e.typ==='korrektur'; })[0];
 pruef('1.3g Datum vor 3 Tagen: Sitzung 45 Min bis 23:00 auf diesen Tag (Snapshot <vor3>-k), Karte erledigt mit erledigtAuf = vor3, tagId = Snapshot', ok3===true && h3.length===1 && nah(h3[0].zeit.dfm, 45*60, 1) && !!e3 && e3.tagId===vor3+'-k' && kG3.erledigtAuf===vor3 && kG3.tagId===vor3+'-k' && kG3.status==='erledigt', JSON.stringify([h3.map(function(h){ return [h.tagId, h.zeit]; }), e3]));
 
 // ══ 1.3 · Dauer 0 / Punkte 0 ══
@@ -61,11 +61,11 @@ hf311Oeffnen('g-5'); hf311DauerSetzen(0); hf311PunkteSetzen(10); var intra5=S.in
 pruef('1.3i Dauer 0, Punkte 10: Meldung „Punkte brauchen eine Dauer“ im Blatt, nichts gebucht, Karte offen, Blatt bleibt offen', ok5===false && HF31.erl && HF31.erl.fehler==='Punkte brauchen eine Dauer' && document.getElementById('sheetBody').innerHTML.indexOf('Punkte brauchen eine Dauer')>=0 && kG5.status==='offen' && S.intraday.length===intra5);
 closeSheet(); HF31.erl=null;
 
-// ══ 1.3 · abgewiesene Sitzung: zweite Karte am selben Tag — beide enden 23:00 (❓ Bericht: Überlappung mit der ersten „Erledigt am“-Sitzung g-1 22:30–23:00) ══
-hf311Oeffnen('g-6'); var intra6=S.intraday.length; _toasts.length=0; var ok6=hf311Buchen();
-pruef('1.3j Überlappung (g-6 60 Min 22:00–23:00 gestern trifft g-1 22:30–23:00): Sitzung abgewiesen — Grund im Blatt, nichts gebucht, Karte bleibt offen, kein Toast', ok6===false && HF31.erl && /^Sitzung abgewiesen: überlappt/.test(HF31.erl.fehler) && document.getElementById('sheetBody').innerHTML.indexOf('Sitzung abgewiesen')>=0 && kG6.status==='offen' && S.intraday.length===intra6 && !_toasts.some(function(t){ return /^Erledigt am/.test(t); }), JSON.stringify([HF31.erl && HF31.erl.fehler, _toasts]));
-hf311DauerSetzen(30); var ok6b=hf311Buchen(); var vor2=anVorTage(heute, 2);
-pruef('1.3k mit 30 Min (22:30–23:00) weiter abgewiesen; mit einem freien Tag (vorgestern) bucht sie dort', ok6b===false && kG6.status==='offen' && (function(){ hf311TagSetzen(vor2); var r=hf311Buchen(); return r===true && kG6.status==='erledigt' && kG6.erledigtAuf===vor2 && kG6.tagId===vor2+'-k'; })(), JSON.stringify([ok6b, kG6.status, kG6.erledigtAuf, kG6.tagId]));
+// ══ 1.3 · Hotfix 31.2: zweite Karte am selben Tag überschneidet sich — wird gebucht (ueberlappen); abgewiesen wird nur noch z. B. ein Satz über 5.000 P/h ══
+hf311Oeffnen('g-6'); HF31.erl.block=null; var intra6=S.intraday.length; _toasts.length=0; var ok6=hf311Buchen(); var e6=S.intraday.filter(function(e){ return e.kartenId==='g-6' && e.typ==='korrektur'; })[0];
+pruef('1.3j Überlappung erlaubt (Hotfix 31.2): g-6 60 Min 22:00–23:00 gestern trifft g-1 22:30–23:00 — gebucht, Eintrag ueberlappen:true, Karte erledigt auf gestern, Toast', ok6===true && S.intraday.length===intra6+1 && !!e6 && e6.ueberlappen===true && nah(e6.minuten, 60, 0.1) && kG6.status==='erledigt' && kG6.erledigtAuf===gestern && _toasts.some(function(t){ return /^Erledigt am/.test(t); }), JSON.stringify([ok6, e6, kG6.status, _toasts]));
+hf311Oeffnen('g-5'); hf311DauerSetzen(1); hf311PunkteSetzen(100); var intra7=S.intraday.length; _toasts.length=0; var ok7=hf311Buchen();
+pruef('1.3k Abweisung bleibt im Blatt: 1 Min, 100 Punkte (6.000 P/h über korrFesterSatz) — Grund im Blatt, nichts gebucht, Karte bleibt offen, kein Toast', ok7===false && HF31.erl && /^Sitzung abgewiesen: punkteJeStd/.test(HF31.erl.fehler) && document.getElementById('sheetBody').innerHTML.indexOf('Sitzung abgewiesen')>=0 && kG5.status==='offen' && S.intraday.length===intra7 && !_toasts.some(function(t){ return /^Erledigt am/.test(t); }), JSON.stringify([HF31.erl && HF31.erl.fehler, _toasts]));
 
 // ══ andere Listen unverändert ══
 closeSheet(); HF31.erl=null;
@@ -75,5 +75,5 @@ pruef('1.5 ✓ in einer anderen Liste (ohne data-hf31gestern): kettenListeKlick 
 pruef('1.4 Beleg Statistik: Zeit und Punkte eines vergangenen Tags stehen im Snapshot (zeit.<dom>, punkteBilanz, log art korrektur, kontoNachziehen), heute als Intraday typ korrektur mit tagId des laufenden Tags (tagesPunkteLive)', /h\.zeit\[dom\]=Math\.max\(0, num\(h\.zeit\[dom\]\)\+dMin\*60\);/.test(src) && /kontoNachziehen\(h, bil0, dP\);/.test(src));
 
 // ══ Version ══
-pruef('3 App 4.5.6 · Build 2026-11-19-66 · sw.js Cache fokus4-v4.5.6-1', APP_VERSION==='4.5.6' && APP_BUILD==='2026-11-19-66' && /const CACHE = 'fokus4-v4\.5\.6-1'/.test(readFile('sw.js')));
+pruef('3 App 4.5.7 · Build 2026-11-26-67 · sw.js Cache fokus4-v4.5.7-1', APP_VERSION==='4.5.7' && APP_BUILD==='2026-11-26-67' && /const CACHE = 'fokus4-v4\.5\.7-1'/.test(readFile('sw.js')));
 suiteEnde('Hotfix 31.1 · ✓ in „Von gestern“ mit Tag, Dauer und Punkten über den Korrektur-Weg (4.5.6)');
