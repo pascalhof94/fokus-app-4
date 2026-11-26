@@ -18976,6 +18976,7 @@ function korrUeberlappt(v, b, ausserId, datum, liste){
   const iv=Array.isArray(liste) ? liste : (S.intraday||[]), hinweise=[];
   for(const x of iv){
     if(!x || !x.ts || SITZUNG_TYPEN.indexOf(x.typ)<0 || num(x.minuten)<0.5) continue;
+    if(x.ueberlappen===true) continue;   // Hotfix 31.2 §4.3: eine überschneidend gebuchte Sitzung blockiert keine spätere Korrektur
     if(ausserId && sitzungIdVon(x)===String(ausserId)) continue;
     const xv=sitzungVonMs(x), xb=Date.parse(x.ts);
     if(!Number.isFinite(xv) || !Number.isFinite(xb)) continue;
@@ -19040,6 +19041,7 @@ function korrSitzungPruefen(sz, datum, liste){
   }
   r.id=(sz.id!=null && sz.id!=='') ? String(sz.id) : ('s-korr-'+k.id+'-'+new Date(v).toISOString()+'-'+new Date(b).toISOString());
   if(korrFindeSitzung({id:r.id, von:sz.von, bis:sz.bis}, k, datum, liste)){ r.v=v; r.b=b; r.ohneWirkung=true; return r; }   // schon da — zweites Einspielen
+  if(sz.ueberlappen===true){ r.v=v; r.b=b; return r; }   // Hotfix 31.2 §4.1: „Erledigt am …“ darf sich überschneiden
   const ue=korrUeberlappt(v, b, null, datum, liste); if(ue.fehler) return ab(ue.fehler);
   r.v=ue.v; r.b=ue.b; r.angepasst=ue.angepasst; if(ue.angepasst) r.status='angepasst';
   return r;
@@ -19308,6 +19310,7 @@ function korrekturAnwenden(kx, abgewiesen, postfachKarte){   // Hotfix 30 §2.1:
       return;
     }
     const r=sitzungHinzu(k, v, b, pr.id, fest);
+    if(sz.ueberlappen===true){ const e=(S.intraday||[]).find(x=>x && x.id===pr.id); if(e) e.ueberlappen=true; }   // Hotfix 31.2 §4.2
     zeilen.push('Sitzung hinzu: „'+String(k.titel||'').slice(0,30)+'" '+belUhr(kalStunde(new Date(v).toISOString()))+'–'+belUhr(kalStunde(new Date(b).toISOString()))+' · '+Math.round(r.min)+' Min · +'+fmtP(r.dP)+' P'+satzText+hinweisText);
   });
   // ── Hotfix 30 §3 · Ticks im Korrektur-Paket: korrekturen[].ticks [{ karteId, anzahl, zeit?, vermerk }] ──
