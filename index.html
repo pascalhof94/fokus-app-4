@@ -29470,14 +29470,17 @@ HF31.erl=null;
 function hf311Satz(k){ try{ return Math.max(0, num(e42Satz(k))); }catch(e){ return 0; } }
 function hf311TagText(d){ return d===heuteApp() ? 'heute' : AN_WT[anWochentag(d)]+' '+anKurzDatum(d)+'.'; }
 function hf311Oeffnen(kid){ const k=S.karten.find(x=>x.id===kid); if(!k) return hf29Meldung('Karte '+hf29Id8(kid)+' nicht gefunden'); const dauer=Math.max(0, Math.min(600, Math.round(num(k.sollMin))));
-  HF31.erl={ kid:k.id, tag:anVorTage(heuteApp(), 1), dauer, punkte:Math.round(hf311Satz(k)*dauer/60), punkteManuell:false, fehler:'' };
+  HF31.erl={ kid:k.id, tag:anVorTage(heuteApp(), 1), dauer, punkte:Math.round(hf311Satz(k)*dauer/60), punkteManuell:false, fehler:'', block:null };   // Hotfix 31.2 §2.1: block = Blockschlüssel oder null
+  hf312BlockVorwahl();
   openSheet('Erledigt am …', hf311BlattHtml(), hf311FussHtml()); return true; }
 function hf311BlattHtml(){ const E=HF31.erl; if(!E) return ''; const k=S.karten.find(x=>x.id===E.kid); if(!k) return '<div class="leer">Karte nicht lesbar</div>';
   return '<div class="hf29-zu"><div class="hf29-karte">'+kartenZeileHtml(k, { live:true })+'</div>'+
     '<p class="k43-lab">Erledigt am</p>'+hf31TagWahlHtml('erl', E.tag, { rueckwaerts:true })+
+    '<p class="k43-lab">Block an diesem Tag</p><div class="hf29-chips" data-hf312bloecke="1">'+hf312BlockWahlInnenHtml()+'</div>'+   // Hotfix 31.2 §2.3
     '<div class="grid2"><div class="field"><label>Dauer (Min.)</label><input type="number" inputmode="numeric" min="0" max="600" step="1" value="'+esc(String(E.dauer))+'" data-hf311dauer="1" aria-label="Dauer in Minuten"></div>'+
     '<div class="field"><label>Punkte</label><input type="number" inputmode="numeric" min="0" step="1" value="'+esc(String(E.punkte))+'" data-hf311punkte="1" aria-label="Punkte"></div></div>'+
-    '<div class="hint">Satz der Karte '+fmtP(hf311Satz(k))+' P/h · Punkte rechnen mit der Dauer mit, bis du sie selbst änderst. Zeit und Punkte zählen zur Statistik des gewählten Tags; kein Abhakbonus.</div>'+
+    '<div class="hf29-opt" data-hf312zeit="1">'+hf312ZeitInnenHtml()+'</div>'+   // Hotfix 31.2 §2.4
+    '<div class="hint">Satz der Karte '+fmtP(hf311Satz(k))+' P/h · Punkte rechnen mit der Dauer mit, bis du sie selbst änderst. Die Zeit liegt mittig im gewählten Block und darf sich mit anderen Buchungen überschneiden. Zeit und Punkte zählen zur Statistik des gewählten Tags; kein Abhakbonus.</div>'+
     (E.fehler ? '<div class="hf29-warn" data-hf311fehler="1"><span><b>'+esc(E.fehler)+'</b></span></div>' : '')+'</div>'; }
 function hf311FussHtml(){ const E=HF31.erl; if(!E) return ''; return '<button class="btn ghost sm" data-close="1">Abbrechen</button><button class="btn prim" data-hf311go="1">✓ Erledigt am '+esc(hf311TagText(E.tag))+'</button>'; }
 function hf311Neu(){ try{ const b=el('sheetBody'), f=el('sheetFoot'); if(b) b.innerHTML=hf311BlattHtml(); if(f) f.innerHTML=hf311FussHtml(); }catch(e){} }
@@ -29488,9 +29491,29 @@ function hf312ErlAnzeigen(){ const E=HF31.erl; if(!E) return; hf312TageMarkieren
   try{ const body=el('sheetBody'); if(body){ const bl=body.querySelector('[data-hf312bloecke]'); if(bl) bl.innerHTML=hf312BlockWahlInnenHtml(); const z=body.querySelector('[data-hf312zeit]'); if(z) z.innerHTML=hf312ZeitInnenHtml();
       const fe=body.querySelector('[data-hf311fehler]'); if(fe && fe.remove) fe.remove(); } }catch(e){}
   try{ const f=el('sheetFoot'); if(f) f.innerHTML=hf311FussHtml(); }catch(e){} }
-function hf311DauerSetzen(v){ const E=HF31.erl; if(!E) return; E.dauer=Math.max(0, Math.min(600, Math.round(num(v)))); if(!E.punkteManuell){ const k=S.karten.find(x=>x.id===E.kid); E.punkte=Math.round(hf311Satz(k)*E.dauer/60); try{ const p=document.querySelector('[data-hf311punkte]'); if(p) p.value=String(E.punkte); }catch(e){} } }
+function hf311DauerSetzen(v){ const E=HF31.erl; if(!E) return; E.dauer=Math.max(0, Math.min(600, Math.round(num(v)))); if(!E.punkteManuell){ const k=S.karten.find(x=>x.id===E.kid); E.punkte=Math.round(hf311Satz(k)*E.dauer/60); try{ const p=document.querySelector('[data-hf311punkte]'); if(p) p.value=String(E.punkte); }catch(e){} }
+  try{ const z=document.querySelector('[data-hf312zeit]'); if(z) z.innerHTML=hf312ZeitInnenHtml(); }catch(e){} }   // Hotfix 31.2 §2.5
 function hf311PunkteSetzen(v){ const E=HF31.erl; if(!E) return; E.punkte=Math.max(0, Math.round(num(v))); E.punkteManuell=true; }
 function hf311Hhmm(ms){ const d=new Date(ms); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+/* ══ Hotfix 31.2 §2 (26.11.2026) · Block des Tages wählen: Blöcke des Tages in der Reihenfolge von K43_BLOECKE ohne Overload, Zeiten aus der Block-Kette des Tages,
+   sonst aus den Standard-Tagesblöcken; heute nur Blöcke, die schon begonnen haben ══ */
+function hf312Bloecke(tag){ const std=hf27StdBloecke(), l=[];
+  K43_BLOECKE.forEach(x=>{ const b=x[0]; if(b==='overload') return; const c=hf29Block(b, tag), s=std.find(y=>y && y.block===b)||{};
+    let von=(c && c.von) || s.von || null, bis=(c ? hf29BlockBis(c, hf29Bloecke(tag)) : null) || s.bis || null;
+    if(!von || !bis || hf26Std(bis)<=hf26Std(von)){ von=s.von; bis=s.bis; } if(!von || !bis) return;
+    l.push({ block:b, name:k43BlockName(b), von, bis }); });
+  return tag===heuteApp() ? l.filter(x=>!(hf26Std(x.von)>=belX(jetztIso()))) : l; }
+function hf312BlockVorwahl(){ const E=HF31.erl; if(!E) return; const l=hf312Bloecke(E.tag), hat=b=>!!b && l.some(x=>x.block===b);
+  if(hat(E.block)) return; const c=hf29BlockVon(E.kid, E.tag);
+  E.block=(c && hat(c.block)) ? c.block : hat('fokus1') ? 'fokus1' : (l.length ? l[0].block : null); }
+function hf312BlockSetzen(b){ const E=HF31.erl; if(!E) return; E.block=b; E.fehler=''; hf312ErlAnzeigen(); }
+function hf312BlockWahlInnenHtml(){ const E=HF31.erl; if(!E) return ''; const l=hf312Bloecke(E.tag); if(!l.length) return '<div class="leer">kein Block mit Zeit — gebucht wird bis jetzt</div>';
+  return l.map(x=>'<button type="button" class="hf29-chip'+(x.block===E.block ? ' an' : '')+'" data-hf312block="'+esc(x.block)+'">'+esc(x.name+' · '+x.von+'–'+x.bis)+'</button>').join(''); }
+function hf312ZeitInnenHtml(){ const E=HF31.erl; if(!E) return ''; if(!(E.dauer>0)) return '<span>ohne Zeit</span>';
+  const sp=hf312Spanne(E.tag, E.block, E.dauer), zeit='<b>'+esc(hf311Hhmm(sp.v)+'–'+hf311Hhmm(sp.b))+'</b>', name=esc(k43BlockName(E.block));
+  if(sp.art==='mittig') return '<span>Gebucht wird '+zeit+' · mittig in '+name+'</span>';
+  if(sp.art==='block') return '<span>Gebucht wird '+zeit+' · ganzer Block '+name+' · '+Math.round(sp.min)+' Min. statt '+E.dauer+' Min., Punkte bleiben '+fmtP(E.punkte)+'</span>';
+  return '<span>Gebucht wird '+zeit+' · '+(E.tag===heuteApp() ? 'bis jetzt' : 'bis 23:00')+'</span>'; }
 function hf311Buchen(){ const E=HF31.erl; if(!E) return false; const k=S.karten.find(x=>x.id===E.kid); if(!k) return hf29Meldung('Karte nicht gefunden'); const heute=heuteApp(), tag=E.tag, dauer=E.dauer, punkte=E.punkte;
   if(dauer<=0 && punkte>0){ E.fehler='Punkte brauchen eine Dauer'; hf311Neu(); return false; }
   const grund='Erledigt am '+anKurzDatum(tag)+'. (Von gestern)';
@@ -29510,6 +29533,7 @@ document.addEventListener('input', e=>{ const t=e.target; if(!t || !t.dataset) r
 /* ── Klicks (capture) ── */
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const d=x=>t.closest('['+x+']'); let z;
   if(d('data-hf311go')){ e.stopPropagation(); haptik(10); hf311Buchen(); return; }   // Hotfix 31.1 §1.3
+  if((z=d('data-hf312block'))){ e.stopPropagation(); haptik(6); hf312BlockSetzen(z.dataset.hf312block); return; }   // Hotfix 31.2 §2.7
   if(d('data-hf312schiebgo')){ e.stopPropagation(); haptik(8); const kid=HF31.schieb, dat=HF31.schiebDatum; if(kid && dat) hf31TagWaehlen(kid, dat); return; }   // Hotfix 31.2 §1.6: ohne opt — ordnet ein und schließt wie bisher
   if((z=d('data-hf31tag'))){ e.stopPropagation(); haptik(6); const [ziel, datum]=String(z.dataset.hf31tag).split('|'); hf31TagWaehlen(ziel, datum); return; }   // Hotfix 31 §7.1
   if((z=d('data-hf31schieb'))){ e.stopPropagation(); haptik(6); hf31Schieben(z.dataset.hf31schieb); return; }   // Hotfix 31 §7.1.3
